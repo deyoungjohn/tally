@@ -390,10 +390,11 @@ Swap #5 used **775,639 gas: with the API's 450,000 it would have reverted again.
 |---|---|
 | 3. Provider terms and AUP | **Done (desk review).** Privy AUP (updated 2025-12-16) restricts Cuba, Iran, North Korea, Syria, Crimea, Donetsk, Luhansk and restricted-party lists; no explicit securities ban; non-custodial use is outside its custodian clause. Details in blueprint §9. |
 | 1. Native BSC embedded wallet + real tx | **Passed 2026-10-01 (email sign-in, laptop, `localhost:3000`).** Privy embedded wallet `0x0809…a4d9d1` sent a 0-value self-transfer on chain 56: [tx](https://bscscan.com/tx/0x04a5f53651c17d5f6572bcc5fbe56210aba8b02c4c985866b327c052453e13e8). Checked via BSC RPC: chainId `0x38`, from = to, value 0, status 1, gas 21,000 at 0.05 gwei. No bridging or other-chain default. |
-| 2. Binance Web3 Wallet via WalletConnect | **Awaiting the user's device.** |
-| 4. Allowed origins | **Awaiting the tunnel URL**, to add in the Privy dashboard. |
-| Cloudflare sub-region headers | **Awaiting the user:** enable "Add visitor location headers" and confirm `cf-region-code` arrives. |
+| 2. External wallet connects and signs on BSC | **Passed for an external EOA, 2026-10-01** (laptop, `localhost:3000`): 0-value self-transfer [tx](https://bscscan.com/tx/0x6af34fdaac73674112a366ff433100da7fc7690a5418b834819be8ae077e9ac1), chainId `0x38`, status 1, 21,000 gas. **Binance Web3 Wallet specifically is not yet confirmed** (which wallet app was used is not recorded). Finding: after the user switched the wallet to X Layer while the page was open, the *Switch to BSC* button never appeared, so the page does not detect a live chain change. M3 must read `eth_chainId` from the provider at send time and call `switchChain(56)` before signing. |
+| 4. Allowed origins | **Done** for `localhost:3000` and the laptop quick tunnel. The final domain must be added when it exists. |
+| Cloudflare sub-region headers | **Still unverified.** Quick tunnels have no dashboard, so `cf-region-code` can only be confirmed once the domain is on Cloudflare with a named tunnel. Until then the gate blocks by country only. |
 | Privy SDK/login blocked in any country? | Untested. |
+| Region gate through a tunnel | **Passed.** Block page (HTTP 451) from a US phone, site loads from NG. Found and fixed a rewrite bug behind the tunnel (`EPROTO`). VPN on the same machine as `cloudflared` caused Cloudflare 524 timeouts, an artefact of the test setup, not the app (600-request stress test clean). KR exit not tested directly. |
 
 ## The DX report (25%): write it yourself, as you go
 The rules reject AI-generated reports, so **keep a timestamped human log from the first minute**. That covers time to first successful call, each error message copied verbatim, and page URL plus section for every doc problem. The items below are leads we found from outside with public endpoints. **Confirm each one yourself with your key before it goes in the report:**
