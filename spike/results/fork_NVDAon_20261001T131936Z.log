@@ -1,0 +1,51 @@
+No files changed, compilation skipped
+
+Ran 5 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest
+[PASS] test_A_replayAsPlainWallet() (gas: 2377339)
+Logs:
+  token NVDAon captured 2026-10-01T13:19:36Z
+  fork block 125107333 capture block 125107331
+  shares per token (1e18) 1001715248795989800
+  route Lista V3:USDC > Uniswap V4:NVDAB > Uniswap V4:NVDAon
+  tokens out 26052412284827202
+  shares out 26097098653631381
+  USDT per share (1e18) 229910614955088387235
+
+[PASS] test_B_guardWrapped() (gas: 2818663)
+Logs:
+  token NVDAon captured 2026-10-01T13:19:36Z
+  fork block 125107333 capture block 125107331
+  shares per token (1e18) 1001715248795989800
+  route Pancakeswap V4:WBNB > Genius:USDC > Uniswap V4:NVDAB > Uniswap V4:NVDAon
+  guard shares 26098025300855630
+  tokens out 26053337345342516
+  shares out 26098025300855630
+  USDT per share (1e18) 229902451654198088515
+
+[PASS] test_C_guardRejectsShortfall() (gas: 2911030)
+Logs:
+  token NVDAon captured 2026-10-01T13:19:36Z
+  fork block 125107333 capture block 125107331
+  shares per token (1e18) 1001715248795989800
+  route Pancakeswap V4:WBNB > Genius:USDC > Uniswap V4:NVDAB > Uniswap V4:NVDAon
+
+[PASS] test_D_7702BatchSwapThenAssert() (gas: 2370187)
+Logs:
+  token NVDAon captured 2026-10-01T13:19:36Z
+  fork block 125107333 capture block 125107331
+  shares per token (1e18) 1001715248795989800
+  route Lista V3:USDC > Uniswap V4:NVDAB > Uniswap V4:NVDAon
+  tokens out 26052412284827202
+  shares out 26097098653631381
+  USDT per share (1e18) 229910614955088387235
+
+[PASS] test_E_7702BatchRevertsAtomically() (gas: 2466981)
+Logs:
+  token NVDAon captured 2026-10-01T13:19:36Z
+  fork block 125107333 capture block 125107331
+  shares per token (1e18) 1001715248795989800
+  route Lista V3:USDC > Uniswap V4:NVDAB > Uniswap V4:NVDAon
+
+Suite result: ok. 5 passed; 0 failed; 0 skipped; finished in 4.62s (7.99s CPU time)
+
+Ran 1 test suite in 4.63s (4.62s CPU time): 5 tests passed, 0 failed, 0 skipped (5 total tests)

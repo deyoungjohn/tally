@@ -1,0 +1,36 @@
+# node / next
+node_modules/
+.next/
+out/
+dist/
+.turbo/
+*.tsbuildinfo
+coverage/
+playwright-report/
+test-results/
+
+# python
+__pycache__/
+.venv/
+spike/.venv/
+
+# foundry
+contracts/out/
+contracts/cache/
+contracts/broadcast/*/31337/
+spike/shareguard/lib/
+spike/shareguard/out/
+spike/shareguard/cache/
+
+# secrets and local data
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+/region_report_*.json
+*.db
+*.sqlite
+
+# os
+.DS_Store

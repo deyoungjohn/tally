@@ -1,0 +1,36 @@
+No files changed, compilation skipped
+
+Ran 5 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest
+[SKIP] test_A_replayAsPlainWallet() (gas: 0)
+Logs:
+  token NVDAon captured 2026-10-01T12:34:20Z
+  fork block 125101300 capture block 125101299
+  shares per token (1e18) 1001715248795989800
+
+[SKIP] test_B_guardWrapped() (gas: 0)
+Logs:
+  token NVDAon captured 2026-10-01T12:34:20Z
+  fork block 125101300 capture block 125101299
+  shares per token (1e18) 1001715248795989800
+
+[SKIP] test_C_guardRejectsShortfall() (gas: 0)
+Logs:
+  token NVDAon captured 2026-10-01T12:34:20Z
+  fork block 125101300 capture block 125101299
+  shares per token (1e18) 1001715248795989800
+
+[SKIP] test_D_7702BatchSwapThenAssert() (gas: 0)
+Logs:
+  token NVDAon captured 2026-10-01T12:34:20Z
+  fork block 125101300 capture block 125101299
+  shares per token (1e18) 1001715248795989800
+
+[SKIP] test_E_7702BatchRevertsAtomically() (gas: 0)
+Logs:
+  token NVDAon captured 2026-10-01T12:34:20Z
+  fork block 125101300 capture block 125101299
+  shares per token (1e18) 1001715248795989800
+
+Suite result: ok. 0 passed; 0 failed; 5 skipped; finished in 595.88ms (1.03ms CPU time)
+
+Ran 1 test suite in 599.20ms (595.88ms CPU time): 0 tests passed, 0 failed, 5 skipped (5 total tests)

@@ -1,0 +1,70 @@
+No files changed, compilation skipped
+
+Ran 6 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest
+[PASS] test_A_replayAsPlainWallet() (gas: 2933018)
+Logs:
+  token NVDAon captured 2026-10-01T14:22:36Z
+  fork block 125115727 capture block 125115724
+  shares per token (1e18) 1001715248795989800
+  route Kipseli:NVDAB > Uniswap V4:NVDAon
+  tokens out 26073743448531755
+  shares out 26118466405588796
+  USDT per share (1e18) 229722523015981048652
+
+[PASS] test_B_guardWrapped() (gas: 3034497)
+Logs:
+  token NVDAon captured 2026-10-01T14:22:36Z
+  fork block 125115727 capture block 125115724
+  shares per token (1e18) 1001715248795989800
+  route Kipseli:NVDAB > Uniswap V4:NVDAon
+  guard shares 26118466405588796
+  tokens out 26073743448531755
+  shares out 26118466405588796
+  USDT per share (1e18) 229722523015981048652
+
+[PASS] test_C_guardRejectsShortfall() (gas: 3160021)
+Logs:
+  token NVDAon captured 2026-10-01T14:22:36Z
+  fork block 125115727 capture block 125115724
+  shares per token (1e18) 1001715248795989800
+  route Kipseli:NVDAB > Uniswap V4:NVDAon
+
+[PASS] test_D_7702BatchSwapThenAssert() (gas: 2924191)
+Logs:
+  token NVDAon captured 2026-10-01T14:22:36Z
+  fork block 125115727 capture block 125115724
+  shares per token (1e18) 1001715248795989800
+  route Kipseli:NVDAB > Uniswap V4:NVDAon
+  tokens out 26073743448531755
+  shares out 26118466405588796
+  USDT per share (1e18) 229722523015981048652
+
+[PASS] test_E_7702BatchRevertsAtomically() (gas: 3102278)
+Logs:
+  token NVDAon captured 2026-10-01T14:22:36Z
+  fork block 125115727 capture block 125115724
+  shares per token (1e18) 1001715248795989800
+  route Kipseli:NVDAB > Uniswap V4:NVDAon
+
+[FAIL: API gas limit too low for this route: 1304906 > 382856] test_F_fitsApiGasLimit() (block: 125115727) (gas: 3157650)
+Logs:
+  token NVDAon captured 2026-10-01T14:22:36Z
+  fork block 125115727 capture block 125115724
+  shares per token (1e18) 1001715248795989800
+  route Kipseli:NVDAB > Uniswap V4:NVDAon
+  API gas 450000
+  gas the route used (approx.) 1372050
+  FINDING: the API's gas limit is too low for this route; a real tx would revert
+
+Suite result: FAILED. 5 passed; 1 failed; 0 skipped; finished in 13.69s (26.24s CPU time)
+
+Ran 1 test suite in 13.70s (13.69s CPU time): 5 tests passed, 1 failed, 0 skipped (6 total tests)
+
+Failing tests:
+Encountered 1 failing test in test/ShareGuardFork.t.sol:ShareGuardForkTest
+[FAIL: API gas limit too low for this route: 1304906 > 382856] test_F_fitsApiGasLimit() (block: 125115727) (gas: 3157650)
+
+Encountered a total of 1 failing tests, 5 tests succeeded
+
+Tip: Run `forge test --rerun` to retry only the 1 failed test
+Tip: Run `forge test --debug --match-test <TEST_NAME>` to inspect one failing test in the debugger

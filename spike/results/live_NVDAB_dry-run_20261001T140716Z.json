@@ -1,0 +1,26 @@
+{
+  "token": "NVDAB",
+  "tokenAddress": "0x02fca66c1d1afb4e2a7884261eb00f63598a7436",
+  "wallet": "0x2Bf7EdF53bc6BE6FF98F149387F3818cE28d2930",
+  "usdtIn": "6000000000000000000",
+  "startedAtUtc": "2026-10-01T14:07:04Z",
+  "mode": "dry-run",
+  "multiplier": "1000778223752807865",
+  "multiplierFrom": "on-chain ui",
+  "referencePrice": null,
+  "statusAtStart": "TRADING",
+  "quote": {
+    "vendor": "LiquidMesh",
+    "mode": "SWAP",
+    "swapMode": "SWAP",
+    "routes": 1,
+    "route": "Uniswap V4:BTCB > Genius:USDC > Uniswap V4:NVDAB",
+    "toTokenAmount": "26024352111960241",
+    "tradeFee": "0.02059387",
+    "priceImpactPercent": "0.0013266362",
+    "router": "0xB44446b0c8E56988c34f7Ff73Ae904982b5FdDA5",
+    "approveTarget": "0xB44446b0c8E56988c34f7Ff73Ae904982b5FdDA5",
+    "minReceive": "25764108590840638"
+  },
+  "simulation": "needs approval first"
+}

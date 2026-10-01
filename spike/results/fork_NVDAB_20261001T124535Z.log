@@ -1,0 +1,51 @@
+No files changed, compilation skipped
+
+Ran 5 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest
+[PASS] test_A_replayAsPlainWallet() (gas: 2305157)
+Logs:
+  token NVDAB captured 2026-10-01T12:45:39Z
+  fork block 125102808 capture block 125102807
+  shares per token (1e18) 1000778223752807865
+  route Elfomofi:SKHYB > Pancakeswap V4:NVDAB
+  tokens out 21686350944442186
+  shares out 21703227777858878
+  USDT per share (1e18) 230380478478914656207
+
+[PASS] test_B_guardWrapped() (gas: 2419119)
+Logs:
+  token NVDAB captured 2026-10-01T12:45:39Z
+  fork block 125102808 capture block 125102807
+  shares per token (1e18) 1000778223752807865
+  route Elfomofi:SKHYB > Pancakeswap V4:NVDAB
+  guard shares 21703227777858878
+  tokens out 21686350944442186
+  shares out 21703227777858878
+  USDT per share (1e18) 230380478478914656207
+
+[PASS] test_C_guardRejectsShortfall() (gas: 2480948)
+Logs:
+  token NVDAB captured 2026-10-01T12:45:39Z
+  fork block 125102808 capture block 125102807
+  shares per token (1e18) 1000778223752807865
+  route Elfomofi:SKHYB > Pancakeswap V4:NVDAB
+
+[PASS] test_D_7702BatchSwapThenAssert() (gas: 2310625)
+Logs:
+  token NVDAB captured 2026-10-01T12:45:39Z
+  fork block 125102808 capture block 125102807
+  shares per token (1e18) 1000778223752807865
+  route Elfomofi:SKHYB > Pancakeswap V4:NVDAB
+  tokens out 21686350944442186
+  shares out 21703227777858878
+  USDT per share (1e18) 230380478478914656207
+
+[PASS] test_E_7702BatchRevertsAtomically() (gas: 2421212)
+Logs:
+  token NVDAB captured 2026-10-01T12:45:39Z
+  fork block 125102808 capture block 125102807
+  shares per token (1e18) 1000778223752807865
+  route Elfomofi:SKHYB > Pancakeswap V4:NVDAB
+
+Suite result: ok. 5 passed; 0 failed; 0 skipped; finished in 74.55s (112.80s CPU time)
+
+Ran 1 test suite in 74.56s (74.55s CPU time): 5 tests passed, 0 failed, 0 skipped (5 total tests)

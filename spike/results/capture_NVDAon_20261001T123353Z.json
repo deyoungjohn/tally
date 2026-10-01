@@ -1,0 +1,36 @@
+{
+  "token": "NVDAon",
+  "tokenAddress": "0xa9ee28c80f960b889dfbd1902055218cba016f75",
+  "tokenIn": "0x55d398326f99059fF775485246999027B3197955",
+  "amountIn": "5000000000000000000",
+  "multiplierSource": "feed",
+  "multiplier": "1001715248795989800",
+  "multiplierFrom": "public RWA API sharesMultiplier",
+  "referencePrice": "230.21875",
+  "capturedAtUtc": "2026-10-01T12:34:20Z",
+  "blockAtCapture": "125101299",
+  "eoa": {
+    "user": "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
+    "replayable": "false",
+    "error": "/api/v1/dex/aggregator/quote: http=200 body={\"code\": 40375, \"msg\": \"Minimum order amount is 5 USD.\", \"data\": null, \"timestamp\": 1790858060199, \"success\": false}",
+    "router": "",
+    "data": "0x",
+    "approveTarget": "",
+    "value": "0",
+    "minReceive": "0",
+    "toTokenAmount": "0",
+    "mode": "ERROR"
+  },
+  "guard": {
+    "user": "0xcb634955B8A7DF7B106f7AB47C9759B26206b777",
+    "replayable": "false",
+    "error": "/api/v1/dex/aggregator/quote: http=200 body={\"code\": 40375, \"msg\": \"Minimum order amount is 5 USD.\", \"data\": null, \"timestamp\": 1790858060259, \"success\": false}",
+    "router": "",
+    "data": "0x",
+    "approveTarget": "",
+    "value": "0",
+    "minReceive": "0",
+    "toTokenAmount": "0",
+    "mode": "ERROR"
+  }
+}

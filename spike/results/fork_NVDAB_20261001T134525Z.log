@@ -1,0 +1,51 @@
+No files changed, compilation skipped
+
+Ran 5 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest
+[PASS] test_A_replayAsPlainWallet() (gas: 2958299)
+Logs:
+  token NVDAB captured 2026-10-01T13:45:26Z
+  fork block 125110844 capture block 125110774
+  shares per token (1e18) 1000778223752807865
+  route Biswap V2:BTCB > Topaz Cl:BSC_ETH > Genius:USDC > Uniswap V4:NVDAB
+  tokens out 25872178091661613
+  shares out 25892312435189419
+  USDT per share (1e18) 231729012810983644463
+
+[PASS] test_B_guardWrapped() (gas: 3067654)
+Logs:
+  token NVDAB captured 2026-10-01T13:45:26Z
+  fork block 125110844 capture block 125110774
+  shares per token (1e18) 1000778223752807865
+  route Biswap V2:BTCB > Topaz Cl:BSC_ETH > Genius:USDC > Uniswap V4:NVDAB
+  guard shares 25892312435189419
+  tokens out 25872178091661613
+  shares out 25892312435189419
+  USDT per share (1e18) 231729012810983644463
+
+[PASS] test_C_guardRejectsShortfall() (gas: 3154227)
+Logs:
+  token NVDAB captured 2026-10-01T13:45:26Z
+  fork block 125110844 capture block 125110774
+  shares per token (1e18) 1000778223752807865
+  route Biswap V2:BTCB > Topaz Cl:BSC_ETH > Genius:USDC > Uniswap V4:NVDAB
+
+[PASS] test_D_7702BatchSwapThenAssert() (gas: 2963998)
+Logs:
+  token NVDAB captured 2026-10-01T13:45:26Z
+  fork block 125110844 capture block 125110774
+  shares per token (1e18) 1000778223752807865
+  route Biswap V2:BTCB > Topaz Cl:BSC_ETH > Genius:USDC > Uniswap V4:NVDAB
+  tokens out 25872178091661613
+  shares out 25892312435189419
+  USDT per share (1e18) 231729012810983644463
+
+[PASS] test_E_7702BatchRevertsAtomically() (gas: 3094485)
+Logs:
+  token NVDAB captured 2026-10-01T13:45:26Z
+  fork block 125110844 capture block 125110774
+  shares per token (1e18) 1000778223752807865
+  route Biswap V2:BTCB > Topaz Cl:BSC_ETH > Genius:USDC > Uniswap V4:NVDAB
+
+Suite result: ok. 5 passed; 0 failed; 0 skipped; finished in 44.84s (14.56s CPU time)
+
+Ran 1 test suite in 44.85s (44.84s CPU time): 5 tests passed, 0 failed, 0 skipped (5 total tests)
