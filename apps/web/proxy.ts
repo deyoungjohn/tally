@@ -1,5 +1,6 @@
 import { evaluateRegion } from "@tally/config";
 import { NextResponse, type NextRequest } from "next/server";
+import { blockedResponse } from "@/lib/blocked-page";
 
 /**
  * Region gate (blueprint §9). Runs on every request, pages and /api/*, before anything renders.
@@ -12,7 +13,7 @@ import { NextResponse, type NextRequest } from "next/server";
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // The block page itself and static assets must stay reachable.
+  // The block page itself must stay reachable.
   if (pathname === "/blocked") return NextResponse.next();
 
   const decision = evaluateRegion(
@@ -30,8 +31,8 @@ export function proxy(request: NextRequest) {
       { status: 451, headers: { "Cache-Control": "no-store" } },
     );
   }
-  // Rewrite (not redirect) so the URL stays; the /blocked handler answers with HTTP 451.
-  return NextResponse.rewrite(new URL("/blocked", request.url));
+  // Answer directly (no rewrite): see lib/blocked-page.ts.
+  return blockedResponse();
 }
 
 export const config = {
