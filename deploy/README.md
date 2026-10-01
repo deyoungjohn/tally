@@ -1,4 +1,36 @@
-# Deploying Tally web to the AWS Seoul EC2 (M0 runbook)
+# Running and deploying Tally web
+
+## A. M0 exit checks from your laptop (no server needed)
+Needs Node 22, pnpm 10 (`corepack enable`), git, and `cloudflared` (`brew install cloudflared`, or the Cloudflare download page). On Windows use WSL.
+
+```bash
+git clone https://github.com/deyoungjohn/tally.git && cd tally
+git checkout claude/inspiring-fermat-u5ryah
+pnpm install
+
+# Public Privy App ID (Privy dashboard > your app > Settings). Not a secret.
+cat > apps/web/.env.local <<'ENV'
+NEXT_PUBLIC_PRIVY_APP_ID=paste-your-app-id-here
+NEXT_PUBLIC_ENABLE_WALLET_CHECK=1
+ENV
+```
+
+**Check 3, the wallet** (Privy allowed origins must include `http://localhost:3000`):
+```bash
+TALLY_ALLOW_MISSING_GEO=1 pnpm --filter @tally/web dev     # http://localhost:3000
+```
+Open `/dev/wallet-check`, sign in, copy the embedded wallet address, send it a few cents of BNB **on BNB Smart Chain (BEP-20)**, press *Refresh balance*, then *Send 0 BNB to self*. Send me the BscScan link.
+
+**Checks 1 and 2, tunnel plus region gate.** Localhost has no Cloudflare header, so use a production build behind a quick tunnel (Cloudflare adds the real `cf-ipcountry`):
+```bash
+pnpm build                                            # reads apps/web/.env.local
+PORT=3000 HOSTNAME=127.0.0.1 node apps/web/.next/standalone/apps/web/server.js   # leave running; do NOT set TALLY_ALLOW_MISSING_GEO
+# in a second terminal:
+cloudflared tunnel --url http://localhost:3000        # prints https://<random>.trycloudflare.com
+```
+Add that URL to the Privy allowed origins, then open it from your laptop (NG: should load), and from a phone or laptop behind a US VPN exit (should show "Not available in your region"). Also try a KR exit.
+
+## B. Deploying to the AWS Seoul EC2 (needed before M3, and for judging)
 
 Run these **on the EC2 box** (Ubuntu 24.04, 2 GB RAM + the 4 GB swap file). Secrets live only in `/etc/tally/tally.env`; never commit them and never paste real secret values into chat.
 
