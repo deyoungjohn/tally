@@ -4,7 +4,7 @@
 
 Built for **BNB Hack: Tokenized Stocks Edition** (submissions lock Sun 11 Oct 2026, 12:00 UTC).
 
-> Status: **building.** The plan and its evidence are in this repo; the app is built milestone by milestone (M0–M7).
+> Status: **building, M0 (foundations) in review.** The plan and its evidence are in this repo; the app is built milestone by milestone (M0–M7).
 
 | Document | What it is |
 |---|---|
@@ -13,5 +13,14 @@ Built for **BNB Hack: Tokenized Stocks Edition** (submissions lock Sun 11 Oct 20
 | [`IDEAS.md`](IDEAS.md) | Ideation and validation record, including **Findings F1–F9** (the evidence behind every design decision) |
 | [`research/`](research) | Market snapshot, winner analysis, compliance and region checks (scripts + data) |
 | [`spike/`](spike) | ShareGuard spike, fork tests with real Trading API calldata, live-buy script and results. **Spike code is not for deployment.** |
+
+## Develop
+```bash
+pnpm install
+pnpm typecheck && pnpm lint && pnpm test
+cd apps/web && TALLY_ALLOW_MISSING_GEO=1 pnpm dev    # region gate fails closed without Cloudflare's header
+pnpm build && pnpm e2e                               # Playwright at 375/768/1280 (needs the standalone build)
+```
+Node 22, pnpm 10. Copy `apps/web/.env.example` to `apps/web/.env.local`. Deployment to the Seoul EC2: [`deploy/README.md`](deploy/README.md).
 
 Not investment advice. Not available in restricted regions.

@@ -384,6 +384,17 @@ Swap #5 used **775,639 gas: with the API's 450,000 it would have reverted again.
 - **The spike contract has a known arbitrary-call hole.** `swapForShares` calls any caller-supplied router and data, so anyone who approved it could be drained (router = token, data = `transferFrom`). It's harmless today because it only ran on forks. v1 must allow-list routers; see `TALLY_BLUEPRINT.md` §10.
 - **ShareGuard is unaudited spike code.** It needs hardening (reentrancy guard, pause check, the Ondo feed) before any mainnet deployment.
 
+**M0 wallet-provider checks (blueprint §8.1), status as of 2026-10-01**
+
+| Check | Status |
+|---|---|
+| 3. Provider terms and AUP | **Done (desk review).** Privy AUP (updated 2025-12-16) restricts Cuba, Iran, North Korea, Syria, Crimea, Donetsk, Luhansk and restricted-party lists; no explicit securities ban; non-custodial use is outside its custodian clause. Details in blueprint §9. |
+| 1. Native BSC embedded wallet + real tx | **Code ready, awaiting the user's run.** `/dev/wallet-check` signs in, creates the embedded wallet on chain 56 only and sends a 0-value self-transfer. Needs a few cents of BNB. |
+| 2. Binance Web3 Wallet via WalletConnect | **Awaiting the user's device.** |
+| 4. Allowed origins | **Awaiting the tunnel URL**, to add in the Privy dashboard. |
+| Cloudflare sub-region headers | **Awaiting the user:** enable "Add visitor location headers" and confirm `cf-region-code` arrives. |
+| Privy SDK/login blocked in any country? | Untested. |
+
 ## The DX report (25%): write it yourself, as you go
 The rules reject AI-generated reports, so **keep a timestamped human log from the first minute**. That covers time to first successful call, each error message copied verbatim, and page URL plus section for every doc problem. The items below are leads we found from outside with public endpoints. **Confirm each one yourself with your key before it goes in the report:**
 - Three different multiplier values for the same token across list API, dynamic API and on-chain (xStocks).

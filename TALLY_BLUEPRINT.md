@@ -383,6 +383,13 @@ If Privy fails 1 or 3, switch to Dynamic and repeat the checks. Record the resul
 - issuer restrictions (bStocks, Ondo, xStocks);
 - the wallet provider's list and the top-up provider's list (from §8.1).
 
+**Wallet-provider review (Privy, M0, 2026-10-01; read from the live pages, re-read before submission):**
+- **Terms of Service §7** require use "in compliance with all applicable … laws", and §7(9) forbids misleading or asset-diverting wallet configuration. No country list there.
+- **Acceptable Use Policy (updated 2025-12-16)** lists as high-risk "persons located in, resident in, or a citizen of … Cuba, Iran, North Korea, and Syria, and the Crimea, Donetsk, and Luhansk regions", plus anyone on US, UK, EU or UN restricted-party lists. It also forbids acting as a custodian, payment institution or money transmitter without a licence. Tally is non-custodial (users sign everything), so this does not apply.
+- **No explicit ban on securities or tokenized securities.** The policy is silent on offerings and broker-dealers, so the general "applicable law" clauses carry it. Risk accepted: Tally is a secondary-market, non-custodial comparison tool, and the copy never gives advice.
+- **Result for §9:** Syria added to the block list (Privy AUP). Crimea, Donetsk and Luhansk were already listed. Whether Privy's SDK or login is technically blocked in any country is untested.
+- **Cloudflare sub-regions:** the gate reads `cf-region-code` (ISO 3166-2, UA-43 Crimea, UA-40 Sevastopol, UA-14 Donetsk, UA-09 Luhansk), which needs Cloudflare's "Add visitor location headers" managed transform. **Unverified on our plan: the user must confirm it is enabled** (see `deploy/README.md`). Without it the gate blocks by country only and this limitation stands.
+
 **Enforcement:**
 1. **Edge:** Next.js middleware reads `cf-ipcountry` (Cloudflare) and, for blocked countries, returns a static "Not available in your region" page for the **whole site** and `/api/*`.
    - Unknown country (`XX`) or Tor (`T1`): also blocked.
