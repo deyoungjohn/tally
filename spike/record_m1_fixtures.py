@@ -117,10 +117,10 @@ def main():
     probes = {}
     for name, path, params in [
         ("rwa_tokens", "/api/v1/dex/market/rwa/tokens", {"chainId": "56"}),
-        ("rwa_price", "/api/v1/dex/market/rwa/price", {"chainId": "56", "contractAddress": nvda["ondo"][1]}),
+        ("rwa_price", "/api/v1/dex/market/rwa/price", {"binanceChainId": "56", "tokenContractAddress": nvda["ondo"][1]}),
         ("rwa_search", "/api/v1/dex/market/rwa/search", {"keyword": "NVDA"}),
-        ("rwa_underlying_profile", "/api/v1/dex/market/rwa/underlying-profile", {"chainId": "56", "contractAddress": nvda["ondo"][1]}),
-        ("rwa_underlying_market", "/api/v1/dex/market/rwa/underlying-market", {"chainId": "56", "contractAddress": nvda["ondo"][1]}),
+        ("rwa_underlying_profile", "/api/v1/dex/market/rwa/underlying-profile", {"binanceChainId": "56", "tokenContractAddress": nvda["ondo"][1]}),
+        ("rwa_underlying_market", "/api/v1/dex/market/rwa/underlying-market", {"binanceChainId": "56", "tokenContractAddress": nvda["ondo"][1]}),
         ("rwa_platforms", "/api/v1/dex/market/rwa/platforms", {}),
     ]:
         probes[name] = raw_call(client, path, params)
