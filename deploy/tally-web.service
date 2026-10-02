@@ -1,0 +1,24 @@
+[Unit]
+Description=Tally web (Next.js standalone)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=tally
+Group=tally
+WorkingDirectory=/opt/tally/apps/web/.next/standalone/apps/web
+EnvironmentFile=/etc/tally/tally.env
+Environment=HOSTNAME=127.0.0.1
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=3
+# Hardening: the app needs no write access outside its data dir.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/tally
+
+[Install]
+WantedBy=multi-user.target

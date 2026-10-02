@@ -1,0 +1,570 @@
+@import "tailwindcss";
+
+/* Tally design tokens: DESIGN.md §2. Dark only. Do not hard-code values that are not defined here. */
+:root {
+  /* graphite scale */
+  --g0: #0c0d0f;
+  --g1: #131417;
+  --g2: #1a1b1f;
+  --g3: #23252a;
+  --g4: #2e3036;
+
+  /* text */
+  --fg: #eef0f2;
+  --fg2: #a3a8b0;
+  --fg3: #8b9098;
+  --fg-disabled: #6c717a;
+
+  /* edges */
+  --edge: rgba(255, 255, 255, 0.12);
+  --edge2: rgba(255, 255, 255, 0.2);
+
+  /* silver accent */
+  --silver-1: #e8ebef;
+  --silver-2: #b4bac3;
+  --silver-ink: #0b0c0e;
+  --silver-glow: rgba(225, 230, 238, 0.22);
+  --silver: linear-gradient(180deg, #ffffff 0%, #d9dde3 40%, #9aa1aa 100%);
+
+  /* semantic */
+  --amber: #f2c14e;
+  --red: #ff6b6b;
+  --blue: #6aa9ff;
+  --up: #3ddc97;
+
+  /* layout */
+  --r: 22px;
+  --w: 1180px;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  color-scheme: dark;
+
+  /* shadcn / BeUI variable mapping (DESIGN.md §2.1) */
+  --background: var(--g0);
+  --foreground: var(--fg);
+  --card: var(--g2);
+  --card-foreground: var(--fg);
+  --popover: var(--g2);
+  --popover-foreground: var(--fg);
+  --primary: var(--silver-1);
+  --primary-foreground: var(--silver-ink);
+  --secondary: var(--g3);
+  --secondary-foreground: var(--fg);
+  --muted: var(--g3);
+  --muted-foreground: var(--fg2);
+  --accent: var(--g3);
+  --accent-foreground: var(--fg);
+  --border: var(--edge);
+  --input: var(--edge);
+  --ring: var(--edge2);
+  --destructive: var(--red);
+  --radius: 22px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
+  --color-fg: var(--fg);
+  --color-fg2: var(--fg2);
+  --color-fg3: var(--fg3);
+  --color-up: var(--up);
+  --color-amber: var(--amber);
+  --color-red: var(--red);
+  --color-blue: var(--blue);
+  --radius-r: var(--r);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+html {
+  background: var(--g0);
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--g0);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-feature-settings: "cv11";
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.18);
+}
+::selection {
+  background: rgba(232, 235, 239, 0.25);
+}
+.num,
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+.mono {
+  font-family: var(--mono);
+  font-weight: 500;
+}
+
+/* ---------- Typography (DESIGN.md §2.2) ---------- */
+.t-display {
+  font-size: clamp(40px, 6vw, 76px);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 0.96;
+}
+.t-h2 {
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 750;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+}
+.t-h3 {
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.t-big {
+  font-size: clamp(36px, 5vw, 56px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.t-lead {
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--fg2);
+}
+.t-kicker {
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--silver-1);
+}
+.t-meta {
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--fg3);
+}
+.fade-text {
+  background: linear-gradient(180deg, #ffffff 0%, #cfd4da 45%, #7e858e 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.dim-text {
+  color: #8b9098;
+}
+
+/* ---------- Page background (DESIGN.md §2.4) ---------- */
+.bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background: linear-gradient(180deg, var(--g2) 0%, var(--g1) 40%, var(--g0) 100%);
+}
+.bg::before {
+  content: "";
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  top: -30%;
+  height: 80%;
+  background: linear-gradient(172deg, #2b2d32 0%, #212327 55%, rgba(33, 35, 39, 0) 100%);
+  clip-path: polygon(0 0, 100% 0, 100% 58%, 0 100%);
+}
+.bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(900px 520px at 80% 16%, rgba(220, 225, 232, 0.09), transparent 60%),
+    radial-gradient(700px 500px at 6% 72%, rgba(255, 255, 255, 0.035), transparent 60%);
+}
+.bg .dots {
+  position: absolute;
+  inset: 0;
+  opacity: 0.4;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.075) 1px, transparent 1.3px);
+  background-size: 26px 26px;
+  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.35) 55%, transparent 90%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.35) 55%, transparent 90%);
+}
+
+/* ---------- Surfaces ---------- */
+.glass {
+  position: relative;
+  border-radius: var(--r);
+  border: 1px solid var(--edge);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.028));
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+    0 30px 70px -35px rgba(0, 0, 0, 0.9);
+}
+.gcard {
+  padding: 20px;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.14),
+    rgba(255, 255, 255, 0.04) 55%,
+    rgba(255, 255, 255, 0.08)
+  );
+  backdrop-filter: blur(26px) saturate(160%);
+  -webkit-backdrop-filter: blur(26px) saturate(160%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    0 40px 80px -30px rgba(0, 0, 0, 0.9);
+}
+.panel {
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: background 0.2s;
+}
+.panel:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+.overlay-backdrop {
+  background: rgba(5, 6, 7, 0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass,
+  .gcard {
+    background: rgba(35, 37, 42, 0.92);
+  }
+}
+
+/* ---------- Buttons (DESIGN.md §2.5) ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 14.5px;
+  letter-spacing: -0.1px;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  border: 0;
+  transition:
+    transform 0.15s var(--ease),
+    background 0.2s,
+    box-shadow 0.2s,
+    opacity 0.2s;
+}
+.btn:active {
+  transform: scale(0.98);
+}
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.45;
+  pointer-events: none;
+}
+.btn-primary {
+  color: var(--silver-ink);
+  background: linear-gradient(180deg, #fff 0%, #e4e7eb 45%, #b7bdc5 100%);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    inset 0 -2px 0 rgba(0, 0, 0, 0.14),
+    0 12px 30px -12px rgba(230, 235, 242, 0.35),
+    0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+.btn-primary:hover {
+  box-shadow:
+    inset 0 1px 0 #fff,
+    inset 0 -2px 0 rgba(0, 0, 0, 0.14),
+    0 16px 40px -10px rgba(230, 235, 242, 0.45),
+    0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+.btn-glassy {
+  color: var(--fg);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--edge);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.btn-glassy:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.btn-light {
+  background: #f4f5f6;
+  color: #0b0c0d;
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 10px 30px -12px rgba(255, 255, 255, 0.3);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--fg2);
+}
+.btn-ghost:hover {
+  color: var(--fg);
+  background: rgba(255, 255, 255, 0.06);
+}
+.btn-icon {
+  width: 44px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--fg);
+}
+
+/* ---------- Nav (DESIGN.md §2.6) ---------- */
+.nav-link {
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: var(--fg2);
+  font-weight: 500;
+  font-size: 14.5px;
+  text-decoration: none;
+  transition:
+    color 0.15s,
+    background 0.15s;
+}
+.nav-link:hover {
+  color: var(--fg);
+  background: rgba(255, 255, 255, 0.06);
+}
+.nav-link[aria-current="page"] {
+  color: var(--fg);
+  background: rgba(255, 255, 255, 0.09);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ---------- Chips and badges (DESIGN.md §2.7) ---------- */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 34px;
+  padding: 0 15px 0 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fg2);
+}
+.eyebrow b {
+  color: var(--fg);
+  font-weight: 600;
+}
+.limit-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--amber);
+  background: rgba(242, 193, 78, 0.12);
+}
+.dot-live {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--up);
+  box-shadow: 0 0 0 0 rgba(61, 220, 151, 0.5);
+  animation: pulse 2.4s var(--ease) infinite;
+}
+
+/* ---------- Layout helpers ---------- */
+.wrap {
+  width: 100%;
+  max-width: var(--w);
+  margin-inline: auto;
+  padding-inline: 16px;
+}
+@media (min-width: 561px) {
+  .wrap {
+    padding-inline: 20px;
+  }
+}
+.section-pad {
+  padding-block: clamp(64px, 10vw, 120px);
+}
+.truncate-mid {
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Motion: keyframes (DESIGN.md §3.2) ---------- */
+@keyframes float {
+  50% {
+    transform: translateY(-14px);
+  }
+}
+@keyframes drift {
+  50% {
+    transform: translate(-30px, 24px);
+  }
+}
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(61, 220, 151, 0.45);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 10px rgba(61, 220, 151, 0);
+  }
+}
+.float {
+  animation: float 7s ease-in-out infinite;
+}
+.drift {
+  animation: drift 9s ease-in-out infinite;
+}
+
+/* Scroll reveal (Revenue .reveal): opacity 0 / 18px → visible over .7s */
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.7s var(--ease),
+    transform 0.7s var(--ease);
+}
+.reveal.in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Hero chrome shapes: our own CSS, decorative (DESIGN.md §2.4) */
+.sphere {
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, #ffffff 0%, #c9ced5 38%, #5d636c 100%);
+  box-shadow:
+    0 30px 50px -20px rgba(0, 0, 0, 0.8),
+    inset 0 -8px 16px rgba(0, 0, 0, 0.25);
+}
+.ring {
+  border-radius: 50%;
+  border: 14px solid transparent;
+  background:
+    linear-gradient(var(--g1), var(--g1)) padding-box,
+    conic-gradient(from 210deg, #ffffff, #8b9098, #e8ebef, #5d636c, #ffffff) border-box;
+  box-shadow: 0 30px 60px -25px rgba(0, 0, 0, 0.85);
+}
+
+@media (max-width: 760px) {
+  .shape {
+    transform: scale(0.6);
+  }
+  .shape.drift,
+  .shape.float {
+    animation: none;
+  }
+}
+
+/* ---------- Reduced motion (DESIGN.md §3.3) ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .float,
+  .drift,
+  .dot-live {
+    animation: none !important;
+  }
+  .reveal {
+    transform: none;
+    transition: opacity 0.15s linear;
+  }
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Blur-in (Linear): hero words and section titles. CSS-only so it plays before hydration. */
+@keyframes blur-in {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+  }
+}
+.blur-in {
+  animation: blur-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+/* Transforms need a box: apply to inline text spans only via .blur-in-word. */
+.blur-in-word {
+  display: inline-block;
+}
+@media (prefers-reduced-motion: reduce) {
+  .blur-in {
+    animation: fade-in 0.15s linear both;
+    animation-delay: 0ms;
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Hover glow that follows the cursor inside glass cards (hover-capable devices only). */
+@media (hover: hover) and (pointer: fine) {
+  .glow-hover::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    background: radial-gradient(
+      240px at var(--x, 50%) var(--y, 50%),
+      rgba(255, 255, 255, 0.08),
+      transparent
+    );
+  }
+  .glow-hover:hover::after {
+    opacity: 1;
+  }
+  .lift {
+    transition:
+      transform 0.2s var(--ease),
+      box-shadow 0.2s;
+  }
+  .lift:hover {
+    transform: translateY(-2px);
+  }
+}
