@@ -222,15 +222,20 @@ Fork tests need an RPC secret and run on demand.
 |---|---|---|
 | 0 | success | |
 | 40001 | param error, incl. "userWalletAddress is required for RFQ (Ondo) quote" | Always send a wallet (placeholder for browse quotes, §7.4) |
-| 40101 / 40102 | invalid key / invalid signature (check the server clock) | Page ops; show "quotes unavailable" |
-| **40304** | "Service not available due to compliance restriction" (caller IP) | Page ops immediately: server region problem |
+| 40101 / 40102 / 40103 / 40104 | invalid key / invalid signature / timestamp outside the recv window (observed: check the clock) / key lacks permission | Page ops; show "quotes unavailable" |
+| **40304** | "Service not available due to compliance restriction" (caller IP). Observed for US, NL and RO exits, always HTTP 200 (F10) | Page ops immediately: server region problem |
+| 40301 / 40302 / 40303 | documented region codes: sanctioned jurisdiction / VPN or proxy detected / unusual IP activity. Never observed | Treated as a region block, same as 40304 |
+| 40311–40314, 40434 | documented KYT (address risk) rejections. Never observed | `compliance` kind; show "this address can't be used" |
 | **40375** | "Minimum order amount is 5 USD." | Enforce min 6 USDT before calling |
+| 40367 / 40369 | documented: Ondo / bStock token unavailable (market hours). Never observed | Per-token "unavailable", other issuer still ranks |
 | 40401 / 40462 | quote expired / swap–quote mismatch (documented) | Re-quote automatically once |
+| **42900** | rate limit exceeded, HTTP 429 (observed after ~5 calls in 50 ms, F10) | Client paces at 4 req/s and retries twice |
 
-- **Retries:** network errors and 5xx get 2 retries with backoff; never retry 4xxxx codes except 40401/40462.
+- **Retries:** network errors, 5xx and 42900 get 2 retries with backoff (300 ms, 600 ms); never retry other 4xxxx codes. 40401/40462 are re-quoted by the caller, not retried by the client. *(42900 added 2026-10-02: it is transient, and the original rule would have failed whole quotes on a burst.)*
+- **Pacing:** token bucket, burst 3 then 4 requests/s, until elevated limits are granted.
 - **Fixtures:** record real responses (with keys stripped) for tests, including a 40304 and a 40375.
 
-**Endpoints used.** Trading API and RWA Data paths are verified. **Market, Transaction and Wallet API paths must be confirmed from `llms-full.txt` in M1** (our tooling couldn't fetch those pages).
+**Endpoints used.** Trading API and RWA Data paths are verified against recorded responses. Market, Transaction and Wallet paths come from `web3.binance.com/en/dev-docs/llms-full.txt` (2026-10-02) and are **unverified until `spike/record_m1_probes.py` has run** (IDEAS §F10 lists them).
 
 | Module | Endpoint | Use in Tally |
 |---|---|---|
@@ -241,9 +246,9 @@ Fork tests need an RPC secret and run on demand.
 | Trading | `GET /api/v1/dex/aggregator/supported/chain` | Health check (also detects 40304) |
 | Trading | `POST /api/v1/dex/aggregator/order/submit`, `GET …/order/{id}` | RFQ path, only if V8 changes |
 | RWA Data | `/api/v1/dex/market/rwa/tokens` (`tabId` sectors, `statusInfo`), `/price`, `/search`, `/underlying-profile` (`protections`, `tokenToShareRatio`), `/underlying-market` (corporate actions), `/platforms` | Registry, status, attestations, reference data |
-| Market | candles and real-time prices (confirm paths) | Ticker charts, BNB price for fee in USD |
-| Transaction | simulation and broadcast (confirm paths) | **Simulate the ShareGuard call before showing "Buy"**, alongside `eth_call`. Using it counts toward "modules used". |
-| Wallet | balances and positions (confirm paths) | Portfolio |
+| Market | `GET /api/v1/dex/market/price`, `/candlestick` (from docs, unverified) | Ticker charts. BNB price for the fee comes from a small BNB quote instead (verified) |
+| Transaction | `GET /api/v1/dex/pre-transaction/{gas-price,block-height}`, `POST …/{gas-limit,simulate,broadcast-transaction}` (from docs, unverified) | **Simulate the ShareGuard call before showing "Buy"**, alongside `eth_call`. Using it counts toward "modules used". |
+| Wallet | `GET /api/v1/dex/balance/all-token-balances-by-address`, `POST …/token-balances-by-address` (from docs, unverified) | Portfolio |
 | Public, no key (cross-check only) | `bapi/defi/v1/public/wallet-direct/buw/wallet/market/token/rwa/stock/detail/list/ai?type=1|2|3`, `.../v2/.../rwa/dynamic/ai`, `.../rwa/asset/market/status/ai`, `web3.binance.com/bapi/defi/v4/.../token/dynamic/info/ai` | Multiplier cross-check, `stockInfo.price` reference, on-chain volume (ghost detection) |
 
 **Rate limits are unknown.** Ask for the hackathon's "elevated rate limits" (§19), and cache aggressively (§7.7).
@@ -277,7 +282,8 @@ Values that break the bounds are flagged in Trap Shield and block execution for 
    - multiplier (§7.3);
    - status (`statusInfo`; `null` means "unknown" and is never assumed open);
    - integrity inputs.
-3. **Reference price:** `stockInfo.price` from any issuer token for the ticker that has it (bStock returns `null`, V15). Mark the session: pre-market, regular, after hours, overnight or closed.
+3. **Reference price (per SHARE):** the authenticated list's `referencePrice ÷ tokenToShareRatio` from any issuer token of the ticker (it is a per-token value: Ondo NFLX shows 680.80 for 10 shares of $68.08, F10). Fall back to the public `stockInfo.price` (bStock returns `null`, V15). Mark the session: pre-market, regular, after hours, overnight or closed.
+   - **Registry source:** the public lists (all three issuers); the authenticated RWA list returned only 488 of 675 BSC tokens and no xStocks.
 4. **Amount to USDT:**
    - USD: `amountIn = usd`.
    - Shares: estimate `amountIn = shares × refPrice × 1.01`, quote once, then scale linearly and re-quote once.
@@ -578,7 +584,7 @@ All visual rules live in `DESIGN.md`. This section covers structure.
 | RPC outage or censorship | Failover transport; tx hash persisted before polling |
 | Region-gate bypass | Edge block + declaration; documented residual risk |
 | Front-end supply chain | Lockfile, pinned versions, CSP headers, no third-party scripts beyond the wallet provider |
-| MEV on swaps | Use the Trading API's built-in MEV protection (confirm the parameter in M1) + share minimum |
+| MEV on swaps | `enableMevProtection` exists only on Binance's `broadcast-transaction` endpoint (F10). Users sign and broadcast in their own wallet, so Tally cannot set it: protection is the share minimum + deadline, **not** a claimed MEV feature |
 | Bot abuse | Read-only, rate limits, no keys |
 
 ---
@@ -655,8 +661,8 @@ Today is Thu 1 Oct; submissions lock **Sun 11 Oct, 12:00 UTC**. Dates are target
 | Question | Where |
 |---|---|
 | Privy vs Dynamic final choice; BSC embedded wallet; AUP | M0 |
-| Exact Market / Transaction / Wallet API paths and the MEV-protection parameter | M1 |
-| Trading API rate limits | M1 (ask organisers) |
+| Exact Market / Transaction / Wallet API paths and the MEV-protection parameter | M1: **paths and `enableMevProtection` found** (docs); parameter names still to verify by recording |
+| Trading API rate limits | M1: ~5 calls then 42900 observed; elevated limits requested, not yet granted |
 | Does bStock's token implementation expose a pause getter? | M2 |
 | Feed parameters: `maxStepBps`, `maxAge` | M2 (start 200 bps / 3 days) |
 | Default tolerance: 1% (the live fill came in 0.51% under quote, so 0.5% would have failed) | M3 user test |

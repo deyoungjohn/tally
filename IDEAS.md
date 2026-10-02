@@ -375,12 +375,12 @@ Swap #5 used **775,639 gas: with the API's 450,000 it would have reverted again.
 8. **The pitch is "correct and cheapest-right-now".** Units and traps are always on; the per-order saving vs the other issuer is shown when there is one (0.61% measured live).
 
 ### F9. Still open
-- **Larger sizes.** Everything so far is $5–$10. Price impact at $100 and $1,000 is unknown.
+- **Larger sizes.** ~~Price impact at $100 and $1,000 is unknown.~~ Answered for quotes in §F10 (impact < 0.003%); real fills at those sizes are untested.
 - **Ondo RFQ mode.** It's documented but never observed. Keep a code path and a test for it.
 - **Ondo multiplier on-chain.** There isn't one. ShareGuard uses a feed for Ondo, which still needs bounds and a signer design.
 - **Whether Binance Wallet / Agentic Wallet can send EIP-7702 batches.**
-- **Region behaviour for UK, Canada, Japan and the Netherlands.** These couldn't be tested; the US block is the only direct evidence.
-- **The Binance Transaction API (simulation/broadcast).** Not exercised yet; we used `eth_call` / `eth_estimateGas`. The hackathon stack expects it.
+- **Region behaviour for UK, Canada, Japan and the Netherlands.** Partly answered in §F10: NL blocked, JP allowed, CA inconclusive (clock skew), UK untested. Romania is blocked too.
+- **The Binance Transaction API (simulation/broadcast).** Paths now known (§F10) but not exercised; `spike/record_m1_probes.py` records them. We still use `eth_call` / `eth_estimateGas`.
 - **The spike contract has a known arbitrary-call hole.** `swapForShares` calls any caller-supplied router and data, so anyone who approved it could be drained (router = token, data = `transferFrom`). It's harmless today because it only ran on forks. v1 must allow-list routers; see `TALLY_BLUEPRINT.md` §10.
 - **ShareGuard is unaudited spike code.** It needs hardening (reentrancy guard, pause check, the Ondo feed) before any mainnet deployment.
 
@@ -395,6 +395,65 @@ Swap #5 used **775,639 gas: with the API's 450,000 it would have reverted again.
 | Cloudflare sub-region headers | **Still unverified.** Quick tunnels have no dashboard, so `cf-region-code` can only be confirmed once the domain is on Cloudflare with a named tunnel. Until then the gate blocks by country only. |
 | Privy SDK/login blocked in any country? | Untested. |
 | Region gate through a tunnel | **Passed.** Block page (HTTP 451) from a US phone, site loads from NG. Found and fixed a rewrite bug behind the tunnel (`EPROTO`). VPN on the same machine as `cloudflared` caused Cloudflare 524 timeouts, an artefact of the test setup, not the app (600-request stress test clean). KR exit not tested directly. |
+
+### F10. M1 engine: what the Seoul recordings and the build showed (2026-10-02)
+Evidence: `packages/binance/fixtures/raw/` (recorded on the Seoul EC2 and from VPN exits, 2026-10-02), `packages/*/src/*.test.ts`. Quotes are quotes, not fills (V11).
+
+**Region (the 40304 body, from `region_block_*.json`, one valid-key `supported/chain` call per exit)**
+
+| Exit | Result | Notes |
+|---|---|---|
+| US | `40304`, HTTP 200 | `"Service not available due to compliance restriction"` |
+| NL | `40304`, HTTP 200 | Same body |
+| **RO (Romania)** | **`40304`, HTTP 200** | **Not on the hackathon list.** Binance blocks it anyway |
+| JP | **allowed** | Japan is on the hackathon list, so only our own edge gate stops it |
+| CA | inconclusive: `40103` timestamp outside recv window | Likely clock skew on the test machine; rerun with a synced clock |
+
+- A request with no key gets `40101` **before** any region check, so a block can only be recorded with a valid key from a blocked IP.
+- **The docs list `40301`, `40302` (VPN detected) and `40303` but never `40304`**, the code callers actually get. The client treats 40301–40304 as one region-block kind.
+- **Consequence for agents:** `baw` calls come from the user's own machine, so a user in Romania (or any other Binance-blocked place not on our list) is refused by Binance directly. Tally's web path is unaffected because the Seoul server makes the calls.
+
+**Rate limit (`rate_limit_probe_*.json`)**
+- 30 back-to-back `supported/chain` calls from Seoul: the first ~5 passed within ~50 ms, then every call returned **HTTP 429, `code 42900 "Rate limit exceeded"`**. Per-IP, per-key and per-endpoint limits are all documented as possible, which one this was is unknown.
+- The client paces at a burst of 3, then 4 requests/s, and retries 42900 twice with backoff. Elevated limits were requested from the organisers; the design assumes the default.
+
+**The authenticated RWA list is not a registry**
+- `GET /api/v1/dex/market/rwa/tokens?chainId=56` returned **488 tokens (442 Ondo, 46 bStock, 0 xStocks)** against 675 on BSC in the public lists (458 + 87 + 130). Paging parameters are not documented; `spike/record_m1_probes.py` probes them.
+- It does carry what the public lists don't: `statusInfo` (reason codes seen: `TRADING`, `MARKET_PAUSED` "Paused for session transition", `UNSUPPORTED`), `tokenToShareRatio`, and a reference price. bStock's `marketStatus` is `null` there too.
+- The registry is therefore built from the public lists; status, reference price and listed price come from the authenticated list.
+
+**`referencePrice` is per token, not per share (a correction to the first M1 build)**
+- Ondo NFLX: `tokenPrice` 6808.01, `referencePrice` 680.80, `tokenToShareRatio` 10, while the quote API prices the same token at 680.80. Per share that is **$68.08**, and bStock NFLX trades at **$68.15**.
+- NVDA, `referencePrice ÷ tokenToShareRatio`: Ondo row 231.66, bStock row 231.63, so the two issuers agree to 0.01% only after dividing. Using `referencePrice` directly misprices Ondo NFLX by 10×.
+- **Binance's own list disagrees with its own quote API:** NFLXon `tokenPrice` (6808) is ten times the price the quote returns (680.80). This is more evidence for Trap Shield and the DX report.
+
+**Quote ladder: $6 to $1,000, bStock vs Ondo (all 24 recorded quotes, all `SWAP`, all `estimateGasFee` 450000)**
+
+| Ticker | USD | Best | Premium vs US (Ondo / bStock) | Price impact (max) | Saving vs runner-up |
+|---|---|---|---|---|---|
+| NVDA | 6 | Ondo | −0.06% / −0.02% | 0.0012% | 0.04% |
+| NVDA | 25 | Ondo | −0.06% / +0.02% | 0.0001% | 0.05% |
+| NVDA | 100 | Ondo | −0.06% / +0.02% | 0.0001% | 0.07% |
+| NVDA | 1,000 | **bStock** | +0.06% / +0.03% | 0.0026% | 0.03% |
+| AAPL | 6 | **bStock** | −0.08% / +0.05% | 0.0044% | 0.33% (Ondo took 4 legs) |
+| AAPL | 25–1,000 | Ondo | +0.02% / +0.04% to +0.06% | ≤ 0.0009% | 0.02–0.04% |
+| NFLX | 6–1,000 | bStock | Ondo blocked as a ghost ($16 of on-chain volume) / +0.06% to +0.11% | ≤ 0.0026% | – |
+
+- **Price impact is negligible up to $1,000** in every recorded quote, which answers the open "larger sizes" question for *quotes*. Fills can still land below a quote (F6: −0.51% once).
+- The cheapest issuer changes with size (NVDA flips to bStock at $1,000), and fees decide close calls: a 4-leg route cost ≈$0.03 more gas than a 1-leg one in the model, which is why AAPL at $6 prefers bStock.
+- The gas model is deliberately conservative for 4 legs (1.03M assumed vs 775,639 used in F6); refine it with every real fill.
+
+**Ghost markets are real and common for Ondo too:** NFLXon had **$16** of 24h on-chain volume (09-30 snapshot), NVDAon $78k, NVDAB $16.7M, NVDAx $52. The ≤$1,000 rule blocks NFLXon, so for some tickers only one issuer is executable.
+
+**On-chain reads work from the cloud:** `uiMultiplier()` for NVDAB returned 1.000778223752807865 (identical to the API), and `multiplier()` for NVDAx 1.001701196801074 (matches the 09-30 snapshot, not the API's 1.000918).
+
+**MEV protection:** `enableMevProtection` (optional boolean) exists only on `POST /api/v1/dex/pre-transaction/broadcast-transaction`. Tally has users sign and broadcast in their own wallet, so we cannot set it. Not claimed as a feature (blueprint §15).
+
+**Endpoint paths from `web3.binance.com/en/dev-docs/llms-full.txt`** (from a summary of the page, so parameter names are unverified until `record_m1_probes.py` runs): Market `/api/v1/dex/market/{price,candlestick}`; Transaction `/api/v1/dex/pre-transaction/{supported/chain,gas-price,block-height,gas-limit,simulate,broadcast-transaction}` and `/post-transaction/orders`; Wallet `/api/v1/dex/balance/{supported/chain,all-token-balances-by-address,token-balances-by-address}`; `/api/v1/dex/aggregator/quote-and-swap` also exists. The docs name some quote parameters `chainId`/`fromToken`; the working calls use `binanceChainId`/`fromTokenAddress`.
+
+**Other build findings**
+- Schemas written from the docs failed on real data twice (`assetType` is `null` on some rows; `executionMode` sits at the top level of the swap response, not inside `routerResult`). The first version swallowed the failure and silently fell back to stale public data, so every fallback now reports a warning.
+- Still open: Ondo bounds need a baseline and the dividend yield (no history store yet), attestation age (`underlying-profile` not recorded yet), the Ondo RFQ path.
 
 ## The DX report (25%): write it yourself, as you go
 The rules reject AI-generated reports, so **keep a timestamped human log from the first minute**. That covers time to first successful call, each error message copied verbatim, and page URL plus section for every doc problem. The items below are leads we found from outside with public endpoints. **Confirm each one yourself with your key before it goes in the report:**
