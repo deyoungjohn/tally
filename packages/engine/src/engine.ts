@@ -106,6 +106,9 @@ export function createLiveEngine(
   });
 }
 
+/** Fixture runs replay "as of" the Seoul recording (2026-10-02 05:26 UTC), so attestation ages and cache expiry are deterministic. */
+export const FIXTURE_NOW = Date.UTC(2026, 9, 2, 5, 26, 0);
+
 /** Offline engine: the real client, schemas and error mapping, answering from recorded fixtures. */
 export function createFixtureEngine(
   o: Pick<FixtureFetchOptions, "blockRegion"> & {
@@ -133,7 +136,7 @@ export function createFixtureEngine(
     apiSecret: "fixture",
     onchain,
     gasPriceWei: async () => recordedGasPrice,
-    now: o.now,
+    now: o.now ?? (() => FIXTURE_NOW),
     ratePerSec: 1000,
     onWarn: o.onWarn,
   });

@@ -158,6 +158,7 @@ export class BinanceData {
     } catch (e) {
       this.warn(`on-chain volume unavailable for ${token.symbol}: ghost check skipped`, e);
     }
+    if (token.executable) await this.addProfileFacts(token, facts);
     if (!auth) {
       // Not in the (truncated) authenticated list. The public dynamic endpoint has statusInfo for Ondo only.
       try {
@@ -170,6 +171,34 @@ export class BinanceData {
       }
     }
     return facts;
+  }
+
+  /** Attestation age (Ondo's dated daily report) and dividend yield, for the integrity grade and the Ondo growth bound. */
+  private async addProfileFacts(token: RegistryToken, facts: TokenMarketFacts): Promise<void> {
+    const [profile, market] = await Promise.all([
+      this.o.api
+        .underlyingProfile(token.address)
+        .catch((e) => this.degraded(`attestation age unavailable for ${token.symbol}`, e)),
+      // The yield only feeds Ondo's multiplier growth bound, so bStock skips this rate-limited call.
+      token.issuer === "ondo"
+        ? this.o.api
+            .underlyingMarket(token.address)
+            .catch((e) => this.degraded(`dividend yield unavailable for ${token.symbol}`, e))
+        : Promise.resolve(undefined),
+    ]);
+    const url = profile?.protections?.dailyAttestationReport?.url;
+    const date = url ? /daily-(\d{4})-(\d{2})-(\d{2})/.exec(url) : null;
+    if (date)
+      facts.attestationAgeDays =
+        (this.now() - Date.UTC(Number(date[1]), Number(date[2]) - 1, Number(date[3]))) / 86_400_000;
+    const yieldPct = market?.marketData?.dividendYield;
+    if (yieldPct) facts.dividendYield = Number(yieldPct) / 100; // the API gives a percent
+  }
+
+  private degraded(message: string, e: unknown): undefined {
+    if (isKindedError(e) && FATAL.has(e.kind)) throw e;
+    this.warn(message, e);
+    return undefined;
   }
 
   /** US price per SHARE: the authenticated `referencePrice ÷ tokenToShareRatio` of any issuer token (bStock's public `stockInfo.price` is null, V15). */

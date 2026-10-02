@@ -183,3 +183,18 @@ describe("other behaviour", () => {
     expect(await e.quote({ ticker: "AAPL", amount: { usd: 25 } })).not.toBe(a);
   });
 });
+
+describe("attestation age and dividend yield (from the recorded underlying-profile/-market)", () => {
+  it("Ondo NVDA's latest daily report (2026-09-29) is 3.2 days old at the recording time: −10 and a plain-English reason; bStock has no dated report", async () => {
+    const q = await engine().quote({ ticker: "NVDA", amount: { usd: 25 } });
+    const on = q.rows.find((r) => r.symbol === "NVDAon")!;
+    expect(on.integrity.score).toBe(90);
+    expect(on.integrity.reasons.map((r) => r.reason).join()).toMatch(/attestation is 3 days old/);
+    expect(q.rows.find((r) => r.symbol === "NVDAB")!.integrity.score).toBe(100);
+  });
+  it("dividend yield arrives as a fraction (0.12% → 0.0012)", async () => {
+    const e = engine();
+    const [t] = (await e.ports.registry.tokensFor("NVDA")).filter((x) => x.symbol === "NVDAon");
+    expect((await e.ports.facts.market(t!)).dividendYield).toBeCloseTo(0.0012, 8);
+  });
+});

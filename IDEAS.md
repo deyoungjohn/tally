@@ -451,9 +451,27 @@ Evidence: `packages/binance/fixtures/raw/` (recorded on the Seoul EC2 and from V
 
 **Endpoint paths from `web3.binance.com/en/dev-docs/llms-full.txt`** (from a summary of the page, so parameter names are unverified until `record_m1_probes.py` runs): Market `/api/v1/dex/market/{price,candlestick}`; Transaction `/api/v1/dex/pre-transaction/{supported/chain,gas-price,block-height,gas-limit,simulate,broadcast-transaction}` and `/post-transaction/orders`; Wallet `/api/v1/dex/balance/{supported/chain,all-token-balances-by-address,token-balances-by-address}`; `/api/v1/dex/aggregator/quote-and-swap` also exists. The docs name some quote parameters `chainId`/`fromToken`; the working calls use `binanceChainId`/`fromTokenAddress`.
 
+**Probes recorded on the Seoul EC2 (`probes_20261002T052602Z.json`)**
+
+| Endpoint | Result |
+|---|---|
+| `GET /market/rwa/tokens` paging | **Every paging parameter is ignored** (`pageSize`, `limit`, `page`, `pageNo`, `pageIndex`, `offset`, `tabId` all return the same 488). Only `platformId` filters (`bstock` → 46; `xstocks` → `40001 "Platform not found: xstocks"`). So the list is incomplete by design, and xStocks isn't in it at all. |
+| `GET /market/rwa/underlying-profile` | Works. Ondo: `protections.dailyAttestationReport.url` (`…/daily-2026-09-29.pdf`) and a monthly report. **bStock: only `collateralReport` with a null URL**, so there is no dated report to age. |
+| `GET /market/rwa/underlying-market` | Works. `marketData.referencePrice` is **per share** (231.49 for NVDA), `dividendYield` is a **percent** (`"0.12"`). It agrees with the list's `referencePrice ÷ tokenToShareRatio` within 0.1%, which confirms the per-token finding above. |
+| `GET /market/rwa/price` | Needs `tokenContractAddresses` (plural). Not used yet. |
+| `POST /pre-transaction/simulate` | **Works** with `{binanceChainId, evmTx:{from,to,data,value}}` → `{status:"SUCCESS", failReason, balanceChanges, allowanceChanges}`. The flat body fails with the misleading `50000 "evmParams is required for EVM chains"` (a client mistake reported as a server error). |
+| `GET /pre-transaction/gas-price` | Works: `evmLegacyGasPrice.{low,medium,high}GasPrice` in wei (≈0.05 gwei). |
+| `POST /pre-transaction/gas-limit` | `50000 "System error. Please try to sign the transaction again shortly."` for a read-only call. Not usable as recorded; we use `eth_estimateGas`. |
+| `GET /market/price`, `/market/candlestick` | **Docs paths don't work as documented:** `price` answers `"Request method 'GET' not supported"` in a different error envelope (`code "000002"`, `status "ERROR"`), `candlestick` is a 404. |
+| Wallet `balance/*` | `token-balances-by-address` works (returns the burner's `balance`, `rawBalance`, `tokenPrice`, `isRiskToken`); `all-token-balances-by-address` returned an empty `tokenAssets` for a wallet that holds tokens. `transactions-by-address` → `40001 "Parameter error"`. |
+| `GET /aggregator/history` | Works and confirms the F6 NVDAB fill: `gasUsed` 437,968, `gasLimit` 698,076, `txType` "Swap". |
+
+- **Error envelopes are inconsistent** across modules (`{code,msg,data,success}`, `{code,msg,data}` without `success`, and `{status,type,code,errorData}` for the Market gateway), and two real client mistakes were reported as `50000` server errors. Worth a line in the DX report.
+- Attestation age is now wired: Ondo NVDA's report was 3.2 days old at the recording time, so it carries the −10 deduction from §7.5. This will be true of most Ondo tokens at a weekend or after a holiday, so the 3-day rule may need a weekday-aware threshold (open question for M4).
+
 **Other build findings**
 - Schemas written from the docs failed on real data twice (`assetType` is `null` on some rows; `executionMode` sits at the top level of the swap response, not inside `routerResult`). The first version swallowed the failure and silently fell back to stale public data, so every fallback now reports a warning.
-- Still open: Ondo bounds need a baseline and the dividend yield (no history store yet), attestation age (`underlying-profile` not recorded yet), the Ondo RFQ path.
+- Still open: Ondo bounds need a stored baseline (the dividend yield is now read; there is no history store yet) and the Ondo RFQ path.
 
 ## The DX report (25%): write it yourself, as you go
 The rules reject AI-generated reports, so **keep a timestamped human log from the first minute**. That covers time to first successful call, each error message copied verbatim, and page URL plus section for every doc problem. The items below are leads we found from outside with public endpoints. **Confirm each one yourself with your key before it goes in the report:**

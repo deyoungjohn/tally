@@ -112,6 +112,56 @@ export const rwaToken = z
 export type RwaToken = z.infer<typeof rwaToken>;
 export const rwaTokensResponse = z.array(rwaToken);
 
+/** /market/rwa/underlying-profile: `protections` holds attestation reports (Ondo: dailyAttestationReport.url with the date in the filename; bStock: collateralReport with a null url). */
+export const underlyingProfile = z
+  .object({
+    tokenContractAddress: z.string(),
+    platformId: z.string(),
+    underlyingTicker: z.string(),
+    tokenToShareRatio: num.nullish(),
+    protections: z
+      .record(
+        z.object({ supported: z.boolean().nullish(), url: z.string().nullish() }).passthrough(),
+      )
+      .nullish(),
+  })
+  .passthrough();
+
+/** /market/rwa/underlying-market: `referencePrice` here is per SHARE; `dividendYield` is a percent ("0.12" = 0.12%). */
+export const underlyingMarket = z
+  .object({
+    tokenContractAddress: z.string(),
+    statusInfo: statusInfo.nullish(),
+    marketData: z
+      .object({
+        referencePrice: num.nullish(),
+        dividendYield: num.nullish(),
+        latestDividend: num.nullish(),
+      })
+      .passthrough()
+      .nullish(),
+  })
+  .passthrough();
+
+/** POST /pre-transaction/simulate. Verified 2026-10-02 with body { binanceChainId, evmTx: { from, to, data, value } }. */
+export const simulateResponse = z
+  .object({
+    status: z.string(),
+    failReason: z.string().nullish(),
+    balanceChanges: z.array(z.unknown()).nullish(),
+    allowanceChanges: z.array(z.unknown()).nullish(),
+  })
+  .passthrough();
+
+export const gasPriceResponse = z
+  .object({
+    evmLegacyGasPrice: z
+      .object({ lowGasPrice: z.string(), mediumGasPrice: z.string(), highGasPrice: z.string() })
+      .nullish(),
+    eip1559GasPrice: z.unknown().nullish(),
+  })
+  .passthrough();
+
 export const rwaSearchResponse = z.array(
   z
     .object({

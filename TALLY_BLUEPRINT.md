@@ -235,7 +235,7 @@ Fork tests need an RPC secret and run on demand.
 - **Pacing:** token bucket, burst 3 then 4 requests/s, until elevated limits are granted.
 - **Fixtures:** record real responses (with keys stripped) for tests, including a 40304 and a 40375.
 
-**Endpoints used.** Trading API and RWA Data paths are verified against recorded responses. Market, Transaction and Wallet paths come from `web3.binance.com/en/dev-docs/llms-full.txt` (2026-10-02) and are **unverified until `spike/record_m1_probes.py` has run** (IDEAS §F10 lists them).
+**Endpoints used.** Trading API and RWA Data paths are verified against recorded responses. Market, Transaction and Wallet paths come from `web3.binance.com/en/dev-docs/llms-full.txt` (2026-10-02) and were **probed on the Seoul EC2 the same day** (`probes_*.json`, IDEAS §F10): simulate, gas-price, block-height, token balances and aggregator history work; the Market `price`/`candlestick` paths do not work as documented.
 
 | Module | Endpoint | Use in Tally |
 |---|---|---|
@@ -246,9 +246,9 @@ Fork tests need an RPC secret and run on demand.
 | Trading | `GET /api/v1/dex/aggregator/supported/chain` | Health check (also detects 40304) |
 | Trading | `POST /api/v1/dex/aggregator/order/submit`, `GET …/order/{id}` | RFQ path, only if V8 changes |
 | RWA Data | `/api/v1/dex/market/rwa/tokens` (`tabId` sectors, `statusInfo`), `/price`, `/search`, `/underlying-profile` (`protections`, `tokenToShareRatio`), `/underlying-market` (corporate actions), `/platforms` | Registry, status, attestations, reference data |
-| Market | `GET /api/v1/dex/market/price`, `/candlestick` (from docs, unverified) | Ticker charts. BNB price for the fee comes from a small BNB quote instead (verified) |
-| Transaction | `GET /api/v1/dex/pre-transaction/{gas-price,block-height}`, `POST …/{gas-limit,simulate,broadcast-transaction}` (from docs, unverified) | **Simulate the ShareGuard call before showing "Buy"**, alongside `eth_call`. Using it counts toward "modules used". |
-| Wallet | `GET /api/v1/dex/balance/all-token-balances-by-address`, `POST …/token-balances-by-address` (from docs, unverified) | Portfolio |
+| Market | `/api/v1/dex/market/price` (not a GET) and `/candlestick` (404) as documented: **don't work** (F10) | Ticker charts need another source (decide in M3). BNB price for the fee comes from a small BNB quote (verified) |
+| Transaction | **Verified:** `GET /api/v1/dex/pre-transaction/{gas-price,block-height}`, `POST …/simulate` (body `{binanceChainId, evmTx:{from,to,data,value}}`). `…/gas-limit` returned a system error; `broadcast-transaction` untested | **Simulate the ShareGuard call before showing "Buy"**, alongside `eth_call`. Using it counts toward "modules used". |
+| Wallet | **Verified:** `POST /api/v1/dex/balance/token-balances-by-address`. `GET …/all-token-balances-by-address` returned an empty list for a funded wallet | Portfolio (query the registry's tokens explicitly) |
 | Public, no key (cross-check only) | `bapi/defi/v1/public/wallet-direct/buw/wallet/market/token/rwa/stock/detail/list/ai?type=1|2|3`, `.../v2/.../rwa/dynamic/ai`, `.../rwa/asset/market/status/ai`, `web3.binance.com/bapi/defi/v4/.../token/dynamic/info/ai` | Multiplier cross-check, `stockInfo.price` reference, on-chain volume (ghost detection) |
 
 **Rate limits are unknown.** Ask for the hackathon's "elevated rate limits" (§19), and cache aggressively (§7.7).
@@ -661,7 +661,7 @@ Today is Thu 1 Oct; submissions lock **Sun 11 Oct, 12:00 UTC**. Dates are target
 | Question | Where |
 |---|---|
 | Privy vs Dynamic final choice; BSC embedded wallet; AUP | M0 |
-| Exact Market / Transaction / Wallet API paths and the MEV-protection parameter | M1: **paths and `enableMevProtection` found** (docs); parameter names still to verify by recording |
+| Exact Market / Transaction / Wallet API paths and the MEV-protection parameter | M1: **resolved**: paths probed on the Seoul EC2, `enableMevProtection` found (broadcast only); Market `price`/`candlestick` need another source |
 | Trading API rate limits | M1: ~5 calls then 42900 observed; elevated limits requested, not yet granted |
 | Does bStock's token implementation expose a pause getter? | M2 |
 | Feed parameters: `maxStepBps`, `maxAge` | M2 (start 200 bps / 3 days) |

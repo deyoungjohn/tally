@@ -160,3 +160,54 @@ describe("authenticated RWA data and public lists", () => {
     expect(Number(b.volume24hBuy ?? 0) + Number(b.volume24hSell ?? 0)).toBeGreaterThan(1000);
   });
 });
+
+describe("probes recorded on the Seoul EC2 (2026-10-02)", () => {
+  const probes = j(latestRaw("probes_"));
+  it("underlying-profile: Ondo has a dated daily attestation report, bStock only an undated collateral report", () => {
+    expect(probes.rwa_underlying_profile.data.protections.dailyAttestationReport.url).toMatch(
+      /daily-2026-09-29\.pdf$/,
+    );
+    expect(probes.rwa_underlying_profile_bstock.data.protections.collateralReport.url).toBeNull();
+  });
+  it("underlying-market referencePrice is per SHARE and agrees with the list's referencePrice ÷ tokenToShareRatio within 0.1%", () => {
+    const perShare = Number(probes.rwa_underlying_market.data.marketData.referencePrice); // 231.48655
+    const list = j(latestRaw("rwa_authenticated_probes")).rwa_tokens.data.find(
+      (t: { tokenSymbol: string }) => t.tokenSymbol === "NVDAon",
+    );
+    const derived = Number(list.referencePrice) / Number(list.tokenToShareRatio);
+    expect(Math.abs(derived / perShare - 1)).toBeLessThan(0.001);
+    expect(Number(list.referencePrice) / perShare).toBeGreaterThan(1.001); // the raw list value is per token: ≈ the 1.0017 multiplier higher
+  });
+  it("the RWA list ignores every paging parameter tried (it always returns 488); only platformId filters it, and xstocks is not a platform there", () => {
+    for (const k of [
+      "pageSize1000",
+      "limit1000",
+      "page2",
+      "pageNo2",
+      "pageIndex2",
+      "offset488",
+      "tabId",
+    ])
+      expect(probes[`rwa_tokens_${k}`].data, k).toHaveLength(488);
+    expect(probes.rwa_tokens_platformId_bstock.data).toHaveLength(46);
+    expect(probes.rwa_tokens_platformId_xstocks.body.msg).toBe("Platform not found: xstocks");
+  });
+  it("Binance simulate answers { status, failReason, balanceChanges, allowanceChanges } for evmTx; the flat body is rejected", async () => {
+    expect(probes.tx_simulate_a.data.status).toBe("SUCCESS");
+    expect(probes.tx_simulate_b.body.msg).toBe("evmParams is required for EVM chains");
+    const sim = await api().simulate({ from: WALLET, to: NVDAB, data: "0x" });
+    expect(sim.status).toBe("SUCCESS");
+  });
+  it("gas-price returns wei tiers (≈0.05 gwei) and the typed client parses them", async () => {
+    const g = await api().gasPrice();
+    expect(Number(g.evmLegacyGasPrice!.mediumGasPrice)).toBeLessThan(1e9);
+  });
+  it("Market GET /market/price is not a GET and /market/candlestick is a 404: the docs paths for Market are wrong or need POST", () => {
+    expect(probes.market_price.body.errorData).toMatch(/GET' not supported/);
+    expect(probes.market_candlestick.http).toBe(404);
+  });
+  it("aggregator history confirms the F6 NVDAB fill: 437,968 gas used, 6 USDT in", () => {
+    expect(probes.agg_history.data.gasUsed).toMatch(/^437968/);
+    expect(probes.agg_history.data.status).toBe("success");
+  });
+});
