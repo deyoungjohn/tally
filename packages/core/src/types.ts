@@ -34,6 +34,15 @@ export interface TokenStatus {
   session: Session;
 }
 
+/** The latest dated attestation report. `reportDate` is YYYY-MM-DD, parsed from the report's file name (Ondo: `daily-2026-09-29.pdf`). */
+export interface AttestationFact {
+  reportDate: string;
+  url: string;
+}
+
+/** Facts that can be missing, each with a reason when it is (shown in the integrity check log as "skipped"). */
+export type FactKey = "status" | "volume" | "attestation" | "listedPrice";
+
 /** Everything about a token that is not its quote. Status `null` means "unknown" and is never assumed open. */
 export interface TokenMarketFacts {
   status: TokenStatus | null;
@@ -41,12 +50,12 @@ export interface TokenMarketFacts {
   listedTokenPrice?: number;
   /** On-chain 24h buy + sell volume in USD. */
   onchainVolume24hUsd?: number;
-  /** Age of the latest attestation report, when the token has `protections`. */
-  attestationAgeDays?: number;
-  /** Ondo only: last accepted multiplier reading, for the monotonic/growth bounds (§7.3). */
+  /** Latest dated attestation report. Age is computed in core from `now`, so it is testable. */
+  attestation?: AttestationFact;
+  /** Ondo only: last accepted multiplier reading (the baseline) for the bounds check (§7.3). `at` is when it was seen. */
   multiplierBaseline?: { value: bigint; at: number };
-  /** Annual dividend yield as a fraction, for the Ondo growth bound. */
-  dividendYield?: number;
+  /** Why a fact is missing ("underlying-profile failed: 42900 …", "no dated daily report (protections: collateralReport)"). */
+  notes?: Partial<Record<FactKey, string>>;
 }
 
 export interface ReferencePrice {

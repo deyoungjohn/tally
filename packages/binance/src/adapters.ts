@@ -35,7 +35,18 @@ export interface BinanceDataOptions {
   now?: () => number;
   /** Called whenever a data source fails and a weaker fallback is used. Silent degradation hid a schema bug once (2026-10-02). */
   onWarn?: (message: string) => void;
+  /** Last accepted Ondo multipliers (data/ondo-multiplier-baseline.json). Optional: without it the bounds check is skipped. */
+  baseline?: BaselineStore;
 }
+
+/** Where accepted Ondo multiplier readings live. A JSON file now (packages/engine), SQLite later. */
+export interface BaselineStore {
+  get(address: string): { value: bigint; at: number } | undefined;
+  /** Called only for readings that passed the bounds check. */
+  record(token: RegistryToken, value: bigint, at: number): Promise<void>;
+}
+
+const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 /**
  * Implements core's registry, facts and quote ports on top of the Binance APIs.
@@ -52,6 +63,8 @@ export class BinanceData {
   private readonly multCache: TtlCache<MultiplierReadings>;
   private readonly marketCache: TtlCache<TokenMarketFacts>;
   private readonly refCache: TtlCache<ReferencePrice | null>;
+  /** Set when the authenticated list could not be loaded, so status notes can say why. */
+  private authError?: string;
 
   constructor(private readonly o: BinanceDataOptions) {
     this.now = o.now ?? Date.now;
@@ -120,6 +133,7 @@ export class BinanceData {
       multipliers: (token) => this.multCache.get(token.address, () => this.readMultipliers(token)),
       market: (token) => this.marketCache.get(token.address, () => this.readMarket(token)),
       reference: (ticker) => this.refCache.get(ticker, () => this.readReference(ticker)),
+      recordAccepted: async (token, value, at) => this.o.baseline?.record(token, value, at),
     },
     quotes: { quote: (token, amountIn, wallet) => this.quote(token, amountIn, wallet) },
   };
@@ -149,56 +163,66 @@ export class BinanceData {
 
   private async readMarket(token: RegistryToken): Promise<TokenMarketFacts> {
     const auth = (await this.authTokens()).get(token.address);
-    const facts: TokenMarketFacts = { status: statusFromInfo(auth?.statusInfo) };
+    const facts: TokenMarketFacts = { status: statusFromInfo(auth?.statusInfo), notes: {} };
+    const notes = facts.notes!;
     if (auth?.tokenPrice) facts.listedTokenPrice = Number(auth.tokenPrice);
     try {
       const d = await this.o.pub.tokenDynamic(token.address);
       facts.onchainVolume24hUsd = Number(d.volume24hBuy ?? 0) + Number(d.volume24hSell ?? 0);
       if (!facts.listedTokenPrice && d.price) facts.listedTokenPrice = Number(d.price);
     } catch (e) {
+      notes.volume = `public token-dynamic call failed: ${msg(e)}`;
       this.warn(`on-chain volume unavailable for ${token.symbol}: ghost check skipped`, e);
     }
-    if (token.executable) await this.addProfileFacts(token, facts);
+    if (token.executable) await this.addAttestation(token, facts);
+    else notes.attestation = "not fetched: this issuer is not executable through Tally";
     if (!auth) {
       // Not in the (truncated) authenticated list. The public dynamic endpoint has statusInfo for Ondo only.
       try {
         const dyn = await this.o.pub.rwaDynamic(token.address);
         facts.status = statusFromInfo(dyn.statusInfo);
+        if (!facts.status)
+          notes.status = `not in the authenticated list${this.authError ? ` (${this.authError})` : ""}; the public dynamic data has no statusInfo for this issuer`;
         if (!facts.listedTokenPrice && dyn.tokenInfo?.price)
           facts.listedTokenPrice = Number(dyn.tokenInfo.price);
       } catch (e) {
+        notes.status = `not in the authenticated list${this.authError ? ` (${this.authError})` : ""}; public dynamic call failed: ${msg(e)}`;
         this.warn(`status unknown for ${token.symbol}`, e);
       }
     }
+    if (facts.listedTokenPrice === undefined)
+      notes.listedPrice = "no listed token price from any source";
+    // Ondo has no on-chain multiplier, so its readings are checked against the last accepted one (§7.3).
+    if (token.issuer === "ondo") facts.multiplierBaseline = this.o.baseline?.get(token.address);
     return facts;
   }
 
-  /** Attestation age (Ondo's dated daily report) and dividend yield, for the integrity grade and the Ondo growth bound. */
-  private async addProfileFacts(token: RegistryToken, facts: TokenMarketFacts): Promise<void> {
-    const [profile, market] = await Promise.all([
-      this.o.api
-        .underlyingProfile(token.address)
-        .catch((e) => this.degraded(`attestation age unavailable for ${token.symbol}`, e)),
-      // The yield only feeds Ondo's multiplier growth bound, so bStock skips this rate-limited call.
-      token.issuer === "ondo"
-        ? this.o.api
-            .underlyingMarket(token.address)
-            .catch((e) => this.degraded(`dividend yield unavailable for ${token.symbol}`, e))
-        : Promise.resolve(undefined),
-    ]);
-    const url = profile?.protections?.dailyAttestationReport?.url;
-    const date = url ? /daily-(\d{4})-(\d{2})-(\d{2})/.exec(url) : null;
-    if (date)
-      facts.attestationAgeDays =
-        (this.now() - Date.UTC(Number(date[1]), Number(date[2]) - 1, Number(date[3]))) / 86_400_000;
-    const yieldPct = market?.marketData?.dividendYield;
-    if (yieldPct) facts.dividendYield = Number(yieldPct) / 100; // the API gives a percent
-  }
-
-  private degraded(message: string, e: unknown): undefined {
-    if (isKindedError(e) && FATAL.has(e.kind)) throw e;
-    this.warn(message, e);
-    return undefined;
+  /**
+   * Latest dated attestation report. Ondo publishes `protections.dailyAttestationReport.url` with the date in the file
+   * name; bStock only has an undated `collateralReport`. Every outcome is written to `notes.attestation` so the integrity
+   * log can say WHY a token has no attestation check: not fetched, call failed, or no dated report.
+   */
+  private async addAttestation(token: RegistryToken, facts: TokenMarketFacts): Promise<void> {
+    const notes = facts.notes!;
+    let profile;
+    try {
+      profile = await this.o.api.underlyingProfile(token.address);
+    } catch (e) {
+      if (isKindedError(e) && FATAL.has(e.kind)) throw e;
+      notes.attestation = `underlying-profile call failed: ${msg(e)}`;
+      this.warn(`attestation unavailable for ${token.symbol}`, e);
+      return;
+    }
+    const url = profile.protections?.dailyAttestationReport?.url;
+    const date = url ? /daily-(\d{4}-\d{2}-\d{2})/.exec(url) : null;
+    if (url && date) {
+      facts.attestation = { reportDate: date[1]!, url };
+      return;
+    }
+    const kinds = Object.keys(profile.protections ?? {});
+    notes.attestation = url
+      ? `daily report url has no date in its file name (${url})`
+      : `no dated daily report (protections: ${kinds.length ? kinds.join(", ") : "none"}${kinds.length ? "; urls empty" : ""})`;
   }
 
   /** US price per SHARE: the authenticated `referencePrice ÷ tokenToShareRatio` of any issuer token (bStock's public `stockInfo.price` is null, V15). */

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { BinanceApiError } from "@tally/binance";
 import { BelowMinimumError, UnknownTickerError } from "@tally/core";
-import { createFixtureEngine } from "./engine";
-import { formatQuote } from "./format";
+import { FIXTURE_NOW, createFixtureEngine } from "./engine";
+import { formatFacts, formatQuote, formatQuoteChecks } from "./format";
 
 const warnings: string[] = [];
 const engine = () => createFixtureEngine({ onWarn: (m) => warnings.push(m) });
@@ -184,7 +184,7 @@ describe("other behaviour", () => {
   });
 });
 
-describe("attestation age and dividend yield (from the recorded underlying-profile/-market)", () => {
+describe("attestation age (from the recorded underlying-profile)", () => {
   it("Ondo NVDA's latest daily report (2026-09-29) is 3.2 days old at the recording time: −10 and a plain-English reason; bStock has no dated report", async () => {
     const q = await engine().quote({ ticker: "NVDA", amount: { usd: 25 } });
     const on = q.rows.find((r) => r.symbol === "NVDAon")!;
@@ -192,9 +192,94 @@ describe("attestation age and dividend yield (from the recorded underlying-profi
     expect(on.integrity.reasons.map((r) => r.reason).join()).toMatch(/attestation is 3 days old/);
     expect(q.rows.find((r) => r.symbol === "NVDAB")!.integrity.score).toBe(100);
   });
-  it("dividend yield arrives as a fraction (0.12% → 0.0012)", async () => {
+});
+
+describe("the integrity log is complete and explains every score", () => {
+  it("every row of a quote carries all seven checks, and the score equals 100 minus the logged points", async () => {
+    const q = await engine().quote({ ticker: "NVDA", amount: { usd: 25 } });
+    for (const r of q.rows) {
+      expect(
+        r.integrity.checks.map((c) => c.id),
+        r.symbol,
+      ).toEqual([
+        "multiplier-sources",
+        "ondo-bounds",
+        "premium",
+        "onchain-volume",
+        "status",
+        "attestation",
+        "unit-trap",
+      ]);
+      expect(r.integrity.score, r.symbol).toBe(
+        100 - r.integrity.checks.reduce((n, c) => n + c.points, 0),
+      );
+    }
+  });
+  it("Ondo NVDA's attestation line reproduces the 2026-10-02 probe exactly: report 2026-09-29, age 3.2d → −10", async () => {
+    const q = await engine().quote({ ticker: "NVDA", amount: { usd: 25 } });
+    const c = q.rows
+      .find((r) => r.symbol === "NVDAon")!
+      .integrity.checks.find((x) => x.id === "attestation")!;
+    expect(c).toMatchObject({
+      outcome: "deduct",
+      points: 10,
+      summary: "report 2026-09-29, age 3.2d > 3d → −10",
+    });
+  });
+  it("bStock has no dated report: the check is 'skipped' with the reason, not a silent clean pass", async () => {
+    const q = await engine().quote({ ticker: "NVDA", amount: { usd: 25 } });
+    const c = q.rows
+      .find((r) => r.symbol === "NVDAB")!
+      .integrity.checks.find((x) => x.id === "attestation")!;
+    expect(c).toMatchObject({ outcome: "skipped", points: 0 });
+    expect(c.summary).toMatch(/no dated daily report \(protections: collateralReport/);
+  });
+  it("REGRESSION (live run 2026-10-02): when the profile call fails, the quote itself says so, in the check log and in warnings", async () => {
+    // Make underlying-profile fail the way a rate-limited call does, everything else answers from fixtures.
+    const warned: string[] = [];
+    const fx = await import("@tally/binance");
+    const real = fx.createFixtureFetch();
+    const failing: typeof fetch = async (input, init) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+      if (url.includes("/underlying-profile"))
+        return new Response(JSON.stringify({ code: 42900, msg: "Rate limit exceeded", data: "" }), {
+          status: 429,
+        });
+      return real(input, init);
+    };
+    const e = createFixtureEngine({
+      onWarn: (m) => warned.push(m),
+      fetch: failing,
+      ratePerSec: 1000,
+    });
+    const q = await e.quote({ ticker: "NVDA", amount: { usd: 25 } });
+    const on = q.rows.find((r) => r.symbol === "NVDAon")!;
+    const c = on.integrity.checks.find((x) => x.id === "attestation")!;
+    expect(c.outcome).toBe("skipped");
+    expect(c.summary).toMatch(/underlying-profile call failed: Rate limit exceeded → skipped/);
+    expect(on.integrity.score).toBe(100); // the clean score of the live run, now explained rather than silent
+    expect(q.warnings.join("\n")).toMatch(
+      /NVDAon: attestation check skipped: underlying-profile call failed: Rate limit exceeded/,
+    );
+    expect(warned.join("\n")).toMatch(/attestation unavailable for NVDAon/);
+  });
+  it("`facts` lists every token with readings, baseline and the full log, without quoting", async () => {
     const e = engine();
-    const [t] = (await e.ports.registry.tokensFor("NVDA")).filter((x) => x.symbol === "NVDAon");
-    expect((await e.ports.facts.market(t!)).dividendYield).toBeCloseTo(0.0012, 8);
+    const t = await e.facts("NVDA");
+    expect(t.map((x) => x.symbol).sort()).toEqual(["NVDAB", "NVDAon", "NVDAx"]);
+    const on = t.find((x) => x.symbol === "NVDAon")!;
+    expect(on.facts.attestation).toMatchObject({ reportDate: "2026-09-29" });
+    expect(on.facts.multiplierBaseline?.value).toBe(1_001_715_248_795_989_800n);
+    expect(on.bounds).toMatchObject({ outcome: "pass" });
+    const out = formatFacts("NVDA", t, FIXTURE_NOW);
+    expect(out).toMatch(/− attestation\s+report 2026-09-29, age 3\.2d > 3d → −10/);
+    expect(out).toMatch(/· attestation\s+no dated daily report/);
+    expect(out).toMatch(/note \(attestation\)/);
+  });
+  it("`quote --checks` prints the log under the table", async () => {
+    const q = await engine().quote({ ticker: "NVDA", amount: { usd: 25 } });
+    expect(formatQuote(q) + formatQuoteChecks(q)).toMatch(
+      /Integrity checks[\s\S]*NVDAon: A \(90\)[\s\S]*− attestation/,
+    );
   });
 });

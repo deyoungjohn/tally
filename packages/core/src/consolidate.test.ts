@@ -4,6 +4,7 @@ import {
   NoReferencePriceError,
   UnknownTickerError,
   consolidatedQuote,
+  inspectTicker,
   rank,
   routeText,
   type EnginePorts,
@@ -76,6 +77,8 @@ interface Setup {
   q?: Record<string, { tokensPerUsdt: bigint; legs?: number; mode?: string; fail?: KindedError }>;
   ref?: { price: number; session: "regular" | "overnight" } | null;
   gas?: bigint | Error;
+  /** collects readings the engine asked to persist as the new Ondo baseline */
+  accepted?: Array<{ symbol: string; value: bigint }>;
 }
 const DEFAULT_MULT: Record<string, MultiplierReadings> = {
   NVDAB: { onchain: m("1.0008"), api: m("1.0008") },
@@ -93,6 +96,9 @@ function ports(
     quoteCalls,
     registry: { tokensFor: async (t) => reg.tokensFor(t) },
     facts: {
+      recordAccepted: async (t, value) => {
+        s.accepted?.push({ symbol: t.symbol, value });
+      },
       multipliers: async (t) => ({ ...DEFAULT_MULT[t.symbol], ...s.mult?.[t.symbol] }),
       market: async (t) => ({
         status: open,
@@ -363,6 +369,83 @@ describe("consolidatedQuote", () => {
     });
   });
 
+  describe("Ondo baseline: only readings that pass are accepted", () => {
+    const NOW = Date.UTC(2026, 9, 2, 12);
+    const base = (v: string) => ({
+      NVDAon: { multiplierBaseline: { value: m(v), at: Date.UTC(2026, 8, 30) } },
+    });
+    it("a passing reading (unchanged) is offered for recording; bStock and xStocks are never recorded", async () => {
+      const accepted: Array<{ symbol: string; value: bigint }> = [];
+      const r = await consolidatedQuote(ports({ accepted, facts: base("1.0017") }), {
+        ticker: "NVDA",
+        amount: { usd: 25 },
+      });
+      expect(accepted).toEqual([{ symbol: "NVDAon", value: m("1.0017") }]);
+      expect(r.rows.find((x) => x.symbol === "NVDAon")!.executable).toBe(true);
+    });
+    it("an ex-dividend jump of +1.5% passes and is recorded", async () => {
+      const accepted: Array<{ symbol: string; value: bigint }> = [];
+      const r = await consolidatedQuote(
+        ports({ accepted, facts: base("1.0017"), mult: { NVDAon: { api: m("1.0167") } } }),
+        { ticker: "NVDA", amount: { usd: 25 } },
+      );
+      expect(r.rows.find((x) => x.symbol === "NVDAon")!.executable).toBe(true);
+      expect(accepted.map((a) => a.value)).toEqual([m("1.0167")]);
+    });
+    it("a failing reading (a decrease) is NOT recorded: the baseline is not poisoned, the token is blocked", async () => {
+      const accepted: Array<{ symbol: string; value: bigint }> = [];
+      const r = await consolidatedQuote(
+        ports({ accepted, facts: base("1.0017"), mult: { NVDAon: { api: m("1.0010") } } }),
+        { ticker: "NVDA", amount: { usd: 25 } },
+      );
+      const on = r.rows.find((x) => x.symbol === "NVDAon")!;
+      expect(accepted).toEqual([]);
+      expect(on.executable).toBe(false);
+      expect(on.notExecutableReason).toMatch(/decreased/);
+      expect(on.integrity.checks.find((c) => c.id === "ondo-bounds")).toMatchObject({
+        outcome: "flag",
+      });
+    });
+    it("a jump above 3% without a corporate action is blocked and not recorded", async () => {
+      const accepted: Array<{ symbol: string; value: bigint }> = [];
+      const r = await consolidatedQuote(
+        ports({ accepted, facts: base("1.0017"), mult: { NVDAon: { api: m("1.1") } } }),
+        { ticker: "NVDA", amount: { usd: 25 } },
+      );
+      expect(accepted).toEqual([]);
+      expect(r.rows.find((x) => x.symbol === "NVDAon")!.executable).toBe(false);
+    });
+    it("no baseline: skipped in the log, executable, and recorded as a first sighting only when the sources agree", async () => {
+      const accepted: Array<{ symbol: string; value: bigint }> = [];
+      const r = await consolidatedQuote(ports({ accepted }), {
+        ticker: "NVDA",
+        amount: { usd: 25 },
+      });
+      expect(
+        r.rows
+          .find((x) => x.symbol === "NVDAon")!
+          .integrity.checks.find((c) => c.id === "ondo-bounds")!.outcome,
+      ).toBe("skipped");
+      expect(accepted).toHaveLength(1);
+      const disagreeing: Array<{ symbol: string; value: bigint }> = [];
+      await consolidatedQuote(
+        ports({ accepted: disagreeing, mult: { NVDAon: { api: m("1.0017"), list: m("1.05") } } }),
+        { ticker: "NVDA", amount: { usd: 25 } },
+      );
+      expect(disagreeing).toEqual([]); // first sighting, but api and list disagree: not trusted as a baseline
+      void NOW;
+    });
+    it("inspectTicker reports every token with its full check log and does not quote", async () => {
+      const p = ports({ facts: base("1.0017") });
+      const out = await inspectTicker(p, "nvda");
+      expect(p.quoteCalls).toHaveLength(0);
+      expect(out.map((o) => o.symbol).sort()).toEqual(["NVDAB", "NVDAon", "NVDAx"]);
+      for (const o of out) expect(o.integrity.checks).toHaveLength(7);
+      expect(out.find((o) => o.symbol === "NVDAon")!.bounds).toMatchObject({ outcome: "pass" });
+      expect(out.find((o) => o.symbol === "NVDAB")!.bounds).toBeUndefined();
+    });
+  });
+
   describe("F1: units differ by issuer", () => {
     it("NFLX: Ondo 10 shares per token vs bStock 1 → both flagged as a unit trap, and $/share is still comparable", async () => {
       // Same stock at $680: Ondo tokens cost ~$6800, bStock tokens ~$680. 100 USDT buys different TOKEN counts, same SHARES.
@@ -396,7 +479,7 @@ describe("rank()", () => {
     effectiveCostPerShare: eff,
     hops,
     sharesOut: E18,
-    integrity: { score, grade: "A", flags: [], reasons: [], unitTrap: false },
+    integrity: { score, grade: "A", flags: [], reasons: [], checks: [], unitTrap: false },
   });
   it("ties go to fewer hops, then the better grade", () => {
     const rows = [row("A", 100, 3, 100), row("B", 100, 1, 90), row("C", 100, 1, 100)];

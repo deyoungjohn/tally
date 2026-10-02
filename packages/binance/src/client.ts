@@ -99,7 +99,9 @@ export class BinanceClient {
   ): Promise<z.infer<S>> {
     let lastError: BinanceApiError | undefined;
     for (let attempt = 0; attempt <= this.retries; attempt++) {
-      if (attempt > 0) await this.sleep(300 * 2 ** (attempt - 1)); // 300ms, 600ms
+      // 300 ms, 600 ms for network errors and 5xx; 1 s, 2 s after a 42900 (the limit is per second, so a short wait fails again)
+      if (attempt > 0)
+        await this.sleep((lastError?.kind === "rate_limited" ? 1000 : 300) * 2 ** (attempt - 1));
       await this.limiter.take();
       try {
         return await this.once(method, path, query, body, schema);

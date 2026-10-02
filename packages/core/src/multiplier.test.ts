@@ -3,7 +3,6 @@ import { checkOndoMultiplier, isUnitTrap, resolveMultiplier, sharesFromTokens } 
 import { parseDecimal } from "./units";
 
 const m = (s: string) => parseDecimal(s, 18);
-const DAY = 86_400_000;
 
 describe("share maths: reproduces the live fills (IDEAS F6/F7)", () => {
   it("bStock fill: 0.025957237393326391 tokens × uiMultiplier = 0.02597743793202315 shares, 230.97 USDT per share", () => {
@@ -65,55 +64,63 @@ describe("unit trap (F1: Ondo NFLX 10 shares per token vs bStock 1)", () => {
   });
 });
 
-describe("Ondo bounds (blueprint §7.3)", () => {
+describe("Ondo bounds (blueprint §7.3): never decreases, one increase ≤ 3%, above 3% needs a corporate action", () => {
   const base = m("1.0017");
-  const prev = { value: base, at: 0 };
-  it("accepts an unchanged value and a first reading", () => {
-    expect(checkOndoMultiplier({ current: base, previous: prev, now: DAY }).ok).toBe(true);
-    expect(checkOndoMultiplier({ current: base, now: DAY }).ok).toBe(true);
+  const prev = { value: base, at: Date.UTC(2026, 8, 30) };
+  const b = (
+    current: string,
+    extra: { reasonMsg?: string } = {},
+    previous: typeof prev | undefined = prev,
+  ) => checkOndoMultiplier({ current: m(current), previous, ...extra });
+
+  it("an unchanged value passes", () => {
+    expect(b("1.0017")).toMatchObject({ outcome: "pass" });
+    expect(b("1.0017").detail).toMatch(/unchanged/);
   });
-  it("rejects a decrease unless a corporate action explains it", () => {
-    expect(checkOndoMultiplier({ current: m("1.0010"), previous: prev, now: DAY })).toMatchObject({
-      ok: false,
+  it("a decrease fails, even with a corporate action listed", () => {
+    expect(b("1.0010")).toMatchObject({ outcome: "fail" });
+    expect(b("1.0010").detail).toMatch(/decreased/);
+    expect(b("1.0010", { reasonMsg: "stock_split" }).outcome).toBe("fail");
+  });
+  it("an ex-dividend jump is accepted: PFE moved about +1.5% in one day, and a per-day yield cap would have blocked it", () => {
+    const r = checkOndoMultiplier({
+      current: m("1.0609"),
+      previous: { value: m("1.0452"), at: 0 },
+    }); // +1.50%
+    expect(r.outcome).toBe("pass");
+    expect(r.detail).toMatch(/\+1\.502%.*within the 3% single-step limit/);
+  });
+  it("exactly 3% passes; just above 3% fails without a corporate action and passes with one", () => {
+    expect(
+      checkOndoMultiplier({ current: m("1.0300"), previous: { value: m("1"), at: 0 } }).outcome,
+    ).toBe("pass");
+    const over = { current: m("1.0301"), previous: { value: m("1"), at: 0 } };
+    expect(checkOndoMultiplier(over)).toMatchObject({ outcome: "fail" });
+    expect(checkOndoMultiplier(over).detail).toMatch(/above 3% with no corporate action/);
+    expect(checkOndoMultiplier({ ...over, reasonMsg: "stock_dividend announced" })).toMatchObject({
+      outcome: "pass",
     });
     expect(
       checkOndoMultiplier({
-        current: m("1.0010"),
-        previous: prev,
-        now: DAY,
-        reasonMsg: "stock_split pending",
-      }).ok,
-    ).toBe(true);
-  });
-  it("accepts dividend-sized daily growth, rejects faster growth", () => {
-    // 0.32% yield/year → 0.00088%/day allowed, plus 0.2% epsilon
-    expect(
-      checkOndoMultiplier({ current: m("1.0018"), previous: prev, now: DAY, dividendYield: 0.0032 })
-        .ok,
-    ).toBe(true);
-    expect(
-      checkOndoMultiplier({
-        current: m("1.0100"),
-        previous: prev,
-        now: DAY,
-        dividendYield: 0.0032,
-      }),
-    ).toMatchObject({ ok: false });
-  });
-  it("jumps above 3% need a matching corporate action, even over many days", () => {
-    expect(checkOndoMultiplier({ current: m("1.2"), previous: prev, now: 30 * DAY })).toMatchObject(
-      { ok: false },
-    );
-    expect(
-      checkOndoMultiplier({
         current: m("10"),
-        previous: prev,
-        now: DAY,
-        reasonMsg: "stock_dividend",
-      }).ok,
-    ).toBe(true);
+        previous: { value: m("1"), at: 0 },
+        reasonMsg: "stock_split",
+      }).outcome,
+    ).toBe("pass"); // 10-for-1 style split
   });
-  it("rejects zero", () => {
-    expect(checkOndoMultiplier({ current: 0n, now: 0 }).ok).toBe(false);
+  it("time since the baseline does not matter: there is no per-day growth cap", () => {
+    const old = { value: m("1.0000"), at: Date.UTC(2020, 0, 1) };
+    expect(checkOndoMultiplier({ current: m("1.0250"), previous: old }).outcome).toBe("pass");
+  });
+  it("no baseline: skipped (only sanity checked), and zero or negative always fails", () => {
+    const none = checkOndoMultiplier({ current: m("1.0017") });
+    expect(none).toMatchObject({ outcome: "skipped" });
+    expect(none.detail).toMatch(/no baseline/);
+    expect(checkOndoMultiplier({ current: 0n })).toMatchObject({ outcome: "fail" });
+  });
+  it("the detail line carries the numbers and the baseline date", () => {
+    expect(b("1.0200").detail).toBe(
+      "1.02 vs baseline 1.0017 (seen 2026-09-30): +1.827%, within the 3% single-step limit",
+    );
   });
 });

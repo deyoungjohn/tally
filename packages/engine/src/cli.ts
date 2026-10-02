@@ -2,12 +2,15 @@
 import { BinanceApiError } from "@tally/binance";
 import { BelowMinimumError } from "@tally/core";
 import { createFixtureEngine, createLiveEngine, type Engine } from "./engine";
-import { formatQuote } from "./format";
+import { formatFacts, formatQuote, formatQuoteChecks } from "./format";
 
 const HELP = `tally: compare one US stock across the issuers on BNB Chain, in shares.
 
   tally quote <TICKER> <amount> [--shares] [--fixtures] [--blocked] [--json]
   tally ladder <TICKER> [--fixtures]            quotes at 6, 25, 100 and 1000 USDT
+  tally facts <TICKER> [--fixtures] [--json]    every token's facts, multiplier readings, bounds and the full integrity check log
+
+  quote --checks prints the integrity log (every check, passes and skips included) under the table.
 
   <amount> is dollars (USDT), or shares with --shares. Minimum order 6 USDT.
   --fixtures  answer from recorded fixtures (works anywhere); without it the live API is used (Seoul EC2 only).
@@ -43,7 +46,23 @@ async function main(argv: string[]): Promise<number> {
       console.log(
         flags.has("--json")
           ? JSON.stringify(q, (_, v) => (typeof v === "bigint" ? v.toString() : v), 2)
-          : formatQuote(q),
+          : formatQuote(q) + (flags.has("--checks") ? formatQuoteChecks(q) : ""),
+      );
+      return 0;
+    }
+    if (cmd === "facts") {
+      if (!ticker) return (console.error("usage: tally facts <TICKER>"), 2);
+      const engine = engineFor(flags);
+      const tokens = await engine.facts(ticker);
+      const now = engine.ports.now?.() ?? Date.now();
+      console.log(
+        flags.has("--json")
+          ? JSON.stringify(
+              { asOf: new Date(now).toISOString(), tokens },
+              (_, v) => (typeof v === "bigint" ? v.toString() : v),
+              2,
+            )
+          : formatFacts(ticker, tokens, now),
       );
       return 0;
     }

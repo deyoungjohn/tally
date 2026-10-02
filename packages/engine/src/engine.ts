@@ -12,21 +12,26 @@ import {
   latestRaw,
   type FixtureFetchOptions,
 } from "@tally/binance";
+import { JsonBaselineStore, baselineFromEnv } from "./baseline";
 import { chainPort, clientFromEnv, onchainMultiplierReader } from "@tally/chain";
 import {
   TtlCache,
   amountBucket,
   consolidatedQuote,
+  inspectTicker,
   parseDecimal,
   type Address,
   type ConsolidatedQuote,
   type EnginePorts,
   type QuoteInput,
   type RegistryToken,
+  type TokenInspection,
 } from "@tally/core";
 
 export interface Engine {
   quote(input: QuoteInput): Promise<ConsolidatedQuote>;
+  /** Every token of a ticker with its facts, bounds and the full integrity check log, and no quote (`tally facts`). */
+  facts(ticker: string): Promise<TokenInspection[]>;
   /** Raw ports, for the trade plan (M3) and tests. */
   ports: EnginePorts;
 }
@@ -41,6 +46,7 @@ interface BuildOptions {
   /** Fixture runs skip pacing: nothing is hitting a real rate limit. */
   ratePerSec?: number;
   onWarn?: (message: string) => void;
+  baseline: JsonBaselineStore;
 }
 
 function build(o: BuildOptions): Engine {
@@ -60,6 +66,7 @@ function build(o: BuildOptions): Engine {
     onchain: o.onchain,
     now,
     onWarn: o.onWarn,
+    baseline: o.baseline,
   });
   const bnb = new TtlCache<number>(TTL_MS.bnbPrice, now);
   const gas = new TtlCache<bigint>(TTL_MS.gasPrice, now);
@@ -74,6 +81,7 @@ function build(o: BuildOptions): Engine {
   const quotes = new TtlCache<ConsolidatedQuote>(TTL_MS.quote, now);
   return {
     ports,
+    facts: (ticker) => inspectTicker(ports, ticker),
     quote: (input) => {
       const amount =
         "usd" in input.amount ? amountBucket(input.amount.usd) : `sh${input.amount.shares}`;
@@ -103,6 +111,7 @@ export function createLiveEngine(
     onchain: onchainMultiplierReader(rpc),
     gasPriceWei: port.gasPriceWei,
     onWarn,
+    baseline: baselineFromEnv(env, onWarn),
   });
 }
 
@@ -114,6 +123,9 @@ export function createFixtureEngine(
   o: Pick<FixtureFetchOptions, "blockRegion"> & {
     now?: () => number;
     onWarn?: (m: string) => void;
+    /** Test hook: wrap or replace the fixture fetch (e.g. to make one endpoint fail). */
+    fetch?: typeof fetch;
+    ratePerSec?: number;
   } = {},
 ): Engine {
   const readJson = (p: string) => JSON.parse(readFileSync(p, "utf8")) as any;
@@ -124,7 +136,7 @@ export function createFixtureEngine(
   );
   // Snapshot on-chain readings (2026-09-30) keyed by ticker and issuer. The registry gives us the ticker.
   const tickerByAddress = new Map<string, string>();
-  const base = createFixtureFetch({ blockRegion: o.blockRegion });
+  const base = o.fetch ?? createFixtureFetch({ blockRegion: o.blockRegion });
   const onchain = async (token: RegistryToken) => {
     const v = onchainTri[token.ticker]?.[token.issuer];
     tickerByAddress.set(token.address, token.ticker);
@@ -137,8 +149,9 @@ export function createFixtureEngine(
     onchain,
     gasPriceWei: async () => recordedGasPrice,
     now: o.now ?? (() => FIXTURE_NOW),
-    ratePerSec: 1000,
+    ratePerSec: o.ratePerSec ?? 1000,
     onWarn: o.onWarn,
+    baseline: new JsonBaselineStore(), // read-only: fixtures never write
   });
 }
 

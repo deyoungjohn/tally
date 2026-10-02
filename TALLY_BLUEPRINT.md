@@ -268,9 +268,11 @@ Fork tests need an RPC secret and run on demand.
 | Ondo | RWA API `sharesMultiplier` | — |
 
 **Ondo sanity bounds:**
-- non-decreasing;
-- per-day growth ≤ (dividendYield / 365 + ε);
-- jumps above 3% are only accepted with a matching corporate action (`stock_split` / `stock_dividend` in `statusInfo.reasonMsg`).
+- **never decreases**;
+- **a single increase of up to 3% is accepted**. Ondo multipliers jump on ex-dividend dates (PFE moved about +1.5% in one day), so there is deliberately **no per-day growth cap** (an earlier `dividendYield / 365 + ε` rule would have blocked real dividends; removed 2026-10-02);
+- an increase **above 3%** is only accepted with a matching corporate action (`stock_split` / `stock_dividend` in `statusInfo.reasonMsg`).
+
+Each reading is compared with the **last accepted reading** (the baseline), kept in `data/ondo-multiplier-baseline.json` (`value` + `seenAt` per token; SQLite later) and seeded from the 2026-09-30 snapshot. **Only readings that pass are stored**, so a bad reading cannot become the baseline. A token with no baseline yet is recorded on first sight only if its sources agree. A decrease is never auto-accepted, not even with a corporate action (a reverse split is handled by the owner in ShareGuard, §10).
 
 Values that break the bounds are flagged in Trap Shield and block execution for that token. Cross-check every source against the public list/dynamic endpoints and record disagreements; they feed the integrity grade and the DX report.
 
@@ -431,7 +433,7 @@ function assertMinShares(address account, address stock, uint256 balBefore, uint
 ```
 
 ### 10.2 Rules
-- **Allow lists** (owner-managed, events on change): `allowedRouter[addr]`, `approveTargetOf[router]`, `asset[stock] = {source: UiMultiplier | Multiplier | Feed, enabled}`.
+- **Allow lists** (owner-managed, events on change): `allowedRouter[addr]`, `approveTargetOf[router]`, `asset[stock] = {source: UiMultiplier | Multiplier | Feed, enabled, maxStepBps}` (`maxStepBps` applies to Feed assets).
   - Initial router and approve target: `0xB44446b0c8E56988c34f7Ff73Ae904982b5FdDA5` (the same address for both, V7).
   - Reject `router == tokenIn` or `router == stock`, or any router not on the list.
 - **Approvals:** approve `approveTarget` for exactly `amountIn`, reset to 0 after the call (forceApprove pattern).
@@ -447,7 +449,7 @@ function assertMinShares(address account, address stock, uint256 balBefore, uint
   - **token pause:** Ondo `tokenPauseManager().isTokenPaused(stock)` → `TokenPaused`; xStocks `isPaused()`; bStock: check in M2 whether its implementation has a pause getter.
 - **Ondo multiplier feed (pull-style, no keeper gas):**
   - an EIP-712 `FeedUpdate{stock, multiplier, validAfter, validUntil}` signed by `feedSigner`;
-  - accepted only if the multiplier is non-decreasing **and** the per-update increase is ≤ `maxStepBps` (start: 200 bps), unless a matching owner-registered `CorporateAction{stock, expectedMultiplier, notBefore}` exists (splits);
+  - accepted only if the multiplier is non-decreasing **and** the per-update increase is ≤ that asset's own `maxStepBps` (**per-asset**, set by the owner, start: **300 bps**; ex-dividend jumps differ by stock, so there is no global limit), unless a matching owner-registered `CorporateAction{stock, expectedMultiplier, notBefore}` exists (splits);
   - stored with `updatedAt`. Swaps on a Feed asset revert if `now − updatedAt > maxAge` (start: 3 days) and no fresh update is supplied.
 - **Ownership:** `Ownable2Step`. The owner can only manage lists, parameters, the feed signer, pause and rescue. **Not upgradeable** (no proxy); deploy a new version if needed.
 - **Events:** `Guarded(user, recipient, stock, tokenIn, amountIn, tokensOut, shares, multiplier, router)`, `AssetSet`, `RouterSet`, `FeedUpdated`, `CorporateActionRegistered`, `Paused`.
@@ -578,7 +580,7 @@ All visual rules live in `DESIGN.md`. This section covers structure.
 | Arbitrary call through ShareGuard (spike bug) | Router and approve-target allow lists; fork test G |
 | Over-broad approvals | Exact-amount approvals to ShareGuard only; the UI never asks for unlimited |
 | Stale or manipulated quote | Re-quote before signing; `minShares` + `deadline` on-chain |
-| Ondo feed signer compromise | Bounded step, monotonic, corporate actions only via the owner, signer rotation; worst case limited to `maxStepBps` |
+| Ondo feed signer compromise | Bounded step, monotonic, corporate actions only via the owner, signer rotation; worst case limited to that asset's `maxStepBps` |
 | Phishing or cloned tokens | Addresses only from the registry |
 | API key leak | Server-only; secrets file; never sent to clients; the key's permissions are limited to what the API grants |
 | RPC outage or censorship | Failover transport; tx hash persisted before polling |
@@ -664,7 +666,7 @@ Today is Thu 1 Oct; submissions lock **Sun 11 Oct, 12:00 UTC**. Dates are target
 | Exact Market / Transaction / Wallet API paths and the MEV-protection parameter | M1: **resolved**: paths probed on the Seoul EC2, `enableMevProtection` found (broadcast only); Market `price`/`candlestick` need another source |
 | Trading API rate limits | M1: ~5 calls then 42900 observed; elevated limits requested, not yet granted |
 | Does bStock's token implementation expose a pause getter? | M2 |
-| Feed parameters: `maxStepBps`, `maxAge` | M2 (start 200 bps / 3 days) |
+| Feed parameters: per-asset `maxStepBps` (start 300 bps), `maxAge` | M2 (start 300 bps / 3 days) |
 | Default tolerance: 1% (the live fill came in 0.51% under quote, so 0.5% would have failed) | M3 user test |
 | Can Cloudflare on our plan see Crimea, Donetsk and Luhansk sub-regions? | M0 |
 | Onchain Pay merchant access | ask Binance; P2 |

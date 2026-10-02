@@ -6,6 +6,7 @@ import {
   isUnitTrap,
   resolveMultiplier,
   sharesFromTokens,
+  type OndoBoundsResult,
   type ResolvedMultiplier,
 } from "./multiplier";
 import { formatUnits, mulDivUp, parseDecimal, toNumber } from "./units";
@@ -28,6 +29,8 @@ export interface EnginePorts {
     multipliers(token: RegistryToken): Promise<MultiplierReadings>;
     market(token: RegistryToken): Promise<TokenMarketFacts>;
     reference(ticker: string): Promise<ReferencePrice | null>;
+    /** Optional: persist an Ondo multiplier reading that passed the bounds check as the new baseline. */
+    recordAccepted?(token: RegistryToken, value: bigint, at: number): Promise<void>;
   };
   quotes: { quote(token: RegistryToken, amountInUsdt: bigint, wallet: Address): Promise<RawQuote> };
   chain: { gasPriceWei(): Promise<bigint>; bnbUsd(): Promise<number> };
@@ -138,7 +141,8 @@ interface Prepared {
   readings: MultiplierReadings;
   facts: TokenMarketFacts;
   multiplier: ResolvedMultiplier | null;
-  boundsViolation?: string;
+  /** Ondo multiplier bounds result; undefined for issuers read on-chain. */
+  bounds?: OndoBoundsResult;
   blockedReason?: string;
 }
 
@@ -199,7 +203,7 @@ export async function consolidatedQuote(
       };
 
       if (p.blockedReason || !p.multiplier) {
-        const integrity = gradeFor(p, ref, undefined, unitTrap);
+        const integrity = gradeFor(p, ref, undefined, unitTrap, now());
         return {
           ...base,
           executable: false,
@@ -214,7 +218,7 @@ export async function consolidatedQuote(
         q = await quoteToken(ports, p, wallet, input.amount, usdAmountIn, ref);
       } catch (e) {
         if (isKindedError(e) && FATAL.has(e.kind)) throw e;
-        const integrity = gradeFor(p, ref, undefined, unitTrap);
+        const integrity = gradeFor(p, ref, undefined, unitTrap, now());
         return {
           ...base,
           executable: false,
@@ -240,7 +244,7 @@ export async function consolidatedQuote(
           : undefined;
       const effective = sharesN > 0 ? (usdIn + (fee ?? 0)) / sharesN : undefined;
       const swap = q.executionMode === "SWAP";
-      const integrity = gradeFor(p, ref, premium, unitTrap);
+      const integrity = gradeFor(p, ref, premium, unitTrap, now());
       return {
         ...base,
         executable: swap,
@@ -267,6 +271,14 @@ export async function consolidatedQuote(
     }),
   );
 
+  // A fact that is missing because a call failed (not because it does not apply) must be visible in the result itself:
+  // the 2026-10-02 live run showed a clean score where a probe 18 minutes earlier showed a deduction.
+  for (const p of prepared) {
+    for (const [key, why] of Object.entries(p.facts.notes ?? {})) {
+      if (why && !why.startsWith("not fetched"))
+        warnings.push(`${p.token.symbol}: ${key} check skipped: ${why}`);
+    }
+  }
   if (resolved.length === 0) warnings.push("No share multiplier could be resolved for any token.");
   // Rows we never tried to quote (xStocks, paused) carry no error, so test for "something failed and nothing succeeded".
   if (rows.some((r) => r.error) && !rows.some((r) => r.sharesOut !== undefined)) {
@@ -305,14 +317,20 @@ async function prepare(ports: EnginePorts, token: RegistryToken, now: number): P
   const multiplier = resolveMultiplier(token.issuer, readings);
   const p: Prepared = { token, readings, facts, multiplier };
   if (multiplier && token.issuer === "ondo") {
-    const b = checkOndoMultiplier({
+    p.bounds = checkOndoMultiplier({
       current: multiplier.value,
       previous: facts.multiplierBaseline,
-      now,
-      dividendYield: facts.dividendYield,
       reasonMsg: facts.status?.reasonMsg,
     });
-    if (!b.ok) p.boundsViolation = b.reason;
+    // Only readings that pass become the new baseline. With no baseline yet, a first sighting is recorded only when the
+    // sources agree with each other, so one bad first reading cannot poison the store.
+    const accept =
+      p.bounds.outcome === "pass" || (p.bounds.outcome === "skipped" && !multiplier.disagree);
+    if (accept && ports.facts.recordAccepted) {
+      await ports.facts
+        .recordAccepted(token, multiplier.value, now)
+        .catch((e) => rethrowFatal(e, () => undefined));
+    }
   }
   if (!token.executable)
     p.blockedReason = "Not tradable through Tally: this issuer has almost no BNB Chain liquidity.";
@@ -324,8 +342,8 @@ async function prepare(ports: EnginePorts, token: RegistryToken, now: number): P
     p.blockedReason = "Binance doesn't support trading this token right now";
   else if (facts.onchainVolume24hUsd !== undefined && facts.onchainVolume24hUsd < 1_000)
     p.blockedReason = "Ghost market: almost no trading on BNB Chain";
-  else if (p.boundsViolation)
-    p.blockedReason = `Share multiplier failed its sanity check (${p.boundsViolation})`;
+  else if (p.bounds?.outcome === "fail")
+    p.blockedReason = `Share multiplier failed its sanity check (${p.bounds.detail})`;
   return p;
 }
 
@@ -334,21 +352,76 @@ function gradeFor(
   ref: ReferencePrice | null,
   quotedPremium: number | undefined,
   unitTrap: boolean,
+  now: number,
 ): Integrity {
   // A token we didn't quote (xStocks, paused) is judged on its listed price, which is exactly what exposes stale ghost listings.
   let premium = quotedPremium;
+  let basis: "quote" | "listed price" | undefined =
+    quotedPremium === undefined ? undefined : "quote";
   if (premium === undefined && ref && p.facts.listedTokenPrice !== undefined && p.multiplier) {
     premium = p.facts.listedTokenPrice / toNumber(p.multiplier.value, 18) / ref.price - 1;
+    basis = "listed price";
   }
   return gradeIntegrity({
-    multiplierDisagree: p.multiplier?.disagree ?? false,
+    multiplier: p.multiplier,
+    readings: p.readings,
+    bounds: p.bounds,
     premium,
+    premiumBasis: basis,
     session: ref?.session ?? p.facts.status?.session ?? "unknown",
     onchainVolume24hUsd: p.facts.onchainVolume24hUsd,
     status: p.facts.status,
-    attestationAgeDays: p.facts.attestationAgeDays,
+    attestation: p.facts.attestation,
+    now,
     unitTrap,
-    boundsViolation: p.boundsViolation,
+    notes: p.facts.notes,
+  });
+}
+
+/** What the engine knows about one token before any quote: readings, resolved multiplier, facts, bounds and the full check log. */
+export interface TokenInspection {
+  symbol: string;
+  issuer: RegistryToken["issuer"];
+  address: Address;
+  executable: boolean;
+  blockedReason?: string;
+  readings: MultiplierReadings;
+  multiplier: ResolvedMultiplier | null;
+  facts: TokenMarketFacts;
+  bounds?: OndoBoundsResult;
+  referencePrice: ReferencePrice | null;
+  integrity: Integrity;
+}
+
+/** The `tally facts` view: everything the grade is built from, with the check log, and no quote. */
+export async function inspectTicker(
+  ports: EnginePorts,
+  ticker: string,
+): Promise<TokenInspection[]> {
+  const now = (ports.now ?? Date.now)();
+  const symbol = ticker.toUpperCase();
+  const tokens = await ports.registry.tokensFor(symbol);
+  if (tokens.length === 0) throw new UnknownTickerError(symbol);
+  const [prepared, ref] = await Promise.all([
+    Promise.all(tokens.map((t) => prepare(ports, t, now))),
+    ports.facts.reference(symbol).catch((e) => rethrowFatal(e, () => null)),
+  ]);
+  return prepared.map((p) => {
+    const others = prepared.filter((o) => o !== p && o.multiplier).map((o) => o.multiplier!.value);
+    const unitTrap = p.multiplier ? isUnitTrap(p.multiplier.value, others) : false;
+    return {
+      symbol: p.token.symbol,
+      issuer: p.token.issuer,
+      address: p.token.address,
+      executable: p.token.executable && !p.blockedReason,
+      blockedReason: p.blockedReason,
+      readings: p.readings,
+      multiplier: p.multiplier,
+      facts: p.facts,
+      bounds: p.bounds,
+      referencePrice: ref,
+      integrity: gradeFor(p, ref, undefined, unitTrap, now),
+    };
   });
 }
 

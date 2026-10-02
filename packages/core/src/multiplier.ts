@@ -1,4 +1,4 @@
-import { E18, mulDiv } from "./units";
+import { E18, formatUnits, mulDiv } from "./units";
 import type { Issuer, MultiplierReadings } from "./types";
 
 export type ResolvedSource = "onchain" | "api" | "list";
@@ -57,54 +57,51 @@ export function resolveMultiplier(
 
 export interface OndoBoundsInput {
   current: bigint;
-  /** Last accepted reading and when it was taken (ms). Without a baseline only the absolute sanity bound applies. */
+  /** Last accepted reading (the baseline). Without one only a sanity check is possible. */
   previous?: { value: bigint; at: number };
-  now: number;
-  /** Annual dividend yield as a fraction (0.0032 for 0.32%). */
-  dividendYield?: number;
   /** `statusInfo.reasonMsg` text, searched for a corporate action. */
   reasonMsg?: string | null;
 }
 
-export type OndoBoundsResult = { ok: true; note?: string } | { ok: false; reason: string };
+export type BoundsOutcome = "pass" | "fail" | "skipped";
+export interface OndoBoundsResult {
+  outcome: BoundsOutcome;
+  /** One line with the numbers: "1.0017152 vs baseline 1.0017152 (seen 2026-09-30): unchanged". */
+  detail: string;
+}
 
-const DAY_MS = 86_400_000;
-const JUMP_LIMIT_PPM = 30_000; // 3%: bigger jumps need a corporate action
-const EPSILON_PPM = 2_000; // 0.2% slack on the daily growth bound
+/** An increase of up to 3% in one step is accepted: Ondo multipliers jump on ex-dividend dates (PFE ≈ +1.5% in one day). */
+export const JUMP_LIMIT_PPM = 30_000;
+
+const fmt = (v: bigint) => formatUnits(v, 18, 8);
 
 /**
- * Ondo sanity bounds (blueprint §7.3): non-decreasing; per-day growth ≤ dividendYield/365 + ε; jumps above 3% only with a
- * matching corporate action (`stock_split` / `stock_dividend`). Violations are flagged and block execution for that token.
+ * Ondo multiplier bounds (blueprint §7.3): never decreases; a single increase of up to 3% is accepted; above 3% needs a
+ * matching corporate action (`stock_split` / `stock_dividend` in `statusInfo.reasonMsg`). There is deliberately no
+ * per-day growth cap: ex-dividend jumps would trip it. A failing reading is flagged and blocks execution for that token.
  */
 export function checkOndoMultiplier(i: OndoBoundsInput): OndoBoundsResult {
-  if (i.current <= 0n) return { ok: false, reason: "multiplier is zero or negative" };
-  if (!i.previous) return { ok: true, note: "no baseline yet; only checked for sanity" };
-  const prev = i.previous.value;
-  const action = /stock_split|stock_dividend/i.test(i.reasonMsg ?? "");
-  if (i.current === prev) return { ok: true };
-  if (i.current < prev) {
-    return action
-      ? { ok: true, note: "decrease accepted: corporate action" }
-      : { ok: false, reason: "multiplier decreased" };
-  }
-  const growthPpm = Number(mulDiv(i.current - prev, 1_000_000n, prev));
-  if (growthPpm > JUMP_LIMIT_PPM) {
-    return action
-      ? { ok: true, note: "jump accepted: corporate action" }
-      : {
-          ok: false,
-          reason: `jump of ${(growthPpm / 10_000).toFixed(2)}% without a corporate action`,
-        };
-  }
-  const days = Math.max((i.now - i.previous.at) / DAY_MS, 1);
-  const allowedPpm = ((i.dividendYield ?? 0) / 365) * days * 1_000_000 + EPSILON_PPM * days;
-  if (growthPpm > allowedPpm) {
+  if (i.current <= 0n)
+    return { outcome: "fail", detail: `multiplier ${i.current} is zero or negative` };
+  if (!i.previous)
     return {
-      ok: false,
-      reason: `grew ${(growthPpm / 10_000).toFixed(3)}% in ${days.toFixed(1)}d, faster than the dividend yield explains`,
+      outcome: "skipped",
+      detail: `${fmt(i.current)}: no baseline for this token, only checked for sanity`,
     };
-  }
-  return { ok: true };
+  const prev = i.previous.value;
+  const base = `${fmt(i.current)} vs baseline ${fmt(prev)} (seen ${new Date(i.previous.at).toISOString().slice(0, 10)})`;
+  if (i.current === prev) return { outcome: "pass", detail: `${base}: unchanged` };
+  if (i.current < prev) return { outcome: "fail", detail: `${base}: decreased` };
+  const ppm = Number(mulDiv(i.current - prev, 1_000_000n, prev));
+  const pct = `+${(ppm / 10_000).toFixed(3)}%`;
+  if (ppm <= JUMP_LIMIT_PPM)
+    return { outcome: "pass", detail: `${base}: ${pct}, within the 3% single-step limit` };
+  if (/stock_split|stock_dividend/i.test(i.reasonMsg ?? ""))
+    return {
+      outcome: "pass",
+      detail: `${base}: ${pct}, above 3% but a corporate action is listed`,
+    };
+  return { outcome: "fail", detail: `${base}: ${pct}, above 3% with no corporate action` };
 }
 
 /** "Unit trap" (blueprint §7.5): the same ticker means a very different amount of stock depending on the issuer. */

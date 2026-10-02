@@ -1,0 +1,2296 @@
+{
+  "schema": 1,
+  "source": "research/snapshot-2026-09-30/rwa_list_ondo.json (public Ondo list, chain 56), fetched 2026-09-30T19:35:13Z",
+  "entries": {
+    "0x00c81d35eddf44c75d4db9e07bdcdc236eb0ebcf": {
+      "symbol": "EEMon",
+      "value": "1.013664147460543285",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x01486675da0764ee780ea7cb65c33062e9b2d28c": {
+      "symbol": "MRNAon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x01b5a4ac600be98448dbefbb78bcdf38262552cc": {
+      "symbol": "OXYon",
+      "value": "1.009877875802699974",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x02d608506ca0048d0d991a11f1e7fb8cad1e44f8": {
+      "symbol": "AALon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x031d85943ba7ca0304323195e7086a76c35366fb": {
+      "symbol": "NEARon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x03e4bd1ea53f1da84513da0319d1f03dd1bbcf93": {
+      "symbol": "ORCLon",
+      "value": "1.0079328914586566",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x03f09e2ef6e64d804a5579e21e7b519db174cf54": {
+      "symbol": "BILon",
+      "value": "1.007977944897084411",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x04b16ff1f9673146f68aa5d5f57aa45adcf068e1": {
+      "symbol": "ETHAon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x04b5e199f2ec84f78b111035f57b16bee448db6f": {
+      "symbol": "NKEon",
+      "value": "1.026577066356554817",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x0574e53f8214d0402c8388b4402113a74354d1b0": {
+      "symbol": "BRAINon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x0585756aafb241b0f8a9df62db26c566091bde0b": {
+      "symbol": "COHRon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x087b5761b161429013d41ea54cd2fb6022a21564": {
+      "symbol": "DRAMon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x0888edfec4c0a66fce074796cf4f6509c00f6c49": {
+      "symbol": "CPERon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x08a513779f46ffb7a34f16094a94016d010128a8": {
+      "symbol": "NVOon",
+      "value": "1.030267091960948431",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x08ce97f3d5cf11e577d091ab048bc5e2eae3fabb": {
+      "symbol": "AGGon",
+      "value": "1.038180908059290589",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x091fc7778e6932d4009b087b191d1ee3bac5729a": {
+      "symbol": "GOOGLon",
+      "value": "1.002460326637435211",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x09f5a6ee1b46787dd252827e40502c4980a0285d": {
+      "symbol": "DGXXon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x0afa28a7ac4e44b1f771515c200f4d67b1f5e8d0": {
+      "symbol": "TTon",
+      "value": "1.003555620488873783",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x0b61036b5182a29a228d8ed9e647a16f62bad1bc": {
+      "symbol": "AAONon",
+      "value": "1.000898203596656132",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x0b790abd6594918de1022233b7cc79badb84d92a": {
+      "symbol": "ALBon",
+      "value": "1.005831835145573562",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x0c50323af81d5c33822c6add256fb9093d42bc74": {
+      "symbol": "AXTIon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x0cde6936d305d5b34667fc46425e852efd73559a": {
+      "symbol": "QQQon",
+      "value": "1.004082430180208355",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x0cfd1030e2431e0fa15d4cc3f3e43076fe93f8f9": {
+      "symbol": "YLD5on",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x0d4f9b25f81163fb4840ba4f434672543823000c": {
+      "symbol": "GSon",
+      "value": "1.013764315605746387",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x0d586b51a90dc999f9bb6a0506da7f034a1d3a2e": {
+      "symbol": "COPon",
+      "value": "1.015212108391859592",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x0dae81a905b645a3d1e67129b89cd0acda224e9a": {
+      "symbol": "HYGon",
+      "value": "1.056102791299602965",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x0e246e05212dbbd78a354c072a92b4e5723b2fa0": {
+      "symbol": "ADIon",
+      "value": "1.006251588366643087",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x0eaa1a75bd682a5669ab2371a559fbd039c6b9eb": {
+      "symbol": "PANWon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x0ed2e3180edf393e6bf8db124bd15ddd54de150a": {
+      "symbol": "AVGOon",
+      "value": "1.006414494428012574",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x0facafb97ffdba3cae88512070af49bd30674cd9": {
+      "symbol": "LITEon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x102138be022f8d142bcb817f7264921d65209608": {
+      "symbol": "FLEXon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x10b58a3d9dcec59bb1c3bf6b9c9414eafce711c9": {
+      "symbol": "VNQon",
+      "value": "1.01980198156816195",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x1104eb7e85e25eb45f88e638b0c27a06c1a91cb2": {
+      "symbol": "IVVon",
+      "value": "1.010377956958191322",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x111f6f2b9f1c5f3ec841690e1deec606086727da": {
+      "symbol": "SAPon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x1161989389a991532dce453d04d6346c2581c907": {
+      "symbol": "ARQQon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x12b7adc48416a103f63e7e6210f62c81dfb91fd0": {
+      "symbol": "EWYon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x138ed6833ff4e8811e1fea0d005e13726c8886f9": {
+      "symbol": "SNOWon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x149bda9e7251dc36f536d1fe7f92a5ea203f4f3d": {
+      "symbol": "AAOIon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x1501ec83ffef405b4331cc4f73277a40fb0c627d": {
+      "symbol": "MRVLon",
+      "value": "1.001483825466955279",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x15580092796f69825cff4738cac55d05d41eaa42": {
+      "symbol": "GLTRon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x15688f10470dfddcb4e2d60cd2acfd3ec418317a": {
+      "symbol": "SOXQon",
+      "value": "1.001104030215548527",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x158734153f354cb326ee690c3d55f810dcb0fc90": {
+      "symbol": "VTIon",
+      "value": "1.007955470059153662",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x167e93a849a0cc479769132552b99aa1cfa0948c": {
+      "symbol": "IJHon",
+      "value": "1.01129031732930719",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x17515b68378d86c38f394c666e79907da05dcba9": {
+      "symbol": "SQQQon",
+      "value": "1.027709560516422679",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x17d03ae104a9d12e9e5794efb109b817dd7f3404": {
+      "symbol": "BEon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x18de24acb876c0b8392d9c55583bb21c0355980b": {
+      "symbol": "APLDon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x19601179a60f55ff6636f5d1a8b6671053bd60a8": {
+      "symbol": "HOODon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x19904bc04c09e5d29ed216ddd105bdf103a0ba2d": {
+      "symbol": "CPNGon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x1c42c07257f936a7c4f84b8d756c95817e23631a": {
+      "symbol": "HUBBon",
+      "value": "1.00213761142353308",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x1cd89241b26fcdc421fd02907d6504c8abbfe1bc": {
+      "symbol": "DGRWon",
+      "value": "1.007865939900596826",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x1cde419fae0ef7f7931ae3e29e5f411c8c5e5fa1": {
+      "symbol": "Von",
+      "value": "1.00681694330219382",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x1d2eaaf0ae00382893aa4318bd88d1cd0e9b858a": {
+      "symbol": "VFSon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x1d7b5e06fdbe4fd33f5c64c081e32b5d539751d0": {
+      "symbol": "AMCon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x1dcd320c5d7b84cd407437c58d56cbbdd0d9d8f3": {
+      "symbol": "MTSIon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x1eada1306df72a5607827416c1a1307d7056dfff": {
+      "symbol": "EXTRon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x1fe12abdf560c753acbc63533519d74801e04958": {
+      "symbol": "XYLDon",
+      "value": "1.023148114648697293",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x20cce48d767ed68cbba7727c4c504efe5bcb626c": {
+      "symbol": "GRNDon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x2144d620e3471441b12bf256e01a09eaa5ea7f12": {
+      "symbol": "PENGon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x2155f5344ba7763f80420de617af41e56de0552b": {
+      "symbol": "NUEon",
+      "value": "1.003341697525391088",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x2206e07410a8fe9ef595e7184b2e9d160fdb7211": {
+      "symbol": "USARon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x22092c94a91d019ad15536725598b0a6be0a73c0": {
+      "symbol": "IEMGon",
+      "value": "1.017768390166729392",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x2291e5361f4ef7bb0d6703377bf497bfe4325152": {
+      "symbol": "BKCHon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x237c9f794edaaa0071cdf64a41c25eb76771754b": {
+      "symbol": "GNRCon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x23def658ea0b4081161d9ab8fdfeef5345bcafbd": {
+      "symbol": "COROon",
+      "value": "1.011642674002343802",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x23e39d94807a8bb7e3f8294b4911d04ee26dce39": {
+      "symbol": "RDWon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x240eb4859b4537d250cf784cc758c404da5fe4bd": {
+      "symbol": "FLHYon",
+      "value": "1.025737606570354183",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x2418c2e1ae3b8d767594b3974d32610743f88155": {
+      "symbol": "PWRon",
+      "value": "1.000106916159774376",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x2494b603319d4d9f9715c9f4496d9e0364b59d93": {
+      "symbol": "TSLAon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x24f5471183ea549987f245d6ce236b6108869c92": {
+      "symbol": "BLKon",
+      "value": "1.018177487531712117",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x2588f20bad92da8dcce7fac8311b5f8ab4690e43": {
+      "symbol": "TMUSon",
+      "value": "1.011188221625670751",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x25a4dbae9a0cd8c75656d6b50ffdf4900cc20d8f": {
+      "symbol": "GLWon",
+      "value": "1.001339209456458611",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x25ed86472cf3012607dc6576c58e6432968255c2": {
+      "symbol": "CORZon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x25ffda07f585c39848db6573e533d7585679c52d": {
+      "symbol": "MAon",
+      "value": "1.00433226330961485",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x2659dd96def34ced3679901e5500779be297fe5a": {
+      "symbol": "BAIon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x274b0cb6db9473245a31cdea9b789786f4108e4b": {
+      "symbol": "CATon",
+      "value": "1.004290909865719845",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x277e1fa8704c5511fed7e30bc691f922aa30101b": {
+      "symbol": "RIVNon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x282973969118f9fe39bf2ff3d8dd1efee82ccb11": {
+      "symbol": "NTESon",
+      "value": "1.015438469618086718",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x2a0a317660f497d4c4836d1ef5faf5970e69437b": {
+      "symbol": "DRSon",
+      "value": "1.001395142825753725",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x2a3cbf64c8181db4a25d41d4d7a7db9984c59dac": {
+      "symbol": "SOXXon",
+      "value": "1.000787897698614475",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x2ac26ec236df5d1d2ad1a6dd4e448a90e45dc35d": {
+      "symbol": "TIPon",
+      "value": "1.039903672884955792",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x2aea1d415d45ccf3eabe565d45dcaf4ea2035b9c": {
+      "symbol": "GEVon",
+      "value": "1.000784237112149539",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x2b08f1c28cb1ede3b11d397929f00215fa97ecfa": {
+      "symbol": "ARGTon",
+      "value": "1.002563501565379468",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x2b1d5cdecc356530a746c5754231efaeaca64022": {
+      "symbol": "PBRon",
+      "value": "1.032800438461393472",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x2bbf5ab85f9ceb595dd785db15cc9f2931c6ea64": {
+      "symbol": "TNKon",
+      "value": "1.002263535935191577",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x2bc97b1c5f83f080798ee9e38da5fbf621454fcf": {
+      "symbol": "ORBXon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x2ec46eed30c94caa5979e6a0395abe824138335f": {
+      "symbol": "LOWon",
+      "value": "1.010811781817516253",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x2f20d5dfbaffa3e6351e06b8b18059747cd7ee72": {
+      "symbol": "YLD8on",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x2f79d36184dfe7968c9d23f87cae1ab72447c1e5": {
+      "symbol": "ONTOon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x30033a17ea24e90631532582a1917c64afbf87af": {
+      "symbol": "OUSTon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x30938154e2697694f41592c2e48459287debe4bf": {
+      "symbol": "ENPHon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x30bd85fd4286c5c9857679f5b188f737b4a7b8c0": {
+      "symbol": "REGNon",
+      "value": "1.001873288448163851",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x317bf42b43a394860718266dec445dcc9fd9da49": {
+      "symbol": "JPMon",
+      "value": "1.013353010767603273",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x318ddd4d03d84a40cf44772385a0cfb3d4394049": {
+      "symbol": "UMCon",
+      "value": "1.012908961363638667",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x31d6011023d6c7695efc29bb016830f3f36de40a": {
+      "symbol": "OIHon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x31dabf49e4bc1af1456c1819cb6a2562154e92f3": {
+      "symbol": "HDon",
+      "value": "1.015054441110329085",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x333932f15e6e14f4a630163d3224548a721ddfa4": {
+      "symbol": "AIQon",
+      "value": "1.000004923287585971",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x335dd4112704f108b5ddd8f8a44bd9ed68522a80": {
+      "symbol": "SOXSon",
+      "value": "0.101695663086635307",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x3385cb29cca0ac66f5d2354d13ef977b49a2510f": {
+      "symbol": "UNHon",
+      "value": "1.02304690869070713",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x33f3df3cea2a8c4828e88f30be932850cf749739": {
+      "symbol": "NATon",
+      "value": "1.05574945862524405",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x341d31b2be1fee9c00e395a62ba41837f4322eed": {
+      "symbol": "LLYon",
+      "value": "1.004407717014765177",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x34304f2f7cc487eb4186e6d69f5905a613474aa2": {
+      "symbol": "CSCOon",
+      "value": "1.014270362303804718",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x343324170c91c4d8cf4d439b3e5a619f50621ae7": {
+      "symbol": "TSEMon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x34375f826fd3dd4e15f883d4f4786bb45eb705ac": {
+      "symbol": "COSTon",
+      "value": "1.005056215448151263",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x35895a1fa1aff7fb3204fb01257409fd75acb24c": {
+      "symbol": "LRCXon",
+      "value": "1.002082277478955134",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x374d03a6c0d5bd4be0a5117ebe1b49d52ac8a53f": {
+      "symbol": "PYPLon",
+      "value": "1.007790133219188067",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x37ff203ac221313b620d047eddd7bd6f68d656a6": {
+      "symbol": "VRSNon",
+      "value": "1.002046968356829546",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x3802dc739ef9e226f36421a9c15efa519153bbbe": {
+      "symbol": "PSQon",
+      "value": "1.016953929467156982",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x38b9a53bfdc5dba58a29bd6992341927c2fca637": {
+      "symbol": "EFAon",
+      "value": "1.023822468085707436",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x390a684ef9cade28a7ad0dfa61ab1eb3842618c4": {
+      "symbol": "AAPLon",
+      "value": "1.003376073740221058",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x398ae5b33505f121c359f22b300fbcfa81db79ae": {
+      "symbol": "BLCRon",
+      "value": "1.001763691603676261",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x3a562836afb1026f5d7a6b6da1125d27fdfee372": {
+      "symbol": "BTDRon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x3a82f1c847cc55e52e597fd81c63a812c6722541": {
+      "symbol": "HUTon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x3c276dd9f9eab5510f9eafd3a6ea54879b27ca3d": {
+      "symbol": "NNEon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x3ce678692a60fb5f31963b05cb158f0ce0ff1736": {
+      "symbol": "IRDMon",
+      "value": "1.004499230231158845",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x3de956d959726c448649354c6fbca92b82dc5ed7": {
+      "symbol": "KEYSon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x3ec23f52f6573fc0587a0631dd8c3b107f6bcb35": {
+      "symbol": "PPLTon",
+      "value": "10",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x3f19a16a401a6af05150479ccb76ef2fb57b0df3": {
+      "symbol": "HIVEon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x3fcd741646a9790635b938cdb69af5df356cbaab": {
+      "symbol": "PALLon",
+      "value": "5",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x400f1e257f86d25578a0928c94dc95115f09d5c9": {
+      "symbol": "PGon",
+      "value": "1.025304000727182209",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x40375e3dd70232eaf264706e5662b90a079e3d31": {
+      "symbol": "EFVon",
+      "value": "1.018574959074742058",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x405f38b90bebf1259062cf29da299f3398662bcb": {
+      "symbol": "KOon",
+      "value": "1.02389050415518419",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x40755f06ab7f8de1ab3a9413b1ef562d63de19b1": {
+      "symbol": "IWFon",
+      "value": "4.012874287579009489",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x40d8e1fbaf69173c47fa493feb50a84eec6b57ee": {
+      "symbol": "IONQon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x4255279af47cf10efb9a5c8839f90170f4ef759f": {
+      "symbol": "Ton",
+      "value": "1.024891883026981672",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x4268f2bfb23a7496504aa5ed1ee325248586299f": {
+      "symbol": "SKHYon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x4277d20430e901092e259ba9cf7164c37077aaf1": {
+      "symbol": "YEARon",
+      "value": "1.007917628188333379",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x4321366277d4a6e170f1f28148c93e8c47636c14": {
+      "symbol": "OIIon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x43807bf4ce06f4fbb4fa8deac37bf274aea324da": {
+      "symbol": "LECOon",
+      "value": "1.004156537848007792",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x43d0b380c33cd004a6a69abd61843881a2de4113": {
+      "symbol": "SHOPon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x441a4d4fc23f17f4cf23e3d60f12d2bd6f176728": {
+      "symbol": "CBRSon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x44fde2c6bc2c2b54962c69fcef57a2a50121dbd7": {
+      "symbol": "RTXon",
+      "value": "1.007544306866908764",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x4553cfe1c09f37f38b12dc509f676964e392f8fc": {
+      "symbol": "AMZNon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x45abf29515bc23f8c0ed2a06584444ce473a75fb": {
+      "symbol": "ASTSon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x463196cc72cbad2d1ac1896cde0766bfbbd64443": {
+      "symbol": "BRTRon",
+      "value": "1.009442802226649922",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x467c7cf9af95765c1bd6542ffd516bf9603a19b9": {
+      "symbol": "QTUMon",
+      "value": "1.003233423612938068",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x467e59ce5d5fe01686d4a80dd1e1dae13549aa6c": {
+      "symbol": "BIDUon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x4693f6f5ef257381a28afd0673e64d8b32d5c6ad": {
+      "symbol": "HIMSon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x4697b2a050f7b5a8e1ebc27c325f9d78d094f041": {
+      "symbol": "ETNon",
+      "value": "1.003880763533020335",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x472f46c5d7409c82234701eff7d4dda4c28b5a93": {
+      "symbol": "BWETon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x4752ae8f910b25e64e4406eaad50c1b4e8de7e6d": {
+      "symbol": "PLUGon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x476a2cad3197df68186b61bc36296e8d3d2d1b85": {
+      "symbol": "LASRon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x47b36ddb9dd12a8411f78226f55e8c3f0d65481f": {
+      "symbol": "PCGon",
+      "value": "1.009107084924797599",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x47bfe4921bd74c66c6b0c35c517abdfb5e3bafb3": {
+      "symbol": "FCELon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x48187890d16aee64798e02c5bed510f4db5694a9": {
+      "symbol": "FLQLon",
+      "value": "1.005373349539798278",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x484ce83bb55b50d70236c7d1e29e0ba7524f905b": {
+      "symbol": "NVTon",
+      "value": "1.000922208281053952",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x492e678c1ea048c70edc635047cdbb87ff5362a2": {
+      "symbol": "HPEon",
+      "value": "1.003781217414486308",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x49ccb157c77afe5f264c35f0e9178a98d77815ab": {
+      "symbol": "RMBSon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x4b1c9087a6fe265a36fbf2c591b0986fe1115f50": {
+      "symbol": "STNGon",
+      "value": "1.003966041318898353",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x4baf4dc56cf6a525a0874e25cc6372a6a8915135": {
+      "symbol": "MPon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x4d209d275e3492ac08497a7a42915899c4dd5e86": {
+      "symbol": "XOMon",
+      "value": "1.013993393629342042",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x4d3442d884202584f1729bca20db05472b886b52": {
+      "symbol": "NOCon",
+      "value": "1.006226353314046476",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x4da12f47578ef89c76179b760c778e70b668f80b": {
+      "symbol": "RDDTon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x4dc8dcee22a56feeca930dff45581aa9a14d5e05": {
+      "symbol": "HIIon",
+      "value": "1.003250903281649558",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x4e07b55e62f443859706e03aea0b3fe3a1bfea8b": {
+      "symbol": "IEIon",
+      "value": "1.008498689014979939",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x4ef383f521e803863a33fca8f3f861e53ef9ef9b": {
+      "symbol": "CLOAon",
+      "value": "1.021845977251840632",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x4fd67cb8cfedc718bac984b5936abe3330d0a2a4": {
+      "symbol": "SNDKon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x500eafc69b68acd6f27064f9b75f1c7d91cc4d9f": {
+      "symbol": "IWMon",
+      "value": "1.009083143348214086",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x50356167a4dbc38bea6779c045e24e25facedfdc": {
+      "symbol": "SPOTon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x50436ec45316a98e72b03ead5752e8543f11ec09": {
+      "symbol": "MAG7Xon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x50e66edb7d0b79ee988f098754a27afaa643b4f5": {
+      "symbol": "WSon",
+      "value": "1.006051456731992729",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x5151a22421ed4277f1e4ca4785a07b035d548a36": {
+      "symbol": "GEon",
+      "value": "1.003558931850101452",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x517a25e696421c88218b43cbb7ea0f873b6973a6": {
+      "symbol": "INODon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x527c6436e1eaa4f2065cde4090f798cb5d031dd6": {
+      "symbol": "ARMon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x52ad57a7ea642e99a892afc79e937b383f1b59e9": {
+      "symbol": "BMNRon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x538e2838f9ebc9b891399df4a8dcc42890d9dc20": {
+      "symbol": "ANETon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x5397cb3f1e419050d9d7160756de0f4ed4f5f898": {
+      "symbol": "ENBon",
+      "value": "1.01320947424736151",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x53a8c5fc5643b437779742f494691e6b7c660a8b": {
+      "symbol": "COFon",
+      "value": "1.008133280098686719",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x5417b7cfdb8a187004067297ebf1491c8d6d5c09": {
+      "symbol": "POWIon",
+      "value": "1.002923737067490167",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x54b92fd77229269ff6484942c123cca72f2d6fec": {
+      "symbol": "FSOLon",
+      "value": "1.017270662626857328",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x551f8db0da800c910e12cf991eac306714481685": {
+      "symbol": "ECHon",
+      "value": "1.010881845661695347",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x55b370b704240a914f42b5bbb3195431c031f9f8": {
+      "symbol": "SPGIon",
+      "value": "1.053475954992204636",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x55b56cc2cdcbc2c58668f72663be7599a46ed79f": {
+      "symbol": "WOLFon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x55b8cc618c4209a97250dff926d3d708814d36aa": {
+      "symbol": "AOSLon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x5630b5741a33371d9d935283849a16dc808f7f3a": {
+      "symbol": "APOon",
+      "value": "1.011618480311991279",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x573e11cc667a8e5be0c7af2410403371088d3d0d": {
+      "symbol": "ALABon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x58ce0de0ced164f2aeab5fcf81d67f3c61cb562c": {
+      "symbol": "COHUon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x5a20886b575058dd7299785f0ea9b1172942a3e0": {
+      "symbol": "ABTon",
+      "value": "1.016057851422025191",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x5a9d924fc336a5ec8cf3b1909aa660533b50b015": {
+      "symbol": "ENLVon",
+      "value": "0.066667",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x5acf40056ed51c8bbcd1b125ef803581ac89a627": {
+      "symbol": "FUTUon",
+      "value": "1.015720479662535676",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x5c50ffd365c852f5e72bfbc2c1ae621e2aca5ece": {
+      "symbol": "TELon",
+      "value": "1.003844163524802247",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x5cb7671740877723c9ad55348a751d7b57052e07": {
+      "symbol": "MXLon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x5d1a9d8aa362a6424b65fcb601e52fefce5b4efa": {
+      "symbol": "GDon",
+      "value": "1.003087721245075737",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x5e24db6de4c21e2c8f9e81bacfcedfbac2dee4aa": {
+      "symbol": "INCEon",
+      "value": "1.022146601130608568",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x5e3ca19c533c8c0381eac5319624596557c279ed": {
+      "symbol": "KEELon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x5e63232993789601ce362e0240a299c1dfcbfbec": {
+      "symbol": "NEMon",
+      "value": "1.003091949609185442",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x5ecc352c4640f1d26bd231dbbd171f40f7d0eec6": {
+      "symbol": "AMATon",
+      "value": "1.002501637568568532",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x5f2d37192576a6804f44722eb828e280d5fb43dc": {
+      "symbol": "BNOon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x5fa699c0c1319b8d86489af77dfde4fa97b47df8": {
+      "symbol": "BTGOon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x5fb339393773414039295ea97a92614fed85d556": {
+      "symbol": "IDEFon",
+      "value": "1.001156076989500122",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x608593d17a2decbbc4399e4185be4922f97ed32e": {
+      "symbol": "USDY",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x60a8f8e05200ff73afde9e2cae819bf1605f0bdd": {
+      "symbol": "MELIon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x60b273bdf00a9a52238ca706257f61efc55bdee0": {
+      "symbol": "EMRon",
+      "value": "1.002419608612830099",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x620477782cea4c4171165396f8014edef83a13da": {
+      "symbol": "FIGRon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x629520dee1620def11596f84e85de9f1ff653012": {
+      "symbol": "WFCon",
+      "value": "1.019332243332157395",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x6459303f58244ff1e7a42b90aa3782dfb6ca6969": {
+      "symbol": "TCOMon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x64e023411215c3b75b9f339b7b77f179cd04c527": {
+      "symbol": "QYLDon",
+      "value": "1.028100965313682357",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x653156b9a46e21906dddc82414871bbdb0261319": {
+      "symbol": "LEMBon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x65d84f0990b7394209d591380c2952c83d778aa3": {
+      "symbol": "CEGon",
+      "value": "1.003106294412029421",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x660ab35be0f102a1d4d4b60a96ac3abfd345e038": {
+      "symbol": "ECOon",
+      "value": "1.062082946194779965",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x66a1409fe303d00209202933e3d31ee43aaab39d": {
+      "symbol": "AURon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x6860a2f969a8133a23421ddce21397995139d7e8": {
+      "symbol": "BRHYon",
+      "value": "1.013290752009436343",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x686f8264625fe4e51f520db856003a4dd52a49ff": {
+      "symbol": "TENon",
+      "value": "1.018101887768295837",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x68b07cef227cea1b2b6683921c8c825cd5c69ec7": {
+      "symbol": "IBITon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x6a4c1b7aa18638fac4c8e0d1961405e27c25baf1": {
+      "symbol": "SILon",
+      "value": "1.000960931171708935",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x6a708ead771238919d85930b5a0f10454e1c331a": {
+      "symbol": "SPYon",
+      "value": "1.009473072784042724",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x6ad19e0a57cfea0bc521a12c6c82372852842933": {
+      "symbol": "LPTHon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x6bfe75d1ad432050ea973c3a3dcd88f02e2444c3": {
+      "symbol": "MSFTon",
+      "value": "1.005730856892783903",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x6cf3b84f0ba4d86d9f6987812a11db2c447d9483": {
+      "symbol": "HIMXon",
+      "value": "1.006449435201227636",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x6e3e077a6c0e3c27fd6d00b97387d9b7bd451bab": {
+      "symbol": "INTUon",
+      "value": "1.007827614227082215",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x6f040fc3061374304bddbfdae9d688d7c868c785": {
+      "symbol": "TERon",
+      "value": "1.000267254038179148",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x6f28cb07790c1049ecd7482d09fd13b977b47201": {
+      "symbol": "PAVEon",
+      "value": "1.001228665699798068",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x7048f5227b032326cc8dbc53cf3fddd947a2c757": {
+      "symbol": "NFLXon",
+      "value": "10",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x70afc3a600f843d2018df16b0b316e4bc9c603e9": {
+      "symbol": "APHon",
+      "value": "2.004270673342698199",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x70bd780076e25d087ed9c35f4e4a540522abe8cf": {
+      "symbol": "DNNon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x71507068e98049cba81e9bbc8d901e4a2f4222eb": {
+      "symbol": "SOFIon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x71e9dc9debc18650bd2342b93623b88c2ad00c89": {
+      "symbol": "STRCon",
+      "value": "1.058620669761465377",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x7313ea16493b2f55054df0131a3a14b043ec8992": {
+      "symbol": "MSTRon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x732823512ba98d1bcde471ca023ee2a0c9f117b7": {
+      "symbol": "SATAon",
+      "value": "1.036951819318634113",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x7437203800140ba7d9081dde8cef09ee40e3bf03": {
+      "symbol": "KWEBon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x7567c2a46bce46373b454682f3d95e6535bde144": {
+      "symbol": "DASHon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x75e9d68e99e76714ed1a7663ab48ba3aabd7a6c5": {
+      "symbol": "HYSon",
+      "value": "1.024818297796627038",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x76e39171cb665a35981e744e2ceb7012f76caeac": {
+      "symbol": "CRWVon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x784584933c2192caa062e90d8140d94768ce62d8": {
+      "symbol": "ISRGon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x790cfb394b1f399a3543ba1f835dde114a387eeb": {
+      "symbol": "INROon",
+      "value": "1.001808006170700362",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x79ed7f4d9668e8e7aaadd12a711d19064840b9a5": {
+      "symbol": "WENon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x7a18bb5fd6ba6343180afdcf6dc406ef17f7fc04": {
+      "symbol": "HALon",
+      "value": "1.003226159326453842",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x7a5bd36047a9d15c90fa79b0654de8dd9d6ebbb1": {
+      "symbol": "AMEon",
+      "value": "1.002043194949002317",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x7af44d51d1fb88c5b74fc71d3cba649bb8099d14": {
+      "symbol": "ACNon",
+      "value": "1.030852839739623902",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x7b695132b165cb6703f0212bbb1e91a782526156": {
+      "symbol": "CLSon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x7b7abd762a400c9768cdeeef3c01dae39e0b8427": {
+      "symbol": "WMBon",
+      "value": "1.01020034150940803",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x7ba995f1662a01f3be0dc299ce94bb7e9c7075f5": {
+      "symbol": "BBAIon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x7bd821eaad82cb92c1ea64dac1f3bb2e787e959a": {
+      "symbol": "SWKSon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x80f03abcb2bd85237740dd69f87d2f5de3909012": {
+      "symbol": "LSCCon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x812fc2943371c952c6c8daf99fe665eb0e40cd27": {
+      "symbol": "CAPRon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x817942d5de16092656568e9f67f54ccb462f8989": {
+      "symbol": "GEMIon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x817f1f6780f99bcaac394a59cb0261962df5da8b": {
+      "symbol": "GOOGon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x821aef7d0f4347bb9ea6f293a98b19d823eef0c5": {
+      "symbol": "VSHon",
+      "value": "1.003370853310730012",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x82436bae31ae373258ba567f32087eefc32189f2": {
+      "symbol": "WCCon",
+      "value": "1.002007841900819795",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x82715299f3f132fb85f3de1f7e8fafd3d79f3eb5": {
+      "symbol": "EWJon",
+      "value": "1.003759352633542927",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x82e07c1017032cfd889b1ca81ebe722c4d4de825": {
+      "symbol": "QUBTon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x84719a1082ed487c7eeac7d69885e3cc2009ea78": {
+      "symbol": "JAAAon",
+      "value": "1.024974277105660489",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x847ef23a3f99af79a185ce033e1664165b846eea": {
+      "symbol": "HSAIon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x85b53a9344884ae428e0e15f05a1819d280d4be7": {
+      "symbol": "HYGWon",
+      "value": "1.011520342885615455",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x8677abad7b458bf16a0fb2676dfc7d3f55ac202a": {
+      "symbol": "ABBVon",
+      "value": "1.016546279555654879",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x869027261075c3c239d6a26842579b93802606f4": {
+      "symbol": "MRKon",
+      "value": "1.014173720487620155",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x8755c5c39b1aa9053a83ac731242a2cf4d04b0fe": {
+      "symbol": "SEDGon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x879fc0d8dfdb13b4af3513d9838f82c4df8f57e8": {
+      "symbol": "IALTon",
+      "value": "1.001730576713819369",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x88672043905bdd272df55a5a7bb1b7e1e693cbc5": {
+      "symbol": "OPRAon",
+      "value": "1.013721657238430532",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x88b90f45bd6a4f97f7d85d280ed64a40880e4935": {
+      "symbol": "ITAon",
+      "value": "1.001757579956809421",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x89a9f7114be6b220fae645ba0cbb720889867415": {
+      "symbol": "CIENon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x89c37104afcee9a72187e05d960a1e09763a126e": {
+      "symbol": "MEIon",
+      "value": "1.00228200822983448",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x89cc700f308a4c59889fbf3286216554c53b0601": {
+      "symbol": "PURRon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x8a5f83a4b3ad2b9604f53c4ddf8dce1329f9d433": {
+      "symbol": "NVMIon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x8a83c31d6751833b4940b6e871c48d9a15a07b46": {
+      "symbol": "PFEon",
+      "value": "1.060931676944711313",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x8ac67002282eea816afa0160d22a8d27f05ba07b": {
+      "symbol": "LWLGon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x8b46599e0e80a34f37e97df58e741ca904cdfabd": {
+      "symbol": "STMon",
+      "value": "1.001097765263570588",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x8b68b3d3173c406d2c5f4f2107d54e6562a23120": {
+      "symbol": "CEVAon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x8b6acf6041a81567f012ff6a4c6d96d5818d74bf": {
+      "symbol": "MUon",
+      "value": "1.001121237525844732",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x8b872732b07be325a8803cdb480d9d20b6f8d11b": {
+      "symbol": "SLVon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x8c7bf0ed6bc778bde1489de1592c1aad3e66371d": {
+      "symbol": "QBTSon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x8c9979dc208f74a5602c38691aa920f121e2f863": {
+      "symbol": "VRTXon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x8d941ebb4921f8d43cfa65233b14a547f96559fc": {
+      "symbol": "JBLon",
+      "value": "1.000152794662118479",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x8dd51e233e2344498f876c231a3bd962e9750a6c": {
+      "symbol": "GGOVon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x8ddb97556f6ae98b4d408c56b167139fe1cbe3e8": {
+      "symbol": "Con",
+      "value": "1.010521230925402007",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x8fd70ee385f470c8d6fda2d93a4e49c849bac6a6": {
+      "symbol": "IRENon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x90ccbb75d61cb65cd73a3abb5df04a75961612b7": {
+      "symbol": "DEon",
+      "value": "1.007956849489990672",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x90eaa91af0b4559f1f270258bb5cddfafbb62da9": {
+      "symbol": "STLDon",
+      "value": "1.003224681430560179",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x918008c3d29496c37b478b611967beaca365af36": {
+      "symbol": "IEFAon",
+      "value": "1.0249977347338618",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x91c62325f901ee29da8e521cfe68980332a4ca06": {
+      "symbol": "ACHRon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x91fc7371d6de682a1e8cfcb4eb7da693312a03a4": {
+      "symbol": "BILIon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x92d504158a8dc69de989db5ede3230d958fb8630": {
+      "symbol": "EXODon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x9351abd19f42101dd36025e495b98e910b255d78": {
+      "symbol": "PLTRon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x93b83111c54aa3993b2de5fccd4c70b26c522d5d": {
+      "symbol": "MYRGon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x93eb8376ec73dd07f46ba7ae1ee9b0bbd937ad93": {
+      "symbol": "EUHYon",
+      "value": "1.008993038283242752",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x93fac02b22b6743423381d163aec418178019b7a": {
+      "symbol": "FIGon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x940f442746d9ae699e63c378d52c4494ea02684f": {
+      "symbol": "BINCon",
+      "value": "1.025789045256870842",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x94174e3d1335db402dd03a092f7aa7ac2cb32be4": {
+      "symbol": "USOon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x941e3a7a6fc97b094c63a0348367cf90d93ff090": {
+      "symbol": "ALOYon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x94d7754541b829a87321d56121bc544167ac490d": {
+      "symbol": "SBUXon",
+      "value": "1.017764658966079924",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x95f7423c51eab71cbd00ca855b0b2b2153f14184": {
+      "symbol": "ROKon",
+      "value": "1.002161968599979857",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x9609f804fd90440dd3f4afa1e0a4d57dfd580ce8": {
+      "symbol": "IJSon",
+      "value": "1.005718660990530932",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x966ebcba3c51e81f5cf159a1eabefd2327ab5e8d": {
+      "symbol": "STXon",
+      "value": "1.002715741252088661",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x96a1b43c8146e6d1f6e66b226a3c520cbe3d8a50": {
+      "symbol": "DYNFon",
+      "value": "1.00273784182869486",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x97b2fd5fc2f3e0dfd72d45734e360961528b6c63": {
+      "symbol": "HYDBon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x9810beac9af3c30d14cfb61cdd557e160f60fd50": {
+      "symbol": "LIon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x9876f4b879cde9aa49ffd260034a0698b7b33a49": {
+      "symbol": "EWZon",
+      "value": "1.006600878243512974",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x992879cd8ce0c312d98648875b5a8d6d042cbf34": {
+      "symbol": "CRCLon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x995add4ba29a628a57930a8a185c62ca044ec090": {
+      "symbol": "MCDon",
+      "value": "1.021904049306145317",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x99e01f02d66455bb106d91d469c9eaf6ab4904f6": {
+      "symbol": "SBETon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x9a1c88ac479906a7f03e76605b15b72df10d8e51": {
+      "symbol": "EQTon",
+      "value": "1.002182402230789206",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x9b8e987e6fec8cf1380c4dca7071e2c7853aeea1": {
+      "symbol": "FXIon",
+      "value": "1.005231412765957447",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x9cea8a7be1ab0320b709d368ad60d8500f55995f": {
+      "symbol": "VRTon",
+      "value": "1.000481613413338117",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x9e23662f540c6bc117adf91230730d9b2fdf5643": {
+      "symbol": "VDEon",
+      "value": "1.008973044485644435",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x9e609e96b688927aa49dcd9758e2081f0c48ccab": {
+      "symbol": "IGEBon",
+      "value": "1.010971067659683597",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0x9f16e46c73b43bdb70861247d537bee4ea18f639": {
+      "symbol": "AMDon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xa046c2f0a1ac0a0e8829efc12163ae892ceafac2": {
+      "symbol": "IGVon",
+      "value": "1.000127185296997973",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xa09699fc0cbb1f85128450a0ff6a3c4d3a7e7b9b": {
+      "symbol": "OPENon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xa1daab37da2a29a1ec721922b55962eb8b481001": {
+      "symbol": "FNon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xa2a97e3d6140e8ccd058f3b84230f3e1a349b1a3": {
+      "symbol": "AGon",
+      "value": "1.000563369423569301",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xa3b089c886e6d721f49def8e050f3b9d4362560b": {
+      "symbol": "VZon",
+      "value": "1.034801484107482426",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xa3b7b7cfeb023a6c4f444f5ca9a3fc85809ece15": {
+      "symbol": "LUNRon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xa486a0a05250e8621ba3b26c3bbc517145eba619": {
+      "symbol": "IEFon",
+      "value": "1.016280993227644106",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xa528caaa2f96090e379d43f90834c75df54d6e74": {
+      "symbol": "INTCon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xa5351c9bf08055e03642b6b8649a0f7e895501bf": {
+      "symbol": "UNGon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xa59469d91563caeeddd2ffc731f41215e7b691ef": {
+      "symbol": "VICRon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xa75f08b9a91439daac9cc7072857cc0a98cf527a": {
+      "symbol": "CCJon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xa7d1e886acf66ec0656df2decb4b7c893a3bab4c": {
+      "symbol": "WMTon",
+      "value": "1.005855614984698629",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xa9ee28c80f960b889dfbd1902055218cba016f75": {
+      "symbol": "NVDAon",
+      "value": "1.0017152487959898",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xab2f74804c022c5249d52e743af4340e42f5f3b6": {
+      "symbol": "GRABon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xac38a6608868e2f487d7993ea7339c69e5ab077b": {
+      "symbol": "CLFon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xad56701d9e57957e28e546db7db508a16d4f86cc": {
+      "symbol": "WULFon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xad8920afa9d158f5ebab77c9ffcad650d72e473d": {
+      "symbol": "VPGon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xae922b6cc2371b6dce592a82fac15ef890a7d467": {
+      "symbol": "AIPon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xaed5985afc12aa09d87f55b4b1e6bc3b8f7b0208": {
+      "symbol": "CMGon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xaf6c03acf72355ce98d0741302b78870b376428c": {
+      "symbol": "OKLOon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xafaa2087093b7b396adab8216506d9066c6a6f13": {
+      "symbol": "ATKRon",
+      "value": "1.002464055010849469",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xaff6b836d3ebd29aeb0c8b840add04ef79d79678": {
+      "symbol": "GFSon",
+      "value": "1.003510505632758592",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xb034f6cb52b7f2fd5a7eeeffca6b9adcd6b9a6f6": {
+      "symbol": "ASMLon",
+      "value": "1.005342942673895318",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xb0752aa50b089ee6ea9acd51373207fa460e87bb": {
+      "symbol": "OSCRon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xb0d7d4b65a654d43f91272bb94e011ce6812a2ef": {
+      "symbol": "SECUon",
+      "value": "1.007901531235421777",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xb18c6a83490dddbc9a83b011173b5b2fb5dc1272": {
+      "symbol": "HTZon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xb1aba049c42b6fe811766eba61f51f11c57acc4b": {
+      "symbol": "Fon",
+      "value": "1.024077607301221741",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xb35a9eab5d25282f4e668798b629a9294e9a47aa": {
+      "symbol": "ONon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xb3d1a5f9bf92f18da643f2ada2f2cdfdae67e9d1": {
+      "symbol": "WLKon",
+      "value": "1.004879356568364611",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xb42f5597eadd424de67b46fe5d1ec4b61367a4e5": {
+      "symbol": "BOTZon",
+      "value": "1.000336336601392134",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xb4d695569236273745b4cd54b539b1b9cc1513af": {
+      "symbol": "RKLBon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xb56b7c2f9988448790b0f78697f405ab5e8597e6": {
+      "symbol": "NVTSon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xb78ccbcd9dce42d4fa5fdc835cb6a1aa1095a3b5": {
+      "symbol": "UCTTon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xb84e150a1d18380cfeeebcde8756368dd489a1a3": {
+      "symbol": "AMKRon",
+      "value": "1.001281543182814555",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xb943c8a0d77b656daf5244da060d647fd9152289": {
+      "symbol": "SOXLon",
+      "value": "1.000469412061933807",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xbb8c10f7e828e3279df8cc3397a5212f845c509b": {
+      "symbol": "AIon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xbbe4dfe7a349fb72aec6f52d5cd9bdd78ae8f313": {
+      "symbol": "TLNon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xbc34d36b70e5a256f3d16f9ca9d3ca3838f6cc4f": {
+      "symbol": "QLTAon",
+      "value": "1.01000211609146203",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xbcf7d958791152128710565a5fc6f68342ed71c8": {
+      "symbol": "TMOon",
+      "value": "1.00193039467368416",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xbeeef4361f6603edacef5205b343c6bb6473a099": {
+      "symbol": "IYWon",
+      "value": "1.000342793337911971",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xc008c5f579ec1450f20099c39f587547e27c7523": {
+      "symbol": "SGOVon",
+      "value": "1.018457360313098676",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xc142ba8ccd36d80c3a001342fb83e4c3d218a873": {
+      "symbol": "SMCIon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xc145dc2ebdbe8ead1fecdebf46c76eb1fdd0104d": {
+      "symbol": "CVNAon",
+      "value": "5",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xc16f47c4a7ed39372b9a0e3e2016cede9b4cb83a": {
+      "symbol": "REMXon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xc2c7fcddc37f6737ca2481ebda6b81ee279fe20c": {
+      "symbol": "BZon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xc2dd31b1b3a2f515ce0d48de712c6744c3475170": {
+      "symbol": "VTVon",
+      "value": "1.014198188008842166",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xc2f65e745fd13af1d00d5c81dd33f762fb81c264": {
+      "symbol": "CAMTon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xc37042a7a4fa510d8884a433762ab87257b91965": {
+      "symbol": "TSMon",
+      "value": "1.009320746408453452",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xc43ae29afe58bf90da6fe3edd570c2e735fb2850": {
+      "symbol": "BOTon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xc4a88a72b848255fd24da3c1ad6755d980535fb1": {
+      "symbol": "RIOTon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xc5efd0c3a8ff6d9816da7b56625ab4c398eb9e08": {
+      "symbol": "ACMRon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xc6f9edbee6042a237d72493bbda3ee2c3c62f708": {
+      "symbol": "NIOon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xc7806943663158d68740a14ab0b270bd60bde87d": {
+      "symbol": "URAon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xc79fc7af952c8b41c6b7b7657dd24f44f7c10f2a": {
+      "symbol": "SYMon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xc8206bb42ec019f7e7ea060ed887e9f5bb53cbb0": {
+      "symbol": "VCXon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xc992e5f8da1b99cb941b0a259be9014cffe89ccf": {
+      "symbol": "USHYon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xca3a5c955f1f01f20aacf9501b03e4aa235e478b": {
+      "symbol": "TXNon",
+      "value": "1.011683272013645206",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xca626a74420aaaf285987da23d829f9159ab867c": {
+      "symbol": "URNMon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xcb22db0ecb6fe58b7b47db443dcfdfdfbf729cef": {
+      "symbol": "ADBEon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xcb2a0f46f67dc4c58a316f1c008edef5c2311795": {
+      "symbol": "IAUon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xcb6d74aff24afc94514727ee0fcda6bb6b64f3f9": {
+      "symbol": "RXRXon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xcc977b493f52b4b6b6a0c3594530f2baee565e96": {
+      "symbol": "MBLYon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xce0466bae0e867239719dc386ca84b1f3efe6914": {
+      "symbol": "WMon",
+      "value": "1.00885934305972954",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xce128edcf46b281b7df8880867b74e11b055e8e7": {
+      "symbol": "WYFIon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xceb29848d04ad3cb46e1fe8e45b82ffac39d797d": {
+      "symbol": "WDCon",
+      "value": "1.00040472067533532",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xcf3e84e62002ca459db81b2032d7fe13715bad51": {
+      "symbol": "PDBCon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xcf9caf83053213c44dd7027db3e1e4ac98e55f8f": {
+      "symbol": "ITOTon",
+      "value": "1.009615626928998616",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xcfd1f0df84300ea1a4e2ba5238043a2fa5a7237c": {
+      "symbol": "PINSon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xd04a2bb053277721a8321d7441eed5b42fdf7250": {
+      "symbol": "CRMon",
+      "value": "1.007124163348934609",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xd09f7b75b9659b864c6f82bb00ff096f9d277998": {
+      "symbol": "LMTon",
+      "value": "1.022808839790325072",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xd0a58bc9d88d3ff48c0294cb7e45937d0e41a928": {
+      "symbol": "SPCXon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xd1f799cb9f5d0a02951b0755beced6c43882712f": {
+      "symbol": "JNJon",
+      "value": "1.0111997233056816",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xd226d8170ee38793430c7dec6903df4b818bb74c": {
+      "symbol": "MARAon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xd2c06fef2ca2375a9c7ceb4abca9dbc2ab6af981": {
+      "symbol": "UUUUon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xd3113a0ad20a46f6a662c63fe8e637f7713e59c7": {
+      "symbol": "CVXon",
+      "value": "1.027471414431826772",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xd381aec27daaccc87f102ff4ad6652f8b5f20ba0": {
+      "symbol": "POWLon",
+      "value": "1.00030563978168587",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xd41699aa1bfc1c5f172c27f387372bd30717a5db": {
+      "symbol": "MKSIon",
+      "value": "1.000652863271777653",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xd41829dec8b51119176ee0a6b73bc8b2718546a9": {
+      "symbol": "BRLNon",
+      "value": "1.012720762681668569",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xd5964f3fcee8d649995ab88f04b8982539c282d2": {
+      "symbol": "BABAon",
+      "value": "1.00891343515435611",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xd60b0276640a693ece55660afac0383ca6433882": {
+      "symbol": "PRIMon",
+      "value": "1.001334419563996051",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xd615468088b19fb9d4f03cb3ce9e33876ff3db99": {
+      "symbol": "BACon",
+      "value": "1.011177383973215521",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xd678f3f86436ee298d28a3c414c367adfed65337": {
+      "symbol": "FORMon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xd7a6353a23ed2c4fcac29a63cbbe3f65ffef41f5": {
+      "symbol": "SOon",
+      "value": "1.017031692015107002",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xd7df5863a3e742f0c767768cdfcb63f09e0422f6": {
+      "symbol": "METAon",
+      "value": "1.002826918305349555",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xd7e3317d54473dab04135fb0676623f237ff5ca9": {
+      "symbol": "CLOIon",
+      "value": "1.023321113815687412",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xd803f8777187d6dee1ea57854aeb957043fb1675": {
+      "symbol": "AXPon",
+      "value": "1.0074362936565311",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xd85d4ce29b4ca361ff72ef0e53d6236e334c5db6": {
+      "symbol": "ONDSon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xd8daffd168651470cd5397a5d670dd5f8e4b02f5": {
+      "symbol": "FPSon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xdabb9aff4cf02f26d2014e4ca9f94ac6fe6572a3": {
+      "symbol": "GMEon",
+      "value": "1.017138313418943429",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xdad07d0ca26ed4109bc00893dbee3ed4ce8ce2a4": {
+      "symbol": "CIFRon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xdb0748297fbef0b33df89e86519a0bd3adaf6459": {
+      "symbol": "INDAon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xdb69becc323fec440ca8eb0c3564802e77ce2827": {
+      "symbol": "TASKon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xdcd4536508060dab8f43c334b3a6c72c39528da5": {
+      "symbol": "CIBRon",
+      "value": "1.001897305180188267",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xdce0957e22f7baf2aa1a50d854e03cee6f215004": {
+      "symbol": "AEHRon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xde9d6036fca870f7efc5a82722ae694c371ac909": {
+      "symbol": "UBERon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xe1743616f705954620aa351465c8885fbde5a8a9": {
+      "symbol": "LINon",
+      "value": "1.016674139284679156",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xe23f03d2907cdc38a10f6ccdc1a157bf1afe51de": {
+      "symbol": "NIKLon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xe2ac868f2fd097086d83bc939248e5ae08d35da4": {
+      "symbol": "BTGon",
+      "value": "1.008927503857800006",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xe3316f5372559768e14bc7ffe983891a742987e7": {
+      "symbol": "INSWon",
+      "value": "1.034863607720426917",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xe3b17e6d290a0f28bd32af4064637057627004d5": {
+      "symbol": "FCXon",
+      "value": "1.003248158416538125",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xe42cfb20e00912409b77a602b5bdcff3c7acc5f4": {
+      "symbol": "TQQQon",
+      "value": "1.004031631370312643",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xe4bd77247671746caa3119e9feaa146f8a4ee237": {
+      "symbol": "BLKGRWon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xe4e12c9cec3e8cae405202a97f66afa695075fa0": {
+      "symbol": "EQIXon",
+      "value": "1.015011450200885668",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xe5ba472c98b7e4695bd856290de66bdedaffc123": {
+      "symbol": "SCHWon",
+      "value": "1.006965419399731114",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xe5ca1585c6053ee891027fd0a2548cb3b27d7f01": {
+      "symbol": "SHLDon",
+      "value": "1.002237055875427406",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xe658c62195f32bc53226e7e2642e3d76b4382fb8": {
+      "symbol": "BLKDIGon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xe6837794fbc6dd024733a1a31f86061296fa2752": {
+      "symbol": "CRWDon",
+      "value": "4",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xe778a2e5d953c82eb9475cf3b87654226a867344": {
+      "symbol": "XYZon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xe7ddf606841ee278a30e5c90486681e68ddd8cbf": {
+      "symbol": "UECon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xe8ff70859ce4cbd72e4352b4fb45f5bf39d07464": {
+      "symbol": "IBMon",
+      "value": "1.022792376444627581",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xe92be960ae64f6a914ca77014cac9e56de7f36c1": {
+      "symbol": "JDon",
+      "value": "1.034507042253521127",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xe9518cb0010c717db69001f1418eff9e97330137": {
+      "symbol": "NOKon",
+      "value": "1.002325125021972431",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xe96f94e10f1265dcc15f83d251f1f6758d2cd67d": {
+      "symbol": "FTGCon",
+      "value": "1.017501466936165978",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xe9d43f7e6b2237e8873a7003b3f43c6b03160be5": {
+      "symbol": "NEEon",
+      "value": "1.015136722587082798",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xea130432a9fee9ca1a7eda84028650d38bd0e232": {
+      "symbol": "FFOGon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xeb19c13c54b1cd48afc62f6503375e92d5f1e856": {
+      "symbol": "NOWon",
+      "value": "5",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xebe1408a7cce4f38de15467e5139c3d82e4641f8": {
+      "symbol": "SYSBon",
+      "value": "1.007291348544276389",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xec4c1944682b8c7ba6c825e9a8b2b32cb5ecace5": {
+      "symbol": "DTCRon",
+      "value": "1.00258759858044164",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xec93fe7ff4b09ca3ccafbc4cc9615e62be412780": {
+      "symbol": "COPXon",
+      "value": "1.002369858267716535",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xecc1299f183b6a720a6f4729bf24f82cd8d50828": {
+      "symbol": "TMon",
+      "value": "1.015073673229886556",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xed2a500eb2b66679e0bbd76e51a60049ae5f3271": {
+      "symbol": "RGTIon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xed5615c5280e897241b9e4f019562a581cd49390": {
+      "symbol": "KOPNon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xedb3124e96c64c177eb709cbc64f9977db40ea74": {
+      "symbol": "APPon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xedcf71b2e2217064038adcb54a3c3a5fc3488ef1": {
+      "symbol": "SOUNon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xee0d57462f20434030b8262204c00c0ea0399c41": {
+      "symbol": "FGDLon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xee268780473e7a0e47bac41547c6e01512555a16": {
+      "symbol": "NBISon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xeee9eee593cb8f7946260b4066cba7907f40acfa": {
+      "symbol": "DISon",
+      "value": "1.010066831424328193",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xef80743f78d98fc2b47a2253b293152ce8b879ba": {
+      "symbol": "ABNBon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xf157481bebd0c0686780fd0f61806c900a6137e8": {
+      "symbol": "CRDOon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xf15b8f7465b92799f6ee440f86b3cab5a4dbc65a": {
+      "symbol": "SCCOon",
+      "value": "1.026785459208234421",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xf1a96d4b591e446445600789d60c73dd636b357c": {
+      "symbol": "FLNCon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xf21132a811ad1a878e21af60f64d4e690c9daa42": {
+      "symbol": "BAon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xf26518958935654878de15be7bc79a26971583ba": {
+      "symbol": "DELLon",
+      "value": "1.00115351142125008",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xf2c24c47805f4f72d3919c8674bfdd401505794b": {
+      "symbol": "VSTon",
+      "value": "1.003074629364078958",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xf2e14fce9259c8a7903c4be5326058ae2d004fc7": {
+      "symbol": "ACLSon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xf325884d9bcac457271fe7f7b6be1765348fcca2": {
+      "symbol": "SNAPon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xf3e82ea164cb344b2b11bad4c24b0ea4f7ba4714": {
+      "symbol": "PDDon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xf400b05ad5a791c65acc3f905e5ade5f1b653c8c": {
+      "symbol": "TTMIon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xf49046aae76eaeb7ffd3ef116ce0f7cd0f52d93e": {
+      "symbol": "MTZon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xf4b674d4e33c36f8db4b928a5eec4e1f87b386e3": {
+      "symbol": "SMRon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xf4fd75764a5c086fb12f822be2ca318b3a362dc3": {
+      "symbol": "USFRon",
+      "value": "1.021484626410913947",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xf54b94ea21e1da5d51ef00fd4502225e5394f874": {
+      "symbol": "IWNon",
+      "value": "1.014602631533727731",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xf69e40069ac227c11459e3f4e8a446b3401616b6": {
+      "symbol": "TLTon",
+      "value": "1.044151396974226011",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xf78155dc15b838b7577002bc53bbe1041ca48622": {
+      "symbol": "BLKHIon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xf8589b526fdd65f7f301c605a6e04f0f1b4b3620": {
+      "symbol": "COINon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xf8919fe7d586b11d0a900e987c4a41bc6c3195f5": {
+      "symbol": "UAMYon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xf9015e0b3ab4ddd216f522d6150db826c9be83f8": {
+      "symbol": "PLon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xf95e50be5efc96117c28775f80c7cdb41ebc4888": {
+      "symbol": "SHYon",
+      "value": "1.014284920758270432",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xf98b89825233808cd37706a53d2b4ae3e359d442": {
+      "symbol": "GLXYon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xf99f8f3a95257d82006183bd524efa7aacc9ef7a": {
+      "symbol": "PEPon",
+      "value": "1.035087254508861537",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xfa9a1e901085e269f6d428f79cd5252d8b919344": {
+      "symbol": "GLDon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xfadde620010736a5074a4269894cb52b0a9a91de": {
+      "symbol": "SLBon",
+      "value": "1.00359036773015735",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xfb4a89a077b9020c7101b1af760beb708f37a416": {
+      "symbol": "ENTGon",
+      "value": "1.000591343350042021",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xfb836dc42ebdff6aa8db9339336899061d1c4f3f": {
+      "symbol": "ICHRon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xfbd4d681c92ead6af0e49950c8b2e47eeacbb2db": {
+      "symbol": "QCOMon",
+      "value": "1.018536802088982624",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xfbdf0366f800cc79d6663da26bc0bf21fb455aa6": {
+      "symbol": "AMGNon",
+      "value": "1.014242845562430826",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xfbe22d27b6e153244882fd7bdfe7c6109918281b": {
+      "symbol": "BLSHon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xfc2067e3e6a289c205151d96ef67a032f339566d": {
+      "symbol": "DBCon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xfc263946439b0d802bf4c5a6fcd34e2885259f91": {
+      "symbol": "KLACon",
+      "value": "10.026064925604903975",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xfd7778d5d4e804b5b512471df36d60c465199a52": {
+      "symbol": "LITon",
+      "value": "1.003021838248679298",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xfe9aa194e3c4604f3872f220eb41c33a287fcd90": {
+      "symbol": "UNPon",
+      "value": "1.006866989908180095",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xfeb0793eea97585eb3a541f3fd53450d225b2b87": {
+      "symbol": "NETon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    },
+    "0xff6f45b2d761cde4dab7f5d7a1a5f691f52f3bc3": {
+      "symbol": "HLITon",
+      "value": "1",
+      "seenAt": "2026-09-30T19:35:13Z"
+    }
+  }
+}

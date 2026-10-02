@@ -1,4 +1,11 @@
-import { formatShares, type ConsolidatedQuote, type QuoteRow } from "@tally/core";
+import {
+  formatShares,
+  formatUnits,
+  type CheckRecord,
+  type ConsolidatedQuote,
+  type QuoteRow,
+  type TokenInspection,
+} from "@tally/core";
 
 const usd = (n: number | undefined, d = 2) =>
   n === undefined
@@ -69,5 +76,69 @@ export function formatQuote(q: ConsolidatedQuote): string {
       `${q.best} saves ${usd(q.saving.usd, 4)} (${(q.saving.pct * 100).toFixed(2)}%) vs ${q.saving.vsSymbol} for the same shares, fee included.`,
     );
   for (const w of q.warnings) out.push(`! ${w}`);
+  return out.join("\n");
+}
+
+const MARK: Record<CheckRecord["outcome"], string> = {
+  pass: "✓",
+  deduct: "−",
+  flag: "⚑",
+  skipped: "·",
+};
+
+/** The integrity log, one line per check: ✓ pass, − deduction, ⚑ flag, · skipped. Every check appears, whatever its outcome. */
+export function formatChecks(checks: CheckRecord[], indent = "    "): string[] {
+  return checks.map((c) => `${indent}${MARK[c.outcome]} ${c.id.padEnd(18)} ${c.summary}`);
+}
+
+/** `tally quote --checks`: the log under the table for every row. */
+export function formatQuoteChecks(q: ConsolidatedQuote): string {
+  const out: string[] = ["", "Integrity checks (✓ pass  − deduction  ⚑ flag  · skipped):"];
+  for (const r of q.rows) {
+    out.push(
+      `  ${r.symbol}: ${r.integrity.grade} (${r.integrity.score})`,
+      ...formatChecks(r.integrity.checks),
+    );
+  }
+  return out.join("\n");
+}
+
+const num = (v: bigint | undefined) => (v === undefined ? "–" : formatUnits(v, 18, 8));
+
+/** `tally facts`: everything the grade is built from, per token, with the check log. */
+export function formatFacts(ticker: string, tokens: TokenInspection[], now: number): string {
+  const out: string[] = [`${ticker.toUpperCase()} facts as of ${new Date(now).toISOString()}`];
+  const ref = tokens[0]?.referencePrice;
+  out.push(
+    `US reference price: ${ref ? `$${ref.price.toFixed(2)} per share, session ${ref.session}` : "none"}`,
+  );
+  for (const t of tokens) {
+    out.push("", `${t.symbol} (${ISSUER[t.issuer] ?? t.issuer})  ${t.address}`);
+    out.push(
+      `  executable: ${t.executable ? "yes" : `no (${t.blockedReason ?? "not executable"})`}`,
+    );
+    const r = t.readings;
+    out.push(
+      `  multiplier readings: on-chain ${num(r.onchain)}, api ${num(r.api)}, list ${num(r.list)}${t.multiplier ? `  → using ${t.multiplier.source} ${num(t.multiplier.value)}${t.multiplier.degraded ? " (degraded)" : ""}` : "  → none"}`,
+    );
+    const s = t.facts.status;
+    out.push(
+      `  status: ${s ? `${s.kind} (${s.reasonCode ?? "no code"}), session ${s.session}${s.reasonMsg ? `, "${s.reasonMsg}"` : ""}` : "unknown"}`,
+    );
+    out.push(
+      `  listed token price: ${t.facts.listedTokenPrice === undefined ? "–" : `$${t.facts.listedTokenPrice.toFixed(2)}`}   on-chain volume 24h: ${t.facts.onchainVolume24hUsd === undefined ? "–" : `$${Math.round(t.facts.onchainVolume24hUsd).toLocaleString("en-US")}`}`,
+    );
+    const a = t.facts.attestation;
+    out.push(`  attestation: ${a ? `report ${a.reportDate} (${a.url})` : "none"}`);
+    const b = t.facts.multiplierBaseline;
+    out.push(
+      `  baseline: ${b ? `${num(b.value)} seen ${new Date(b.at).toISOString().slice(0, 10)}` : t.issuer === "ondo" ? "none" : "n/a"}`,
+    );
+    for (const [k, why] of Object.entries(t.facts.notes ?? {})) out.push(`  note (${k}): ${why}`);
+    out.push(
+      `  integrity ${t.integrity.grade} (${t.integrity.score}):`,
+      ...formatChecks(t.integrity.checks),
+    );
+  }
   return out.join("\n");
 }
