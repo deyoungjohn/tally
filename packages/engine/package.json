@@ -16,7 +16,8 @@
     "@tally/binance": "workspace:*",
     "@tally/chain": "workspace:*",
     "@tally/config": "workspace:*",
-    "@tally/core": "workspace:*"
+    "@tally/core": "workspace:*",
+    "viem": "^2.57.2"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

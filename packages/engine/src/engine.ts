@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- fixture JSON is untyped by nature */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { QUOTE_PLACEHOLDER_WALLET, TTL_MS } from "@tally/config";
+import { QUOTE_PLACEHOLDER_WALLET, SHAREGUARD_DEPLOYED, TTL_MS } from "@tally/config";
 import {
   BinanceApi,
   BinanceClient,
@@ -13,6 +13,18 @@ import {
   type FixtureFetchOptions,
 } from "@tally/binance";
 import { JsonBaselineStore, baselineFromEnv } from "./baseline";
+import {
+  getTradeReceipt,
+  prepareTrade,
+  type FeedSigner,
+  type TradeChain,
+  type TradePlan,
+  type TradeReceipt,
+  type TradeRequest,
+} from "./trade";
+import { feedSignerFromEnv, liveTradeChain } from "./trade-chain";
+import { fixtureTradeChain } from "./trade-fixture";
+import type { Hex } from "viem";
 import { chainPort, clientFromEnv, onchainMultiplierReader } from "@tally/chain";
 import {
   TtlCache,
@@ -32,7 +44,13 @@ export interface Engine {
   quote(input: QuoteInput): Promise<ConsolidatedQuote>;
   /** Every token of a ticker with its facts, bounds and the full integrity check log, and no quote (`tally facts`). */
   facts(ticker: string): Promise<TokenInspection[]>;
-  /** Raw ports, for the trade plan (M3) and tests. */
+  /** The trade plan (blueprint §7.6) and the receipt in shares. Needs the ShareGuard address (`SHAREGUARD_ADDRESS`). */
+  trade: {
+    guard: Address;
+    prepare(req: TradeRequest): Promise<TradePlan>;
+    receipt(txHash: Hex, ticker?: string): Promise<TradeReceipt>;
+  };
+  /** Raw ports, for tests. */
   ports: EnginePorts;
 }
 
@@ -47,6 +65,9 @@ interface BuildOptions {
   ratePerSec?: number;
   onWarn?: (message: string) => void;
   baseline: JsonBaselineStore;
+  guard: Address;
+  tradeChain: TradeChain;
+  signer?: FeedSigner;
 }
 
 function build(o: BuildOptions): Engine {
@@ -79,16 +100,33 @@ function build(o: BuildOptions): Engine {
     now,
   };
   const quotes = new TtlCache<ConsolidatedQuote>(TTL_MS.quote, now);
+  const quote = (input: QuoteInput) => {
+    const amount =
+      "usd" in input.amount ? amountBucket(input.amount.usd) : `sh${input.amount.shares}`;
+    return quotes.get(`${input.ticker.toUpperCase()}:${amount}:${input.wallet ?? ""}`, () =>
+      consolidatedQuote(ports, input),
+    );
+  };
+  const tradeDeps = {
+    guard: o.guard,
+    api,
+    chain: o.tradeChain,
+    quote,
+    bnbUsd: ports.chain.bnbUsd,
+    reference: (t: string) => ports.facts.reference(t),
+    signer: o.signer,
+    now,
+    onWarn: o.onWarn,
+  };
   return {
     ports,
-    facts: (ticker) => inspectTicker(ports, ticker),
-    quote: (input) => {
-      const amount =
-        "usd" in input.amount ? amountBucket(input.amount.usd) : `sh${input.amount.shares}`;
-      return quotes.get(`${input.ticker.toUpperCase()}:${amount}:${input.wallet ?? ""}`, () =>
-        consolidatedQuote(ports, input),
-      );
+    trade: {
+      guard: o.guard,
+      prepare: (req) => prepareTrade(tradeDeps, req),
+      receipt: (hash, ticker) => getTradeReceipt(tradeDeps, hash, ticker),
     },
+    facts: (ticker) => inspectTicker(ports, ticker),
+    quote,
   };
 }
 
@@ -103,6 +141,7 @@ export function createLiveEngine(
     throw new Error(
       "BINANCE_W3_API_KEY and BINANCE_W3_API_SECRET are not set. Use --fixtures to run offline, or run this on the Seoul EC2 with the env file loaded.",
     );
+  const guard = (env.SHAREGUARD_ADDRESS?.trim() || SHAREGUARD_DEPLOYED) as Address;
   const rpc = clientFromEnv(env);
   const port = chainPort(rpc, async () => 0); // gas price only; BNB price comes from the API in `build`
   return build({
@@ -112,6 +151,9 @@ export function createLiveEngine(
     gasPriceWei: port.gasPriceWei,
     onWarn,
     baseline: baselineFromEnv(env, onWarn),
+    guard,
+    tradeChain: liveTradeChain(rpc, guard),
+    signer: feedSignerFromEnv(env),
   });
 }
 
@@ -126,6 +168,9 @@ export function createFixtureEngine(
     /** Test hook: wrap or replace the fixture fetch (e.g. to make one endpoint fail). */
     fetch?: typeof fetch;
     ratePerSec?: number;
+    /** Test and e2e hook: the state of the user's wallet and the guard. Defaults to a funded wallet with allowance. */
+    tradeChain?: TradeChain;
+    signer?: FeedSigner;
   } = {},
 ): Engine {
   const readJson = (p: string) => JSON.parse(readFileSync(p, "utf8")) as any;
@@ -152,6 +197,9 @@ export function createFixtureEngine(
     ratePerSec: o.ratePerSec ?? 1000,
     onWarn: o.onWarn,
     baseline: new JsonBaselineStore(), // read-only: fixtures never write
+    guard: SHAREGUARD_DEPLOYED,
+    tradeChain: o.tradeChain ?? fixtureTradeChain(),
+    signer: o.signer,
   });
 }
 
