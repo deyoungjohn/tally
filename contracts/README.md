@@ -17,6 +17,8 @@ Solidity 0.8.28, EVM `prague`, OpenZeppelin 5.4 and forge-std 1.10 as **git subm
 | `tools/guarded_buy.py` | the live guarded buys (run on the Seoul EC2) |
 | `script/fork.sh`, `script/capture.sh` | run fork tests / capture fresh calldata |
 
+**Deployed:** BSC `0x28F6F19bffbF25E36452c78d12090F0bC922970a` (2026-10-02, verified on BscScan). Results of the first two guarded buys: `results/`, `IDEAS.md` §F11.
+
 ## What ShareGuard does
 `swapForShares(tokenIn, amountIn, stock, minShares, router, routerData, recipient, deadline)` pulls
 `tokenIn` from the caller, approves **exactly** `amountIn` to the router's approve target, runs the

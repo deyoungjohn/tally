@@ -425,7 +425,7 @@ Start from `spike/shareguard/src/ShareGuard.sol` (proven on the fork) and harden
 
 > ⚠️ **Spike vulnerability that v1 fixes: arbitrary call.** The spike's `swapForShares` calls any `router` with any `data` supplied by the caller. Anyone who has approved ShareGuard could then be drained: an attacker passes `router = USDT` and `data = transferFrom(victim, attacker, amount)`. *(M2 correction, IDEAS §F11: with `tokenIn = USDT` the spike's own "no output" check stops this; the working exploit sets `tokenIn` = the stock token so the pulled dust counts as output.)* **v1 only calls allow-listed routers and approve targets,** never a token contract as the router, and rejects `tokenIn == stock`. Fork test G proves every variant fails (and that the spike logic is drained on real USDT).
 >
-> **Status (M2, 2026-10-02):** built in `contracts/` (see `contracts/README.md`); unit, fuzz and fork tests A–I pass. BscScan verification and the live guarded buys are owner-run (§19) and pending. Interface as built: `swapForShares(tokenIn, amountIn, stock, minShares, router, routerData, recipient, deadline)` and `swapForSharesWithFeed(..., FeedUpdate u, bytes sig)`; `Asset{source, enabled, maxStepBps, pauseCheck, pauseManager}`.
+> **Status (M2, 2026-10-02): done.** Built in `contracts/` (see `contracts/README.md`); unit, fuzz and fork tests A–I pass; **deployed and verified at `0x28F6F19bffbF25E36452c78d12090F0bC922970a`** with two live guarded buys (IDEAS §F11). Interface as built: `swapForShares(tokenIn, amountIn, stock, minShares, router, routerData, recipient, deadline)` and `swapForSharesWithFeed(..., FeedUpdate u, bytes sig)`; `Asset{source, enabled, maxStepBps, pauseCheck, pauseManager}`.
 
 ### 10.1 Interface (sketch)
 ```solidity
@@ -716,6 +716,7 @@ Today is Thu 1 Oct; submissions lock **Sun 11 Oct, 12:00 UTC**. Dates are target
 | bStock `compliance()` (NVDAB) | `0x53dba7aabde774787a1f57236b235567da8e14f4` |
 | bStock pause manager (shared by all bStocks seen) | `0x9fc74Be63f3589485B2423984a7a0557e0CF700a` (`isTokenPaused(address)` `0x5e76ad54`) |
 | Selectors | `uiMultiplier()` `0xa60bf13d` · `multiplier()` `0x1b3ed722` · `compliance()` `0x6290865d` · `tokenPauseManager()` `0x461ad792` |
+| **ShareGuard v1 (deployed 2026-10-02)** | `0x28F6F19bffbF25E36452c78d12090F0bC922970a` (owner: the user's deployer wallet; feed signer `0xDd3C5F463d71fb06D7bE749F904A4090E080f407`) |
 | Revert seen with too little gas | `0x1425ea42` = `FailedInnerCall()` |
 | Spike burner (test fills) | `0x2Bf7EdF53bc6BE6FF98F149387F3818cE28d2930` |
 
