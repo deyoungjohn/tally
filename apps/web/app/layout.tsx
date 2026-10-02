@@ -33,7 +33,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrains.variable}`}>
+    <html lang="en" className={`${inter.variable} ${jetbrains.variable}`} suppressHydrationWarning>
       <body>
         <noscript>
           <style>{".reveal{opacity:1!important;transform:none!important}"}</style>
