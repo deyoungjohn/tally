@@ -11,7 +11,10 @@ remappings = [
   "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
   "forge-std/=lib/forge-std/src/",
 ]
-fs_permissions = [{ access = "read", path = "./captures" }]
+fs_permissions = [
+  { access = "read", path = "./captures" },
+  { access = "read", path = "./deploy" },
+]
 
 [fuzz]
 runs = 512
@@ -21,3 +24,6 @@ bsc = "${BSC_RPC}"
 
 [lint]
 exclude_lints = ["named-struct-fields", "mixed-case-function", "mixed-case-variable"]
+
+[etherscan]
+bsc = { key = "${BSCSCAN_API_KEY}", chain = 56 }

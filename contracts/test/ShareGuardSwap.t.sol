@@ -23,7 +23,14 @@ contract ShareGuardSwapTest is GuardBase {
         usdt.approve(address(guard), 10e18);
         vm.expectRevert(abi.encodeWithSelector(ShareGuard.InsufficientShares.selector, 0.04e18, 0.05e18));
         guard.swapForShares(
-            address(usdt), 10e18, address(bstock), 0.05e18, address(router), _data(bstock, 10e18, 0.04e18, address(guard)), user, block.timestamp
+            address(usdt),
+            10e18,
+            address(bstock),
+            0.05e18,
+            address(router),
+            _data(bstock, 10e18, 0.04e18, address(guard)),
+            user,
+            block.timestamp
         );
         vm.stopPrank();
         assertEq(usdt.balanceOf(user), 100e18, "nothing spent on revert");
@@ -45,7 +52,14 @@ contract ShareGuardSwapTest is GuardBase {
         usdt.approve(address(guard), 10e18);
         vm.expectPartialRevert(ShareGuard.InsufficientShares.selector);
         guard.swapForShares(
-            address(usdt), 10e18, address(nflx), 2e18, address(router), _data(nflx, 10e18, 0.1e18, address(guard)), user, block.timestamp
+            address(usdt),
+            10e18,
+            address(nflx),
+            2e18,
+            address(router),
+            _data(nflx, 10e18, 0.1e18, address(guard)),
+            user,
+            block.timestamp
         );
         vm.stopPrank();
     }
@@ -55,7 +69,14 @@ contract ShareGuardSwapTest is GuardBase {
         usdt.approve(address(guard), 10e18);
         vm.expectRevert(ShareGuard.NoOutput.selector);
         guard.swapForShares(
-            address(usdt), 10e18, address(bstock), 1, address(router), _data(bstock, 10e18, 1e18, address(0xBEEF)), user, block.timestamp
+            address(usdt),
+            10e18,
+            address(bstock),
+            1,
+            address(router),
+            _data(bstock, 10e18, 1e18, address(0xBEEF)),
+            user,
+            block.timestamp
         );
         vm.stopPrank();
     }
@@ -89,7 +110,14 @@ contract ShareGuardSwapTest is GuardBase {
         vm.startPrank(user, user);
         usdt.approve(address(guard), 10e18);
         guard.swapForShares(
-            address(usdt), 10e18, address(bstock), 1, address(router), _data(bstock, 10e18, 1e18, address(guard)), stranger, block.timestamp
+            address(usdt),
+            10e18,
+            address(bstock),
+            1,
+            address(router),
+            _data(bstock, 10e18, 1e18, address(guard)),
+            stranger,
+            block.timestamp
         );
         vm.stopPrank();
         assertEq(bstock.balanceOf(stranger), 1e18);
@@ -129,7 +157,14 @@ contract ShareGuardSwapTest is GuardBase {
         usdt.approve(address(guard), 10e18);
         vm.expectPartialRevert(ShareGuard.RouterCallFailed.selector);
         guard.swapForShares(
-            address(usdt), 10e18, address(bstock), 1, address(router), abi.encodeCall(MockRouter.fail, ()), user, block.timestamp
+            address(usdt),
+            10e18,
+            address(bstock),
+            1,
+            address(router),
+            abi.encodeCall(MockRouter.fail, ()),
+            user,
+            block.timestamp
         );
         vm.stopPrank();
         assertEq(usdt.balanceOf(user), 100e18);
@@ -139,7 +174,14 @@ contract ShareGuardSwapTest is GuardBase {
         vm.prank(user, user);
         vm.expectRevert(); // MockToken underflow: no allowance
         guard.swapForShares(
-            address(usdt), 10e18, address(bstock), 1, address(router), _data(bstock, 10e18, 1e18, address(guard)), user, block.timestamp
+            address(usdt),
+            10e18,
+            address(bstock),
+            1,
+            address(router),
+            _data(bstock, 10e18, 1e18, address(guard)),
+            user,
+            block.timestamp
         );
     }
 
@@ -153,7 +195,14 @@ contract ShareGuardSwapTest is GuardBase {
         usdt.approve(address(guard), 10e18);
         vm.expectRevert(abi.encodeWithSelector(ShareGuard.AssetNotEnabled.selector, address(bstock)));
         guard.swapForShares(
-            address(usdt), 10e18, address(bstock), 1, address(router), _data(bstock, 10e18, 1e18, address(guard)), user, block.timestamp
+            address(usdt),
+            10e18,
+            address(bstock),
+            1,
+            address(router),
+            _data(bstock, 10e18, 1e18, address(guard)),
+            user,
+            block.timestamp
         );
         vm.stopPrank();
     }
@@ -215,7 +264,14 @@ contract ShareGuardSwapTest is GuardBase {
         usdt.approve(address(guard), 10e18);
         vm.expectRevert(abi.encodeWithSelector(ShareGuard.RouterNotAllowed.selector, address(router)));
         guard.swapForShares(
-            address(usdt), 10e18, address(bstock), 1, address(router), _data(bstock, 10e18, 1e18, address(guard)), user, block.timestamp
+            address(usdt),
+            10e18,
+            address(bstock),
+            1,
+            address(router),
+            _data(bstock, 10e18, 1e18, address(guard)),
+            user,
+            block.timestamp
         );
         vm.stopPrank();
     }
@@ -225,16 +281,21 @@ contract ShareGuardSwapTest is GuardBase {
         ReentrantRouter bad = new ReentrantRouter();
         guard.setRouter(address(bad), true, address(bad));
         bytes memory inner = abi.encodeCall(
-            ShareGuard.swapForShares,
-            (address(usdt), 1, address(bstock), 1, address(bad), "", user, block.timestamp)
+            ShareGuard.swapForShares, (address(usdt), 1, address(bstock), 1, address(bad), "", user, block.timestamp)
         );
         bad.arm(address(guard), inner);
         vm.startPrank(user, user);
         usdt.approve(address(guard), 10e18);
         vm.expectPartialRevert(ShareGuard.RouterCallFailed.selector);
         guard.swapForShares(
-            address(usdt), 10e18, address(bstock), 1, address(bad),
-            abi.encodeCall(ReentrantRouter.swap, (usdt, 10e18, bstock, 1e18, address(guard))), user, block.timestamp
+            address(usdt),
+            10e18,
+            address(bstock),
+            1,
+            address(bad),
+            abi.encodeCall(ReentrantRouter.swap, (usdt, 10e18, bstock, 1e18, address(guard))),
+            user,
+            block.timestamp
         );
         vm.stopPrank();
     }
@@ -247,7 +308,14 @@ contract ShareGuardSwapTest is GuardBase {
         usdt.approve(address(guard), 10e18);
         vm.expectRevert(); // Pausable.EnforcedPause
         guard.swapForShares(
-            address(usdt), 10e18, address(bstock), 1, address(router), _data(bstock, 10e18, 1e18, address(guard)), user, block.timestamp
+            address(usdt),
+            10e18,
+            address(bstock),
+            1,
+            address(router),
+            _data(bstock, 10e18, 1e18, address(guard)),
+            user,
+            block.timestamp
         );
         vm.stopPrank();
         guard.unpause();
@@ -261,7 +329,14 @@ contract ShareGuardSwapTest is GuardBase {
         usdt.approve(address(guard), 10e18);
         vm.expectRevert(abi.encodeWithSelector(ShareGuard.TokenPaused.selector, address(bstock)));
         guard.swapForShares(
-            address(usdt), 10e18, address(bstock), 1, address(router), _data(bstock, 10e18, 1e18, address(guard)), user, block.timestamp
+            address(usdt),
+            10e18,
+            address(bstock),
+            1,
+            address(router),
+            _data(bstock, 10e18, 1e18, address(guard)),
+            user,
+            block.timestamp
         );
         vm.stopPrank();
         assertEq(usdt.balanceOf(user), 100e18);

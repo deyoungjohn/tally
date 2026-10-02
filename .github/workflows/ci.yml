@@ -47,4 +47,20 @@ jobs:
           path: apps/web/test-results/*.png
           if-no-files-found: ignore
 
-  # Offline Foundry suites arrive in M2 (contracts/ is empty until then).
+  # Offline Foundry suites: unit + fuzz + the key-less deploy-script compile. Fork tests A-I need a
+  # BSC archive RPC secret and run on demand (.github/workflows/fork.yml).
+  contracts:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: contracts
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: foundry-rs/foundry-toolchain@v1
+      - run: forge --version
+      - run: forge fmt --check
+      - run: forge build --sizes
+      - name: Unit and fuzz tests (fork tests skip without CAPTURE)
+        run: forge test -vv

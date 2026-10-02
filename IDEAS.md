@@ -377,12 +377,12 @@ Swap #5 used **775,639 gas: with the API's 450,000 it would have reverted again.
 ### F9. Still open
 - **Larger sizes.** ~~Price impact at $100 and $1,000 is unknown.~~ Answered for quotes in §F10 (impact < 0.003%); real fills at those sizes are untested.
 - **Ondo RFQ mode.** It's documented but never observed. Keep a code path and a test for it.
-- **Ondo multiplier on-chain.** There isn't one. ShareGuard uses a feed for Ondo, which still needs bounds and a signer design.
+- **Ondo multiplier on-chain.** There isn't one. ShareGuard v1 uses a signed feed bounded per asset (§F11); the TS signer service is M3.
 - **Whether Binance Wallet / Agentic Wallet can send EIP-7702 batches.**
 - **Region behaviour for UK, Canada, Japan and the Netherlands.** Partly answered in §F10: NL blocked, JP allowed, CA inconclusive (clock skew), UK untested. Romania is blocked too.
 - **The Binance Transaction API (simulation/broadcast).** Paths now known (§F10) but not exercised; `spike/record_m1_probes.py` records them. We still use `eth_call` / `eth_estimateGas`.
-- **The spike contract has a known arbitrary-call hole.** `swapForShares` calls any caller-supplied router and data, so anyone who approved it could be drained (router = token, data = `transferFrom`). It's harmless today because it only ran on forks. v1 must allow-list routers; see `TALLY_BLUEPRINT.md` §10.
-- **ShareGuard is unaudited spike code.** It needs hardening (reentrancy guard, pause check, the Ondo feed) before any mainnet deployment.
+- ~~**The spike contract has a known arbitrary-call hole.**~~ Fixed in ShareGuard v1 (§F11): routers and approve targets are allow-listed, fork test G proves the attack reverts. The spike contract is still never to be deployed.
+- **ShareGuard v1 is unaudited.** The spike's hardening list (reentrancy guard, pause check, Ondo feed) is done and tested (§F11), but nobody independent has reviewed it; mainnet use stays at test amounts.
 
 **M0 wallet-provider checks (blueprint §8.1), status as of 2026-10-01**
 
@@ -475,6 +475,43 @@ Evidence: `packages/binance/fixtures/raw/` (recorded on the Seoul EC2 and from V
 **Other build findings**
 - Schemas written from the docs failed on real data twice (`assetType` is `null` on some rows; `executionMode` sits at the top level of the swap response, not inside `routerResult`). The first version swallowed the failure and silently fell back to stale public data, so every fallback now reports a warning.
 - Ondo bounds use a stored baseline (`data/ondo-multiplier-baseline.json`, seeded from the 09-30 snapshot). Rule: one increase ≤ 3% is accepted (a judgement threshold, ≈5× the largest step seen) unless the independent price check fails; a decrease or an increase above 3% is accepted automatically only with (1) a `stock_split`/`stock_dividend` status seen within 48 h, (2) new/old within 0.5% of a simple ratio (n or 1/n for n in 2,3,4,5,8,10,15,20,25,30,50, plus 3/2 and 2/3), and (3) after trading resumes, tokenPrice ÷ newMultiplier within 2% of `stockInfo.price`; otherwise it stays blocked and flagged, with the owner's manual action only a fallback. The per-day yield cap was removed because distribution steps would trip it: between 09-30 and 10-02, **31 of 458 Ondo multipliers changed, each in one step, none decreased, max +0.58% (USHY)** (`research/ondo-multiplier-steps.md`), while a yield ÷ 365 cap allows about 0.016%/day for HYG, which stepped +0.40%. The earlier "PFE +1.5% in one day" figure was an estimate (≈6% yield ÷ 4), not observed. Check 3 on the real 09-30 public data: 28 Ondo tokens within 0.15% in a regular session (NFLXon 10×: +0.06%, CRWDon 4×: +0.01%); the xStocks NFLX token, whose multiplier of 10 disagrees with its price, fails at −89.8%. Still open: the Ondo RFQ path, moving the baseline to SQLite, and what `reasonMsg` looks like in a real corporate action (it is documented as a bare code; none has been recorded).
+
+### F11. M2 ShareGuard v1: what the build and the fork tests showed (2026-10-02)
+Evidence: `contracts/` (`src/ShareGuard.sol`, `test/*.t.sol`, `captures/`), run from the US cloud sandbox against an archive BSC RPC. **Status: exit check 1 (unit, fuzz, fork A–I) passes here; checks 2 (BscScan) and 3 (two live guarded buys) need the owner's key and the Seoul EC2 and are not done.**
+
+**Does bStock have a pause getter? No (blueprint §20 answered).** The NVDAB token is an EIP-1967 *beacon* proxy (beacon `0x156d…93a3`, implementation `0xCFEd…4e46`, 10,836 bytes). Its code contains the `isTokenPaused(address)` selector but not `tokenPauseManager()`, `paused()` or `isPaused()`, and calling any of those on the token reverts. A `debug_traceCall` (callTracer) of a `transfer` shows the token calling `isTokenPaused(token)` on a **shared manager, `0x9fc74Be63f3589485B2423984a7a0557e0CF700a`**, which returns `false`. The same manager answers for NVDAB, AAPLB, TSLAB, QQQB and SPYB. Ondo is the opposite: NVDAon (also a beacon proxy) exposes `tokenPauseManager()` → `0x6334…638F`, whose `isTokenPaused(NVDAon)` is `false`. xStocks NVDAx (implementation `0x65c4…f19b`) has `isPaused()` = `false`. So bStock's manager can only be found by tracing a call, and nothing on the token announces a rotation. ShareGuard therefore keeps the bStock manager in the asset's config and reads Ondo's from the token on every swap. `debug_traceCall` works on QuickNode and is how to find such hidden dependencies.
+
+**The fork tests are now reproducible: an archive RPC pins them to the capture's block.** F5 found that 90-minute-old captures failed to replay on a fork of the chain tip. Forking at `blockAtCapture` (QuickNode archive) replays the 2026-10-01 14:21–14:22 UTC captures a day later, deterministically, with no Binance key: they are committed in `contracts/captures/`. `FORK_LATEST=1` restores the old mode for a capture made seconds ago.
+
+| Test | NVDAB (`Elfomofi:NVDAB`, 1 hop) | NVDAon (`Kipseli:NVDAB > Uniswap V4:NVDAon`) |
+|---|---|---|
+| A replay as plain wallet | ✅ | ✅ |
+| B guard as the trader (+ `Guarded` event, approval 0, guard holds nothing) | ✅ | ✅ |
+| B2 same, with a signed EIP-712 feed update | skipped (not a Feed asset) | ✅ |
+| C share shortfall reverts | ✅ | ✅ |
+| D, E 7702 batch and atomic revert | ✅ ✅ | ✅ ✅ |
+| F route fits **our** gas limit | ✅ | ✅ |
+| G arbitrary-call attack reverts | ✅ | ✅ |
+| H paused token reverts (mocked manager); manager that reverts fails closed | ✅ | ✅ |
+| I stale or out-of-bounds feed reverts | skipped (not a Feed asset) | ✅ |
+
+Offline: **72 unit and fuzz tests pass** (swap, admin, feed bounds, monotonic replay, staleness, corporate actions, signatures, ownership, rescue, reentrancy, 7702 batch; 6 fuzz properties at 512 runs: share maths over multipliers 1e15–1e20, exact minimum, refund and no residue, tolerance, the per-asset feed bound, only-allow-listed-routers-are-called). A Python-signed (`eth_account`) EIP-712 update verifies against the contract's own digest (`PythonFeedSignature.t.sol`), so `tools/guarded_buy.py` and the contract agree.
+
+**Gas (test F; fork figures, approximate: a fork test is one transaction, so access warmth differs from live).** NVDAB: guarded call used 723,790; smallest limit that succeeds + intrinsic = 674,479; limit we would send (×1.25) = 843,099. NVDAon: used 1,384,434; estimate 1,458,555; limit 1,823,194. **The API's 450,000 is too low for both**, and the test says so. The authoritative figure is `eth_estimateGas` at the live buy, which the tool records next to the API's number.
+
+**Correction to blueprint §10: the arbitrary-call attack needs one more trick.** Fork test G runs the spike's swap logic (`test/SpikeVulnerable.sol`, a test-only copy) against real USDT and the real stock. The attack exactly as the blueprint worded it (`tokenIn = USDT`, `router = USDT`, `data = transferFrom(victim, attacker, X)`) **reverts in the spike** on its own "no output" check, because the stock balance does not move. The working exploit sets **`tokenIn` = the stock** (the attacker pulls a dust amount of it, which the output check then counts as output) with `router = USDT`: that drains the victim's whole approved USDT balance in one call. The hole is real; the blueprint's one-line description was incomplete. ShareGuard v1 stops all variants three ways: the router must be allow-listed (`RouterNotAllowed`), `tokenIn == stock` reverts (`SameToken`), and a router or approve target can never be a configured stock token. G asserts the victim keeps every token. The allow-listed real router given the attack calldata also fails, because it is not a token contract.
+
+**Deploy dry run (key-less, live BSC state, 10 tokens: NVDA, AAPL, TSLA, QQQ, SPY × bStock and Ondo):** every asset prices (`sharesPerToken` NVDAB 1.000778, NVDAon 1.001715, SPYon 1.009473) and answers its pause check; estimated 5.55M gas ≈ 0.00028 BNB at 0.05 gwei; contract runtime 14,597 bytes. `tools/gen_assets.py` refuses an Ondo seed when the public list's `multiplier` and the dynamic endpoint's `sharesMultiplier` differ by more than 0.1% (all five agreed exactly on 2026-10-02).
+
+**Design decisions made in M2 (deviations or additions to §10, for review):**
+1. **The first Ondo multiplier is owner-seeded** (`setAsset(..., seedMultiplier)`, only while the feed has never been seeded). The deploy script has only the deployer key and cannot produce a signed first value; every later change must be signed and bounded.
+2. **Feed updates are monotonic by `validAfter`.** An older signed update reverts (`UpdateOlderThanStored`); the identical update may be resubmitted by another user's swap (it only refreshes the timestamp); the same `validAfter` with a different value reverts. `updatedAt` is the block time of acceptance, and `validUntil` must still be in the future.
+3. **A swap also needs `minShares > 0`** (a zero minimum would switch the guard off for a naive caller) and `tokenIn != stock`.
+4. **`maxStepBps` is capped at 1000 (10%)** so a configuration slip cannot open the bound; splits go through corporate actions anyway. `maxAge` is owner-settable within 1 hour – 7 days.
+5. **`tokenIn` is not allow-listed.** The guard holds nothing between transactions, so an odd input token can only hurt the caller who chose it. Revisit if the audit disagrees.
+6. **Pause checks fail closed:** a manager that reverts, returns the wrong size, or a token that reports no manager makes the swap revert (`PauseCheckFailed`) instead of passing.
+
+**Not done / still open after M2 code:** BscScan verification and the two live guarded buys (owner and EC2); an independent review of the contract (it is still unaudited); the TS feed-signer service and the engine's use of `Guarded` receipts (M3); whether the bStock manager can change without notice.
 
 ## The DX report (25%): write it yourself, as you go
 The rules reject AI-generated reports, so **keep a timestamped human log from the first minute**. That covers time to first successful call, each error message copied verbatim, and page URL plus section for every doc problem. The items below are leads we found from outside with public endpoints. **Confirm each one yourself with your key before it goes in the report:**

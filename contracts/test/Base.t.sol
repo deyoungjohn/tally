@@ -48,7 +48,11 @@ abstract contract GuardBase is Test {
         usdt.mint(user, 100e18);
     }
 
-    function _data(MockToken stock, uint256 spend, uint256 out, address recipient) internal view returns (bytes memory) {
+    function _data(MockToken stock, uint256 spend, uint256 out, address recipient)
+        internal
+        view
+        returns (bytes memory)
+    {
         return abi.encodeCall(MockRouter.swap, (usdt, spend, stock, out, recipient));
     }
 
@@ -57,7 +61,14 @@ abstract contract GuardBase is Test {
         vm.startPrank(user, user);
         usdt.approve(address(guard), 10e18);
         uint256 shares = guard.swapForShares(
-            address(usdt), 10e18, address(stock), minShares, address(router), _data(stock, spend, out, address(guard)), user, block.timestamp + 60
+            address(usdt),
+            10e18,
+            address(stock),
+            minShares,
+            address(router),
+            _data(stock, spend, out, address(guard)),
+            user,
+            block.timestamp + 60
         );
         vm.stopPrank();
         return shares;
@@ -113,6 +124,8 @@ abstract contract GuardBase is Test {
         bytes memory d = _data(ondo, 10e18, 1e18, address(guard));
         vm.expectRevert(err);
         vm.prank(user, user);
-        guard.swapForSharesWithFeed(address(usdt), 10e18, address(ondo), 1, address(router), d, user, block.timestamp + 60, u, sig);
+        guard.swapForSharesWithFeed(
+            address(usdt), 10e18, address(ondo), 1, address(router), d, user, block.timestamp + 60, u, sig
+        );
     }
 }

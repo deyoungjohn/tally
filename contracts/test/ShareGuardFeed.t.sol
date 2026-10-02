@@ -14,7 +14,11 @@ contract ShareGuardFeedTest is GuardBase {
         return uint64(block.timestamp);
     }
 
-    function _ok(uint256 m, uint64 validAfter) internal view returns (ShareGuard.FeedUpdate memory u, bytes memory sig) {
+    function _ok(uint256 m, uint64 validAfter)
+        internal
+        view
+        returns (ShareGuard.FeedUpdate memory u, bytes memory sig)
+    {
         return _update(address(ondo), m, validAfter, _now() + 1 hours);
     }
 
@@ -50,20 +54,37 @@ contract ShareGuardFeedTest is GuardBase {
 
     function test_justAboveTheBoundNeedsACorporateAction() public {
         (ShareGuard.FeedUpdate memory u, bytes memory sig) = _ok(1.030000000000000001e18, T0);
-        _expectFeedRevert(abi.encodeWithSelector(ShareGuard.UpdateOutOfBounds.selector, address(ondo), 1e18, 1.030000000000000001e18), u, sig);
+        _expectFeedRevert(
+            abi.encodeWithSelector(ShareGuard.UpdateOutOfBounds.selector, address(ondo), 1e18, 1.030000000000000001e18),
+            u,
+            sig
+        );
     }
 
     function test_perAssetStep() public {
         // a second asset with a tighter 50 bps bound: 1% is fine for `ondo` (300 bps) but not here
         MockToken tight = new MockToken();
         tight.setPauseManager(address(pm));
-        guard.setAsset(address(tight), ShareGuard.Asset(ShareGuard.Source.Feed, true, 50, ShareGuard.PauseCheck.Manager, address(0)), 1e18);
+        guard.setAsset(
+            address(tight),
+            ShareGuard.Asset(ShareGuard.Source.Feed, true, 50, ShareGuard.PauseCheck.Manager, address(0)),
+            1e18
+        );
         (ShareGuard.FeedUpdate memory u, bytes memory sig) = _update(address(tight), 1.01e18, T0, _now() + 1 hours);
         vm.startPrank(user, user);
         usdt.approve(address(guard), 10e18);
         vm.expectRevert(abi.encodeWithSelector(ShareGuard.UpdateOutOfBounds.selector, address(tight), 1e18, 1.01e18));
         guard.swapForSharesWithFeed(
-            address(usdt), 10e18, address(tight), 1, address(router), _data(tight, 10e18, 1e18, address(guard)), user, block.timestamp + 60, u, sig
+            address(usdt),
+            10e18,
+            address(tight),
+            1,
+            address(router),
+            _data(tight, 10e18, 1e18, address(guard)),
+            user,
+            block.timestamp + 60,
+            u,
+            sig
         );
         vm.stopPrank();
         (u, sig) = _update(address(ondo), 1.01e18, T0, _now() + 1 hours);
@@ -82,7 +103,9 @@ contract ShareGuardFeedTest is GuardBase {
 
     function test_decreaseIsRejectedByDefault() public {
         (ShareGuard.FeedUpdate memory u, bytes memory sig) = _ok(0.9999e18, T0);
-        _expectFeedRevert(abi.encodeWithSelector(ShareGuard.UpdateOutOfBounds.selector, address(ondo), 1e18, 0.9999e18), u, sig);
+        _expectFeedRevert(
+            abi.encodeWithSelector(ShareGuard.UpdateOutOfBounds.selector, address(ondo), 1e18, 0.9999e18), u, sig
+        );
     }
 
     function test_reverseSplitViaCorporateAction() public {
@@ -111,13 +134,17 @@ contract ShareGuardFeedTest is GuardBase {
     function test_corporateActionMustMatchTheUpdate() public {
         guard.registerCorporateAction(address(ondo), 0.1e18, T0);
         (ShareGuard.FeedUpdate memory u, bytes memory sig) = _ok(0.2e18, T0);
-        _expectFeedRevert(abi.encodeWithSelector(ShareGuard.UpdateOutOfBounds.selector, address(ondo), 1e18, 0.2e18), u, sig);
+        _expectFeedRevert(
+            abi.encodeWithSelector(ShareGuard.UpdateOutOfBounds.selector, address(ondo), 1e18, 0.2e18), u, sig
+        );
     }
 
     function test_corporateActionHonoursNotBefore() public {
         guard.registerCorporateAction(address(ondo), 0.1e18, T0 + 1 days);
         (ShareGuard.FeedUpdate memory u, bytes memory sig) = _ok(0.1e18, T0);
-        _expectFeedRevert(abi.encodeWithSelector(ShareGuard.CorporateActionNotReady.selector, address(ondo), T0 + 1 days), u, sig);
+        _expectFeedRevert(
+            abi.encodeWithSelector(ShareGuard.CorporateActionNotReady.selector, address(ondo), T0 + 1 days), u, sig
+        );
         vm.warp(T0 + 1 days);
         (u, sig) = _update(address(ondo), 0.1e18, T0, _now() + 1 hours);
         _buyWithFeed(u, sig, 10e18, 1);
@@ -130,7 +157,9 @@ contract ShareGuardFeedTest is GuardBase {
         // a later signed update back to 1.0 is a 10x increase: the consumed action cannot be reused
         vm.warp(T0 + 1);
         (u, sig) = _update(address(ondo), 1e18, T0 + 1, _now() + 1 hours);
-        _expectFeedRevert(abi.encodeWithSelector(ShareGuard.UpdateOutOfBounds.selector, address(ondo), 0.1e18, 1e18), u, sig);
+        _expectFeedRevert(
+            abi.encodeWithSelector(ShareGuard.UpdateOutOfBounds.selector, address(ondo), 0.1e18, 1e18), u, sig
+        );
     }
 
     function test_ownerCanClearACorporateAction() public {
@@ -139,7 +168,9 @@ contract ShareGuardFeedTest is GuardBase {
         emit ShareGuard.CorporateActionCleared(address(ondo), false);
         guard.clearCorporateAction(address(ondo));
         (ShareGuard.FeedUpdate memory u, bytes memory sig) = _ok(0.1e18, T0);
-        _expectFeedRevert(abi.encodeWithSelector(ShareGuard.UpdateOutOfBounds.selector, address(ondo), 1e18, 0.1e18), u, sig);
+        _expectFeedRevert(
+            abi.encodeWithSelector(ShareGuard.UpdateOutOfBounds.selector, address(ondo), 1e18, 0.1e18), u, sig
+        );
     }
 
     function test_corporateActionOnlyForFeedAssets() public {
@@ -178,17 +209,23 @@ contract ShareGuardFeedTest is GuardBase {
     }
 
     function test_updateOutsideItsWindowReverts() public {
-        (ShareGuard.FeedUpdate memory u, bytes memory sig) = _update(address(ondo), 1.01e18, _now() + 100, _now() + 1 hours);
-        _expectFeedRevert(abi.encodeWithSelector(ShareGuard.UpdateNotValidNow.selector, _now() + 100, _now() + 1 hours), u, sig);
+        (ShareGuard.FeedUpdate memory u, bytes memory sig) =
+            _update(address(ondo), 1.01e18, _now() + 100, _now() + 1 hours);
+        _expectFeedRevert(
+            abi.encodeWithSelector(ShareGuard.UpdateNotValidNow.selector, _now() + 100, _now() + 1 hours), u, sig
+        );
         // an expired update (the replay case): signed long ago, window closed
         (u, sig) = _update(address(ondo), 1.01e18, T0 - 2 hours, T0 - 1 hours);
-        _expectFeedRevert(abi.encodeWithSelector(ShareGuard.UpdateNotValidNow.selector, T0 - 2 hours, T0 - 1 hours), u, sig);
+        _expectFeedRevert(
+            abi.encodeWithSelector(ShareGuard.UpdateNotValidNow.selector, T0 - 2 hours, T0 - 1 hours), u, sig
+        );
     }
 
     // --- signatures ------------------------------------------------------------------------
 
     function test_badSignatureReverts() public {
-        (ShareGuard.FeedUpdate memory u, bytes memory sig) = _updateSignedBy(0xBEEF, address(ondo), 1.01e18, T0, _now() + 1 hours);
+        (ShareGuard.FeedUpdate memory u, bytes memory sig) =
+            _updateSignedBy(0xBEEF, address(ondo), 1.01e18, T0, _now() + 1 hours);
         _expectFeedRevert(abi.encodePacked(ShareGuard.InvalidSigner.selector), u, sig);
         // garbage signature bytes
         _expectFeedRevert(abi.encodePacked(ShareGuard.InvalidSigner.selector), u, hex"1234");
@@ -231,7 +268,14 @@ contract ShareGuardFeedTest is GuardBase {
         usdt.approve(address(guard), 10e18);
         vm.expectRevert(abi.encodeWithSelector(ShareGuard.FeedStale.selector, address(ondo), T0, uint64(3 days)));
         guard.swapForShares(
-            address(usdt), 10e18, address(ondo), 1, address(router), _data(ondo, 10e18, 1e18, address(guard)), user, block.timestamp
+            address(usdt),
+            10e18,
+            address(ondo),
+            1,
+            address(router),
+            _data(ondo, 10e18, 1e18, address(guard)),
+            user,
+            block.timestamp
         );
         vm.stopPrank();
         vm.expectRevert(abi.encodeWithSelector(ShareGuard.FeedStale.selector, address(ondo), T0, uint64(3 days)));
@@ -240,7 +284,8 @@ contract ShareGuardFeedTest is GuardBase {
 
     function test_freshUpdateRescuesAStaleFeed() public {
         vm.warp(T0 + 5 days);
-        (ShareGuard.FeedUpdate memory u, bytes memory sig) = _update(address(ondo), 1.002e18, T0 + 5 days, T0 + 5 days + 1 hours);
+        (ShareGuard.FeedUpdate memory u, bytes memory sig) =
+            _update(address(ondo), 1.002e18, T0 + 5 days, T0 + 5 days + 1 hours);
         assertEq(_buyWithFeed(u, sig, 1e18, 1), 1.002e18);
     }
 

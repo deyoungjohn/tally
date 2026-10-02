@@ -123,9 +123,7 @@ contract ShareGuard is Ownable2Step, Pausable, ReentrancyGuard, EIP712 {
         address pauseManager
     );
     event RouterSet(address indexed router, bool allowed, address approveTarget);
-    event FeedUpdated(
-        address indexed stock, uint256 multiplier, uint256 previous, uint64 validAfter, uint64 updatedAt
-    );
+    event FeedUpdated(address indexed stock, uint256 multiplier, uint256 previous, uint64 validAfter, uint64 updatedAt);
     event FeedSeeded(address indexed stock, uint256 multiplier);
     event CorporateActionRegistered(address indexed stock, uint256 expectedMultiplier, uint64 notBefore);
     event CorporateActionCleared(address indexed stock, bool consumed);
@@ -216,10 +214,7 @@ contract ShareGuard is Ownable2Step, Pausable, ReentrancyGuard, EIP712 {
 
     /// @notice Register the one corporate action (split) the owner expects for `stock`. The feed
     ///         signer alone can never produce a decrease or an increase above `maxStepBps`.
-    function registerCorporateAction(address stock, uint256 expectedMultiplier, uint64 notBefore)
-        external
-        onlyOwner
-    {
+    function registerCorporateAction(address stock, uint256 expectedMultiplier, uint64 notBefore) external onlyOwner {
         if (_asset[stock].source != Source.Feed) revert NotAFeedAsset(stock);
         if (expectedMultiplier == 0) revert MultiplierUnavailable(stock);
         corporateActionOf[stock] = CorporateAction(expectedMultiplier, notBefore, true);

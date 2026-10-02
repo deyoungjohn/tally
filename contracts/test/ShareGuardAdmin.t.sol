@@ -22,7 +22,9 @@ contract ShareGuardAdminTest is GuardBase {
         vm.expectRevert(denied);
         guard.setRouter(address(0x1234), true, address(0x1234));
         vm.expectRevert(denied);
-        guard.setAsset(address(bstock), _asset(ShareGuard.Source.UiMultiplier, true, 0, ShareGuard.PauseCheck.None, address(0)), 0);
+        guard.setAsset(
+            address(bstock), _asset(ShareGuard.Source.UiMultiplier, true, 0, ShareGuard.PauseCheck.None, address(0)), 0
+        );
         vm.expectRevert(denied);
         guard.registerCorporateAction(address(ondo), 2e18, 0);
         vm.expectRevert(denied);
@@ -79,37 +81,57 @@ contract ShareGuardAdminTest is GuardBase {
         vm.expectRevert(abi.encodeWithSelector(ShareGuard.InvalidAssetConfig.selector, address(0)));
         guard.setAsset(address(0), _asset(ShareGuard.Source.Feed, true, 300, ShareGuard.PauseCheck.None, address(0)), 0);
         vm.expectRevert(abi.encodeWithSelector(ShareGuard.InvalidAssetConfig.selector, address(guard)));
-        guard.setAsset(address(guard), _asset(ShareGuard.Source.Feed, true, 300, ShareGuard.PauseCheck.None, address(0)), 0);
+        guard.setAsset(
+            address(guard), _asset(ShareGuard.Source.Feed, true, 300, ShareGuard.PauseCheck.None, address(0)), 0
+        );
         vm.expectRevert(abi.encodeWithSelector(ShareGuard.InvalidAssetConfig.selector, address(0xEE))); // no code
-        guard.setAsset(address(0xEE), _asset(ShareGuard.Source.Feed, true, 300, ShareGuard.PauseCheck.None, address(0)), 0);
+        guard.setAsset(
+            address(0xEE), _asset(ShareGuard.Source.Feed, true, 300, ShareGuard.PauseCheck.None, address(0)), 0
+        );
         // a router can never be a stock
         vm.expectRevert(abi.encodeWithSelector(ShareGuard.InvalidAssetConfig.selector, address(router)));
-        guard.setAsset(address(router), _asset(ShareGuard.Source.Feed, true, 300, ShareGuard.PauseCheck.None, address(0)), 0);
+        guard.setAsset(
+            address(router), _asset(ShareGuard.Source.Feed, true, 300, ShareGuard.PauseCheck.None, address(0)), 0
+        );
         // no source
         vm.expectRevert(abi.encodeWithSelector(ShareGuard.InvalidAssetConfig.selector, address(t)));
         guard.setAsset(address(t), _asset(ShareGuard.Source.None, true, 0, ShareGuard.PauseCheck.None, address(0)), 0);
         // step above the cap, and an enabled Feed with no step
         vm.expectRevert(abi.encodeWithSelector(ShareGuard.InvalidAssetConfig.selector, address(t)));
-        guard.setAsset(address(t), _asset(ShareGuard.Source.Feed, true, 1001, ShareGuard.PauseCheck.None, address(0)), 1e18);
+        guard.setAsset(
+            address(t), _asset(ShareGuard.Source.Feed, true, 1001, ShareGuard.PauseCheck.None, address(0)), 1e18
+        );
         vm.expectRevert(abi.encodeWithSelector(ShareGuard.InvalidAssetConfig.selector, address(t)));
-        guard.setAsset(address(t), _asset(ShareGuard.Source.Feed, true, 0, ShareGuard.PauseCheck.None, address(0)), 1e18);
+        guard.setAsset(
+            address(t), _asset(ShareGuard.Source.Feed, true, 0, ShareGuard.PauseCheck.None, address(0)), 1e18
+        );
         // a fixed pause manager only makes sense with PauseCheck.Manager
         vm.expectRevert(abi.encodeWithSelector(ShareGuard.InvalidAssetConfig.selector, address(t)));
-        guard.setAsset(address(t), _asset(ShareGuard.Source.Feed, true, 300, ShareGuard.PauseCheck.TokenFlag, address(pm)), 1e18);
+        guard.setAsset(
+            address(t), _asset(ShareGuard.Source.Feed, true, 300, ShareGuard.PauseCheck.TokenFlag, address(pm)), 1e18
+        );
         // the cap itself is fine
-        guard.setAsset(address(t), _asset(ShareGuard.Source.Feed, true, 1000, ShareGuard.PauseCheck.None, address(0)), 1e18);
+        guard.setAsset(
+            address(t), _asset(ShareGuard.Source.Feed, true, 1000, ShareGuard.PauseCheck.None, address(0)), 1e18
+        );
     }
 
     function test_setAssetEmits() public {
         vm.expectEmit(true, false, false, true, address(guard));
-        emit ShareGuard.AssetSet(address(bstock), ShareGuard.Source.UiMultiplier, false, 0, ShareGuard.PauseCheck.None, address(0));
-        guard.setAsset(address(bstock), _asset(ShareGuard.Source.UiMultiplier, false, 0, ShareGuard.PauseCheck.None, address(0)), 0);
+        emit ShareGuard.AssetSet(
+            address(bstock), ShareGuard.Source.UiMultiplier, false, 0, ShareGuard.PauseCheck.None, address(0)
+        );
+        guard.setAsset(
+            address(bstock), _asset(ShareGuard.Source.UiMultiplier, false, 0, ShareGuard.PauseCheck.None, address(0)), 0
+        );
         assertFalse(guard.assetOf(address(bstock)).enabled);
     }
 
     function test_feedSeedOnlyOnce() public {
         // the seed from setUp is 1e18; re-configuring the asset cannot reseed it
-        guard.setAsset(address(ondo), _asset(ShareGuard.Source.Feed, true, 300, ShareGuard.PauseCheck.Manager, address(0)), 5e18);
+        guard.setAsset(
+            address(ondo), _asset(ShareGuard.Source.Feed, true, 300, ShareGuard.PauseCheck.Manager, address(0)), 5e18
+        );
         assertEq(guard.sharesPerToken(address(ondo)), 1e18, "seed applies only while never seeded");
         (uint256 m,,) = guard.feedOf(address(ondo));
         assertEq(m, 1e18);

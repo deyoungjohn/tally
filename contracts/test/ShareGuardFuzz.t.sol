@@ -18,7 +18,9 @@ contract ShareGuardFuzzTest is GuardBase {
     function _swap(uint256 amountIn, uint256 spend, uint256 out, uint256 minShares) internal returns (uint256) {
         bytes memory d = _data(bstock, spend, out, address(guard));
         vm.prank(user, user);
-        return guard.swapForShares(address(usdt), amountIn, address(bstock), minShares, address(router), d, user, block.timestamp);
+        return guard.swapForShares(
+            address(usdt), amountIn, address(bstock), minShares, address(router), d, user, block.timestamp
+        );
     }
 
     /// shares = tokens x multiplier / 1e18 exactly (rounded down), whatever the multiplier.
@@ -120,7 +122,11 @@ contract ShareGuardFuzzTest is GuardBase {
         bytes memory d = _data(ondo, 10e18, 1e18, address(fresh));
 
         bool allowed = proposed == seed || (proposed > seed && (proposed - seed) * 10_000 <= seed * stepBps);
-        if (!allowed) vm.expectRevert(abi.encodeWithSelector(ShareGuard.UpdateOutOfBounds.selector, address(ondo), seed, proposed));
+        if (!allowed) {
+            vm.expectRevert(
+                abi.encodeWithSelector(ShareGuard.UpdateOutOfBounds.selector, address(ondo), seed, proposed)
+            );
+        }
         _feedSwap(fresh, d, u, sig);
         if (allowed) {
             (uint256 m,,) = fresh.feedOf(address(ondo));
@@ -139,6 +145,8 @@ contract ShareGuardFuzzTest is GuardBase {
 
     function _feedSwap(ShareGuard g, bytes memory d, ShareGuard.FeedUpdate memory u, bytes memory sig) internal {
         vm.prank(user, user);
-        g.swapForSharesWithFeed(address(usdt), 10e18, address(ondo), 1, address(router), d, user, block.timestamp, u, sig);
+        g.swapForSharesWithFeed(
+            address(usdt), 10e18, address(ondo), 1, address(router), d, user, block.timestamp, u, sig
+        );
     }
 }

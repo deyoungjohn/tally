@@ -18,6 +18,8 @@ spike/.venv/
 contracts/out/
 contracts/cache/
 contracts/broadcast/*/31337/
+contracts/broadcast/**/dry-run/
+contracts/deploy/seeds.json
 spike/shareguard/lib/
 spike/shareguard/out/
 spike/shareguard/cache/
