@@ -15,6 +15,7 @@ Standard library only. Runs anywhere the public bapi endpoints work (not region-
 """
 import json
 import os
+import re
 import sys
 import time
 import urllib.request
@@ -46,10 +47,17 @@ def to_wei(s):
 def main(tickers):
     if not tickers:
         sys.exit(__doc__)
+    bad = [t for t in tickers if not re.fullmatch(r"[A-Z0-9.]{1,10}", t)]
+    if bad:
+        sys.exit(f"not tickers: {bad}. Pass only upper-case tickers (e.g. NVDA AAPL); if you pasted a command "
+                 "with a trailing '# comment', your shell passed the comment as arguments. Nothing was written.")
     lists = {}
     for t, name in ((1, "ondo"), (3, "bstock")):
         j = get(f"{BAPI}/v1/public/wallet-direct/buw/wallet/market/token/rwa/stock/detail/list/ai?type={t}")
         lists[name] = {x["ticker"]: x for x in j.get("data", []) if x["chainId"] == "56"}
+    unknown = [tk for tk in tickers if tk not in lists["bstock"] and tk not in lists["ondo"]]
+    if unknown:
+        sys.exit(f"no bStock or Ondo token on BSC for: {unknown}. Nothing was written.")
     assets, seeds, problems = [], {}, []
     for tk in tickers:
         for kind in ("bstock", "ondo"):

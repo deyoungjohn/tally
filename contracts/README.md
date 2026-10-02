@@ -36,31 +36,37 @@ unspent input, and resets the approval to 0. It holds no balance between transac
   global pause, `rescue`. It cannot move user funds (none are held) or change a multiplier alone.
 
 ## Offline tests (CI runs these)
+Expect 72 passing; the 10 fork tests skip without `CAPTURE`.
+
 ```bash
 export PATH="$HOME/.foundry/bin:$PATH"
-cd contracts && forge test            # 72 pass; the 10 fork tests skip without CAPTURE
+cd contracts && forge test
 ```
 
 ## Fork tests A–I (need an ARCHIVE BSC RPC; pinned to each capture's block)
 ```bash
-BSC_RPC=<archive url> ./script/fork.sh            # every capture in captures/
-BSC_RPC=<archive url> ./script/fork.sh NVDAon     # one
+BSC_RPC=<archive url> ./script/fork.sh
+BSC_RPC=<archive url> ./script/fork.sh NVDAon
 ```
 Fresh captures (on the Seoul EC2; read-only, nothing is signed), then replay:
 ```bash
 ./script/capture.sh NVDAB NVDAon
-FORK_LATEST=1 BSC_RPC=<archive url> ./script/fork.sh NVDAB NVDAon   # tip of the chain, for a capture made seconds ago
+FORK_LATEST=1 BSC_RPC=<archive url> ./script/fork.sh NVDAB NVDAon
 git add captures && git commit -m "fork captures" && git push
 ```
 
 ## Deploy (your machine only; the key never goes to the server or to git)
+> Copy the commands **without** the `#` lines. Some terminals pass `# comment` text to the program as arguments, which breaks `gen_assets.py` and `forge script`.
+
 You need: a deployer key funded with ≈0.0005 BNB (the dry run estimates 0.0003), the feed signer's
 **address** (never its key; it must differ from the deployer), and a BscScan API key.
 ```bash
 git clone --recurse-submodules <repo> && cd tally/contracts
-python3 tools/gen_assets.py NVDA AAPL TSLA QQQ SPY      # fresh Ondo seeds; the script refuses seeds > 2 h old
+# fresh Ondo seeds; the deploy script refuses seeds older than 2 hours
+python3 tools/gen_assets.py NVDA AAPL TSLA QQQ SPY
 export BSC_RPC=<url> FEED_SIGNER=0x<feed signer ADDRESS> BSCSCAN_API_KEY=<key>
-# export OWNER=0x<address>   # optional: hand ownership over (two-step: that address must call acceptOwnership)
+# optional: hand ownership to another address (two-step: it must call acceptOwnership)
+# export OWNER=0x<address>
 read -rsp "Deployer key (0x…): " DEPLOYER_PK && echo && export DEPLOYER_PK
 
 # 1) dry run: simulates on live state, prints each asset's multiplier and the gas cost, sends nothing
@@ -83,13 +89,13 @@ set `SHAREGUARD_ADDRESS` in the server's env file.
 ## Two live guarded buys (Seoul EC2; M2 exit check 3)
 Use the burner from the F6 spike (or a new one) holding ≥12 USDT and ≈0.002 BNB on BSC.
 ```bash
-cd tally/contracts            # on the EC2, after `git pull`
-export BINANCE_W3_API_KEY=… BINANCE_W3_API_SECRET=… BSC_RPC=<url>      # or let the scripts prompt
+cd tally/contracts
+export BINANCE_W3_API_KEY=… BINANCE_W3_API_SECRET=… BSC_RPC=<url>
 read -rsp "Burner key: " PARITY_PK && echo && export PARITY_PK
 PY=../spike/.venv/bin/python
-$PY tools/guarded_buy.py --guard 0x<SHAREGUARD> --token NVDAB  --usdt 6                 # dry run
+$PY tools/guarded_buy.py --guard 0x<SHAREGUARD> --token NVDAB  --usdt 6
 $PY tools/guarded_buy.py --guard 0x<SHAREGUARD> --token NVDAB  --usdt 6 --send
-$PY tools/guarded_buy.py --guard 0x<SHAREGUARD> --token NVDAon --usdt 6 --send --sign-feed   # asks for FEED_SIGNER_PK (hidden)
+$PY tools/guarded_buy.py --guard 0x<SHAREGUARD> --token NVDAon --usdt 6 --send --sign-feed
 unset PARITY_PK FEED_SIGNER_PK
 git add results && git commit -m "M2: guarded buys" && git push
 ```

@@ -2,7 +2,7 @@
   "router": "0xB44446b0c8E56988c34f7Ff73Ae904982b5FdDA5",
   "approveTarget": "0xB44446b0c8E56988c34f7Ff73Ae904982b5FdDA5",
   "bstockPauseManager": "0x9fc74Be63f3589485B2423984a7a0557e0CF700a",
-  "count": 8,
+  "count": 10,
   "assets": [
     {
       "symbol": "NVDAB",
@@ -50,6 +50,18 @@
       "symbol": "QQQon",
       "ticker": "QQQ",
       "address": "0x0cde6936d305d5b34667fc46425e852efd73559a",
+      "kind": "ondo"
+    },
+    {
+      "symbol": "SPYB",
+      "ticker": "SPY",
+      "address": "0x7138b48df7d98d7e3cc221bfe7192d0a178182d8",
+      "kind": "bstock"
+    },
+    {
+      "symbol": "SPYon",
+      "ticker": "SPY",
+      "address": "0x6a708ead771238919d85930b5a0f10454e1c331a",
       "kind": "ondo"
     }
   ]
