@@ -1,27 +1,25 @@
 # Running and deploying Tally web
 
-## A. M0 exit checks from your laptop (no server needed)
+## A. Running and checking from your laptop (no server needed)
 Needs Node 22, pnpm 10 (`corepack enable`), git, and `cloudflared` (`brew install cloudflared`, or the Cloudflare download page). On Windows use WSL.
 
 ```bash
 git clone https://github.com/deyoungjohn/tally.git && cd tally
-git checkout claude/inspiring-fermat-u5ryah
+git checkout main
 pnpm install
 
 # Public Privy App ID (Privy dashboard > your app > Settings). Not a secret.
 cat > apps/web/.env.local <<'ENV'
 NEXT_PUBLIC_PRIVY_APP_ID=paste-your-app-id-here
-NEXT_PUBLIC_ENABLE_WALLET_CHECK=1
 ENV
 ```
 
-**Check 3, the wallet** (Privy allowed origins must include `http://localhost:3000`):
+**Run locally** (Privy allowed origins must include `http://localhost:3000`):
 ```bash
 TALLY_ALLOW_MISSING_GEO=1 pnpm --filter @tally/web dev     # http://localhost:3000
 ```
-Open `/dev/wallet-check`, sign in, copy the embedded wallet address, send it a few cents of BNB **on BNB Smart Chain (BEP-20)**, press *Refresh balance*, then *Send 0 BNB to self*. Send me the BscScan link.
 
-**Checks 1 and 2, tunnel plus region gate.** Localhost has no Cloudflare header, so use a production build behind a quick tunnel (Cloudflare adds the real `cf-ipcountry`):
+**Tunnel plus region gate.** Localhost has no Cloudflare header, so use a production build behind a quick tunnel (Cloudflare adds the real `cf-ipcountry`):
 ```bash
 pnpm build                                            # reads apps/web/.env.local
 PORT=3000 HOSTNAME=127.0.0.1 node apps/web/.next/standalone/apps/web/server.js   # leave running; do NOT set TALLY_ALLOW_MISSING_GEO
@@ -58,12 +56,11 @@ The swap file and `/etc/tally/tally.env` are already done. The env file needs `N
 ```bash
 sudo git clone https://github.com/deyoungjohn/tally.git /opt/tally   # first time only
 cd /opt/tally
-sudo git fetch origin claude/inspiring-fermat-u5ryah && sudo git checkout claude/inspiring-fermat-u5ryah
-sudo git pull origin claude/inspiring-fermat-u5ryah
+sudo git fetch origin main && sudo git checkout main
+sudo git pull origin main
 
 sudo pnpm install --frozen-lockfile
 set -a; source /etc/tally/tally.env; set +a
-export NEXT_PUBLIC_ENABLE_WALLET_CHECK=1        # M0 only: exposes /dev/wallet-check
 sudo -E pnpm build                              # uses swap; takes a few minutes
 sudo chown -R tally:tally /opt/tally
 ```
@@ -86,10 +83,9 @@ Send that URL back, and add it (plus `http://localhost:3000`) under **Privy dash
 
 > A quick tunnel is a Cloudflare free service and **does add `cf-ipcountry`**. It does *not* give you the dashboard needed to enable the visitor-location transform, so `cf-region-code` (Crimea/Donetsk/Luhansk) only works after the domain is on Cloudflare with a named tunnel. Until then the gate blocks by country only.
 
-## 4. M0 exit checks to run
+## 4. Checks to run after a deploy
 1. Open the tunnel URL on a phone: landing skeleton with the tokens.
 2. **Region:** from a US VPN exit the page must say "Not available in your region" (HTTP 451); from KR (or any unlisted country) the site loads.
-3. Open `<tunnel-url>/dev/wallet-check`, sign in, copy the embedded wallet address, send it a few cents of BNB **on BNB Smart Chain (BEP-20)**, press *Refresh balance*, then *Send 0 BNB to self*. Send the BscScan link.
 
 ## Updating later
 ```bash
