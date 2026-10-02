@@ -1,0 +1,229 @@
+{
+ "calls": [
+  {
+   "i": 0,
+   "t": 18.55,
+   "ok": true,
+   "http": 200,
+   "code": null
+  },
+  {
+   "i": 1,
+   "t": 18.6,
+   "ok": true,
+   "http": 200,
+   "code": null
+  },
+  {
+   "i": 2,
+   "t": 18.66,
+   "ok": true,
+   "http": 200,
+   "code": null
+  },
+  {
+   "i": 3,
+   "t": 18.71,
+   "ok": true,
+   "http": 200,
+   "code": null
+  },
+  {
+   "i": 4,
+   "t": 18.77,
+   "ok": true,
+   "http": 200,
+   "code": null
+  },
+  {
+   "i": 5,
+   "t": 18.82,
+   "ok": false,
+   "http": 429,
+   "code": 42900
+  },
+  {
+   "i": 6,
+   "t": 18.87,
+   "ok": false,
+   "http": 429,
+   "code": 42900
+  },
+  {
+   "i": 7,
+   "t": 18.93,
+   "ok": false,
+   "http": 429,
+   "code": 42900
+  },
+  {
+   "i": 8,
+   "t": 18.98,
+   "ok": false,
+   "http": 429,
+   "code": 42900
+  },
+  {
+   "i": 9,
+   "t": 19.03,
+   "ok": false,
+   "http": 429,
+   "code": 42900
+  },
+  {
+   "i": 10,
+   "t": 19.08,
+   "ok": false,
+   "http": 429,
+   "code": 42900
+  },
+  {
+   "i": 11,
+   "t": 19.12,
+   "ok": false,
+   "http": 429,
+   "code": 42900
+  },
+  {
+   "i": 12,
+   "t": 19.17,
+   "ok": false,
+   "http": 429,
+   "code": 42900
+  },
+  {
+   "i": 13,
+   "t": 19.22,
+   "ok": false,
+   "http": 429,
+   "code": 42900
+  },
+  {
+   "i": 14,
+   "t": 19.28,
+   "ok": false,
+   "http": 429,
+   "code": 42900
+  },
+  {
+   "i": 15,
+   "t": 19.33,
+   "ok": false,
+   "http": 429,
+   "code": 42900
+  },
+  {
+   "i": 16,
+   "t": 19.38,
+   "ok": false,
+   "http": 429,
+   "code": 42900
+  },
+  {
+   "i": 17,
+   "t": 19.42,
+   "ok": false,
+   "http": 429,
+   "code": 42900
+  },
+  {
+   "i": 18,
+   "t": 19.47,
+   "ok": false,
+   "http": 429,
+   "code": 42900
+  },
+  {
+   "i": 19,
+   "t": 19.52,
+   "ok": false,
+   "http": 429,
+   "code": 42900
+  },
+  {
+   "i": 20,
+   "t": 19.57,
+   "ok": true,
+   "http": 200,
+   "code": null
+  },
+  {
+   "i": 21,
+   "t": 19.62,
+   "ok": true,
+   "http": 200,
+   "code": null
+  },
+  {
+   "i": 22,
+   "t": 19.67,
+   "ok": true,
+   "http": 200,
+   "code": null
+  },
+  {
+   "i": 23,
+   "t": 19.73,
+   "ok": true,
+   "http": 200,
+   "code": null
+  },
+  {
+   "i": 24,
+   "t": 19.79,
+   "ok": true,
+   "http": 200,
+   "code": null
+  },
+  {
+   "i": 25,
+   "t": 19.84,
+   "ok": false,
+   "http": 429,
+   "code": 42900
+  },
+  {
+   "i": 26,
+   "t": 19.89,
+   "ok": false,
+   "http": 429,
+   "code": 42900
+  },
+  {
+   "i": 27,
+   "t": 19.94,
+   "ok": false,
+   "http": 429,
+   "code": 42900
+  },
+  {
+   "i": 28,
+   "t": 19.99,
+   "ok": false,
+   "http": 429,
+   "code": 42900
+  },
+  {
+   "i": 29,
+   "t": 20.04,
+   "ok": false,
+   "http": 429,
+   "code": 42900
+  }
+ ],
+ "first_failure": {
+  "i": 5,
+  "path": "/api/v1/dex/aggregator/supported/chain",
+  "params": {
+   "binanceChainId": "56"
+  },
+  "ok": false,
+  "http": 429,
+  "body": {
+   "code": 42900,
+   "timestamp": 1790909367546,
+   "msg": "Rate limit exceeded",
+   "data": ""
+  }
+ }
+}
