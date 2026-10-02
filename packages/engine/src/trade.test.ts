@@ -80,7 +80,10 @@ describe("trade plan (blueprint §7.6), on recorded quotes and swap builds", () 
   });
 
   it("Ondo: when the guard already holds the engine's multiplier the buy carries no signed update", async () => {
-    const p = await buy(createFixtureEngine({ tradeChain: approved(), signer: testSigner() }), "ondo");
+    const p = await buy(
+      createFixtureEngine({ tradeChain: approved(), signer: testSigner() }),
+      "ondo",
+    );
     expect(p.status).toBe("ready");
     expect(p.symbol).toBe("NVDAon");
     expect(p.feedUpdate).toBe(false);
@@ -102,7 +105,14 @@ describe("trade plan (blueprint §7.6), on recorded quotes and swap builds", () 
     const d = decodeFunctionData({ abi: SHAREGUARD_ABI, data: p.tx!.data });
     expect(d.functionName).toBe("swapForSharesWithFeed");
     const args = d.args as unknown as readonly [
-      Address, bigint, Address, bigint, Address, Hex, Address, bigint,
+      Address,
+      bigint,
+      Address,
+      bigint,
+      Address,
+      Hex,
+      Address,
+      bigint,
       { stock: Address; multiplier: bigint; validAfter: bigint; validUntil: bigint },
       Hex,
     ];
@@ -141,7 +151,11 @@ describe("trade plan (blueprint §7.6), on recorded quotes and swap builds", () 
       errorName: "InsufficientShares",
       args: [1n, 2n],
     });
-    const chain = fixtureTradeChain({ ...fixtureWallet(), allowance: 10n ** 24n, simulateRevert: data });
+    const chain = fixtureTradeChain({
+      ...fixtureWallet(),
+      allowance: 10n ** 24n,
+      simulateRevert: data,
+    });
     expect(decodeGuardRevert(data)?.name).toBe("InsufficientShares");
     const err = await buy(createFixtureEngine({ tradeChain: chain }), "bstock").catch((e) => e);
     expect(err).toBeInstanceOf(TradeError);
@@ -150,7 +164,11 @@ describe("trade plan (blueprint §7.6), on recorded quotes and swap builds", () 
   });
 
   it("a paused token is refused with the corporate-action message", async () => {
-    const chain = fixtureTradeChain({ ...fixtureWallet(), allowance: 10n ** 24n, tokenPaused: true });
+    const chain = fixtureTradeChain({
+      ...fixtureWallet(),
+      allowance: 10n ** 24n,
+      tokenPaused: true,
+    });
     await expect(buy(createFixtureEngine({ tradeChain: chain }), "bstock")).rejects.toMatchObject({
       kind: "token_paused",
     });
@@ -167,7 +185,7 @@ describe("trade plan (blueprint §7.6), on recorded quotes and swap builds", () 
 describe("receipt in shares (blueprint §7.6 step 8)", () => {
   it("is pending until mined, then decodes the Guarded event into shares, $/share and premium", async () => {
     const e = createFixtureEngine({ tradeChain: approved() });
-    expect((await e.trade.receipt("0x" + "11".repeat(32) as Hex, "NVDA")).status).toBe("pending");
+    expect((await e.trade.receipt(("0x" + "11".repeat(32)) as Hex, "NVDA")).status).toBe("pending");
     const r = await e.trade.receipt(FIXTURE_SWAP_HASH, "NVDA");
     expect(r.status).toBe("success");
     expect(BigInt(r.fill!.shares)).toBe(25_704_894_000_000_000n);
@@ -182,5 +200,23 @@ describe("receipt in shares (blueprint §7.6 step 8)", () => {
     expect(((await buy(e, "bstock")) as TradePlan).status).toBe("needs_approval");
     await e.trade.receipt(FIXTURE_APPROVE_HASH);
     expect((await buy(e, "bstock")).status).toBe("ready");
+  });
+});
+
+describe("health (blueprint §14)", () => {
+  it("reports Binance auth, RPC height, the guard and the Ondo feed's age from the recorded state", async () => {
+    const h = await createFixtureEngine({ tradeChain: approved() }).health();
+    expect(h).toMatchObject({
+      binance: "ok",
+      feedSigner: "missing",
+      guard: { address: SHAREGUARD_DEPLOYED, paused: false },
+    });
+    expect(h.rpcBlock).toBe(125_273_150);
+    expect(h.ondoFeed.maxAgeHours).toBe(72);
+    expect(h.ondoFeed.ageHours).toBeGreaterThanOrEqual(0); // the recorded feed update is dated after the fixture clock, so the age clamps to 0
+  });
+  it("a region block (40304) is reported as such, not as 'ok'", async () => {
+    const h = await createFixtureEngine({ blockRegion: true, tradeChain: approved() }).health();
+    expect(h.binance).toBe("region_block");
   });
 });

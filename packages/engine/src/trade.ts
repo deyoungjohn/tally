@@ -63,9 +63,12 @@ export interface TradeChain {
   readGuard(stock: Address, router: Address): Promise<GuardReading>;
   allowance(owner: Address): Promise<bigint>;
   balances(owner: Address): Promise<{ usdt: bigint; bnb: bigint }>;
-  estimateGas(tx: TxRequest): Promise<{ ok: true; gas: bigint } | Extract<SimulationResult, { ok: false }>>;
+  estimateGas(
+    tx: TxRequest,
+  ): Promise<{ ok: true; gas: bigint } | Extract<SimulationResult, { ok: false }>>;
   simulate(tx: TxRequest, limit: bigint): Promise<SimulationResult>;
   gasPriceWei(): Promise<bigint>;
+  blockNumber(): Promise<bigint>;
   receipt(txHash: Hex): Promise<TransactionReceipt | null>;
 }
 
@@ -170,7 +173,11 @@ export function explainRevert(reason: string, data?: Hex): TradeError {
     case "PauseCheckFailed":
       return new TradeError("token_paused", "Trading is paused for a corporate action.", r.name);
     case "EnforcedPause":
-      return new TradeError("guard_paused", "Buying is paused right now. Nothing was spent.", r.name);
+      return new TradeError(
+        "guard_paused",
+        "Buying is paused right now. Nothing was spent.",
+        r.name,
+      );
     case "FeedStale":
     case "FeedNotSeeded":
       return new TradeError(
@@ -197,7 +204,11 @@ export function explainRevert(reason: string, data?: Hex): TradeError {
     case "NoOutput":
       return new TradeError("route_failed", "The trade route failed. Nothing was spent.", r.name);
     default:
-      return new TradeError("simulation_reverted", "The trade would fail, so nothing was sent.", reason);
+      return new TradeError(
+        "simulation_reverted",
+        "The trade would fail, so nothing was sent.",
+        reason,
+      );
   }
 }
 
@@ -236,7 +247,11 @@ export async function prepareTrade(deps: TradeDeps, req: TradeRequest): Promise<
   const stock = row.address;
 
   // 2. A fresh quote and swap for THIS token, built for the guard's address (V12), never the user's.
-  const routes = await deps.api.quoteRoutes({ toToken: stock, amount: amountIn, wallet: deps.guard });
+  const routes = await deps.api.quoteRoutes({
+    toToken: stock,
+    amount: amountIn,
+    wallet: deps.guard,
+  });
   const best = pickBest(routes);
   if (!best) throw new TradeError("route_failed", "No route was returned for this buy.");
   const raw = toRawQuote(best);
@@ -307,7 +322,11 @@ export async function prepareTrade(deps: TradeDeps, req: TradeRequest): Promise<
     }
   } else {
     if (stored === undefined)
-      throw new TradeError("not_buyable", "The share count for this token can't be read right now.", g.sharesPerTokenError);
+      throw new TradeError(
+        "not_buyable",
+        "The share count for this token can't be read right now.",
+        g.sharesPerTokenError,
+      );
     m = stored;
     if (ppm(stored, engineM) > DISAGREE_PPM)
       warnings.push(
@@ -370,7 +389,11 @@ export async function prepareTrade(deps: TradeDeps, req: TradeRequest): Promise<
     return {
       ...base,
       status: "needs_approval",
-      approve: { to: USDT_BSC, data: encodeApprove(deps.guard, amountIn), amount: amountIn.toString() },
+      approve: {
+        to: USDT_BSC,
+        data: encodeApprove(deps.guard, amountIn),
+        amount: amountIn.toString(),
+      },
     };
   }
 
@@ -407,7 +430,9 @@ export async function prepareTrade(deps: TradeDeps, req: TradeRequest): Promise<
     // The Binance simulation is a second opinion, not a gate: our own eth_call at the exact limit already passed.
     binance = "skipped";
     binanceNote = e instanceof Error ? e.message : String(e);
-    warnings.push(`Binance simulation unavailable (${binanceNote}); the on-chain simulation passed.`);
+    warnings.push(
+      `Binance simulation unavailable (${binanceNote}); the on-chain simulation passed.`,
+    );
     deps.onWarn?.(`trade: Binance simulate failed: ${binanceNote}`);
   }
   const bnb = await deps.bnbUsd().catch(() => null);

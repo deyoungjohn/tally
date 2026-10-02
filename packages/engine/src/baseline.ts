@@ -12,7 +12,9 @@ import {
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 /** The committed seed: Ondo multipliers from the 2026-09-30 public snapshot (see scripts/seed-ondo-baseline.ts). Never written at runtime. */
-export const SEED_PATH = join(HERE, "..", "..", "..", "data", "ondo-multiplier-baseline.json");
+export const SEED_PATH = process.env.TALLY_REPO_ROOT
+  ? join(process.env.TALLY_REPO_ROOT, "data", "ondo-multiplier-baseline.json")
+  : join(HERE, "..", "..", "..", "data", "ondo-multiplier-baseline.json");
 const REFRESH_MS = 24 * 60 * 60 * 1000;
 const ACTION_THROTTLE_MS = 60 * 60 * 1000; // a halt is polled every minute: write the sighting at most hourly
 const ACTION_SAME_EVENT_MS = 7 * 24 * 60 * 60 * 1000; // sightings of the same kind within 7 days extend one sighting

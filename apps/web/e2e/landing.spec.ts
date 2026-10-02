@@ -69,7 +69,35 @@ test.describe("reduced motion", () => {
     expect(animated).toEqual(["none", "none", "none"]);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     // Scroll reveal falls back to an opacity fade: sections still become visible.
-    await page.locator("#compare .reveal").scrollIntoViewIfNeeded();
-    await expect(page.locator("#compare .reveal")).toHaveCSS("opacity", "1");
+    for (const reveal of await page.locator("#compare .reveal").all()) {
+      await reveal.scrollIntoViewIfNeeded();
+      await expect(reveal).toHaveCSS("opacity", "1");
+    }
   });
+});
+
+for (const width of [375, 768, 1280] as const) {
+  test.describe(`landing live data at ${width}px`, () => {
+    test.use({ viewport: { width, height: 900 } });
+    test("shows a live NVDA quote and the comparison, with no horizontal scroll", async ({
+      page,
+    }) => {
+      await page.goto("/");
+      await expect(page.getByTestId("hero-quote")).toContainText("shares", { timeout: 15_000 });
+      await expect(page.getByTestId("row-NVDAon")).toBeVisible();
+      await expect(page.getByTestId("hero-fills")).toContainText("Shares delivered");
+      const overflow = await page.evaluate(
+        () => document.documentElement.scrollWidth - window.innerWidth,
+      );
+      expect(overflow).toBeLessThanOrEqual(0);
+    });
+  });
+}
+
+test("the unit-trap card flips between token price and price per share", async ({ page }) => {
+  await page.goto("/");
+  const card = page.locator("#compare");
+  await expect(card).toContainText("$680.80");
+  await card.getByRole("button", { name: "Price per share" }).click();
+  await expect(card).toContainText("$68.08");
 });

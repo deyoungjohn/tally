@@ -50,6 +50,10 @@ export function BottomSheet({
   const titleId = `${uid}-title`;
   const descriptionId = `${uid}-description`;
 
+  // Parents pass inline callbacks and re-render often (a countdown, a polling balance). Keeping the latest in a ref means the
+  // scroll lock, key handler and focus move below run once per open, not on every render (re-running stole focus each second).
+  const onOpenChangeRef = useRef(onOpenChange);
+  onOpenChangeRef.current = onOpenChange;
   useEffect(() => setMounted(true), []);
   useEffect(() => {
     if (open) setSnap(defaultSnap);
@@ -75,7 +79,27 @@ export function BottomSheet({
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         event.preventDefault();
-        onOpenChange(false);
+        onOpenChangeRef.current(false);
+        return;
+      }
+      // Focus trap (DESIGN §7): Tab cycles inside the dialog.
+      if (event.key === "Tab" && sheetRef.current) {
+        const items = Array.from(
+          sheetRef.current.querySelectorAll<HTMLElement>(
+            'a[href],button:not([disabled]),input:not([disabled]),select,textarea,[tabindex]:not([tabindex="-1"])',
+          ),
+        ).filter((el) => el.offsetParent !== null);
+        if (items.length === 0) return;
+        const first = items[0]!;
+        const last = items[items.length - 1]!;
+        const active = document.activeElement;
+        if (event.shiftKey && (active === first || active === sheetRef.current)) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && active === last) {
+          event.preventDefault();
+          first.focus();
+        }
       }
     };
     window.addEventListener("keydown", onKey);
@@ -92,7 +116,7 @@ export function BottomSheet({
       window.scrollTo(0, scrollY);
       previouslyFocused?.focus?.();
     };
-  }, [open, onOpenChange]);
+  }, [open]);
 
   const onDragEnd = (_: unknown, info: PanInfo) => {
     const velocity = info.velocity.y;
@@ -163,8 +187,8 @@ export function BottomSheet({
               {...gate}
               style={{ ...heightStyle, ...gate.style }}
               className={cn(
-                "glass pointer-events-auto fixed bottom-0 left-0 right-0 z-50 mx-auto flex max-w-2xl flex-col overflow-hidden !rounded-b-none !rounded-t-[28px] outline-none will-change-transform",
-                "bg-[var(--g2)]",
+                "glass pointer-events-auto !fixed bottom-0 left-0 right-0 z-50 mx-auto flex max-w-2xl flex-col overflow-hidden !rounded-b-none !rounded-t-[28px] outline-none will-change-transform",
+                "!bg-[var(--g2)]",
                 className,
               )}
               role="dialog"
@@ -198,7 +222,7 @@ export function BottomSheet({
                   </div>
                 ) : null}
               </div>
-              <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(24px,env(safe-area-inset-bottom))]">
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(24px,env(safe-area-inset-bottom))]">
                 {children}
               </div>
             </motion.div>

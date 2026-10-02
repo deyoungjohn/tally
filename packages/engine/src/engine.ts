@@ -1,7 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- fixture JSON is untyped by nature */
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { QUOTE_PLACEHOLDER_WALLET, SHAREGUARD_DEPLOYED, TTL_MS } from "@tally/config";
+import {
+  LIQUIDMESH_ROUTER,
+  QUOTE_PLACEHOLDER_WALLET,
+  SHAREGUARD_DEPLOYED,
+  TTL_MS,
+} from "@tally/config";
+
+/** NVDAon: the token whose feed the health check reads (any Ondo asset would do). */
+const ONDO_PROBE = "0xa9ee28c80f960b889dfbd1902055218cba016f75" as Address;
 import {
   BinanceApi,
   BinanceClient,
@@ -40,6 +48,16 @@ import {
   type TokenInspection,
 } from "@tally/core";
 
+export interface HealthReport {
+  binance: "ok" | "region_block" | "auth" | "error";
+  binanceDetail?: string;
+  rpcBlock: number | null;
+  guard: { address: Address; paused: boolean | null };
+  feedSigner: "configured" | "missing";
+  /** Age of the guard's stored Ondo multiplier, in hours; the guard refuses Ondo buys past `maxAgeHours` unless a signed update rides along. */
+  ondoFeed: { ageHours: number | null; maxAgeHours: number | null };
+}
+
 export interface Engine {
   quote(input: QuoteInput): Promise<ConsolidatedQuote>;
   /** Every token of a ticker with its facts, bounds and the full integrity check log, and no quote (`tally facts`). */
@@ -50,6 +68,8 @@ export interface Engine {
     prepare(req: TradeRequest): Promise<TradePlan>;
     receipt(txHash: Hex, ticker?: string): Promise<TradeReceipt>;
   };
+  /** What `/api/health` reports: Binance auth and the region detector, RPC height, the guard and the Ondo feed's age (blueprint §14). */
+  health(): Promise<HealthReport>;
   /** Raw ports, for tests. */
   ports: EnginePorts;
 }
@@ -118,8 +138,43 @@ function build(o: BuildOptions): Engine {
     now,
     onWarn: o.onWarn,
   };
+  const health = async (): Promise<HealthReport> => {
+    const r: HealthReport = {
+      binance: "ok",
+      rpcBlock: null,
+      guard: { address: o.guard, paused: null },
+      feedSigner: o.signer ? "configured" : "missing",
+      ondoFeed: { ageHours: null, maxAgeHours: null },
+    };
+    await Promise.all([
+      api.supportedChains().then(
+        () => undefined,
+        (e: unknown) => {
+          const k = (e as { kind?: string }).kind;
+          r.binance = k === "region_block" ? "region_block" : k === "auth" ? "auth" : "error";
+          r.binanceDetail = e instanceof Error ? e.message : String(e);
+        },
+      ),
+      o.tradeChain.blockNumber().then(
+        (n) => void (r.rpcBlock = Number(n)),
+        () => undefined,
+      ),
+      o.tradeChain.readGuard(ONDO_PROBE, LIQUIDMESH_ROUTER).then(
+        (g) => {
+          r.guard.paused = g.paused;
+          r.ondoFeed = {
+            ageHours: Math.max(0, (now() / 1000 - Number(g.feed.updatedAt)) / 3600),
+            maxAgeHours: Number(g.maxAge) / 3600,
+          };
+        },
+        () => undefined,
+      ),
+    ]);
+    return r;
+  };
   return {
     ports,
+    health,
     trade: {
       guard: o.guard,
       prepare: (req) => prepareTrade(tradeDeps, req),

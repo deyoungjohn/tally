@@ -56,6 +56,7 @@ export function liveTradeChain(client: BscClient, guard: Address): TradeChain {
     },
     simulate: (tx, limit) => simulateAtLimit(client, tx, limit),
     gasPriceWei: () => client.getGasPrice(),
+    blockNumber: () => client.getBlockNumber(),
     async receipt(txHash) {
       try {
         return await client.getTransactionReceipt({ hash: txHash });
@@ -84,4 +85,3 @@ export function feedSignerFromEnv(
       account.signTypedData(feedUpdateTypedData(guard, update)),
   };
 }
-

@@ -56,7 +56,8 @@ export function fixtureTradeChain(
         source: s === NVDAON ? 2 : 0,
         tokenPaused: state.tokenPaused ?? false,
         sharesPerToken: m,
-        sharesPerTokenError: m === undefined ? "fixture: no guard reading for this token" : undefined,
+        sharesPerTokenError:
+          m === undefined ? "fixture: no guard reading for this token" : undefined,
         routerAllowed: true,
         approveTarget: ROUTER,
         feed: { multiplier: m ?? 0n, updatedAt: 1_790_935_427n, validAfter: 1_790_935_379n },
@@ -76,6 +77,7 @@ export function fixtureTradeChain(
         : { ok: true as const, returnData: "0x" as Hex };
     },
     gasPriceWei: async () => 50_000_000n,
+    blockNumber: async () => 125_273_150n,
     async receipt(hash) {
       if (hash === FIXTURE_APPROVE_HASH) {
         state.allowance = 2n ** 255n;

@@ -51,19 +51,20 @@ export function SiteHeader() {
           </SharedLayoutBg>
         </nav>
         <div className="flex items-center gap-2">
-          <ButtonLink href="/#compare" className="hidden min-[561px]:inline-flex !h-10">
+          <ButtonLink href="/trade/NVDA" className="hidden min-[561px]:inline-flex !h-10">
             Get a quote
           </ButtonLink>
-          <Button
-            variant="icon"
-            className="min-[761px]:hidden"
-            aria-label="Open menu"
-            aria-haspopup="dialog"
-            aria-expanded={open}
-            onClick={() => setOpen(true)}
-          >
-            <Menu size={18} aria-hidden />
-          </Button>
+          <span className="min-[761px]:hidden">
+            <Button
+              variant="icon"
+              aria-label="Open menu"
+              aria-haspopup="dialog"
+              aria-expanded={open}
+              onClick={() => setOpen(true)}
+            >
+              <Menu size={18} aria-hidden />
+            </Button>
+          </span>
         </div>
       </div>
       <BottomSheet open={open} onOpenChange={setOpen} snapPoints={["auto"]} title="Menu">

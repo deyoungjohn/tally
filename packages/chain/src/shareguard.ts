@@ -197,7 +197,9 @@ export async function readGuard(
   stock: Address,
   router: Address,
 ): Promise<GuardReading> {
-  const read = <F extends "paused" | "allowedRouter" | "approveTargetOf" | "assetOf" | "feedOf" | "maxAge">(
+  const read = <
+    F extends "paused" | "allowedRouter" | "approveTargetOf" | "assetOf" | "feedOf" | "maxAge",
+  >(
     functionName: F,
     args?: readonly unknown[],
   ) =>
@@ -253,7 +255,8 @@ export async function readGuard(
     sharesPerToken: spt.v,
     sharesPerTokenError: spt.err,
     routerAllowed,
-    approveTarget: approveTarget === ZERO_ADDR ? ZERO_ADDR : (approveTarget.toLowerCase() as Address),
+    approveTarget:
+      approveTarget === ZERO_ADDR ? ZERO_ADDR : (approveTarget.toLowerCase() as Address),
     feed: { multiplier: feed[0], updatedAt: feed[1], validAfter: feed[2] },
     maxAge,
   };
