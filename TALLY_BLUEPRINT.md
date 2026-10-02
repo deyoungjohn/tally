@@ -222,15 +222,20 @@ Fork tests need an RPC secret and run on demand.
 |---|---|---|
 | 0 | success | |
 | 40001 | param error, incl. "userWalletAddress is required for RFQ (Ondo) quote" | Always send a wallet (placeholder for browse quotes, §7.4) |
-| 40101 / 40102 | invalid key / invalid signature (check the server clock) | Page ops; show "quotes unavailable" |
-| **40304** | "Service not available due to compliance restriction" (caller IP) | Page ops immediately: server region problem |
+| 40101 / 40102 / 40103 / 40104 | invalid key / invalid signature / timestamp outside the recv window (observed: check the clock) / key lacks permission | Page ops; show "quotes unavailable" |
+| **40304** | "Service not available due to compliance restriction" (caller IP). Observed for US, NL and RO exits, always HTTP 200 (F10) | Page ops immediately: server region problem |
+| 40301 / 40302 / 40303 | documented region codes: sanctioned jurisdiction / VPN or proxy detected / unusual IP activity. Never observed | Treated as a region block, same as 40304 |
+| 40311–40314, 40434 | documented KYT (address risk) rejections. Never observed | `compliance` kind; show "this address can't be used" |
 | **40375** | "Minimum order amount is 5 USD." | Enforce min 6 USDT before calling |
+| 40367 / 40369 | documented: Ondo / bStock token unavailable (market hours). Never observed | Per-token "unavailable", other issuer still ranks |
 | 40401 / 40462 | quote expired / swap–quote mismatch (documented) | Re-quote automatically once |
+| **42900** | rate limit exceeded, HTTP 429 (observed after ~5 calls in 50 ms, F10) | Client paces at 4 req/s and retries twice |
 
-- **Retries:** network errors and 5xx get 2 retries with backoff; never retry 4xxxx codes except 40401/40462.
+- **Retries:** network errors, 5xx and 42900 get 2 retries with backoff (300 ms, 600 ms); never retry other 4xxxx codes. 40401/40462 are re-quoted by the caller, not retried by the client. *(42900 added 2026-10-02: it is transient, and the original rule would have failed whole quotes on a burst.)*
+- **Pacing:** token bucket, burst 3 then 4 requests/s, until elevated limits are granted.
 - **Fixtures:** record real responses (with keys stripped) for tests, including a 40304 and a 40375.
 
-**Endpoints used.** Trading API and RWA Data paths are verified. **Market, Transaction and Wallet API paths must be confirmed from `llms-full.txt` in M1** (our tooling couldn't fetch those pages).
+**Endpoints used.** Trading API and RWA Data paths are verified against recorded responses. Market, Transaction and Wallet paths come from `web3.binance.com/en/dev-docs/llms-full.txt` (2026-10-02) and were **probed on the Seoul EC2 the same day** (`probes_*.json`, IDEAS §F10): simulate, gas-price, block-height, token balances and aggregator history work; the Market `price`/`candlestick` paths do not work as documented.
 
 | Module | Endpoint | Use in Tally |
 |---|---|---|
@@ -241,9 +246,9 @@ Fork tests need an RPC secret and run on demand.
 | Trading | `GET /api/v1/dex/aggregator/supported/chain` | Health check (also detects 40304) |
 | Trading | `POST /api/v1/dex/aggregator/order/submit`, `GET …/order/{id}` | RFQ path, only if V8 changes |
 | RWA Data | `/api/v1/dex/market/rwa/tokens` (`tabId` sectors, `statusInfo`), `/price`, `/search`, `/underlying-profile` (`protections`, `tokenToShareRatio`), `/underlying-market` (corporate actions), `/platforms` | Registry, status, attestations, reference data |
-| Market | candles and real-time prices (confirm paths) | Ticker charts, BNB price for fee in USD |
-| Transaction | simulation and broadcast (confirm paths) | **Simulate the ShareGuard call before showing "Buy"**, alongside `eth_call`. Using it counts toward "modules used". |
-| Wallet | balances and positions (confirm paths) | Portfolio |
+| Market | `/api/v1/dex/market/price` (not a GET) and `/candlestick` (404) as documented: **don't work** (F10) | Ticker charts need another source (decide in M3). BNB price for the fee comes from a small BNB quote (verified) |
+| Transaction | **Verified:** `GET /api/v1/dex/pre-transaction/{gas-price,block-height}`, `POST …/simulate` (body `{binanceChainId, evmTx:{from,to,data,value}}`). `…/gas-limit` returned a system error; `broadcast-transaction` untested | **Simulate the ShareGuard call before showing "Buy"**, alongside `eth_call`. Using it counts toward "modules used". |
+| Wallet | **Verified:** `POST /api/v1/dex/balance/token-balances-by-address`. `GET …/all-token-balances-by-address` returned an empty list for a funded wallet | Portfolio (query the registry's tokens explicitly) |
 | Public, no key (cross-check only) | `bapi/defi/v1/public/wallet-direct/buw/wallet/market/token/rwa/stock/detail/list/ai?type=1|2|3`, `.../v2/.../rwa/dynamic/ai`, `.../rwa/asset/market/status/ai`, `web3.binance.com/bapi/defi/v4/.../token/dynamic/info/ai` | Multiplier cross-check, `stockInfo.price` reference, on-chain volume (ghost detection) |
 
 **Rate limits are unknown.** Ask for the hackathon's "elevated rate limits" (§19), and cache aggressively (§7.7).
@@ -262,10 +267,19 @@ Fork tests need an RPC secret and run on demand.
 | xStocks | on-chain `multiplier()` (display only) | `0x1b3ed722` |
 | Ondo | RWA API `sharesMultiplier` | — |
 
-**Ondo sanity bounds:**
-- non-decreasing;
-- per-day growth ≤ (dividendYield / 365 + ε);
-- jumps above 3% are only accepted with a matching corporate action (`stock_split` / `stock_dividend` in `statusInfo.reasonMsg`).
+**Ondo sanity bounds** (off-chain, checked on every reading). Ondo has no on-chain multiplier, so every change in it is checked twice: by its size, and against the market.
+
+*Steps.* Ondo multipliers move in single steps on distribution dates, not gradually. Measured between the 2026-09-30 and 2026-10-02 snapshots (`research/ondo-multiplier-steps.md`): **31 of 458 tokens changed, each in one step, none decreased, the largest step was +0.58% (USHY)**; bond ETFs on their monthly distribution moved +0.28% to +0.40% (HYG +0.40%, TLT +0.39%, AGG +0.34%, BIL +0.28%). Reverse splits do happen: SOXS (Ondo) has a multiplier of 0.1017. There is deliberately **no per-day growth cap**: a `dividendYield / 365 + ε` rule would have rejected all 31 observed updates (HYG's ~5.8% yield allows about 0.016% per day, and it stepped 0.40%).
+
+1. **A single increase of up to 3% is accepted** (a **judgement threshold**, about five times the largest step seen, not derived from data; revisit it as more steps are observed), **unless the price check (below) runs and fails.**
+2. **A decrease, or an increase above 3%, is accepted automatically only when all three hold:**
+   1. **Status:** `statusInfo.reasonMsg` showed `stock_split` or `stock_dividend` within 48 hours of the change. The `reasonMsg` is a **bare code** with no ratio (tokenized-securities skill docs), so no ratio is ever read from it. Because a halt can end before the multiplier is next read, the sighting is remembered across runs (the baseline file, below); the change time is Binance's `lastUpdateTime` when it gives one, otherwise the time we noticed it.
+   2. **Simple ratio:** `new / old` is within **0.5%** of a simple ratio: `n` or `1/n` for n in 2, 3, 4, 5, 8, 10, 15, 20, 25, 30, 50, plus 3/2 and 2/3. Test vectors: NFLX 10.0, CRWD 4.0, SOXS 0.1017 (from 1.017, 1/10).
+   3. **Price check:** after trading has resumed (status open), `tokenPrice ÷ newMultiplier` is within **2%** of the US share price (`stockInfo.price`). Both prices come from the public RWA dynamic data (`tokenInfo.price`, `stockInfo.price`); the authenticated list's `tokenPrice` is not used, because for Ondo NFLX it is ten times the quote API's price. On real 2026-09-30 data this check is quiet: 28 Ondo tokens were all within 0.15% in a regular session (NFLXon 10×: +0.06%, CRWDon 4×: +0.01%), while the xStocks NFLX token with multiplier 10 fails at −89.8%.
+   Until all three hold, **the token stays blocked and flagged** (Trap Shield). The owner's manual action (editing the baseline, or registering a `CorporateAction` in ShareGuard, §10) is only a fallback.
+3. **The price check also runs on every other multiplier change, dividend steps included**, as a validation independent of every multiplier source. If it runs and fails, the step is blocked; if it cannot run (trading not open, or price data missing) the step is accepted on size alone and the check is logged as skipped. Its inputs (token price, multiplier, stock price, deviation, status) are always recorded in the integrity log (`multiplier-validation`).
+
+Each reading is compared with the **last accepted reading** (the baseline), kept in `data/ondo-multiplier-baseline.json` (`value` + `seenAt` per token; SQLite later) and seeded from the 2026-09-30 snapshot. **Only readings that pass are stored**, so a bad reading cannot become the baseline. A token with no baseline yet is recorded on first sight only if its sources agree. The file also keeps the last corporate-action status sighting per token (`action`: kind, first and last seen); an accepted change consumes it.
 
 Values that break the bounds are flagged in Trap Shield and block execution for that token. Cross-check every source against the public list/dynamic endpoints and record disagreements; they feed the integrity grade and the DX report.
 
@@ -277,7 +291,8 @@ Values that break the bounds are flagged in Trap Shield and block execution for 
    - multiplier (§7.3);
    - status (`statusInfo`; `null` means "unknown" and is never assumed open);
    - integrity inputs.
-3. **Reference price:** `stockInfo.price` from any issuer token for the ticker that has it (bStock returns `null`, V15). Mark the session: pre-market, regular, after hours, overnight or closed.
+3. **Reference price (per SHARE):** the authenticated list's `referencePrice ÷ tokenToShareRatio` from any issuer token of the ticker (it is a per-token value: Ondo NFLX shows 680.80 for 10 shares of $68.08, F10). Fall back to the public `stockInfo.price` (bStock returns `null`, V15). Mark the session: pre-market, regular, after hours, overnight or closed.
+   - **Registry source:** the public lists (all three issuers); the authenticated RWA list returned only 488 of 675 BSC tokens and no xStocks.
 4. **Amount to USDT:**
    - USD: `amountIn = usd`.
    - Shares: estimate `amountIn = shares × refPrice × 1.01`, quote once, then scale linearly and re-quote once.
@@ -425,7 +440,7 @@ function assertMinShares(address account, address stock, uint256 balBefore, uint
 ```
 
 ### 10.2 Rules
-- **Allow lists** (owner-managed, events on change): `allowedRouter[addr]`, `approveTargetOf[router]`, `asset[stock] = {source: UiMultiplier | Multiplier | Feed, enabled}`.
+- **Allow lists** (owner-managed, events on change): `allowedRouter[addr]`, `approveTargetOf[router]`, `asset[stock] = {source: UiMultiplier | Multiplier | Feed, enabled, maxStepBps}` (`maxStepBps` applies to Feed assets).
   - Initial router and approve target: `0xB44446b0c8E56988c34f7Ff73Ae904982b5FdDA5` (the same address for both, V7).
   - Reject `router == tokenIn` or `router == stock`, or any router not on the list.
 - **Approvals:** approve `approveTarget` for exactly `amountIn`, reset to 0 after the call (forceApprove pattern).
@@ -441,7 +456,7 @@ function assertMinShares(address account, address stock, uint256 balBefore, uint
   - **token pause:** Ondo `tokenPauseManager().isTokenPaused(stock)` → `TokenPaused`; xStocks `isPaused()`; bStock: check in M2 whether its implementation has a pause getter.
 - **Ondo multiplier feed (pull-style, no keeper gas):**
   - an EIP-712 `FeedUpdate{stock, multiplier, validAfter, validUntil}` signed by `feedSigner`;
-  - accepted only if the multiplier is non-decreasing **and** the per-update increase is ≤ `maxStepBps` (start: 200 bps), unless a matching owner-registered `CorporateAction{stock, expectedMultiplier, notBefore}` exists (splits);
+  - accepted only if the per-update increase is ≤ that asset's own `maxStepBps` (**per-asset**, set by the owner, start: **300 bps**; distribution steps differ by stock, so there is no global limit). **A decrease is accepted only via an owner-registered `CorporateAction{stock, expectedMultiplier, notBefore}` whose `expectedMultiplier` matches the update** (a reverse split); so is an increase above `maxStepBps` (a forward split). The signer cannot make either on its own;
   - stored with `updatedAt`. Swaps on a Feed asset revert if `now − updatedAt > maxAge` (start: 3 days) and no fresh update is supplied.
 - **Ownership:** `Ownable2Step`. The owner can only manage lists, parameters, the feed signer, pause and rescue. **Not upgradeable** (no proxy); deploy a new version if needed.
 - **Events:** `Guarded(user, recipient, stock, tokenIn, amountIn, tokensOut, shares, multiplier, router)`, `AssetSet`, `RouterSet`, `FeedUpdated`, `CorporateActionRegistered`, `Paused`.
@@ -572,13 +587,13 @@ All visual rules live in `DESIGN.md`. This section covers structure.
 | Arbitrary call through ShareGuard (spike bug) | Router and approve-target allow lists; fork test G |
 | Over-broad approvals | Exact-amount approvals to ShareGuard only; the UI never asks for unlimited |
 | Stale or manipulated quote | Re-quote before signing; `minShares` + `deadline` on-chain |
-| Ondo feed signer compromise | Bounded step, monotonic, corporate actions only via the owner, signer rotation; worst case limited to `maxStepBps` |
+| Ondo feed signer compromise | Bounded step, monotonic, corporate actions only via the owner, signer rotation; worst case limited to that asset's `maxStepBps` |
 | Phishing or cloned tokens | Addresses only from the registry |
 | API key leak | Server-only; secrets file; never sent to clients; the key's permissions are limited to what the API grants |
 | RPC outage or censorship | Failover transport; tx hash persisted before polling |
 | Region-gate bypass | Edge block + declaration; documented residual risk |
 | Front-end supply chain | Lockfile, pinned versions, CSP headers, no third-party scripts beyond the wallet provider |
-| MEV on swaps | Use the Trading API's built-in MEV protection (confirm the parameter in M1) + share minimum |
+| MEV on swaps | `enableMevProtection` exists only on Binance's `broadcast-transaction` endpoint (F10). Users sign and broadcast in their own wallet, so Tally cannot set it: protection is the share minimum + deadline, **not** a claimed MEV feature |
 | Bot abuse | Read-only, rate limits, no keys |
 
 ---
@@ -655,10 +670,10 @@ Today is Thu 1 Oct; submissions lock **Sun 11 Oct, 12:00 UTC**. Dates are target
 | Question | Where |
 |---|---|
 | Privy vs Dynamic final choice; BSC embedded wallet; AUP | M0 |
-| Exact Market / Transaction / Wallet API paths and the MEV-protection parameter | M1 |
-| Trading API rate limits | M1 (ask organisers) |
+| Exact Market / Transaction / Wallet API paths and the MEV-protection parameter | M1: **resolved**: paths probed on the Seoul EC2, `enableMevProtection` found (broadcast only); Market `price`/`candlestick` need another source |
+| Trading API rate limits | M1: ~5 calls then 42900 observed; elevated limits requested, not yet granted |
 | Does bStock's token implementation expose a pause getter? | M2 |
-| Feed parameters: `maxStepBps`, `maxAge` | M2 (start 200 bps / 3 days) |
+| Feed parameters: per-asset `maxStepBps` (start 300 bps), `maxAge` | M2 (start 300 bps / 3 days) |
 | Default tolerance: 1% (the live fill came in 0.51% under quote, so 0.5% would have failed) | M3 user test |
 | Can Cloudflare on our plan see Crimea, Donetsk and Luhansk sub-regions? | M0 |
 | Onchain Pay merchant access | ask Binance; P2 |

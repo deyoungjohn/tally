@@ -1,0 +1,16 @@
+{
+ "path": "/api/v1/dex/aggregator/supported/chain",
+ "params": {
+  "binanceChainId": "56"
+ },
+ "http": 200,
+ "ok": true,
+ "data": [
+  {
+   "binanceChainId": "56",
+   "name": "BNB Smart Chain",
+   "shortName": "BSC",
+   "logoUrl": "https://onchainos.bnbstatic.com/image/admin_mgs_image_upload/20250228/d0216ce4-a3e9-4bda-8937-4a6aa943ccf2.png"
+  }
+ ]
+}

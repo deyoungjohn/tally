@@ -5,7 +5,7 @@ import { bsc } from "viem/chains";
 import type { ReactNode } from "react";
 
 /**
- * Privy is loaded only on routes that need a wallet (M0: /dev/wallet-check). The landing page
+ * Privy is loaded only on routes that need a wallet (M3: trade flow, portfolio). The landing page
  * stays free of the wallet SDK to protect the JS budget (blueprint §11).
  * BSC (chain 56) is the only chain: hard requirement (blueprint §4, §8.1).
  */

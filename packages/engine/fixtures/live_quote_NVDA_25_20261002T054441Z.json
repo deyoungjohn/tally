@@ -1,0 +1,129 @@
+{
+  "ticker": "NVDA",
+  "asOf": "2026-10-02T05:44:41.993Z",
+  "amount": {
+    "usd": 25
+  },
+  "referencePrice": 231.70981100000003,
+  "session": "overnight",
+  "rows": [
+    {
+      "symbol": "NVDAon",
+      "issuer": "ondo",
+      "address": "0xa9ee28c80f960b889dfbd1902055218cba016f75",
+      "decimals": 18,
+      "isBest": true,
+      "executable": true,
+      "multiplier": {
+        "value": "1001715248795989800",
+        "source": "api",
+        "degraded": false,
+        "maxDeviationPpm": 0,
+        "disagree": false
+      },
+      "amountInUsdt": "25000000000000000000",
+      "tokensOut": "107712615421326863",
+      "sharesOut": "107897369355241206",
+      "usdPerShare": 231.59431796411056,
+      "premium": -0.000498438263753398,
+      "hops": 2,
+      "routeText": "USDT \u2192 NVDAB \u2192 NVDAon",
+      "vendor": "LiquidMesh",
+      "executionMode": "SWAP",
+      "priceImpactPct": 0.0004940824,
+      "quoteId": "7f3038580f0a4a2eb1c2afca88d5fbe8",
+      "feeUsd": 0.02332696421907812,
+      "expectedGas": 600000,
+      "effectiveCostPerShare": 231.81051382095555,
+      "integrity": {
+        "score": 100,
+        "grade": "A",
+        "flags": [],
+        "reasons": [],
+        "unitTrap": false
+      },
+      "rank": 1
+    },
+    {
+      "symbol": "NVDAx",
+      "issuer": "xstocks",
+      "address": "0xc845b2894dbddd03858fd2d643b4ef725fe0849d",
+      "decimals": 18,
+      "isBest": false,
+      "executable": false,
+      "notExecutableReason": "Not tradable through Tally: this issuer has almost no BNB Chain liquidity.",
+      "multiplier": {
+        "value": "1001701196801074000",
+        "source": "onchain",
+        "degraded": false,
+        "maxDeviationPpm": 1701,
+        "disagree": true
+      },
+      "integrity": {
+        "score": 35,
+        "grade": "F",
+        "flags": [
+          "multiplier-disagreement",
+          "ghost"
+        ],
+        "reasons": [
+          {
+            "points": 25,
+            "flag": "multiplier-disagreement",
+            "reason": "Data sources disagree on how many shares one token is (more than 0.1%)."
+          },
+          {
+            "points": 40,
+            "flag": "ghost",
+            "reason": "Almost no trading on BNB Chain ($0 in 24h). Prices can be stale."
+          }
+        ],
+        "unitTrap": false
+      }
+    },
+    {
+      "symbol": "NVDAB",
+      "issuer": "bstock",
+      "address": "0x02fca66c1d1afb4e2a7884261eb00f63598a7436",
+      "decimals": 18,
+      "isBest": false,
+      "executable": true,
+      "multiplier": {
+        "value": "1000778223752807865",
+        "source": "onchain",
+        "degraded": false,
+        "maxDeviationPpm": 0,
+        "disagree": false
+      },
+      "amountInUsdt": "25000000000000000000",
+      "tokensOut": "107722906392297831",
+      "sharesOut": "107806738916773815",
+      "usdPerShare": 231.78901353504187,
+      "premium": 0.00034181778794795115,
+      "hops": 1,
+      "routeText": "USDT \u2192 NVDAB",
+      "vendor": "LiquidMesh",
+      "executionMode": "SWAP",
+      "priceImpactPct": 0.0003960693,
+      "quoteId": "a46b8d9837ff4155a9ccd646ddfe4894",
+      "feeUsd": 0.01710644042732395,
+      "expectedGas": 440000,
+      "effectiveCostPerShare": 231.94769044707172,
+      "integrity": {
+        "score": 100,
+        "grade": "A",
+        "flags": [],
+        "reasons": [],
+        "unitTrap": false
+      },
+      "rank": 2
+    }
+  ],
+  "best": "NVDAon",
+  "saving": {
+    "usd": 0.014800997094962484,
+    "pct": 0.0005914119077959912,
+    "vsSymbol": "NVDAB"
+  },
+  "warnings": []
+}

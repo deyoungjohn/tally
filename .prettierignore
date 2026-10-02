@@ -5,3 +5,6 @@ research
 spike
 *.md
 contracts
+packages/binance/fixtures
+packages/engine/fixtures
+data
