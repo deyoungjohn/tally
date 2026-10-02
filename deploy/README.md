@@ -91,6 +91,9 @@ Send that URL back, and add it (plus `http://localhost:3000`) under **Privy dash
 3. **Health** (live data, from the box itself): `curl -s -H 'cf-ipcountry: KR' http://127.0.0.1:3000/api/health`. Expect `"binance":"ok"`, a number for `rpcBlock`, `"feedSigner":"configured"` and an `ondoFeed.ageHours` under 72. `"binance":"region_block"` means the server's region drifted (40304).
 4. **Live quote:** `curl -s -H 'cf-ipcountry: KR' 'http://127.0.0.1:3000/api/quote?ticker=NVDA&usd=6'`
 
+## Restarting after any change (manual run, no systemd)
+`./deploy/restart.sh` reloads `/etc/tally/tally.env` and restarts the server. Add `--build` after changing `NEXT_PUBLIC_PRIVY_APP_ID` or code, or `--update` to pull the branch, install, rebuild and restart. It prints which env names are missing (never values) and the `/api/health` result. The repo lives at `~/tally` on the box, not `/opt/tally`; this script works from wherever it is cloned.
+
 ## C. The phone test (M3 exit check 1)
 1. Start a temporary tunnel and leave it running: `cloudflared tunnel --url http://localhost:3000` (or read the URL of the `tally-tunnel` unit, section B.3). A new URL means a new Privy allowed origin.
 2. Add the URL under **Privy dashboard → Settings → Allowed origins**.
