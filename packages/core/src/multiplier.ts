@@ -70,15 +70,67 @@ export interface OndoBoundsResult {
   detail: string;
 }
 
-/** An increase of up to 3% in one step is accepted: Ondo multipliers jump on ex-dividend dates (PFE ≈ +1.5% in one day). */
+/**
+ * Largest single increase accepted without a corporate action. A JUDGEMENT threshold, not derived from data: the
+ * largest step measured between 2026-09-30 and 2026-10-02 was +0.58% (research/ondo-multiplier-steps.md), so 3% is
+ * about five times that. Revisit it when more steps have been observed.
+ */
 export const JUMP_LIMIT_PPM = 30_000;
+/** A reverse split's new multiplier must be within 1% of old × ratio (slack for dividends accrued since the baseline). */
+export const SPLIT_MATCH_PPM = 10_000;
 
-const fmt = (v: bigint) => formatUnits(v, 18, 8);
+export interface CorporateAction {
+  kind: "stock_split" | "stock_dividend";
+  /**
+   * Shares per old share after the action: 10 for a 10-for-1 split, 0.1 for a 1-for-10 reverse split. Undefined when the
+   * message carries no ratio we can read, in which case a decrease can never be verified and stays blocked.
+   */
+  ratio?: number;
+}
 
 /**
- * Ondo multiplier bounds (blueprint §7.3): never decreases; a single increase of up to 3% is accepted; above 3% needs a
- * matching corporate action (`stock_split` / `stock_dividend` in `statusInfo.reasonMsg`). There is deliberately no
- * per-day growth cap: ex-dividend jumps would trip it. A failing reading is flagged and blocks execution for that token.
+ * Reads a corporate action from `statusInfo.reasonMsg`. ASSUMPTION: no recorded message has carried a stock_split yet (the
+ * only reasonMsg seen is "Paused for session transition"), so the ratio format ("1-for-10", "1:10", new:old) is a guess. It is safe
+ * to be wrong: a misread ratio also has to match old × ratio on the multiplier itself, and no ratio means a decrease is blocked.
+ */
+export function parseCorporateAction(msg: string | null | undefined): CorporateAction | undefined {
+  const text = msg ?? "";
+  const kind = /stock_split/i.test(text)
+    ? "stock_split"
+    : /stock_dividend/i.test(text)
+      ? "stock_dividend"
+      : undefined;
+  if (!kind) return undefined;
+  const r = /(\d+(?:\.\d+)?)\s*(?:-?\s*for\s*-?|:)\s*(\d+(?:\.\d+)?)/i.exec(text);
+  const ratio = r && Number(r[2]) > 0 ? Number(r[1]) / Number(r[2]) : undefined;
+  return ratio !== undefined && ratio > 0 ? { kind, ratio } : { kind };
+}
+
+const fmt = (v: bigint) => formatUnits(v, 18, 8);
+const num = (n: number) => String(Number(n.toPrecision(6)));
+/** |current − old × ratio| / (old × ratio) in ppm. */
+function ratioDeviationPpm(
+  old: bigint,
+  current: bigint,
+  ratio: number,
+): { expected: bigint; ppm: number } {
+  const expected = (old * BigInt(Math.round(ratio * 1_000_000))) / 1_000_000n;
+  const diff = current > expected ? current - expected : expected - current;
+  return {
+    expected,
+    ppm: expected === 0n ? Number.POSITIVE_INFINITY : Number(mulDiv(diff, 1_000_000n, expected)),
+  };
+}
+
+/**
+ * Ondo multiplier bounds (blueprint §7.3):
+ *  - never decreases, EXCEPT a matching reverse split: a `stock_split` corporate action whose ratio gives
+ *    new ≈ old × ratio (within 1%). Anything else that decreases is flagged and blocked;
+ *  - a single increase of up to 3% is accepted (judgement threshold; measured steps were ≤ 0.58%);
+ *  - an increase above 3% needs a matching corporate action (`stock_split` / `stock_dividend`), and if the message gives a
+ *    ratio the new value must also be within 1% of old × ratio.
+ * There is deliberately no per-day growth cap: distributions arrive as single steps (HYG +0.40% in one day where a
+ * yield ÷ 365 cap allows ~0.016%). A failing reading is flagged and blocks execution for that token.
  */
 export function checkOndoMultiplier(i: OndoBoundsInput): OndoBoundsResult {
   if (i.current <= 0n)
@@ -91,17 +143,56 @@ export function checkOndoMultiplier(i: OndoBoundsInput): OndoBoundsResult {
   const prev = i.previous.value;
   const base = `${fmt(i.current)} vs baseline ${fmt(prev)} (seen ${new Date(i.previous.at).toISOString().slice(0, 10)})`;
   if (i.current === prev) return { outcome: "pass", detail: `${base}: unchanged` };
-  if (i.current < prev) return { outcome: "fail", detail: `${base}: decreased` };
+  const action = parseCorporateAction(i.reasonMsg);
+
+  if (i.current < prev) {
+    const drop = `-${(Number(mulDiv(prev - i.current, 1_000_000n, prev)) / 10_000).toFixed(3)}%`;
+    if (action?.kind !== "stock_split") {
+      return {
+        outcome: "fail",
+        detail: `${base}: decreased ${drop}, no matching stock_split corporate action`,
+      };
+    }
+    if (action.ratio === undefined) {
+      return {
+        outcome: "fail",
+        detail: `${base}: decreased ${drop}; a stock_split is listed but its ratio can't be read, so new ≈ old × ratio can't be verified`,
+      };
+    }
+    const { expected, ppm } = ratioDeviationPpm(prev, i.current, action.ratio);
+    if (ppm <= SPLIT_MATCH_PPM) {
+      return {
+        outcome: "pass",
+        detail: `${base}: decreased ${drop}, matching a stock_split ratio ${num(action.ratio)} (expected ${fmt(expected)}, off by ${(ppm / 10_000).toFixed(2)}%)`,
+      };
+    }
+    return {
+      outcome: "fail",
+      detail: `${base}: decreased ${drop}; the listed stock_split ratio ${num(action.ratio)} expects ${fmt(expected)}, off by ${(ppm / 10_000).toFixed(2)}% (limit 1%)`,
+    };
+  }
+
   const ppm = Number(mulDiv(i.current - prev, 1_000_000n, prev));
   const pct = `+${(ppm / 10_000).toFixed(3)}%`;
   if (ppm <= JUMP_LIMIT_PPM)
     return { outcome: "pass", detail: `${base}: ${pct}, within the 3% single-step limit` };
-  if (/stock_split|stock_dividend/i.test(i.reasonMsg ?? ""))
+  if (!action)
+    return { outcome: "fail", detail: `${base}: ${pct}, above 3% with no corporate action` };
+  if (action.ratio === undefined)
     return {
       outcome: "pass",
-      detail: `${base}: ${pct}, above 3% but a corporate action is listed`,
+      detail: `${base}: ${pct}, above 3% but a ${action.kind} is listed (ratio not readable, not cross-checked)`,
     };
-  return { outcome: "fail", detail: `${base}: ${pct}, above 3% with no corporate action` };
+  const { expected, ppm: off } = ratioDeviationPpm(prev, i.current, action.ratio);
+  return off <= SPLIT_MATCH_PPM
+    ? {
+        outcome: "pass",
+        detail: `${base}: ${pct}, above 3% but matches a ${action.kind} ratio ${num(action.ratio)} (expected ${fmt(expected)})`,
+      }
+    : {
+        outcome: "fail",
+        detail: `${base}: ${pct}, the listed ${action.kind} ratio ${num(action.ratio)} expects ${fmt(expected)}, off by ${(off / 10_000).toFixed(2)}% (limit 1%)`,
+      };
 }
 
 /** "Unit trap" (blueprint §7.5): the same ticker means a very different amount of stock depending on the issuer. */

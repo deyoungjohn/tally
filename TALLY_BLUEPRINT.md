@@ -267,12 +267,14 @@ Fork tests need an RPC secret and run on demand.
 | xStocks | on-chain `multiplier()` (display only) | `0x1b3ed722` |
 | Ondo | RWA API `sharesMultiplier` | — |
 
-**Ondo sanity bounds:**
-- **never decreases**;
-- **a single increase of up to 3% is accepted**. Ondo multipliers jump on ex-dividend dates (PFE moved about +1.5% in one day), so there is deliberately **no per-day growth cap** (an earlier `dividendYield / 365 + ε` rule would have blocked real dividends; removed 2026-10-02);
-- an increase **above 3%** is only accepted with a matching corporate action (`stock_split` / `stock_dividend` in `statusInfo.reasonMsg`).
+**Ondo sanity bounds** (off-chain, checked on every reading):
+- **never decreases, except a matching reverse split.** A decrease is accepted only with a `stock_split` corporate action in `statusInfo.reasonMsg` **and** `new ≈ old × ratio` (within 1%, slack for dividends accrued since the baseline). Any other decrease, and a `stock_split` whose ratio cannot be read or does not match, is flagged and blocked. Reverse splits happen: SOXS (Ondo) has a multiplier of 0.1017;
+- **a single increase of up to 3% is accepted.** Ondo multipliers move in single steps on distribution dates, not gradually. Measured between the 2026-09-30 and 2026-10-02 snapshots (`research/ondo-multiplier-steps.md`): **31 of 458 tokens changed, each in one step, none decreased, the largest step was +0.58% (USHY)**; bond ETFs on their monthly distribution moved +0.28% to +0.40% (HYG +0.40%, TLT +0.39%, AGG +0.34%, BIL +0.28%). The **3% figure is a judgement threshold** (about five times the largest step seen), not derived from data; revisit it when more steps have been observed. There is deliberately **no per-day growth cap**: a `dividendYield / 365 + ε` rule would have rejected all 31 observed updates (HYG's ~5.8% yield allows about 0.016% per day, and it stepped 0.40%);
+- an increase **above 3%** is only accepted with a matching corporate action (`stock_split` / `stock_dividend`); if the message gives a ratio, the new value must also be within 1% of `old × ratio`.
 
-Each reading is compared with the **last accepted reading** (the baseline), kept in `data/ondo-multiplier-baseline.json` (`value` + `seenAt` per token; SQLite later) and seeded from the 2026-09-30 snapshot. **Only readings that pass are stored**, so a bad reading cannot become the baseline. A token with no baseline yet is recorded on first sight only if its sources agree. A decrease is never auto-accepted, not even with a corporate action (a reverse split is handled by the owner in ShareGuard, §10).
+*Assumption:* no recorded `reasonMsg` has carried a corporate action yet (the only one seen is "Paused for session transition"), so the ratio format the parser reads (`1-for-10`, `1:10`, new:old) is unverified. It is safe to be wrong: a misread ratio must still match the multiplier itself, and an unreadable ratio keeps a decrease blocked.
+
+Each reading is compared with the **last accepted reading** (the baseline), kept in `data/ondo-multiplier-baseline.json` (`value` + `seenAt` per token; SQLite later) and seeded from the 2026-09-30 snapshot. **Only readings that pass are stored**, so a bad reading cannot become the baseline. A token with no baseline yet is recorded on first sight only if its sources agree.
 
 Values that break the bounds are flagged in Trap Shield and block execution for that token. Cross-check every source against the public list/dynamic endpoints and record disagreements; they feed the integrity grade and the DX report.
 
@@ -449,7 +451,7 @@ function assertMinShares(address account, address stock, uint256 balBefore, uint
   - **token pause:** Ondo `tokenPauseManager().isTokenPaused(stock)` → `TokenPaused`; xStocks `isPaused()`; bStock: check in M2 whether its implementation has a pause getter.
 - **Ondo multiplier feed (pull-style, no keeper gas):**
   - an EIP-712 `FeedUpdate{stock, multiplier, validAfter, validUntil}` signed by `feedSigner`;
-  - accepted only if the multiplier is non-decreasing **and** the per-update increase is ≤ that asset's own `maxStepBps` (**per-asset**, set by the owner, start: **300 bps**; ex-dividend jumps differ by stock, so there is no global limit), unless a matching owner-registered `CorporateAction{stock, expectedMultiplier, notBefore}` exists (splits);
+  - accepted only if the per-update increase is ≤ that asset's own `maxStepBps` (**per-asset**, set by the owner, start: **300 bps**; distribution steps differ by stock, so there is no global limit). **A decrease is accepted only via an owner-registered `CorporateAction{stock, expectedMultiplier, notBefore}` whose `expectedMultiplier` matches the update** (a reverse split); so is an increase above `maxStepBps` (a forward split). The signer cannot make either on its own;
   - stored with `updatedAt`. Swaps on a Feed asset revert if `now − updatedAt > maxAge` (start: 3 days) and no fresh update is supplied.
 - **Ownership:** `Ownable2Step`. The owner can only manage lists, parameters, the feed signer, pause and rescue. **Not upgradeable** (no proxy); deploy a new version if needed.
 - **Events:** `Guarded(user, recipient, stock, tokenIn, amountIn, tokensOut, shares, multiplier, router)`, `AssetSet`, `RouterSet`, `FeedUpdated`, `CorporateActionRegistered`, `Paused`.

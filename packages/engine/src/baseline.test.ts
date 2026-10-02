@@ -2,8 +2,16 @@ import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSy
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { Registry, parseDecimal, type RegistryToken } from "@tally/core";
+import {
+  JUMP_LIMIT_PPM,
+  Registry,
+  checkOndoMultiplier,
+  parseDecimal,
+  type RegistryToken,
+} from "@tally/core";
 import { JsonBaselineStore, SEED_PATH, baselineFromEnv } from "./baseline";
+
+const RESEARCH = join(SEED_PATH, "..", "..", "research");
 
 const NVDAON = "0xa9ee28c80f960b889dfbd1902055218cba016f75";
 const token = Registry.fromRows([
@@ -106,5 +114,74 @@ describe("JsonBaselineStore", () => {
     expect(baselineFromEnv({ TALLY_DATA_DIR: dir }).writable).toBe(true);
     expect(existsSync(join(dir, "ondo-multiplier-baseline.json"))).toBe(true);
     expect(baselineFromEnv({ TALLY_BASELINE_PATH: join(dir, "x.json") }).writable).toBe(true);
+  });
+});
+
+describe("the bounds against real data: seed (2026-09-30) as baseline, public Ondo list of 2026-10-02 as the reading", () => {
+  const list = (dir: string) =>
+    new Map(
+      (
+        JSON.parse(readFileSync(join(RESEARCH, dir, "rwa_list_ondo.json"), "utf8")).data as Array<{
+          chainId: string;
+          contractAddress: string;
+          symbol: string;
+          multiplier: string;
+        }>
+      )
+        .filter((r) => r.chainId === "56")
+        .map((r) => [r.contractAddress.toLowerCase(), r]),
+    );
+  const store = new JsonBaselineStore();
+  const now = list("snapshot-2026-10-02");
+
+  it("accepts every one of the 458 tokens: unchanged, or one small step up (research/ondo-multiplier-steps.md)", () => {
+    expect(now.size).toBe(458);
+    for (const [addr, r] of now) {
+      const res = checkOndoMultiplier({
+        current: parseDecimal(r.multiplier, 18),
+        previous: store.get(addr),
+      });
+      expect(res.outcome, `${r.symbol}: ${res.detail}`).toBe("pass");
+    }
+  });
+  it("31 tokens changed, none decreased, the largest step is +0.58% (USHY), and the 3% limit is about five times that", () => {
+    let changed = 0;
+    let decreased = 0;
+    let max = 0;
+    let maxSymbol = "";
+    for (const [addr, r] of now) {
+      const base = store.get(addr)!.value;
+      const cur = parseDecimal(r.multiplier, 18);
+      if (cur === base) continue;
+      changed++;
+      if (cur < base) decreased++;
+      const step = Number(((cur - base) * 1_000_000n) / base);
+      if (step > max) [max, maxSymbol] = [step, r.symbol];
+    }
+    expect({ changed, decreased, maxSymbol }).toEqual({
+      changed: 31,
+      decreased: 0,
+      maxSymbol: "USHYon",
+    });
+    expect(max / 10_000).toBeCloseTo(0.579, 3);
+    expect(JUMP_LIMIT_PPM / max).toBeGreaterThan(5);
+  });
+  it("a per-day yield cap would have rejected the distribution steps: HYG stepped +0.40% where 5.8% ÷ 365 allows 0.016%", () => {
+    const hyg = [...now.values()].find((r) => r.symbol === "HYGon")!;
+    const base = store.get([...now.keys()].find((k) => now.get(k) === hyg)!)!.value;
+    const step = Number(((parseDecimal(hyg.multiplier, 18) - base) * 1_000_000n) / base) / 10_000; // percent
+    expect(step).toBeCloseTo(0.4, 1);
+    expect(step).toBeGreaterThan((5.8 / 365) * 10);
+  });
+  it("SOXS shows reverse splits happen (0.1017): the same rule blocks a drop to it from 1.017 without a stock_split, and accepts it with one", () => {
+    const soxs = [...now.values()].find((r) => r.symbol === "SOXSon")!;
+    expect(Number(soxs.multiplier)).toBeCloseTo(0.1017, 3);
+    const old = { value: parseDecimal("1.0170", 18), at: Date.parse("2026-09-30T19:35:13Z") };
+    const cur = parseDecimal(soxs.multiplier, 18);
+    expect(checkOndoMultiplier({ current: cur, previous: old }).outcome).toBe("fail");
+    expect(
+      checkOndoMultiplier({ current: cur, previous: old, reasonMsg: "stock_split 1-for-10" })
+        .outcome,
+    ).toBe("pass");
   });
 });
