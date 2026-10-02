@@ -242,7 +242,7 @@ describe("radar and portfolio views", () => {
     expect(g.ticker).toBe("NVDA");
     expect(g.parts.map((x) => x.symbol).sort()).toEqual(["NVDAB", "NVDAon"]);
     const b = g.parts.find((x) => x.symbol === "NVDAB")!;
-    expect(b.shares).toBeCloseTo(0.025654736 * 1.0007782237528079, 9);
+    expect(b.shares).toBeCloseTo(0.025654736 * 1.0007782237528, 9);
     expect(g.shares).toBeCloseTo(g.parts[0]!.shares + g.parts[1]!.shares, 12);
     expect(p.totalValueUsd).toBeGreaterThan(5);
     expect(p.wallet.usdt).toBe(12);
