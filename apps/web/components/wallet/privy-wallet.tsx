@@ -1,21 +1,21 @@
 "use client";
 
 import { PrivyProvider, usePrivy, useSendTransaction, useWallets } from "@privy-io/react-auth";
-import { useMemo, type ReactNode } from "react";
+import { useEffect, useMemo } from "react";
 import { createWalletClient, custom, toHex, type Hex } from "viem";
 import { bsc } from "viem/chains";
-import { WalletCtxProvider, type TallyWallet } from "./wallet-context";
+import type { TallyWallet } from "./wallet-context";
 
 /**
  * Privy on BSC only (chain 56 is a hard requirement, blueprint §4 and §8.1). Embedded wallets are created at first login.
  * `showWalletUIs: false` because Tally shows its own confirm step (exact shares, minimum, fee); Privy's prompt would repeat it.
  */
-export function PrivyWallet({ children }: { children: ReactNode }) {
+export function PrivyWallet({ onChange }: { onChange: (w: TallyWallet) => void }) {
   const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
   if (!appId) {
     // Browsing must keep working: only signing in is unavailable (the button stays disabled, `ready` is false).
     console.error("NEXT_PUBLIC_PRIVY_APP_ID is not set, so sign-in is unavailable.");
-    return <>{children}</>;
+    return null;
   }
   return (
     <PrivyProvider
@@ -31,7 +31,7 @@ export function PrivyWallet({ children }: { children: ReactNode }) {
         appearance: { theme: "dark", accentColor: "#e8ebef", showWalletLoginFirst: false },
       }}
     >
-      <Bridge>{children}</Bridge>
+      <Bridge onChange={onChange} />
     </PrivyProvider>
   );
 }
@@ -39,7 +39,7 @@ export function PrivyWallet({ children }: { children: ReactNode }) {
 const isUserRejection = (e: unknown) =>
   typeof e === "object" && e !== null && (e as { code?: number }).code === 4001;
 
-function Bridge({ children }: { children: ReactNode }) {
+function Bridge({ onChange }: { onChange: (w: TallyWallet) => void }) {
   const { ready, authenticated, login, logout, connectWallet } = usePrivy();
   const { wallets } = useWallets();
   const { sendTransaction } = useSendTransaction();
@@ -101,5 +101,6 @@ function Bridge({ children }: { children: ReactNode }) {
     }),
     [ready, authenticated, wallet, login, logout, connectWallet, sendTransaction],
   );
-  return <WalletCtxProvider value={value}>{children}</WalletCtxProvider>;
+  useEffect(() => onChange(value), [value, onChange]);
+  return null;
 }

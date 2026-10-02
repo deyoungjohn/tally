@@ -45,7 +45,10 @@ export function Segmented<T extends string>({
 
   return (
     <MotionConfig transition={reduce ? { duration: 0 } : SPRING_LAYOUT}>
-      <div
+      {/* layoutRoot: the pill is measured relative to this group, so scroll locks, page shifts and dialogs opening or closing
+          elsewhere are never replayed as movement (the pill used to drop in from above when a dialog closed). */}
+      <motion.div
+        layoutRoot
         role="radiogroup"
         aria-label={label}
         className={cn(
@@ -84,7 +87,7 @@ export function Segmented<T extends string>({
             </button>
           );
         })}
-      </div>
+      </motion.div>
     </MotionConfig>
   );
 }

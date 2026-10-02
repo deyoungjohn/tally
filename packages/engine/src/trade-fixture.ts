@@ -78,6 +78,16 @@ export function fixtureTradeChain(
     },
     gasPriceWei: async () => 50_000_000n,
     blockNumber: async () => 125_273_150n,
+    // The two recorded live buys (IDEAS F11): 0.025654736 NVDAB and 0.025660879 NVDAon.
+    async erc20Balances(_owner, tokens) {
+      return tokens.map((t) =>
+        t.toLowerCase() === NVDAB
+          ? 25_654_736_000_000_000n
+          : t.toLowerCase() === NVDAON
+            ? 25_660_879_000_000_000n
+            : 0n,
+      );
+    },
     async receipt(hash) {
       if (hash === FIXTURE_APPROVE_HASH) {
         state.allowance = 2n ** 255n;

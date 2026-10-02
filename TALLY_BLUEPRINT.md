@@ -2,7 +2,7 @@
 
 > **Naming:** Tally was called **Parity** during ideation and validation. Code under `spike/` and `research/` keeps the old identifiers (e.g. `PARITY_PK`, the `"parity.shareguard.fork"` seed behind the fork test's fixed address). Don't rename them; they're historical and some are load-bearing.
 
-> **"Shares, not tokens."** Tally compares the same US stock across the three issuers that tokenize it on BNB Chain (Ondo, bStocks, xStocks). It quotes each one in **real share units**, routes your buy to the best true price, and settles through **ShareGuard**, a contract that reverts if you'd receive fewer **shares** than promised.
+> **"Buy tokenized shares, at the best prices."** (UI tagline, changed 2026-10-02: copy must never imply users buy the underlying shares.) Tally compares the same US stock across the three issuers that tokenize it on BNB Chain (Ondo, bStocks, xStocks). It quotes each one in **share units** (tokenized shares track a stock's price; they are not the underlying shares), routes your buy to the best true price, and settles through **ShareGuard**, a contract that reverts if you'd receive fewer **shares** than promised.
 
 This document is the hand-off from the ideation and validation phase to the build phase. It is meant to be **self-contained**: a new session (human or AI) should be able to build Tally from this file, `DESIGN.md`, and the evidence they link to, without reading the earlier conversation.
 
@@ -500,6 +500,8 @@ All visual rules live in `DESIGN.md`. This section covers structure.
 | `/how-it-works`, `/faq`, `/legal/*` | Content | public |
 | `/blocked` | Region block page | — |
 | `/api/quote`, `/api/trade/plan`, `/api/trade/receipt`, `/api/fills`, `/api/declaration`, `/api/health` (M3); `/api/registry`, `/api/integrity`, `/api/portfolio/[address]` (M4) | Route handlers wrapping `packages/core`. zod-validated inputs. Rate-limited per IP. | |
+
+> **As built (2026-10-02, owner revision):** the pages are Home `/`, Trade `/trade[/TICKER]`, Portfolio `/portfolio`, Radar `/radar` (this section's Trap Shield) and `/docs` (footer; holds the contract links). FAQ is a section of Home reached from the nav. `/api/radar` and `/api/portfolio` exist. The landing page lives on `trytally.xyz` and is built last; this app is `app.trytally.xyz`. UI copy uses "the guarantee" instead of "ShareGuard".
 
 **Requirements:**
 - Server components for static and SEO parts; client components for live data (react-query).

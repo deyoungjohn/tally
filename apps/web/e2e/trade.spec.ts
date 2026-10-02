@@ -243,3 +243,76 @@ test.describe("reduced motion", () => {
     await buyThrough(page);
   });
 });
+
+test.describe("layout order", () => {
+  test("phone: price, then the trade card, then the issuer comparison", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 800 });
+    await mockWallet(page);
+    await page.goto("/trade/NVDA");
+    await quoteLoaded(page);
+    const y = async (id: string) => (await page.getByTestId(id).boundingBox())!.y;
+    const price = await y("ref-price");
+    const card = await y("trade-card");
+    const rows = (await page.getByTestId("row-NVDAon").boundingBox())!.y;
+    expect(price).toBeLessThan(card);
+    expect(card).toBeLessThan(rows);
+  });
+
+  test("desktop: the issuer comparison is on the left of the trade card", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await mockWallet(page);
+    await page.goto("/trade/NVDA");
+    await quoteLoaded(page);
+    const row = (await page.getByTestId("row-NVDAon").boundingBox())!;
+    const card = (await page.getByTestId("trade-card").boundingBox())!;
+    expect(row.x + row.width).toBeLessThanOrEqual(card.x + 1);
+  });
+
+  test("the stock dropdown switches the stock on the trade page", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await mockWallet(page);
+    await page.goto("/trade/NVDA");
+    await quoteLoaded(page);
+    await page.getByTestId("stock-picker").selectOption("AAPL");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("Apple");
+    await expect(page).toHaveURL(/\/trade\/AAPL/);
+  });
+});
+
+for (const [w, h] of [
+  [375, 800],
+  [1280, 900],
+] as const) {
+  test(`the sign-in dialog is centered at ${w}px and the toggle pills stay put when it closes`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: w, height: h });
+    await mockWallet(page, false);
+    await page.goto("/trade/NVDA");
+    await quoteLoaded(page);
+    const pill = page
+      .getByRole("radiogroup", { name: "Price tolerance" })
+      .getByRole("radio", { checked: true });
+    // Page coordinates: opening the dialog scrolls the page, and the pill must not move on the page itself.
+    const top = () => pill.evaluate((el) => el.getBoundingClientRect().top + window.scrollY);
+    const before = await top();
+    await page.getByTestId("buy-button").click();
+    const dialog = page.getByRole("dialog", { name: "Create your account" });
+    await expect(dialog).toBeVisible();
+    await page.waitForTimeout(700);
+    const box = (await dialog.boundingBox())!;
+    expect(Math.abs(box.x + box.width / 2 - w / 2)).toBeLessThan(2);
+    expect(box.y).toBeGreaterThan(0);
+    expect(box.y + box.height).toBeLessThan(h);
+    expect(Math.abs(box.y + box.height / 2 - h / 2)).toBeLessThan(60);
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    // Sample for a moment: the pill must not move at all.
+    const ys: number[] = [];
+    for (let i = 0; i < 10; i++) {
+      ys.push(await top());
+      await page.waitForTimeout(60);
+    }
+    for (const y of ys) expect(Math.abs(y - before)).toBeLessThan(1.5);
+  });
+}

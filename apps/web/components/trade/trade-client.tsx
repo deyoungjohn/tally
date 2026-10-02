@@ -1,26 +1,24 @@
 "use client";
 
-import { AlertTriangle, ExternalLink, ShieldCheck } from "lucide-react";
+import { AlertTriangle, ShieldCheck } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatedNumber } from "@/components/motion/animated-number";
 import { Button } from "@/components/motion/button";
-import { WalletRoot, useTallyWallet } from "@/components/wallet/wallet-context";
-import { SHAREGUARD_DEPLOYED } from "@tally/config";
+import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { useLiveQuote, type QuoteAmount } from "@/lib/hooks/use-live-quote";
 import { fmtUsd, SESSION_LABEL } from "@/lib/format";
-import { SessionBadge, TokenLogo } from "./badges";
+import { isBuyable, nameOf } from "@/lib/tickers";
+import { ComingSoon } from "./coming-soon";
+import { StockPicker } from "./stock-picker";
+import { SessionBadge } from "./badges";
 import { ProgressIsland, ReceiptCard, ReviewSheet, SignInSheet, TopUpSheet } from "./flow-sheets";
 import { IssuerList } from "./issuer-list";
 import { Sparkline } from "./sparkline";
 import { MIN_USD, TradeCard, type Unit } from "./trade-card";
 import { useTradeFlow, type FlowParams } from "./use-trade-flow";
 
-export function TradeClient(props: { ticker: string; name: string; buyable: boolean }) {
-  return (
-    <WalletRoot>
-      <TradeInner {...props} />
-    </WalletRoot>
-  );
+export function TradeClient(props: { ticker: string; initialUsd?: number }) {
+  return <TradeInner {...props} />;
 }
 
 const RETRY_KINDS = new Set([
@@ -36,10 +34,21 @@ const RETRY_KINDS = new Set([
   "timeout",
 ]);
 
-function TradeInner({ ticker, name, buyable }: { ticker: string; name: string; buyable: boolean }) {
+function TradeInner({
+  ticker: initialTicker,
+  initialUsd,
+}: {
+  ticker: string;
+  initialUsd?: number;
+}) {
+  const [ticker, setTicker] = useState(initialTicker);
+  const name = nameOf(ticker);
+  const buyable = isBuyable(ticker);
   const wallet = useTallyWallet();
   const [unit, setUnit] = useState<Unit>("usd");
-  const [amountText, setAmountText] = useState(String(MIN_USD));
+  const [amountText, setAmountText] = useState(
+    String(initialUsd && initialUsd >= MIN_USD ? initialUsd : MIN_USD),
+  );
   const [tolerance, setTolerance] = useState(1);
   const [picked, setPicked] = useState<string | undefined>();
   const [dismissed, setDismissed] = useState(false);
@@ -112,29 +121,36 @@ function TradeInner({ ticker, name, buyable }: { ticker: string; name: string; b
   const topupPlan = phase.name === "topup" ? phase.plan : null;
   const best = q?.rows.find((r) => r.isBest);
 
+  const changeTicker = (t: string) => {
+    if (t === ticker) return;
+    history.current = [];
+    setPoints([]);
+    setPicked(undefined);
+    setTicker(t);
+    flow.cancel();
+    try {
+      window.history.replaceState(null, "", `/trade/${t}`);
+    } catch {
+      /* the URL just stays as it was */
+    }
+  };
+
   return (
     <main id="main" className="wrap pb-24 pt-8 min-[561px]:pt-12">
       <ProgressIsland phase={phase} />
       <div className="flex flex-col gap-4 min-[981px]:grid min-[981px]:grid-cols-[minmax(0,1fr)_minmax(0,480px)] min-[981px]:items-start min-[981px]:gap-8">
-        <div className="contents min-w-0 min-[981px]:block">
+        {/* Left on desktop: the stock, its price, then the issuers compared. On a phone the trade card comes second. */}
+        <div className="contents min-[981px]:grid min-[981px]:min-w-0 min-[981px]:grid-cols-1 min-[981px]:gap-4">
           <div className="order-1 min-w-0">
-            <p className="eyebrow glass !rounded-full">
-              <span className="dot-live" aria-hidden />
-              <span>
-                Compared across <b>Ondo · bStocks</b>
-              </span>
-            </p>
-            <div className="mt-5 flex items-center gap-4">
-              <TokenLogo ticker={ticker} />
-              <div className="min-w-0">
-                <h1 className="t-h2 !text-[clamp(30px,5vw,44px)]">{name}</h1>
-                <p className="t-meta mono">{ticker}</p>
-              </div>
-              <div className="ml-auto">{q ? <SessionBadge session={q.session} /> : null}</div>
+            <div className="flex flex-wrap items-center gap-3">
+              <StockPicker value={ticker} onChange={changeTicker} />
+              {q ? <SessionBadge session={q.session} /> : null}
             </div>
+            <h1 className="t-h2 mt-4 !text-[clamp(30px,5vw,44px)]">{name}</h1>
+            <p className="t-meta mono">{ticker} · tokenized, not the underlying share</p>
           </div>
 
-          <div className="glass order-3 mt-2 min-w-0 p-5 min-[981px]:mt-6">
+          <div className="glass order-2 min-w-0 p-5">
             <p className="t-meta">US price per share</p>
             <p className="t-big mt-1" data-testid="ref-price">
               {q?.referencePrice == null ? (
@@ -157,29 +173,28 @@ function TradeInner({ ticker, name, buyable }: { ticker: string; name: string; b
             <p className="t-meta mt-1">This session · updates every 10 seconds</p>
           </div>
 
-          <div className="panel order-4 mt-0 min-w-0 p-5 min-[981px]:mt-4">
+          <div className="order-4 min-w-0">
+            <IssuerList
+              quote={q}
+              selected={row?.symbol}
+              onSelect={setPicked}
+              loading={quote.loading}
+            />
+          </div>
+
+          <div className="panel order-5 min-w-0 p-5">
             <p className="flex items-center gap-2 font-semibold">
               <ShieldCheck size={18} aria-hidden /> Guaranteed in shares, on-chain
             </p>
             <p className="mt-1 text-[14px] text-fg2">
-              ShareGuard checks how many <b className="text-fg">shares</b> you receive, not tokens.
-              If it&apos;s below your minimum, nothing happens and your USDT stays put.
+              Tally checks how many <b className="text-fg">shares</b> your tokens represent and
+              cancels the whole trade if you&apos;d get fewer than your minimum. Your USDT stays
+              put. These are tokenized shares issued by Ondo and bStocks, not the underlying stock.
             </p>
-            <a
-              className="mono mt-2 inline-flex items-center gap-1.5 text-[12.5px] text-blue"
-              href={`https://bscscan.com/address/${SHAREGUARD_DEPLOYED}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {SHAREGUARD_DEPLOYED.slice(0, 8)}…{SHAREGUARD_DEPLOYED.slice(-6)}{" "}
-              <ExternalLink size={12} aria-hidden />
-              <span className="sr-only">(opens BscScan in a new tab)</span>
-            </a>
           </div>
           {!buyable ? (
-            <p role="status" className="mt-4 text-[14px] text-amber">
-              {ticker} can be compared here, but ShareGuard isn&apos;t set up for it yet, so buying
-              is switched off.
+            <p role="status" className="order-5 text-[14px] text-amber">
+              {ticker} can be compared here, but buying it isn&apos;t switched on yet.
             </p>
           ) : null}
           <p className="sr-only" aria-live="polite" data-testid="live-summary">
@@ -189,8 +204,8 @@ function TradeInner({ ticker, name, buyable }: { ticker: string; name: string; b
           </p>
         </div>
 
-        <div className="contents min-w-0 min-[981px]:grid min-[981px]:grid-cols-1 min-[981px]:gap-4">
-          <div className="order-2 grid min-w-0 grid-cols-1 gap-4">
+        <div className="contents min-[981px]:sticky min-[981px]:top-24 min-[981px]:grid min-[981px]:min-w-0 min-[981px]:grid-cols-1 min-[981px]:gap-4">
+          <div className="order-3 grid min-w-0 grid-cols-1 gap-4">
             {phase.name === "done" && !dismissed ? (
               <ReceiptCard
                 receipt={phase.receipt}
@@ -250,18 +265,14 @@ function TradeInner({ ticker, name, buyable }: { ticker: string; name: string; b
               quoteLoading={quote.loading}
               onBuy={onBuy}
             />
-          </div>
-          {quote.error && !q ? (
-            <p role="alert" className="order-2 text-[14px] text-amber" data-testid="quote-error">
-              {quote.error.message}
-            </p>
-          ) : null}
-          <div className="order-5 min-w-0">
-            <IssuerList
-              quote={q}
-              selected={row?.symbol}
-              onSelect={setPicked}
-              loading={quote.loading}
+            {quote.error && !q ? (
+              <p role="alert" className="text-[14px] text-amber" data-testid="quote-error">
+                {quote.error.message}
+              </p>
+            ) : null}
+            <ComingSoon
+              items={["Sell to USDT or BNB", "Limit price", "Recurring buys"]}
+              title="Advanced · coming soon"
             />
           </div>
         </div>

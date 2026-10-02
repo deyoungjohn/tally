@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { WalletRoot } from "@/components/wallet/wallet-context";
 import "./globals.css";
 
 const inter = Inter({
@@ -19,9 +20,9 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Tally: shares, not tokens",
+  title: "Tally: buy tokenized shares, at the best prices",
   description:
-    "Compare the same US stock across Ondo, bStocks and xStocks on BNB Chain, in real share units, and buy at the best price with an on-chain share guarantee.",
+    "Compare tokenized versions of the same US stock across Ondo, bStocks and xStocks on BNB Chain, in share units, and buy at the best price with an on-chain minimum-shares guarantee. Not the underlying shares.",
 };
 
 export const viewport: Viewport = {
@@ -47,11 +48,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         >
           Skip to content
         </a>
-        <div className="relative z-10">
-          <SiteHeader />
-          {children}
-          <SiteFooter />
-        </div>
+        <WalletRoot>
+          <div className="relative z-10">
+            <SiteHeader />
+            {children}
+            <SiteFooter />
+          </div>
+        </WalletRoot>
       </body>
     </html>
   );

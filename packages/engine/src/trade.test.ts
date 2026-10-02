@@ -220,3 +220,31 @@ describe("health (blueprint §14)", () => {
     expect(h.binance).toBe("region_block");
   });
 });
+
+describe("radar and portfolio views", () => {
+  it("radar grades every token of a ticker and flags the ghost xStocks token", async () => {
+    const r = await createFixtureEngine().radar(["NVDA"]);
+    const x = r.rows.find((x) => x.symbol === "NVDAx")!;
+    expect(x.grade).toBe("F");
+    expect(x.flags).toEqual(expect.arrayContaining(["ghost"]));
+    expect(r.rows.find((x) => x.symbol === "NVDAon")!.grade).toBe("A");
+    expect(r.failed).toEqual([]);
+  });
+  it("radar reports a ticker it cannot read instead of dropping it", async () => {
+    const r = await createFixtureEngine().radar(["NVDA", "ZZZZ"]);
+    expect(r.failed.map((f) => f.ticker)).toEqual(["ZZZZ"]);
+    expect(r.rows.some((x) => x.ticker === "NVDA")).toBe(true);
+  });
+  it("portfolio adds shares across issuers: tokens × each issuer's multiplier", async () => {
+    const e = createFixtureEngine();
+    const p = await e.portfolio(USER, ["NVDA"]);
+    const g = p.groups[0]!;
+    expect(g.ticker).toBe("NVDA");
+    expect(g.parts.map((x) => x.symbol).sort()).toEqual(["NVDAB", "NVDAon"]);
+    const b = g.parts.find((x) => x.symbol === "NVDAB")!;
+    expect(b.shares).toBeCloseTo(0.025654736 * 1.0007782237528079, 9);
+    expect(g.shares).toBeCloseTo(g.parts[0]!.shares + g.parts[1]!.shares, 12);
+    expect(p.totalValueUsd).toBeGreaterThan(5);
+    expect(p.wallet.usdt).toBe(12);
+  });
+});

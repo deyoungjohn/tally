@@ -6,7 +6,7 @@
 >
 > | | **Idea 1: TALLY** | **Idea 2: STIPEND** |
 > |---|---|---|
-> | One line | *Shares, not tokens.* A best-execution layer that converts Ondo, bStock and xStocks into real share units, sends each order to the issuer with the best true price, and blocks trades that fall into data traps. | *The AI wealth manager paid only from your dividends.* An Agent Studio agent whose entire income is a capped cut of dividends, measured on-chain from share multipliers and enforced by a vault contract. |
+> | One line | *Buy tokenized shares, at the best prices.* A best-execution layer that converts Ondo, bStock and xStocks into share units, sends each order to the issuer with the best true price, and blocks trades that fall into data traps. | *The AI wealth manager paid only from your dividends.* An Agent Studio agent whose entire income is a capped cut of dividends, measured on-chain from share multipliers and enforced by a vault contract. |
 > | Blind spot it attacks | Unit of account and data integrity. The same ticker means 10× different amounts of stock depending on the issuer, and the APIs disagree with the chain. | Nobody uses the multiplier as a dividend ledger. It tracks dividend yield at **r = 0.917**. |
 > | Special prize it targets | Best Use of Agentic Wallet / Wallet Skills | Best Use of BNB Agent Studio (identity, runtime, **self-funding via x402**) |
 > | Pattern from past winners it uses | Precise financial primitive + upstream fix to the sponsor's own tooling (Meld, PRECEDENCE, Tilt) | AI bounded by on-chain policy + paid x402 calls + verifiable profit and loss (Faktura, Flattora, Watchdog, Infinite Money Glitch) |
@@ -67,7 +67,7 @@ The track page lists 10 example ideas, and most entries will cluster around them
 
 ---
 
-## Idea 1: TALLY: "Shares, not tokens."
+## Idea 1: TALLY: "Buy tokenized shares, at the best prices."
 
 ### The pitch
 Robinhood users think in shares and dollars, and they expect best execution. On-chain they get three issuers, each with its own units, disagreeing metadata and ghost pools. Tally is the **consolidated tape and share-true order router for tokenized equities on BSC**. You say "buy half a share of NVDA" or "$50 of Apple". Tally quotes every issuer in real share units, picks the best true price, and settles through an on-chain guard that reverts if you'd get fewer **shares** than promised.
@@ -559,6 +559,8 @@ Evidence: `packages/engine/src/trade.ts` and `trade.test.ts` (recorded Seoul quo
 4. **Region declaration** is stored in `declarations.jsonl` under `TALLY_DATA_DIR` (country and region headers, no IP), versioned by date; SQLite replaces it later.
 5. **The feed signer has no endpoint.** It signs inside the trade plan, bounded by the contract's `maxStepBps`.
 6. TSLA, QQQ and SPY have no recorded quote fixtures, so they only work live. Recording them (`spike/record_m1_fixtures.py` on the EC2) would let the whole ticker strip run offline.
+
+**Owner review of the first deploy (2026-10-02) and what changed:** the single long page was split into Home, Trade, Portfolio, Radar and Docs (see blueprint §11 note); the tagline became "Buy tokenized shares, at the best prices" because the old one implied buying real shares; dialogs are centered at every width (the bottom-sheet look the owner saw was intended but wrong for sign-in); contract links moved to the docs; the FAQ is Spectrum UI's FAQ Tabs Card; the nav bar blurs more on scroll; the header shows the short wallet address after sign-in. A real bug found on the way: when the wallet SDK finished loading, the provider swap remounted the whole page and wiped on-screen state. **Open from the review:** Google sign-in fails with "not allowed" in Privy (the Google login method and the exact origin must be enabled in the Privy dashboard); the three blinking dots in the top-left corner are not in the page: nothing in Tally animates there on the production build, so it is most likely a browser extension (to confirm in a private window).
 
 **To fill in after the EC2 runs:** `/api/health` output, a live `/api/trade/plan` for the test wallet (`needs_funds`, then `needs_approval`, then `ready`), a real buy through the web page with its `Guarded` receipt, and the phone test (who, device, where they hesitated, time to receipt).
 

@@ -69,6 +69,8 @@ export interface TradeChain {
   simulate(tx: TxRequest, limit: bigint): Promise<SimulationResult>;
   gasPriceWei(): Promise<bigint>;
   blockNumber(): Promise<bigint>;
+  /** `balanceOf(owner)` for each token, in token units (18 decimals), in the same order. */
+  erc20Balances(owner: Address, tokens: Address[]): Promise<bigint[]>;
   receipt(txHash: Hex): Promise<TransactionReceipt | null>;
 }
 

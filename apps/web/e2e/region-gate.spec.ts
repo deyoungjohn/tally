@@ -10,7 +10,7 @@ test("US visitor gets the 451 block page", async ({ request }) => {
 test("KR visitor sees the site", async ({ request }) => {
   const res = await request.get("/", { headers: { "cf-ipcountry": "KR" } });
   expect(res.status()).toBe(200);
-  expect(await res.text()).toContain("not tokens");
+  expect(await res.text()).toContain("tokenized shares");
 });
 
 test("API is gated too", async ({ request }) => {

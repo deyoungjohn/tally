@@ -64,7 +64,7 @@ declare global {
 const MOCK_APPROVE = `0x${"a1".padStart(64, "0")}` as Hex;
 const MOCK_SWAP = `0x${"b2".padStart(64, "0")}` as Hex;
 
-function MockWallet({ spec, children }: { spec: MockSpec; children: ReactNode }) {
+function MockBridge({ spec, onChange }: { spec: MockSpec; onChange: (w: TallyWallet) => void }) {
   const [signedIn, setSignedIn] = useState(Boolean(spec.signedIn));
   const value = useMemo<TallyWallet>(
     () => ({
@@ -84,11 +84,17 @@ function MockWallet({ spec, children }: { spec: MockSpec; children: ReactNode })
     }),
     [signedIn, spec],
   );
-  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+  useEffect(() => onChange(value), [value, onChange]);
+  return null;
 }
 
-/** Real wallets load lazily: the Privy SDK stays out of every route that does not trade (JS budget, blueprint §11). */
+/**
+ * Wallet state for the whole app. The page tree (`children`) always sits at the same place under one context provider and is
+ * never remounted: the real wallet SDK loads lazily, then pushes its state in through `onChange`. (An earlier version swapped
+ * the provider around `children` when the SDK finished loading, which remounted every page and wiped typed amounts and tabs.)
+ */
 export function WalletRoot({ children }: { children: ReactNode }) {
+  const [wallet, setWallet] = useState<TallyWallet>(IDLE);
   const [mode, setMode] = useState<"pending" | "mock" | "privy">("pending");
   const [Privy, setPrivy] = useState<null | typeof import("./privy-wallet").PrivyWallet>(null);
   useEffect(() => {
@@ -99,7 +105,13 @@ export function WalletRoot({ children }: { children: ReactNode }) {
     setMode("privy");
     void import("./privy-wallet").then((m) => setPrivy(() => m.PrivyWallet));
   }, []);
-  if (mode === "mock") return <MockWallet spec={window.__tallyMockWallet!}>{children}</MockWallet>;
-  if (mode === "privy" && Privy) return <Privy>{children}</Privy>;
-  return <Ctx.Provider value={IDLE}>{children}</Ctx.Provider>;
+  return (
+    <Ctx.Provider value={wallet}>
+      {mode === "mock" ? (
+        <MockBridge spec={window.__tallyMockWallet!} onChange={setWallet} />
+      ) : null}
+      {mode === "privy" && Privy ? <Privy onChange={setWallet} /> : null}
+      {children}
+    </Ctx.Provider>
+  );
 }

@@ -2,7 +2,7 @@
 
 import { AlertTriangle, Check, Copy, ExternalLink, Lock, ShieldCheck, Wallet } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { BottomSheet } from "@/components/motion/bottom-sheet";
+import { Modal } from "@/components/motion/modal";
 import { Button } from "@/components/motion/button";
 import { DynamicIsland, DynamicIslandView } from "@/components/motion/dynamic-island";
 import { useTallyWallet } from "@/components/wallet/wallet-context";
@@ -117,12 +117,7 @@ export function SignInSheet({ open, onClose }: { open: boolean; onClose: () => v
   };
 
   return (
-    <BottomSheet
-      open={open}
-      onOpenChange={(o) => !o && onClose()}
-      snapPoints={["auto"]}
-      title="Create your account"
-    >
+    <Modal open={open} onOpenChange={(o) => !o && onClose()} title="Create your account">
       <p className="mt-1 text-fg2">
         Sign in with your email or Google. We make you a wallet in a few seconds. No crypto
         experience needed.
@@ -145,7 +140,7 @@ export function SignInSheet({ open, onClose }: { open: boolean; onClose: () => v
           Already have a crypto wallet? You can connect it on the next screen.
         </p>
       </div>
-    </BottomSheet>
+    </Modal>
   );
 }
 
@@ -239,12 +234,7 @@ export function TopUpSheet({
   const address = wallet.address ?? "";
 
   return (
-    <BottomSheet
-      open={open}
-      onOpenChange={(o) => !o && onClose()}
-      snapPoints={[0.92]}
-      title="Add funds to buy"
-    >
+    <Modal open={open} onOpenChange={(o) => !o && onClose()} title="Add funds to buy">
       {p ? (
         <div className="mt-1 grid gap-4">
           <p className="text-fg2" data-testid="topup-need">
@@ -298,7 +288,7 @@ export function TopUpSheet({
           </p>
         </div>
       ) : null}
-    </BottomSheet>
+    </Modal>
   );
 }
 
@@ -326,12 +316,7 @@ export function ReviewSheet({
 
   const min = plan ? fromWei(plan.minShares) : 0;
   return (
-    <BottomSheet
-      open={plan !== null}
-      onOpenChange={(o) => !o && onClose()}
-      snapPoints={["auto"]}
-      title="Review your buy"
-    >
+    <Modal open={plan !== null} onOpenChange={(o) => !o && onClose()} title="Review your buy">
       {plan ? (
         <div className="mt-1 grid gap-4">
           {notice ? (
@@ -348,7 +333,7 @@ export function ReviewSheet({
               {fmtShares(min)} <span className="text-[22px] text-fg2">{plan.ticker} shares</span>
             </p>
             <p className="mt-2 text-[14px] text-fg2">
-              …or nothing happens. ShareGuard checks this in shares, on-chain.
+              …or nothing happens. Tally checks this in shares, on-chain, before it keeps the trade.
             </p>
           </div>
           <dl>
@@ -403,7 +388,7 @@ export function ReviewSheet({
           </div>
         </div>
       ) : null}
-    </BottomSheet>
+    </Modal>
   );
 }
 

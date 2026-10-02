@@ -32,6 +32,7 @@ import {
 } from "./trade";
 import { feedSignerFromEnv, liveTradeChain } from "./trade-chain";
 import { fixtureTradeChain } from "./trade-fixture";
+import { portfolioFor, radarFor, type PortfolioReport, type RadarReport } from "./views";
 import type { Hex } from "viem";
 import { chainPort, clientFromEnv, onchainMultiplierReader } from "@tally/chain";
 import {
@@ -68,6 +69,10 @@ export interface Engine {
     prepare(req: TradeRequest): Promise<TradePlan>;
     receipt(txHash: Hex, ticker?: string): Promise<TradeReceipt>;
   };
+  /** Integrity grades for every token of the given tickers (cached 2 minutes). */
+  radar(tickers: readonly string[]): Promise<RadarReport>;
+  /** A wallet's holdings in shares across issuers. Read-only: any address works. */
+  portfolio(address: Address, tickers: readonly string[]): Promise<PortfolioReport>;
   /** What `/api/health` reports: Binance auth and the region detector, RPC height, the guard and the Ondo feed's age (blueprint §14). */
   health(): Promise<HealthReport>;
   /** Raw ports, for tests. */
@@ -172,9 +177,12 @@ function build(o: BuildOptions): Engine {
     ]);
     return r;
   };
+  const radar = radarFor(ports, now);
   return {
     ports,
     health,
+    radar,
+    portfolio: (address, tickers) => portfolioFor(ports, o.tradeChain, address, tickers, now),
     trade: {
       guard: o.guard,
       prepare: (req) => prepareTrade(tradeDeps, req),
