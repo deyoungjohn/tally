@@ -1,0 +1,40 @@
+{
+  "token": "NVDAon",
+  "tokenAddress": "0xa9ee28c80f960b889dfbd1902055218cba016f75",
+  "guard": "0x28F6F19bffbF25E36452c78d12090F0bC922970a",
+  "wallet": "0x2Bf7EdF53bc6BE6FF98F149387F3818cE28d2930",
+  "usdtIn": "6000000000000000000",
+  "startedAtUtc": "2026-10-02T10:02:07Z",
+  "mode": "dry-run",
+  "signedFeed": false,
+  "guardState": {
+    "owner": "0x327dccbda0b4633a109f536951c7cba81a8ef710",
+    "feedSigner": "0xdd3c5f463d71fb06d7be749f904a4090e080f407",
+    "paused": false,
+    "maxAge": 259200,
+    "source": "Feed",
+    "enabled": true,
+    "maxStepBps": 300,
+    "pauseCheck": 1,
+    "pauseManager": "0x0000000000000000000000000000000000000000",
+    "tokenPaused": false,
+    "feed": {
+      "multiplier": 1001715248795989800,
+      "updatedAt": 1790932381,
+      "validAfter": 0
+    },
+    "sharesPerToken": 1001715248795989800
+  },
+  "multiplier": "1001715248795989800",
+  "referencePrice": "233.626667",
+  "quote": {
+    "vendor": "LiquidMesh",
+    "route": "Metric:NVDAon",
+    "routes": 1,
+    "toTokenAmount": "25623174919281956",
+    "quotedShares": "25667125039211690",
+    "minShares": "25410453788819573",
+    "router": "0xB44446b0c8E56988c34f7Ff73Ae904982b5FdDA5",
+    "apiGas": "450000"
+  }
+}

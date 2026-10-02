@@ -12,7 +12,7 @@ This document is the hand-off from the ideation and validation phase to the buil
 | Hackathon | BNB Hack: Tokenized Stocks Edition (`bnbhackathon.md`) |
 | **Submission lock** | **Sun 11 Oct 2026, 12:00 UTC** |
 | Judging / winners | 12–23 Oct / week of 26 Oct. The repo, demo and deployed link must stay up through judging. |
-| Companion docs | `DESIGN.md` (UI system) · `IDEAS.md` §Findings F1–F9 (evidence) · `spike/README.md` (how the tests were run) |
+| Companion docs | `DESIGN.md` (UI system) · `IDEAS.md` §Findings F1–F11 (evidence) · `spike/README.md` (how the tests were run) |
 | Origin | Research and validation in [deyoungjohn/find-out](https://github.com/deyoungjohn/find-out) (PR #2); imported into this repo on 2026-10-01 |
 
 ---
@@ -423,7 +423,9 @@ If Privy fails 1 or 3, switch to Dynamic and repeat the checks. Record the resul
 ## 10. ShareGuard v1 (`contracts/`)
 Start from `spike/shareguard/src/ShareGuard.sol` (proven on the fork) and harden it.
 
-> ⚠️ **Spike vulnerability that v1 must fix: arbitrary call.** The spike's `swapForShares` calls any `router` with any `data` supplied by the caller. Anyone who has approved ShareGuard could then be drained: an attacker passes `router = USDT` and `data = transferFrom(victim, attacker, amount)`. **v1 must only call allow-listed routers and approve targets,** and must never call a token contract as the router. Fork test G (below) must prove the attack fails.
+> ⚠️ **Spike vulnerability that v1 fixes: arbitrary call.** The spike's `swapForShares` calls any `router` with any `data` supplied by the caller. Anyone who has approved ShareGuard could then be drained: an attacker passes `router = USDT` and `data = transferFrom(victim, attacker, amount)`. *(M2 correction, IDEAS §F11: with `tokenIn = USDT` the spike's own "no output" check stops this; the working exploit sets `tokenIn` = the stock token so the pulled dust counts as output.)* **v1 only calls allow-listed routers and approve targets,** never a token contract as the router, and rejects `tokenIn == stock`. Fork test G proves every variant fails (and that the spike logic is drained on real USDT).
+>
+> **Status (M2, 2026-10-02): done.** Built in `contracts/` (see `contracts/README.md`); unit, fuzz and fork tests A–I pass; **deployed and verified at `0x28F6F19bffbF25E36452c78d12090F0bC922970a`** with two live guarded buys (IDEAS §F11). Interface as built: `swapForShares(tokenIn, amountIn, stock, minShares, router, routerData, recipient, deadline)` and `swapForSharesWithFeed(..., FeedUpdate u, bytes sig)`; `Asset{source, enabled, maxStepBps, pauseCheck, pauseManager}`.
 
 ### 10.1 Interface (sketch)
 ```solidity
@@ -442,7 +444,7 @@ function assertMinShares(address account, address stock, uint256 balBefore, uint
 ### 10.2 Rules
 - **Allow lists** (owner-managed, events on change): `allowedRouter[addr]`, `approveTargetOf[router]`, `asset[stock] = {source: UiMultiplier | Multiplier | Feed, enabled, maxStepBps}` (`maxStepBps` applies to Feed assets).
   - Initial router and approve target: `0xB44446b0c8E56988c34f7Ff73Ae904982b5FdDA5` (the same address for both, V7).
-  - Reject `router == tokenIn` or `router == stock`, or any router not on the list.
+  - Reject `router == tokenIn` or `router == stock`, or any router not on the list; reject `tokenIn == stock`, `minShares == 0` and `amountIn == 0`. A configured stock can never be a router or approve target (and vice versa).
 - **Approvals:** approve `approveTarget` for exactly `amountIn`, reset to 0 after the call (forceApprove pattern).
 - **Accounting** (as in the spike):
   - measure the stock balance change on the guard itself, revert if `NoOutput`;
@@ -453,11 +455,12 @@ function assertMinShares(address account, address stock, uint256 balBefore, uint
 - **Checks:**
   - `block.timestamp ≤ deadline`;
   - `whenNotPaused` (global emergency pause of *new* swaps; it can't trap funds, since none are held);
-  - **token pause:** Ondo `tokenPauseManager().isTokenPaused(stock)` → `TokenPaused`; xStocks `isPaused()`; bStock: check in M2 whether its implementation has a pause getter.
+  - **token pause (fails closed; a check that cannot be answered reverts `PauseCheckFailed`):** per asset `pauseCheck` = `Manager` → `manager.isTokenPaused(stock)` → `TokenPaused`, where Ondo's manager is read from `token.tokenPauseManager()` on every swap and **bStock's is fixed in the asset config** (`0x9fc7…700a`; the bStock token has **no** pause getter, found by tracing a transfer, IDEAS §F11); `TokenFlag` → xStocks `isPaused()`.
 - **Ondo multiplier feed (pull-style, no keeper gas):**
   - an EIP-712 `FeedUpdate{stock, multiplier, validAfter, validUntil}` signed by `feedSigner`;
   - accepted only if the per-update increase is ≤ that asset's own `maxStepBps` (**per-asset**, set by the owner, start: **300 bps**; distribution steps differ by stock, so there is no global limit). **A decrease is accepted only via an owner-registered `CorporateAction{stock, expectedMultiplier, notBefore}` whose `expectedMultiplier` matches the update** (a reverse split); so is an increase above `maxStepBps` (a forward split). The signer cannot make either on its own;
-  - stored with `updatedAt`. Swaps on a Feed asset revert if `now − updatedAt > maxAge` (start: 3 days) and no fresh update is supplied.
+  - stored with `updatedAt` (block time of acceptance). Swaps on a Feed asset revert if `now − updatedAt > maxAge` (start: 3 days; owner-settable within 1 h–7 d) and no fresh update is supplied.
+  - **Seed and monotonic (M2):** the first value of a Feed asset is **owner-seeded** in `setAsset` (no signed first value exists, and the deploy script has only the deployer key); it applies only while the feed was never seeded. An update older than the stored `validAfter` reverts, the identical update may be resubmitted, the same `validAfter` with another value reverts. `maxStepBps` is capped at 1000.
 - **Ownership:** `Ownable2Step`. The owner can only manage lists, parameters, the feed signer, pause and rescue. **Not upgradeable** (no proxy); deploy a new version if needed.
 - **Events:** `Guarded(user, recipient, stock, tokenIn, amountIn, tokensOut, shares, multiplier, router)`, `AssetSet`, `RouterSet`, `FeedUpdated`, `CorporateActionRegistered`, `Paused`.
 - **Libraries:** OpenZeppelin `SafeERC20`, `ReentrancyGuard`, `Ownable2Step`, `Pausable`, `EIP712`, `ECDSA`.
@@ -478,7 +481,8 @@ function assertMinShares(address account, address stock, uint256 balBefore, uint
 | **H** | a paused token reverts (simulate via `vm.mockCall` on the pause manager) |
 | **I** | a stale or out-of-bounds Ondo feed reverts |
 
-- **Deploy script** (`forge script`): reads `DEPLOYER_PK` from the environment on **the user's machine**, never the server. Sets the router allow list, assets (bStock tokens: UiMultiplier; Ondo: Feed with an initial signed value) and the feed signer. Verifies on BscScan.
+- **Deploy script** (`forge script`, `contracts/script/Deploy.s.sol`): reads `DEPLOYER_PK` from the environment on **the user's machine**, never the server (without it, a key-less simulation). Sets the router allow list, assets from `deploy/assets.json` (bStock: UiMultiplier + fixed pause manager; Ondo: Feed, 300 bps, owner-seeded from `deploy/seeds.json`, which `tools/gen_assets.py` writes and the script refuses when older than 2 h) and the feed signer (an address, never a key). Checks every asset prices and answers its pause check on live state before finishing. Verifies on BscScan (`--verify`).
+- **Fork tests replay pinned to the capture's block** (archive RPC), so captures stay valid for days; `FORK_LATEST=1` for fresh ones.
 
 ---
 
@@ -658,7 +662,7 @@ Today is Thu 1 Oct; submissions lock **Sun 11 Oct, 12:00 UTC**. Dates are target
 ---
 
 ## 19. Owned by the user (the build session must not do these)
-- Create the **ShareGuard deployer/owner key** and the **Ondo feed-signer key**. Fund the deployer with a little BNB. Run the deploy script on their own machine.
+- Create the **ShareGuard deployer/owner key** and the **Ondo feed-signer key**. Fund the deployer with a little BNB (≈0.0005; the dry run estimates 0.0003). Run the deploy script on their own machine (`contracts/README.md`). The build session needs only the feed signer's **address**, a **BscScan API key** for verification, and an archive BSC RPC for fork tests.
 - Buy the **domain** and add it to Cloudflare. Create the **Privy** (and/or Dynamic) app and add the allowed origins. Create the **Telegram bot** via BotFather. Get a **dedicated BSC RPC** key.
 - Keep the **Binance Web3 API key** in the server secrets file. Ask in the builder Telegram for **elevated rate limits** and about an **Onchain Pay merchant code**.
 - Do the human test in M3 (or recruit a non-crypto friend). Record the demo video.
@@ -672,8 +676,9 @@ Today is Thu 1 Oct; submissions lock **Sun 11 Oct, 12:00 UTC**. Dates are target
 | Privy vs Dynamic final choice; BSC embedded wallet; AUP | M0 |
 | Exact Market / Transaction / Wallet API paths and the MEV-protection parameter | M1: **resolved**: paths probed on the Seoul EC2, `enableMevProtection` found (broadcast only); Market `price`/`candlestick` need another source |
 | Trading API rate limits | M1: ~5 calls then 42900 observed; elevated limits requested, not yet granted |
-| Does bStock's token implementation expose a pause getter? | M2 |
-| Feed parameters: per-asset `maxStepBps` (start 300 bps), `maxAge` | M2 (start 300 bps / 3 days) |
+| Does bStock's token implementation expose a pause getter? | M2: **resolved: no.** Its transfer asks a shared manager `0x9fc7…700a` `isTokenPaused(token)`; ShareGuard stores that address per asset (IDEAS §F11) |
+| Feed parameters: per-asset `maxStepBps` (start 300 bps), `maxAge` | M2: **built** (300 bps start, cap 1000; `maxAge` 3 days, settable 1 h–7 d) |
+| Is bStock's pause manager ever rotated? It is not discoverable from the token | open; owner updates the asset via `setAsset` |
 | Default tolerance: 1% (the live fill came in 0.51% under quote, so 0.5% would have failed) | M3 user test |
 | Can Cloudflare on our plan see Crimea, Donetsk and Luhansk sub-regions? | M0 |
 | Onchain Pay merchant access | ask Binance; P2 |
@@ -709,7 +714,9 @@ Today is Thu 1 Oct; submissions lock **Sun 11 Oct, 12:00 UTC**. Dates are target
 | Ondo `compliance()` (NVDAon) | `0x76be569c94c39a2e2492de2f4d1c253f348250d0` → `0x62fbbe0312d31823579de46ab1d89fae0b798e61` |
 | Ondo `tokenPauseManager()` | `0x6334924c787ebd21c881740ef6237ef51962638f` (`isTokenPaused(address)`) |
 | bStock `compliance()` (NVDAB) | `0x53dba7aabde774787a1f57236b235567da8e14f4` |
+| bStock pause manager (shared by all bStocks seen) | `0x9fc74Be63f3589485B2423984a7a0557e0CF700a` (`isTokenPaused(address)` `0x5e76ad54`) |
 | Selectors | `uiMultiplier()` `0xa60bf13d` · `multiplier()` `0x1b3ed722` · `compliance()` `0x6290865d` · `tokenPauseManager()` `0x461ad792` |
+| **ShareGuard v1 (deployed 2026-10-02)** | `0x28F6F19bffbF25E36452c78d12090F0bC922970a` (owner: the user's deployer wallet; feed signer `0xDd3C5F463d71fb06D7bE749F904A4090E080f407`) |
 | Revert seen with too little gas | `0x1425ea42` = `FailedInnerCall()` |
 | Spike burner (test fills) | `0x2Bf7EdF53bc6BE6FF98F149387F3818cE28d2930` |
 
@@ -723,6 +730,6 @@ Re-read token addresses from the registry at runtime; this table is for tests an
 | Compliance and transfers | `research/transfer_check.py`, `IDEAS.md` §F2 |
 | Region enforcement | `research/region_check.py`, `spike/region_report_ec2-seoul.json`, `IDEAS.md` §F3 |
 | Routes, fees, gas | `IDEAS.md` §F4, `spike/results/capture_*.json` |
-| Fork tests | `spike/shareguard/`, `spike/results/fork_*.log`, `IDEAS.md` §F5 |
+| Fork tests | `spike/shareguard/`, `spike/results/fork_*.log`, `IDEAS.md` §F5; ShareGuard v1: `contracts/`, `IDEAS.md` §F11 |
 | Live buys | `spike/results/live_*.json`, BscScan links in `IDEAS.md` §F6 |
 | Design source | `spike/revenue-family-landing-page.png`, revenue.family `assets/site.css?v=42`, `DESIGN.md` |

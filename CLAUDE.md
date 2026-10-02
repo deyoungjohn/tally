@@ -1,6 +1,6 @@
 # Tally: instructions for AI sessions
 
-- **Start by reading** `TALLY_BLUEPRINT.md` (end to end), then `DESIGN.md`, then `IDEAS.md` §Findings F1–F9. The decisions in blueprint §4 are final unless new evidence contradicts them; propose changes, don't make them silently.
+- **Start by reading** `TALLY_BLUEPRINT.md` (end to end), then `DESIGN.md`, then `IDEAS.md` §Findings F1–F11. The decisions in blueprint §4 are final unless new evidence contradicts them; propose changes, don't make them silently.
 - **Build in milestone order** (blueprint §17). Before coding a milestone, list its tasks and exit checks. A milestone is done only when every exit check passes.
 - **Never create, request, print or store private keys or seed phrases.** The user creates the ShareGuard deployer/owner key and the Ondo feed-signer key and runs deployments on their own machine (blueprint §19). Secrets live only in the server's env file, never in git.
 - **Never deploy spike code.** `spike/shareguard/src/ShareGuard.sol` has a known arbitrary-call hole; ShareGuard v1 must allow-list routers (blueprint §10, fork test G).
@@ -11,9 +11,9 @@
 - **Git:** one branch and one PR per milestone. Keep `main` deployable.
 - **The Developer Experience Report is written by the user**, not by an AI (the hackathon rejects AI-generated reports). You may point to evidence in `IDEAS.md`.
 
-## Repo state and conventions (updated at the end of M1, 2026-10-02)
+## Repo state and conventions (updated during M2, 2026-10-02)
 
-- **Status:** M0 merged. M1 (engine) built, PR open. Next is M2 (ShareGuard v1). Milestone results live in `IDEAS.md` §F9 (M0) and §F10 (M1); the M0 provider review is in blueprint §9.
+- **Status:** M0 and M1 merged. **M2 (ShareGuard v1) is done: deployed and verified at `0x28F6F19bffbF25E36452c78d12090F0bC922970a` (BSC, 2026-10-02), two live guarded buys recorded (`IDEAS.md` §F11).** Next is M3 (web trade flow). Milestone results live in `IDEAS.md` §F9 (M0), §F10 (M1) and §F11 (M2); the M0 provider review is in blueprint §9. `SHAREGUARD_ADDRESS` is the deployed address; the owner/deployer is the user's own wallet and the Ondo feed signer is `0xDd3C5F463d71fb06D7bE749F904A4090E080f407` (its key goes in the server env only in M3).
 - **Layout:** pnpm workspaces on Node 22. `apps/web` (Next 16, standalone output); `apps/bot` and `packages/mcp` are typed stubs until their milestones; `packages/config` holds the region block list and constants.
 - **Engine (M1):** `packages/core` is pure (bigint share maths, multiplier resolution and Ondo bounds, integrity grade, gas model, TTL cache, registry, `consolidatedQuote` against injected ports). `packages/binance` is the signed client (pacing, retries, HTTP-200 error codes, zod schemas, typed endpoints, public API, fixture transport) and implements core's ports in `adapters.ts`. `packages/chain` is viem with failover, multiplier readers, `planGas` (×1.25) and `simulateAtLimit`. `packages/engine` wires them and holds the CLI. Web, bot and MCP must call `@tally/engine`, never rebuild the wiring.
 - **CLI:** `pnpm tally quote NVDA 25 --fixtures` (offline, works anywhere), `pnpm tally ladder NVDA --fixtures`, `pnpm tally facts NVDA` (every token's readings, baseline and integrity log), `--shares`, `--json`, `--checks` (print the integrity log under the quote), `--blocked` (simulate 40304). Use `pnpm --silent tally …` when redirecting output, or the pnpm banner lands in the file. Without `--fixtures` it needs `BINANCE_W3_API_KEY`/`BINANCE_W3_API_SECRET` and only works from the Seoul EC2.
@@ -28,3 +28,12 @@
 - **Wallet check page removed (start of M1).** `/dev/wallet-check` and `NEXT_PUBLIC_ENABLE_WALLET_CHECK` are gone; the M0 wallet results stay in `IDEAS.md` §F9. `components/providers.tsx` (`WalletProviders`) is kept for M3. Known, accepted noise from Privy's own UI: React warnings about `isActive` and list keys.
 - **Wallet requirements carried into M3:** read the wallet's real chain (`eth_chainId`) at send time and call `switchChain(56)` before signing; the page must not trust a cached chain. Key wallet UI off `authenticated`, not off the connected-wallet list, which survives sign-out.
 - **Before submission:** re-read the Privy Acceptable Use Policy; confirm `cf-region-code` arrives once the domain is on Cloudflare (Crimea, Donetsk, Luhansk); prove the EC2 deploy (`deploy/README.md` section B).
+
+## ShareGuard v1 / contracts (M2)
+
+- **Layout:** `contracts/` is Foundry (Solidity 0.8.28, evm `prague`; OpenZeppelin 5.4 and forge-std are git submodules, so clone with `--recurse-submodules`). `src/ShareGuard.sol` is the contract; `test/` has unit, fuzz and fork tests A–I; `script/Deploy.s.sol` deploys; `tools/gen_assets.py` builds the deploy inputs; `tools/guarded_buy.py` does the live guarded buys; `contracts/README.md` has the exact commands. Never deploy `spike/shareguard/` or `contracts/test/SpikeVulnerable.sol`.
+- **Commands (sandbox):** `export PATH=$HOME/.foundry/bin:$PATH; cd contracts; forge test` (offline; the fork tests skip), `./script/fork.sh` (fork tests A–I on every capture; needs the archive `BSC_RPC`, which is set in the cloud sandbox and works), `forge fmt`, and a key-less deploy dry run: `FEED_SIGNER=0x…dEaD forge script script/Deploy.s.sol:Deploy --rpc-url $BSC_RPC --sender 0x1111111111111111111111111111111111111111` (run `python3 tools/gen_assets.py NVDA AAPL TSLA QQQ SPY` first; seeds expire after 2 h).
+- **Fork tests pin to the capture's block** (archive RPC), so committed captures in `contracts/captures/` replay without a Binance key from the cloud. Fresh captures come from the Seoul EC2 (`./script/capture.sh`).
+- **Foundry gotchas hit in M2:** `vm.expectEmit` and `vm.expectRevert` bind to the *next call*, and so does `vm.prank`; an argument like `guard.toShares(...)` is an external call that consumes it. Compute such values first. Long external calls hit "stack too deep" in tests: wrap them in a helper rather than enabling `via_ir`.
+- **Pause checks:** bStock has no pause getter; its shared manager `0x9fc7…700a` is stored per asset. Ondo's manager is read from the token each swap. Both fail closed. See `IDEAS.md` §F11.
+- **Keys:** `DEPLOYER_PK` is read only by the user's own forge run; `PARITY_PK` (buyer burner) and `FEED_SIGNER_PK` only by `tools/guarded_buy.py` on the user's EC2. Never create, print, store or ask for them; the fork tests use public test constants (`0xA11CE`, `0xFEED5`) only.
