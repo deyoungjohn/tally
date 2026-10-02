@@ -2,12 +2,16 @@ import { BNB_NATIVE, BSC_CHAIN_ID, USDT_BSC } from "@tally/config";
 import type { Address, RawQuote } from "@tally/core";
 import { BinanceClient } from "./client";
 import {
+  gasPriceResponse,
   quoteResponse,
   rwaPlatformsResponse,
   rwaSearchResponse,
   rwaTokensResponse,
+  simulateResponse,
   supportedChains,
   swapResponse,
+  underlyingMarket,
+  underlyingProfile,
   type QuoteItem,
 } from "./schemas";
 
@@ -19,6 +23,10 @@ const P = {
   rwaTokens: "/api/v1/dex/market/rwa/tokens",
   rwaSearch: "/api/v1/dex/market/rwa/search",
   rwaPlatforms: "/api/v1/dex/market/rwa/platforms",
+  underlyingProfile: "/api/v1/dex/market/rwa/underlying-profile",
+  underlyingMarket: "/api/v1/dex/market/rwa/underlying-market",
+  simulate: "/api/v1/dex/pre-transaction/simulate",
+  gasPrice: "/api/v1/dex/pre-transaction/gas-price",
 } as const;
 
 export interface QuoteParams {
@@ -87,6 +95,36 @@ export class BinanceApi {
 
   rwaPlatforms() {
     return this.client.get(P.rwaPlatforms, {}, rwaPlatformsResponse);
+  }
+
+  underlyingProfile(tokenContractAddress: string) {
+    return this.client.get(
+      P.underlyingProfile,
+      { binanceChainId: CHAIN, tokenContractAddress },
+      underlyingProfile,
+    );
+  }
+
+  underlyingMarket(tokenContractAddress: string) {
+    return this.client.get(
+      P.underlyingMarket,
+      { binanceChainId: CHAIN, tokenContractAddress },
+      underlyingMarket,
+    );
+  }
+
+  /** Binance Transaction API simulation, used alongside eth_call before showing "Buy" (blueprint §7.6 step 6). */
+  simulate(tx: { from: string; to: string; data: string; value?: string }) {
+    return this.client.post(
+      P.simulate,
+      { binanceChainId: CHAIN, evmTx: { value: "0", ...tx } },
+      simulateResponse,
+    );
+  }
+
+  /** Binance's gas price tiers in wei. We estimate gas ourselves (V10); this is only a cross-check for the price. */
+  gasPrice() {
+    return this.client.get(P.gasPrice, { binanceChainId: CHAIN }, gasPriceResponse);
   }
 
   /** BNB price in USD, read from the `tokenUnitPrice` of a small BNB quote (blueprint §7.4 step 7). */

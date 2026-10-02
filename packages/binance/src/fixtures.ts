@@ -50,6 +50,7 @@ export function createFixtureFetch(o: FixtureFetchOptions = {}): typeof fetch {
   const health = readJson(latestRaw("health_supported_chain", raw));
   const probes = readJson(latestRaw("rwa_authenticated_probes", raw));
   const block = readJson(latestRaw("region_block_US", raw)).body;
+  const probes2 = readJson(latestRaw("probes_", raw));
   const lists = {
     1: readJson(join(snap, "rwa_list_ondo.json")),
     2: readJson(join(snap, "rwa_list_xstocks.json")),
@@ -112,6 +113,30 @@ export function createFixtureFetch(o: FixtureFetchOptions = {}): typeof fetch {
           ? json(ok(s.swap.data))
           : json(fail(40001, `fixture: no recorded swap for ${addr}`));
       }
+      // Recorded for NVDAon and NVDAB only (spike/record_m1_probes.py); other tokens answer like an unrecorded call.
+      const probeFor = (key: string) =>
+        Object.entries<any>(probes2).find(
+          ([k, v]) =>
+            k.startsWith(key) &&
+            v.ok &&
+            String(v.params?.tokenContractAddress).toLowerCase() ===
+              (q.get("tokenContractAddress") ?? "").toLowerCase(),
+        )?.[1];
+      if (
+        path === "/api/v1/dex/market/rwa/underlying-profile" ||
+        path === "/api/v1/dex/market/rwa/underlying-market"
+      ) {
+        const hit = probeFor(
+          path.endsWith("profile") ? "rwa_underlying_profile" : "rwa_underlying_market",
+        );
+        return hit
+          ? json(ok(hit.data))
+          : json(fail(40001, `fixture: ${path} not recorded for ${q.get("tokenContractAddress")}`));
+      }
+      if (path === "/api/v1/dex/pre-transaction/simulate")
+        return json(ok(probes2.tx_simulate_a.data));
+      if (path === "/api/v1/dex/pre-transaction/gas-price")
+        return json(ok(probes2.tx_gas_price.data));
       if (path === "/api/v1/dex/market/rwa/tokens") return json(ok(probes.rwa_tokens.data));
       if (path === "/api/v1/dex/market/rwa/search") return json(ok(probes.rwa_search.data));
       if (path === "/api/v1/dex/market/rwa/platforms") return json(ok(probes.rwa_platforms.data));
