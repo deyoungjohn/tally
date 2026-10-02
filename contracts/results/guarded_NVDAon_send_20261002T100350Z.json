@@ -1,0 +1,71 @@
+{
+  "token": "NVDAon",
+  "tokenAddress": "0xa9ee28c80f960b889dfbd1902055218cba016f75",
+  "guard": "0x28F6F19bffbF25E36452c78d12090F0bC922970a",
+  "wallet": "0x2Bf7EdF53bc6BE6FF98F149387F3818cE28d2930",
+  "usdtIn": "6000000000000000000",
+  "startedAtUtc": "2026-10-02T10:02:53Z",
+  "mode": "send",
+  "signedFeed": true,
+  "guardState": {
+    "owner": "0x327dccbda0b4633a109f536951c7cba81a8ef710",
+    "feedSigner": "0xdd3c5f463d71fb06d7be749f904a4090e080f407",
+    "paused": false,
+    "maxAge": 259200,
+    "source": "Feed",
+    "enabled": true,
+    "maxStepBps": 300,
+    "pauseCheck": 1,
+    "pauseManager": "0x0000000000000000000000000000000000000000",
+    "tokenPaused": false,
+    "feed": {
+      "multiplier": 1001715248795989800,
+      "updatedAt": 1790932381,
+      "validAfter": 0
+    },
+    "sharesPerToken": 1001715248795989800
+  },
+  "feedUpdate": {
+    "multiplier": "1001715248795989800",
+    "validAfter": 1790935379,
+    "validUntil": 1790936309,
+    "signer": "0xDd3C5F463d71fb06D7bE749F904A4090E080f407"
+  },
+  "multiplier": "1001715248795989800",
+  "referencePrice": "233.935417",
+  "quote": {
+    "vendor": "LiquidMesh",
+    "route": "Metric:NVDAB > Uniswap V4:NVDAon",
+    "routes": 1,
+    "toTokenAmount": "25658709240640865",
+    "quotedShares": "25702720310772526",
+    "minShares": "25445693107664800",
+    "router": "0xB44446b0c8E56988c34f7Ff73Ae904982b5FdDA5",
+    "apiGas": "450000"
+  },
+  "approveTx": "0x1b3bcf6dc8bc0503b939bc6b27da8bec5fbb69c85938e5441f2cd991f0b2bb28",
+  "gasEstimate": 814600,
+  "gasLimitSent": 1018250,
+  "apiGas": 450000,
+  "minShares": "25447870367776653",
+  "routeAtSend": "Metric:NVDAB > Uniswap V4:NVDAon",
+  "toTokenAmountAtSend": "25660904727472955",
+  "swapTx": "0x55ec244764dae2778357a7a446f5ec95de03cf2243fbff3ea1f3b4458a22e11a",
+  "bscscan": "https://bscscan.com/tx/0x55ec244764dae2778357a7a446f5ec95de03cf2243fbff3ea1f3b4458a22e11a",
+  "swapStatus": "success",
+  "gasUsed": 648385,
+  "gasBNB": 3.241925e-05,
+  "guarded": {
+    "user": "0x2bf7edf53bc6be6ff98f149387f3818ce28d2930",
+    "recipient": "0x2bf7edf53bc6be6ff98f149387f3818ce28d2930",
+    "stock": "0xa9ee28c80f960b889dfbd1902055218cba016f75",
+    "amountIn": "6000000000000000000",
+    "tokensOut": "25660879351478947",
+    "shares": "25704894143890610",
+    "multiplier": "1001715248795989800",
+    "router": "0xb44446b0c8e56988c34f7ff73ae904982b5fdda5",
+    "walletBalanceDelta": "25660879351478947"
+  },
+  "usdtPerShare": 233.41858427477885,
+  "premiumVsReferencePct": -0.22092966163441696
+}
