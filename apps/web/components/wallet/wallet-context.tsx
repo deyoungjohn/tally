@@ -1,6 +1,14 @@
 "use client";
 
-import { type ReactNode, createContext, useContext, useEffect, useMemo, useState } from "react";
+import {
+  Component,
+  type ReactNode,
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import type { Hex } from "viem";
 import { USDT_BSC } from "@tally/config";
 
@@ -88,6 +96,24 @@ function MockBridge({ spec, onChange }: { spec: MockSpec; onChange: (w: TallyWal
   return null;
 }
 
+/** A wallet-provider failure (a Privy origin not allowed, a blocked script) must not take the page down: browsing and quotes keep working and sign-in stays off. */
+class WalletBoundary extends Component<
+  { children: ReactNode; onFail: () => void },
+  { failed: boolean }
+> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch(error: unknown) {
+    console.error("Wallet provider failed; sign-in is unavailable:", error);
+    this.props.onFail();
+  }
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
+
 /**
  * Wallet state for the whole app. The page tree (`children`) always sits at the same place under one context provider and is
  * never remounted: the real wallet SDK loads lazily, then pushes its state in through `onChange`. (An earlier version swapped
@@ -110,7 +136,11 @@ export function WalletRoot({ children }: { children: ReactNode }) {
       {mode === "mock" ? (
         <MockBridge spec={window.__tallyMockWallet!} onChange={setWallet} />
       ) : null}
-      {mode === "privy" && Privy ? <Privy onChange={setWallet} /> : null}
+      {mode === "privy" && Privy ? (
+        <WalletBoundary onFail={() => setWallet(IDLE)}>
+          <Privy onChange={setWallet} />
+        </WalletBoundary>
+      ) : null}
       {children}
     </Ctx.Provider>
   );

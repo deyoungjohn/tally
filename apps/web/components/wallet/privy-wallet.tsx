@@ -1,7 +1,7 @@
 "use client";
 
 import { PrivyProvider, usePrivy, useSendTransaction, useWallets } from "@privy-io/react-auth";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { createWalletClient, custom, toHex, type Hex } from "viem";
 import { bsc } from "viem/chains";
 import type { TallyWallet } from "./wallet-context";
@@ -50,22 +50,31 @@ function Bridge({ onChange }: { onChange: (w: TallyWallet) => void }) {
       wallets.find((w) => w.walletClientType === "privy"))
     : undefined;
 
+  // Privy hands back NEW function objects on every render. If they were dependencies of the value pushed to the app, every
+  // render would publish a new value, re-render the app, re-render this bridge and loop forever (React error #185). So the
+  // functions live in refs and the published value depends only on primitives.
+  const live = useRef({ login, logout, connectWallet, sendTransaction, wallet });
+  live.current = { login, logout, connectWallet, sendTransaction, wallet };
+  const address = wallet?.address as `0x${string}` | undefined;
+  const embedded = wallet?.walletClientType === "privy";
+
   const value = useMemo<TallyWallet>(
     () => ({
       ready,
       authenticated,
-      address: wallet?.address as `0x${string}` | undefined,
-      embedded: wallet?.walletClientType === "privy",
-      login: () => login(),
-      logout: () => void logout(),
-      connectExternal: () => connectWallet(),
+      address,
+      embedded,
+      login: () => live.current.login(),
+      logout: () => void live.current.logout(),
+      connectExternal: () => live.current.connectWallet(),
       async sendTx(tx) {
-        if (!wallet) throw new Error("No wallet is connected");
-        const address = wallet.address as `0x${string}`;
+        const w = live.current.wallet;
+        if (!w) throw new Error("No wallet is connected");
+        const from = w.address as `0x${string}`;
         try {
-          if (wallet.walletClientType === "privy") {
-            await wallet.switchChain(56);
-            const r = await sendTransaction(
+          if (w.walletClientType === "privy") {
+            await w.switchChain(56);
+            const r = await live.current.sendTransaction(
               {
                 to: tx.to,
                 data: tx.data,
@@ -73,25 +82,16 @@ function Bridge({ onChange }: { onChange: (w: TallyWallet) => void }) {
                 chainId: 56,
                 gasLimit: tx.gas === undefined ? undefined : toHex(tx.gas),
               },
-              { address, uiOptions: { showWalletUIs: false } },
+              { address: from, uiOptions: { showWalletUIs: false } },
             );
             return r.hash as Hex;
           }
           // External wallet: read its REAL chain at send time and switch before signing (M0 finding: never trust a cached chain).
-          const provider = await wallet.getEthereumProvider();
+          const provider = await w.getEthereumProvider();
           const chainHex = (await provider.request({ method: "eth_chainId" })) as string;
-          if (parseInt(chainHex, 16) !== 56) await wallet.switchChain(56);
-          const wc = createWalletClient({
-            account: address,
-            chain: bsc,
-            transport: custom(provider),
-          });
-          return await wc.sendTransaction({
-            to: tx.to,
-            data: tx.data,
-            value: 0n,
-            gas: tx.gas,
-          });
+          if (parseInt(chainHex, 16) !== 56) await w.switchChain(56);
+          const wc = createWalletClient({ account: from, chain: bsc, transport: custom(provider) });
+          return await wc.sendTransaction({ to: tx.to, data: tx.data, value: 0n, gas: tx.gas });
         } catch (e) {
           if (isUserRejection(e))
             throw Object.assign(new Error("Signature rejected"), { code: 4001 });
@@ -99,7 +99,7 @@ function Bridge({ onChange }: { onChange: (w: TallyWallet) => void }) {
         }
       },
     }),
-    [ready, authenticated, wallet, login, logout, connectWallet, sendTransaction],
+    [ready, authenticated, address, embedded],
   );
   useEffect(() => onChange(value), [value, onChange]);
   return null;

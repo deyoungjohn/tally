@@ -183,3 +183,25 @@ test.describe("radar and portfolio pages", () => {
     await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
   });
 });
+
+test.describe("real wallet provider (no mock)", () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+  // Regression: an unstable Privy callback once made the app re-render forever (React error #185) and every page showed "This page couldn't load".
+  // Needs a build that has a Privy App ID: `NEXT_PUBLIC_PRIVY_APP_ID=clx0000000000000000000000 pnpm build` (any value; it never has to reach Privy).
+  for (const path of ["/", "/trade/NVDA", "/radar", "/portfolio"]) {
+    test(`${path} stays up with the real provider mounted`, async ({ page }) => {
+      const errors: string[] = [];
+      let noAppId = false;
+      page.on("pageerror", (e) => errors.push(e.message));
+      page.on("console", (m) => {
+        if (m.text().includes("NEXT_PUBLIC_PRIVY_APP_ID is not set")) noAppId = true;
+      });
+      await page.goto(path);
+      await page.waitForTimeout(4000);
+      test.skip(noAppId, "this build has no Privy App ID, so the real provider is not mounted");
+      expect(errors, errors.join("\n")).toEqual([]);
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+      await expect(page.getByText("This page couldn’t load")).toHaveCount(0);
+    });
+  }
+});
