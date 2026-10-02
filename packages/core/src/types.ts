@@ -40,8 +40,25 @@ export interface AttestationFact {
   url: string;
 }
 
+/** Corporate-action codes that can justify a multiplier decrease or a jump above the step limit. `reasonMsg` is a bare code. */
+export type CorporateActionKind = "stock_split" | "stock_dividend";
+/** A status that showed a corporate action: first and last time we saw it (ms), so a halt that spans several polls is one sighting. */
+export interface CorporateActionSighting {
+  kind: CorporateActionKind;
+  firstSeenAt: number;
+  lastSeenAt: number;
+}
+/** Inputs for the independent price check of a multiplier change, from the public RWA dynamic data. */
+export interface PriceCheckInputs {
+  /** Price of one TOKEN (`tokenInfo.price`). */
+  tokenPrice?: number;
+  /** US price per SHARE (`stockInfo.price`). */
+  stockPrice?: number;
+  note?: string;
+}
+
 /** Facts that can be missing, each with a reason when it is (shown in the integrity check log as "skipped"). */
-export type FactKey = "status" | "volume" | "attestation" | "listedPrice";
+export type FactKey = "status" | "volume" | "attestation" | "listedPrice" | "priceCheck";
 
 /** Everything about a token that is not its quote. Status `null` means "unknown" and is never assumed open. */
 export interface TokenMarketFacts {
@@ -54,6 +71,10 @@ export interface TokenMarketFacts {
   attestation?: AttestationFact;
   /** Ondo only: last accepted multiplier reading (the baseline) for the bounds check (§7.3). `at` is when it was seen. */
   multiplierBaseline?: { value: bigint; at: number };
+  /** Ondo only: when `statusInfo.reasonMsg` last showed a corporate-action code for this token (kept across runs). */
+  corporateAction?: CorporateActionSighting;
+  /** Ondo only: when Binance's list says the multiplier last changed (`lastUpdateTime`, ms), if it says. */
+  multiplierChangedAt?: number;
   /** Why a fact is missing ("underlying-profile failed: 42900 …", "no dated daily report (protections: collateralReport)"). */
   notes?: Partial<Record<FactKey, string>>;
 }

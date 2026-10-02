@@ -195,7 +195,7 @@ describe("attestation age (from the recorded underlying-profile)", () => {
 });
 
 describe("the integrity log is complete and explains every score", () => {
-  it("every row of a quote carries all seven checks, and the score equals 100 minus the logged points", async () => {
+  it("every row of a quote carries all eight checks, and the score equals 100 minus the logged points", async () => {
     const q = await engine().quote({ ticker: "NVDA", amount: { usd: 25 } });
     for (const r of q.rows) {
       expect(
@@ -204,6 +204,7 @@ describe("the integrity log is complete and explains every score", () => {
       ).toEqual([
         "multiplier-sources",
         "ondo-bounds",
+        "multiplier-validation",
         "premium",
         "onchain-volume",
         "status",

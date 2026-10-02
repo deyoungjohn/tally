@@ -17,6 +17,7 @@ import type {
   Address,
   KindedError,
   MultiplierReadings,
+  PriceCheckInputs,
   RawQuote,
   RegistryToken,
   TokenMarketFacts,
@@ -79,6 +80,11 @@ interface Setup {
   gas?: bigint | Error;
   /** collects readings the engine asked to persist as the new Ondo baseline */
   accepted?: Array<{ symbol: string; value: bigint }>;
+  /** corporate-action sightings the engine asked to remember */
+  noted?: Array<{ symbol: string; kind: string }>;
+  /** token and stock price handed to the price check, per symbol; `priceCalls` records which tokens it was asked about */
+  priceInputs?: Record<string, PriceCheckInputs>;
+  priceCalls?: string[];
 }
 const DEFAULT_MULT: Record<string, MultiplierReadings> = {
   NVDAB: { onchain: m("1.0008"), api: m("1.0008") },
@@ -96,6 +102,13 @@ function ports(
     quoteCalls,
     registry: { tokensFor: async (t) => reg.tokensFor(t) },
     facts: {
+      noteCorporateAction: async (t, kind) => {
+        s.noted?.push({ symbol: t.symbol, kind });
+      },
+      priceCheck: async (t) => {
+        s.priceCalls?.push(t.symbol);
+        return s.priceInputs?.[t.symbol] ?? {};
+      },
       recordAccepted: async (t, value) => {
         s.accepted?.push({ symbol: t.symbol, value });
       },
@@ -401,7 +414,7 @@ describe("consolidatedQuote", () => {
       const on = r.rows.find((x) => x.symbol === "NVDAon")!;
       expect(accepted).toEqual([]);
       expect(on.executable).toBe(false);
-      expect(on.notExecutableReason).toMatch(/decreased/);
+      expect(on.notExecutableReason).toMatch(/decrease/);
       expect(on.integrity.checks.find((c) => c.id === "ondo-bounds")).toMatchObject({
         outcome: "flag",
       });
@@ -435,12 +448,173 @@ describe("consolidatedQuote", () => {
       expect(disagreeing).toEqual([]); // first sighting, but api and list disagree: not trusted as a baseline
       void NOW;
     });
+    describe("splits and large jumps: accepted automatically only with status sighting + simple ratio + price check", () => {
+      const splitStatus = statusFromInfo({
+        openState: true,
+        marketStatus: "regular",
+        reasonCode: "TRADING",
+        reasonMsg: "stock_split",
+      });
+      const baseAt = { multiplierBaseline: { value: m("1.0017"), at: Date.UTC(2026, 8, 30) } };
+      const newMult = m("10.017"); // × 10 from 1.0017
+      const goodPrice = { NVDAon: { tokenPrice: 230 * 10.017, stockPrice: 230 } };
+
+      it("a status showing stock_split is remembered; once the multiplier steps ×10 and the price agrees, it is accepted and recorded", async () => {
+        const accepted: Array<{ symbol: string; value: bigint }> = [];
+        const noted: Array<{ symbol: string; kind: string }> = [];
+        const priceCalls: string[] = [];
+        const r = await consolidatedQuote(
+          ports({
+            accepted,
+            noted,
+            priceCalls,
+            priceInputs: goodPrice,
+            facts: { NVDAon: { ...baseAt, status: splitStatus } },
+            mult: { NVDAon: { api: newMult } },
+          }),
+          { ticker: "NVDA", amount: { usd: 25 } },
+        );
+        expect(noted).toEqual([{ symbol: "NVDAon", kind: "stock_split" }]);
+        expect(priceCalls).toEqual(["NVDAon"]);
+        const on = r.rows.find((x) => x.symbol === "NVDAon")!;
+        expect(on.executable).toBe(true);
+        expect(accepted).toEqual([{ symbol: "NVDAon", value: newMult }]);
+        expect(on.integrity.checks.find((c) => c.id === "ondo-bounds")!.summary).toMatch(
+          /accepted, all three hold.*simple ratio 10/,
+        );
+        const v = on.integrity.checks.find((c) => c.id === "multiplier-validation")!;
+        expect(v).toMatchObject({
+          outcome: "pass",
+          inputs: { stockPrice: 230, multiplier: "10.017" },
+        });
+        expect((v.inputs as { tokenPrice: number }).tokenPrice).toBeCloseTo(2303.91, 2);
+      });
+      it("a remembered sighting from before (the halt was seen earlier, status is open again) counts as 'around the change'", async () => {
+        const accepted: Array<{ symbol: string; value: bigint }> = [];
+        const earlier = {
+          kind: "stock_split" as const,
+          firstSeenAt: Date.UTC(2026, 9, 2, 6),
+          lastSeenAt: Date.UTC(2026, 9, 2, 9),
+        };
+        const r = await consolidatedQuote(
+          ports({
+            accepted,
+            priceInputs: goodPrice,
+            facts: { NVDAon: { ...baseAt, corporateAction: earlier } },
+            mult: { NVDAon: { api: newMult } },
+          }),
+          { ticker: "NVDA", amount: { usd: 25 } },
+        );
+        expect(r.rows.find((x) => x.symbol === "NVDAon")!.executable).toBe(true);
+        expect(accepted).toHaveLength(1);
+      });
+      it("without any status sighting the same jump stays blocked and flagged, and is NOT recorded", async () => {
+        const accepted: Array<{ symbol: string; value: bigint }> = [];
+        const r = await consolidatedQuote(
+          ports({
+            accepted,
+            priceInputs: goodPrice,
+            facts: { NVDAon: baseAt },
+            mult: { NVDAon: { api: newMult } },
+          }),
+          { ticker: "NVDA", amount: { usd: 25 } },
+        );
+        const on = r.rows.find((x) => x.symbol === "NVDAon")!;
+        expect(on.executable).toBe(false);
+        expect(on.notExecutableReason).toMatch(
+          /\(1\) no stock_split\/stock_dividend status seen within 48h/,
+        );
+        expect(on.integrity.flags).toContain("bounds");
+        expect(accepted).toEqual([]);
+      });
+      it("while trading has not resumed, the price check waits and the token stays blocked", async () => {
+        const halted = statusFromInfo({
+          marketStatus: "paused",
+          reasonCode: "MARKET_PAUSED",
+          reasonMsg: "stock_split",
+        });
+        const accepted: Array<{ symbol: string; value: bigint }> = [];
+        const r = await consolidatedQuote(
+          ports({
+            accepted,
+            priceInputs: goodPrice,
+            facts: { NVDAon: { ...baseAt, status: halted } },
+            mult: { NVDAon: { api: newMult } },
+          }),
+          { ticker: "NVDA", amount: { usd: 25 } },
+        );
+        const on = r.rows.find((x) => x.symbol === "NVDAon")!;
+        expect(on.executable).toBe(false);
+        expect(on.notExecutableReason).toMatch(/Paused/); // the halt itself blocks it first
+        expect(on.integrity.checks.find((c) => c.id === "ondo-bounds")!.summary).toMatch(
+          /\(3\) price check: trading has not resumed/,
+        );
+        expect(on.integrity.checks.find((c) => c.id === "multiplier-validation")!.outcome).toBe(
+          "skipped",
+        );
+        expect(accepted).toEqual([]);
+      });
+      it("a price that disagrees by more than 2% blocks it even with the status and a simple ratio", async () => {
+        const r = await consolidatedQuote(
+          ports({
+            priceInputs: { NVDAon: { tokenPrice: 230 * 10.017 * 1.04, stockPrice: 230 } },
+            facts: { NVDAon: { ...baseAt, status: splitStatus } },
+            mult: { NVDAon: { api: newMult } },
+          }),
+          { ticker: "NVDA", amount: { usd: 25 } },
+        );
+        const on = r.rows.find((x) => x.symbol === "NVDAon")!;
+        expect(on.executable).toBe(false);
+        expect(on.integrity.checks.find((c) => c.id === "multiplier-validation")).toMatchObject({
+          outcome: "flag",
+          flag: "bounds",
+        });
+      });
+      it("the price inputs are fetched ONLY when the multiplier changed (unchanged, and bStock, cost no extra call)", async () => {
+        const priceCalls: string[] = [];
+        await consolidatedQuote(
+          ports({
+            priceCalls,
+            facts: { NVDAon: { multiplierBaseline: { value: m("1.0017"), at: 0 } } },
+          }),
+          { ticker: "NVDA", amount: { usd: 25 } },
+        );
+        expect(priceCalls).toEqual([]);
+        await consolidatedQuote(
+          ports({
+            priceCalls,
+            priceInputs: { NVDAon: { tokenPrice: 231, stockPrice: 230.6 } },
+            facts: { NVDAon: { multiplierBaseline: { value: m("1.0000"), at: 0 } } },
+          }),
+          { ticker: "NVDA", amount: { usd: 25 } },
+        );
+        expect(priceCalls).toEqual(["NVDAon"]);
+      });
+      it("a failed price-check call is reported in the quote's warnings and the check log, not swallowed", async () => {
+        const r = await consolidatedQuote(
+          ports({
+            priceInputs: { NVDAon: { note: "public RWA dynamic call failed: 403" } },
+            facts: { NVDAon: { multiplierBaseline: { value: m("1.0000"), at: 0 } } },
+          }),
+          { ticker: "NVDA", amount: { usd: 25 } },
+        );
+        expect(r.warnings.join("\n")).toMatch(
+          /NVDAon: priceCheck check skipped: public RWA dynamic call failed: 403/,
+        );
+        expect(
+          r.rows
+            .find((x) => x.symbol === "NVDAon")!
+            .integrity.checks.find((c) => c.id === "multiplier-validation")!.summary,
+        ).toMatch(/public RWA dynamic call failed: 403.*skipped/);
+      });
+    });
+
     it("inspectTicker reports every token with its full check log and does not quote", async () => {
       const p = ports({ facts: base("1.0017") });
       const out = await inspectTicker(p, "nvda");
       expect(p.quoteCalls).toHaveLength(0);
       expect(out.map((o) => o.symbol).sort()).toEqual(["NVDAB", "NVDAon", "NVDAx"]);
-      for (const o of out) expect(o.integrity.checks).toHaveLength(7);
+      for (const o of out) expect(o.integrity.checks).toHaveLength(8);
       expect(out.find((o) => o.symbol === "NVDAon")!.bounds).toMatchObject({ outcome: "pass" });
       expect(out.find((o) => o.symbol === "NVDAB")!.bounds).toBeUndefined();
     });

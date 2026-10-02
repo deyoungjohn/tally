@@ -2,12 +2,20 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { BaselineStore } from "@tally/binance";
-import { formatUnits, parseDecimal, type RegistryToken } from "@tally/core";
+import {
+  formatUnits,
+  parseDecimal,
+  type CorporateActionKind,
+  type CorporateActionSighting,
+  type RegistryToken,
+} from "@tally/core";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 /** The committed seed: Ondo multipliers from the 2026-09-30 public snapshot (see scripts/seed-ondo-baseline.ts). Never written at runtime. */
 export const SEED_PATH = join(HERE, "..", "..", "..", "data", "ondo-multiplier-baseline.json");
 const REFRESH_MS = 24 * 60 * 60 * 1000;
+const ACTION_THROTTLE_MS = 60 * 60 * 1000; // a halt is polled every minute: write the sighting at most hourly
+const ACTION_SAME_EVENT_MS = 7 * 24 * 60 * 60 * 1000; // sightings of the same kind within 7 days extend one sighting
 
 interface Entry {
   symbol: string;
@@ -15,6 +23,8 @@ interface Entry {
   value: string;
   /** ISO time the value was last seen. */
   seenAt: string;
+  /** A status that showed stock_split / stock_dividend: the multiplier change may land hours later, after the halt. */
+  action?: { kind: CorporateActionKind; firstSeenAt: string; lastSeenAt: string };
 }
 interface BaselineFile {
   schema: 1;
@@ -65,11 +75,45 @@ export class JsonBaselineStore implements BaselineStore {
     const text = formatUnits(value, 18);
     const prev = this.file.entries[key];
     if (prev && prev.value === text && at - Date.parse(prev.seenAt) < REFRESH_MS) return;
+    // An accepted CHANGE consumes the corporate-action sighting that justified it; a mere refresh keeps it (the change may still come).
+    const action = prev && prev.value === text ? prev.action : undefined;
     this.file.entries[key] = {
       symbol: token.symbol,
       value: text,
       seenAt: new Date(at).toISOString(),
+      ...(action ? { action } : {}),
     };
+    await this.save();
+  }
+
+  getAction(address: string): CorporateActionSighting | undefined {
+    const a = this.file.entries[address.toLowerCase()]?.action;
+    return a
+      ? {
+          kind: a.kind,
+          firstSeenAt: Date.parse(a.firstSeenAt),
+          lastSeenAt: Date.parse(a.lastSeenAt),
+        }
+      : undefined;
+  }
+
+  async noteAction(token: RegistryToken, kind: CorporateActionKind, at: number): Promise<void> {
+    if (!this.writable) return;
+    const entry = this.file.entries[token.address.toLowerCase()];
+    if (!entry) return; // nothing to attach it to
+    const prev = entry.action;
+    if (prev && prev.kind === kind && at - Date.parse(prev.lastSeenAt) < ACTION_THROTTLE_MS) return;
+    const continuing =
+      prev && prev.kind === kind && at - Date.parse(prev.lastSeenAt) <= ACTION_SAME_EVENT_MS;
+    entry.action = {
+      kind,
+      firstSeenAt: continuing ? prev!.firstSeenAt : new Date(at).toISOString(),
+      lastSeenAt: new Date(at).toISOString(),
+    };
+    await this.save();
+  }
+
+  private async save(): Promise<void> {
     this.chain = this.chain
       .then(() => this.persist())
       .catch((e) =>

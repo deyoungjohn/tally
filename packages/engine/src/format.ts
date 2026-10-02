@@ -88,7 +88,7 @@ const MARK: Record<CheckRecord["outcome"], string> = {
 
 /** The integrity log, one line per check: ✓ pass, − deduction, ⚑ flag, · skipped. Every check appears, whatever its outcome. */
 export function formatChecks(checks: CheckRecord[], indent = "    "): string[] {
-  return checks.map((c) => `${indent}${MARK[c.outcome]} ${c.id.padEnd(18)} ${c.summary}`);
+  return checks.map((c) => `${indent}${MARK[c.outcome]} ${c.id.padEnd(22)} ${c.summary}`);
 }
 
 /** `tally quote --checks`: the log under the table for every row. */
@@ -134,6 +134,15 @@ export function formatFacts(ticker: string, tokens: TokenInspection[], now: numb
     out.push(
       `  baseline: ${b ? `${num(b.value)} seen ${new Date(b.at).toISOString().slice(0, 10)}` : t.issuer === "ondo" ? "none" : "n/a"}`,
     );
+    const ca = t.facts.corporateAction;
+    if (t.issuer === "ondo") {
+      out.push(
+        `  corporate action: ${ca ? `${ca.kind} seen ${new Date(ca.firstSeenAt).toISOString().slice(0, 16)}Z to ${new Date(ca.lastSeenAt).toISOString().slice(0, 16)}Z` : "none seen"}`,
+      );
+      out.push(
+        `  multiplier last changed (Binance lastUpdateTime): ${t.facts.multiplierChangedAt ? new Date(t.facts.multiplierChangedAt).toISOString().slice(0, 16) + "Z" : "not stated"}`,
+      );
+    }
     for (const [k, why] of Object.entries(t.facts.notes ?? {})) out.push(`  note (${k}): ${why}`);
     out.push(
       `  integrity ${t.integrity.grade} (${t.integrity.score}):`,

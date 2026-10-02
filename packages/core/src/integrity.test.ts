@@ -112,7 +112,7 @@ describe("integrity grade (blueprint §7.5)", () => {
 });
 
 describe("the integrity log records EVERY check, passes and skips included", () => {
-  it("always writes all seven checks in a fixed order", () => {
+  it("always writes all eight checks in a fixed order", () => {
     for (const input of [
       clean,
       { ...clean, status: null, attestation: undefined },
@@ -121,6 +121,7 @@ describe("the integrity log records EVERY check, passes and skips included", () 
       expect(gradeIntegrity(input).checks.map((c) => c.id)).toEqual([
         "multiplier-sources",
         "ondo-bounds",
+        "multiplier-validation",
         "premium",
         "onchain-volume",
         "status",

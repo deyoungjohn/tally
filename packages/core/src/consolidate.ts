@@ -6,6 +6,7 @@ import {
   isUnitTrap,
   resolveMultiplier,
   sharesFromTokens,
+  corporateActionKind,
   type OndoBoundsResult,
   type ResolvedMultiplier,
 } from "./multiplier";
@@ -13,8 +14,10 @@ import { formatUnits, mulDivUp, parseDecimal, toNumber } from "./units";
 import {
   isKindedError,
   type Address,
+  type CorporateActionKind,
   type EngineErrorKind,
   type MultiplierReadings,
+  type PriceCheckInputs,
   type RawQuote,
   type ReferencePrice,
   type RegistryToken,
@@ -31,6 +34,14 @@ export interface EnginePorts {
     reference(ticker: string): Promise<ReferencePrice | null>;
     /** Optional: persist an Ondo multiplier reading that passed the bounds check as the new baseline. */
     recordAccepted?(token: RegistryToken, value: bigint, at: number): Promise<void>;
+    /** Optional: remember that this token's status showed a corporate action (kept across runs, for the bounds check). */
+    noteCorporateAction?(
+      token: RegistryToken,
+      kind: CorporateActionKind,
+      at: number,
+    ): Promise<void>;
+    /** Optional: token price and US share price for the independent price check. Called only when a multiplier changed. */
+    priceCheck?(token: RegistryToken): Promise<PriceCheckInputs>;
   };
   quotes: { quote(token: RegistryToken, amountInUsdt: bigint, wallet: Address): Promise<RawQuote> };
   chain: { gasPriceWei(): Promise<bigint>; bnbUsd(): Promise<number> };
@@ -317,10 +328,37 @@ async function prepare(ports: EnginePorts, token: RegistryToken, now: number): P
   const multiplier = resolveMultiplier(token.issuer, readings);
   const p: Prepared = { token, readings, facts, multiplier };
   if (multiplier && token.issuer === "ondo") {
+    // A status showing a corporate action is remembered (the change may land hours later, after the halt), and counted
+    // as seen right now.
+    const kind = corporateActionKind(facts.status?.reasonMsg);
+    let action = facts.corporateAction;
+    if (kind) {
+      const continuing =
+        action && action.kind === kind && now - action.lastSeenAt <= 7 * 24 * 3_600_000;
+      action = { kind, firstSeenAt: continuing ? action!.firstSeenAt : now, lastSeenAt: now };
+      await ports.facts
+        .noteCorporateAction?.(token, kind, now)
+        .catch((e) => rethrowFatal(e, () => undefined));
+    }
+    // The price check only runs for a changed multiplier, so the extra data call is rare.
+    const previous = facts.multiplierBaseline;
+    let prices: PriceCheckInputs | undefined;
+    if (previous && previous.value !== multiplier.value && ports.facts.priceCheck) {
+      prices = await ports.facts
+        .priceCheck(token)
+        .catch((e) =>
+          rethrowFatal(e, () => ({ note: e instanceof Error ? e.message : String(e) })),
+        );
+      if (prices?.note) (facts.notes ??= {}).priceCheck = prices.note;
+    }
     p.bounds = checkOndoMultiplier({
       current: multiplier.value,
-      previous: facts.multiplierBaseline,
-      reasonMsg: facts.status?.reasonMsg,
+      previous,
+      now,
+      status: facts.status,
+      action,
+      changedAt: facts.multiplierChangedAt,
+      prices,
     });
     // Only readings that pass become the new baseline. With no baseline yet, a first sighting is recorded only when the
     // sources agree with each other, so one bad first reading cannot poison the store.
@@ -366,6 +404,7 @@ function gradeFor(
     multiplier: p.multiplier,
     readings: p.readings,
     bounds: p.bounds,
+    validation: p.bounds?.validation,
     premium,
     premiumBasis: basis,
     session: ref?.session ?? p.facts.status?.session ?? "unknown",

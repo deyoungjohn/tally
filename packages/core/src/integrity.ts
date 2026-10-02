@@ -1,5 +1,4 @@
-import type { BoundsOutcome } from "./multiplier";
-import type { ResolvedMultiplier } from "./multiplier";
+import type { BoundsOutcome, PriceValidation, ResolvedMultiplier } from "./multiplier";
 import { formatUnits } from "./units";
 import type { AttestationFact, FactKey, MultiplierReadings, Session, TokenStatus } from "./types";
 
@@ -16,6 +15,7 @@ export type IntegrityFlag =
 export type CheckId =
   | "multiplier-sources"
   | "ondo-bounds"
+  | "multiplier-validation"
   | "premium"
   | "onchain-volume"
   | "status"
@@ -48,6 +48,8 @@ export interface IntegrityInput {
   readings?: MultiplierReadings;
   /** Ondo bounds result; undefined for issuers that read on-chain (check is not applicable). */
   bounds?: { outcome: BoundsOutcome; detail: string };
+  /** The independent price check of a multiplier change (token price ÷ multiplier vs the US price). */
+  validation?: PriceValidation;
   /** Premium vs the US price as a fraction (0.0012 = +0.12%); undefined when no price is available. */
   premium?: number;
   /** Where the premium came from: a Binance quote, or the listed token price of a token we did not quote. */
@@ -69,7 +71,7 @@ export interface Integrity {
   flags: IntegrityFlag[];
   /** Deductions and flags with plain-English reasons (what the UI shows). */
   reasons: CheckRecord[];
-  /** The full log: all seven checks, every time. */
+  /** The full log: all eight checks, every time. */
   checks: CheckRecord[];
   /** Badge only, no points. */
   unitTrap: boolean;
@@ -168,6 +170,55 @@ export function gradeIntegrity(i: IntegrityInput): Integrity {
       inputs: { detail: i.bounds.detail },
       summary: `${i.bounds.detail} → ${i.bounds.outcome === "skipped" ? "skipped" : "pass"}`,
     });
+  }
+
+  // 2b. Independent price check of a multiplier change: tokenPrice ÷ multiplier within 2% of the US share price.
+  {
+    const v = i.validation;
+    if (!i.bounds) {
+      checks.push({
+        id: "multiplier-validation",
+        outcome: "skipped",
+        points: 0,
+        inputs: {},
+        summary: "not applicable: this issuer's multiplier is read on-chain → skipped",
+      });
+    } else if (!v) {
+      checks.push({
+        id: "multiplier-validation",
+        outcome: "skipped",
+        points: 0,
+        inputs: {},
+        summary: `no price check result${note("priceCheck") ? ` (${note("priceCheck")})` : ""} → skipped`,
+      });
+    } else if (v.outcome === "fail") {
+      checks.push({
+        id: "multiplier-validation",
+        outcome: "flag",
+        points: 0,
+        flag: "bounds",
+        inputs: v.inputs,
+        summary: `${v.summary} → FAILED, blocks execution (0 pts)`,
+        reason: `The share multiplier does not match the market price: ${v.summary}.`,
+      });
+    } else if (v.outcome === "pass") {
+      checks.push({
+        id: "multiplier-validation",
+        outcome: "pass",
+        points: 0,
+        inputs: v.inputs,
+        summary: `${v.summary} → pass`,
+      });
+    } else {
+      const why = note("priceCheck") ? ` (${note("priceCheck")})` : "";
+      checks.push({
+        id: "multiplier-validation",
+        outcome: "skipped",
+        points: 0,
+        inputs: v.inputs,
+        summary: `${v.summary}${why} → skipped`,
+      });
+    }
   }
 
   // 3. Premium vs the US price (−30 if |premium| > 2% during regular hours)

@@ -7,6 +7,9 @@ import {
   sessionFromMarketStatus,
   statusFromInfo,
   type Address,
+  type CorporateActionKind,
+  type CorporateActionSighting,
+  type PriceCheckInputs,
   type EnginePorts,
   type Issuer,
   type MultiplierReadings,
@@ -39,9 +42,13 @@ export interface BinanceDataOptions {
   baseline?: BaselineStore;
 }
 
-/** Where accepted Ondo multiplier readings live. A JSON file now (packages/engine), SQLite later. */
+/** Where accepted Ondo multiplier readings and corporate-action sightings live. A JSON file now (packages/engine), SQLite later. */
 export interface BaselineStore {
   get(address: string): { value: bigint; at: number } | undefined;
+  /** The last time this token's status showed a corporate action, if ever. */
+  getAction(address: string): CorporateActionSighting | undefined;
+  /** Remember a corporate-action status (extends the current sighting, or starts a new one). */
+  noteAction(token: RegistryToken, kind: CorporateActionKind, at: number): Promise<void>;
   /** Called only for readings that passed the bounds check. */
   record(token: RegistryToken, value: bigint, at: number): Promise<void>;
 }
@@ -58,6 +65,8 @@ export class BinanceData {
   private readonly registryCache: TtlCache<{
     registry: Registry;
     listMultiplier: Map<string, bigint>;
+    /** When Binance's list says each multiplier last changed (`lastUpdateTime`, ms). */
+    listChangedAt: Map<string, number>;
   }>;
   private readonly authCache: TtlCache<Map<string, RwaToken>>;
   private readonly multCache: TtlCache<MultiplierReadings>;
@@ -86,6 +95,7 @@ export class BinanceData {
       );
       const rows: RegistryRow[] = [];
       const listMultiplier = new Map<string, bigint>();
+      const listChangedAt = new Map<string, number>();
       for (const row of lists.flat()) {
         if (row.chainId !== "56") continue;
         const issuer = ISSUER_BY_TYPE[row.type];
@@ -100,8 +110,10 @@ export class BinanceData {
         });
         if (row.multiplier)
           listMultiplier.set(row.contractAddress.toLowerCase(), parseDecimal(row.multiplier, 18));
+        if (row.lastUpdateTime)
+          listChangedAt.set(row.contractAddress.toLowerCase(), row.lastUpdateTime);
       }
-      return { registry: Registry.fromRows(rows), listMultiplier };
+      return { registry: Registry.fromRows(rows), listMultiplier, listChangedAt };
     });
   }
 
@@ -134,6 +146,8 @@ export class BinanceData {
       market: (token) => this.marketCache.get(token.address, () => this.readMarket(token)),
       reference: (ticker) => this.refCache.get(ticker, () => this.readReference(ticker)),
       recordAccepted: async (token, value, at) => this.o.baseline?.record(token, value, at),
+      noteCorporateAction: async (token, kind, at) => this.o.baseline?.noteAction(token, kind, at),
+      priceCheck: (token) => this.readPriceCheck(token),
     },
     quotes: { quote: (token, amountIn, wallet) => this.quote(token, amountIn, wallet) },
   };
@@ -193,7 +207,11 @@ export class BinanceData {
     if (facts.listedTokenPrice === undefined)
       notes.listedPrice = "no listed token price from any source";
     // Ondo has no on-chain multiplier, so its readings are checked against the last accepted one (§7.3).
-    if (token.issuer === "ondo") facts.multiplierBaseline = this.o.baseline?.get(token.address);
+    if (token.issuer === "ondo") {
+      facts.multiplierBaseline = this.o.baseline?.get(token.address);
+      facts.corporateAction = this.o.baseline?.getAction(token.address);
+      facts.multiplierChangedAt = (await this.loadRegistry()).listChangedAt.get(token.address);
+    }
     return facts;
   }
 
@@ -223,6 +241,30 @@ export class BinanceData {
     notes.attestation = url
       ? `daily report url has no date in its file name (${url})`
       : `no dated daily report (protections: ${kinds.length ? kinds.join(", ") : "none"}${kinds.length ? "; urls empty" : ""})`;
+  }
+
+  /**
+   * Inputs for the independent price check, from the public RWA dynamic data: `tokenInfo.price` (one token) and
+   * `stockInfo.price` (US price per share). The authenticated list's `tokenPrice` is NOT used: for Ondo NFLX it is ten
+   * times the price the quote API returns. Called only when a multiplier changed, so it costs one public call, rarely.
+   */
+  private async readPriceCheck(token: RegistryToken): Promise<PriceCheckInputs> {
+    try {
+      const d = await this.o.pub.rwaDynamic(token.address);
+      const tokenPrice = d.tokenInfo?.price ? Number(d.tokenInfo.price) : undefined;
+      const stockPrice = d.stockInfo?.price ? Number(d.stockInfo.price) : undefined;
+      return {
+        tokenPrice,
+        stockPrice,
+        note:
+          tokenPrice && stockPrice
+            ? undefined
+            : "public RWA dynamic data has no token or stock price",
+      };
+    } catch (e) {
+      this.warn(`price check inputs unavailable for ${token.symbol}`, e);
+      return { note: `public RWA dynamic call failed: ${msg(e)}` };
+    }
   }
 
   /** US price per SHARE: the authenticated `referencePrice ÷ tokenToShareRatio` of any issuer token (bStock's public `stockInfo.price` is null, V15). */
