@@ -5,3 +5,4 @@ research
 spike
 *.md
 contracts
+packages/binance/fixtures
