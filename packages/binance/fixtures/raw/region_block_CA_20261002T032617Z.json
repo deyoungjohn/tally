@@ -1,0 +1,16 @@
+{
+ "path": "/api/v1/dex/aggregator/supported/chain",
+ "params": {
+  "binanceChainId": "56"
+ },
+ "egress_country": "CA",
+ "recorded_at_utc": "2026-10-02T03:26:17.565906+00:00",
+ "ok": false,
+ "http": 401,
+ "body": {
+  "code": 40103,
+  "timestamp": 1790911576626,
+  "msg": "Timestamp outside recv_window. serverTime=2026-10-02T03:26:16.626679166Z",
+  "data": ""
+ }
+}
