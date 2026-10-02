@@ -1,0 +1,23 @@
+[profile.default]
+src = "src"
+test = "test"
+out = "out"
+libs = ["lib"]
+solc_version = "0.8.28"
+evm_version = "prague" # BSC supports EIP-7702 (Pascal hard fork); needed for the batch tests
+optimizer = true
+optimizer_runs = 200
+remappings = [
+  "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+  "forge-std/=lib/forge-std/src/",
+]
+fs_permissions = [{ access = "read", path = "./captures" }]
+
+[fuzz]
+runs = 512
+
+[rpc_endpoints]
+bsc = "${BSC_RPC}"
+
+[lint]
+exclude_lints = ["named-struct-fields", "mixed-case-function", "mixed-case-variable"]
