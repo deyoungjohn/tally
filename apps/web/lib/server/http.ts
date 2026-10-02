@@ -44,7 +44,7 @@ export function errorResponse(e: unknown): NextResponse {
       return fail(502, "upstream", "We couldn't reach the price source. Try again.");
   }
   if (isTradeError(e)) return fail(409, e.kind, e.message);
-  console.error("unhandled", e instanceof Error ? e.stack : e);
+  console.error("unhandled:", e instanceof Error ? e.message.slice(0, 200) : e);
   return fail(500, "internal", "Something went wrong on our side. Nothing was spent.");
 }
 

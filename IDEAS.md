@@ -537,6 +537,31 @@ Offline: **72 unit and fuzz tests pass** (swap, admin, feed bounds, monotonic re
 
 **Not done / still open after M2:** an independent review of the contract (still unaudited; amounts stay at test size); the TS feed-signer service and the engine's use of `Guarded` receipts (M3); whether the bStock pause manager can change without notice; the corporate-action and stale-feed paths have not been exercised on mainnet.
 
+### F12. M3 web trade flow: what the build and the tests showed (2026-10-02)
+Evidence: `packages/engine/src/trade.ts` and `trade.test.ts` (recorded Seoul quotes and swap builds), `apps/web/e2e/` (Playwright at 375/768/1280, mock wallet, fixture server). **Status: built and green offline; the two checks that need real money (the live trade plan on the EC2, the phone test with a first-time user) are not done yet and are filled in below when they are.**
+
+**What the trade plan does (and why it is two-phase).** The gas estimate and the simulation need the allowance to exist, otherwise the guarded call reverts on `transferFrom` and says nothing useful. So one endpoint answers `needs_funds`, `needs_approval` (exact amount) or `ready`, and the page calls it again after the approval mines. In fixture mode the numbers match the live M2 buy: estimate 554,149 → limit 692,687 (×1.25), against the API's 450,000 (F11).
+
+**Offline verification of the contract interface.** The ShareGuard ABI is hand-written in `packages/chain/src/shareguard.ts` and the tests decode the calldata back with it. A signed feed update is built, decoded and its EIP-712 signature recovered to the signer's address with viem, using the same typed data the contract's digest uses (the M2 Python signer was already checked against the contract). The Ondo signer is only used when the guard's stored multiplier is stale or differs by more than 1 ppm from the engine's accepted value.
+
+**Bugs the 375px tests found (all would have broken the phone test):**
+- The bottom sheet rendered at the *bottom of the page* instead of the viewport. `.glass { position: relative }` in unlayered CSS beats Tailwind's `fixed`. The M0 mobile menu had the same bug; its test only checked "visible". The review sheet's *Confirm* was unreachable.
+- Even when positioned, the sheet's scroll area had no `min-h-0`, so on a short phone *Confirm and buy* was clipped.
+- The sheet was see-through (the same override on `background`), so the page text showed through the review.
+- The page was 414px wide at a 375px viewport: grid tracks sized by content. Fixed with `grid-cols-1` and `min-w-0`.
+- Focus moved back to the dialog every second while the countdown ran, because the sheet's effect depended on an inline callback. A keyboard user could not tab through the review.
+- `/trade` on a phone put the trade card below ~900px of header and chart. On mobile the card now follows the title.
+
+**Decisions and deviations (for review):**
+1. **No historical chart.** The Market candlestick endpoint does not work (F10), so the ticker page shows a session line built from our own 10 s polling, labelled as such.
+2. **Only five tickers are buyable** (NVDA, AAPL, TSLA, QQQ, SPY): those are the ShareGuard assets. Others show quotes and a disabled "Quotes only for now" button.
+3. **Sheets everywhere.** DESIGN §3.2 asks for a morphing modal on desktop; M3 uses the bottom sheet at every width. The FAQ uses native `<details>` instead of `bouncy-accordion`.
+4. **Region declaration** is stored in `declarations.jsonl` under `TALLY_DATA_DIR` (country and region headers, no IP), versioned by date; SQLite replaces it later.
+5. **The feed signer has no endpoint.** It signs inside the trade plan, bounded by the contract's `maxStepBps`.
+6. TSLA, QQQ and SPY have no recorded quote fixtures, so they only work live. Recording them (`spike/record_m1_fixtures.py` on the EC2) would let the whole ticker strip run offline.
+
+**To fill in after the EC2 runs:** `/api/health` output, a live `/api/trade/plan` for the test wallet (`needs_funds`, then `needs_approval`, then `ready`), a real buy through the web page with its `Guarded` receipt, and the phone test (who, device, where they hesitated, time to receipt).
+
 ## The DX report (25%): write it yourself, as you go
 The rules reject AI-generated reports, so **keep a timestamped human log from the first minute**. That covers time to first successful call, each error message copied verbatim, and page URL plus section for every doc problem. The items below are leads we found from outside with public endpoints. **Confirm each one yourself with your key before it goes in the report:**
 - Three different multiplier values for the same token across list API, dynamic API and on-chain (xStocks).
