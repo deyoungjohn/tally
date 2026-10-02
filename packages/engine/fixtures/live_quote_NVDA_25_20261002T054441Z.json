@@ -1,11 +1,3 @@
-
-> tally@0.0.0 tally /home/ubuntu/tally
-> pnpm --filter @tally/engine tally quote NVDA 25 --json
-
-
-> @tally/engine@0.0.0 tally /home/ubuntu/tally/packages/engine
-> tsx src/cli.ts quote NVDA 25 --json
-
 {
   "ticker": "NVDA",
   "asOf": "2026-10-02T05:44:41.993Z",
@@ -35,7 +27,7 @@
       "usdPerShare": 231.59431796411056,
       "premium": -0.000498438263753398,
       "hops": 2,
-      "routeText": "USDT → NVDAB → NVDAon",
+      "routeText": "USDT \u2192 NVDAB \u2192 NVDAon",
       "vendor": "LiquidMesh",
       "executionMode": "SWAP",
       "priceImpactPct": 0.0004940824,
@@ -109,7 +101,7 @@
       "usdPerShare": 231.78901353504187,
       "premium": 0.00034181778794795115,
       "hops": 1,
-      "routeText": "USDT → NVDAB",
+      "routeText": "USDT \u2192 NVDAB",
       "vendor": "LiquidMesh",
       "executionMode": "SWAP",
       "priceImpactPct": 0.0003960693,
