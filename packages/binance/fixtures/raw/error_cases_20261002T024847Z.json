@@ -1,0 +1,53 @@
+{
+ "ondo_5_usdt_40375": {
+  "path": "/api/v1/dex/aggregator/quote",
+  "params": {
+   "binanceChainId": "56",
+   "amount": "5000000000000000000",
+   "fromTokenAddress": "0x55d398326f99059fF775485246999027B3197955",
+   "toTokenAddress": "0xa9ee28c80f960b889dfbd1902055218cba016f75",
+   "userWalletAddress": "0xcb634955B8A7DF7B106f7AB47C9759B26206b777"
+  },
+  "ok": false,
+  "http": 200,
+  "body": {
+   "code": 40375,
+   "msg": "Minimum order amount is 5 USD.",
+   "data": null,
+   "timestamp": 1790909362949,
+   "success": false
+  }
+ },
+ "ondo_no_wallet_40001": {
+  "path": "/api/v1/dex/aggregator/quote",
+  "params": {
+   "binanceChainId": "56",
+   "amount": "6000000000000000000",
+   "fromTokenAddress": "0x55d398326f99059fF775485246999027B3197955",
+   "toTokenAddress": "0xa9ee28c80f960b889dfbd1902055218cba016f75"
+  },
+  "ok": false,
+  "http": 200,
+  "body": {
+   "code": 40001,
+   "msg": "userWalletAddress is required for RFQ (Ondo) quote",
+   "data": null,
+   "timestamp": 1790909363005,
+   "success": false
+  }
+ },
+ "bad_credentials": {
+  "path": "/api/v1/dex/aggregator/supported/chain",
+  "params": {
+   "binanceChainId": "56"
+  },
+  "ok": false,
+  "http": 401,
+  "body": {
+   "data": "",
+   "msg": "Invalid API Key",
+   "timestamp": 1790909363054,
+   "code": 40101
+  }
+ }
+}

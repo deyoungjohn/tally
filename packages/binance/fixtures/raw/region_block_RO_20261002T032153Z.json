@@ -1,0 +1,16 @@
+{
+ "path": "/api/v1/dex/aggregator/supported/chain",
+ "params": {
+  "binanceChainId": "56"
+ },
+ "egress_country": "RO",
+ "recorded_at_utc": "2026-10-02T03:21:53.681374+00:00",
+ "ok": false,
+ "http": 200,
+ "body": {
+  "code": 40304,
+  "msg": "Service not available due to compliance restriction",
+  "success": false,
+  "timestamp": 1790911312555
+ }
+}
