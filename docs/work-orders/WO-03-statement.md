@@ -12,6 +12,7 @@
 - `packages/mod-statement/**`
 - `apps/web/modules/statement/**`, `apps/web/app/dev/statement/**`
 - `apps/worker/src/jobs/statement.ts`
+- Approved 2026-10-03, **additive only**: portfolio collector methods in `packages/binance/src/collectors.ts`, `packages/binance/src/collector-fixtures.ts`, `packages/binance/src/collectors.test.ts`, and their exposure on `engine.collectors` in `packages/engine/src/**`; `zod` dependency in `packages/mod-statement/package.json` and `pnpm-lock.yaml`
 
 ## Tasks
 
