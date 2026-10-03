@@ -14,7 +14,7 @@ Snapshots use `registry/bsc` (raw authenticated RWA list including status), `pri
 
 `pnpm e2e:foundation` uses its own supervised server on port 3101 with fixture collection, selected module flags and dev previews enabled. `pnpm e2e` remains the existing production/flag-off suite.
 
-Run `TALLY_DATA_DIR=/var/lib/tally pnpm worker prune` as a separate hourly loop. Retention is 48 h for `price`/`prices`, 7 d for `registry` and other kinds, always retaining at least the newest observation per kind/key. Identical latest payloads at the same observation time are not appended again. Evidence kinds `receipt`, `receipts`, `decision`, `decisions`, `alert`, `alerts` are explicitly excluded from automatic pruning.
+Run `TALLY_DATA_DIR=/var/lib/tally pnpm worker prune` as a separate hourly loop. Retention is 24 h for per-token `price`, 2 h for aggregate `prices`, 6 h for `registry` and 7 d for other kinds, always retaining at least the newest observation per kind/key. Identical latest payloads at the same observation time are not appended again. Evidence kinds `receipt`, `receipts`, `decision`, `decisions`, `alert`, `alerts` are explicitly excluded from automatic pruning.
 
 ## WO-00 evidence
 

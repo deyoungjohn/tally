@@ -2,9 +2,9 @@ import type { WorkerJob } from "../runner";
 
 const HOUR = 60 * 60 * 1000;
 export const SNAPSHOT_RETENTION_MS = {
-  price: 48 * HOUR,
-  prices: 48 * HOUR,
-  registry: 7 * 24 * HOUR,
+  price: 24 * HOUR,
+  prices: 2 * HOUR,
+  registry: 6 * HOUR,
   default: 7 * 24 * HOUR,
 } as const;
 
