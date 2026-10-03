@@ -10,6 +10,9 @@ export const LIQUIDMESH_ROUTER = "0xB44446b0c8E56988c34f7Ff73Ae904982b5FdDA5" as
 /** Placeholder `userWalletAddress` for browse quotes: the spike's fixed ShareGuard fork address (F3: quotes ignore wallet history). */
 export const QUOTE_PLACEHOLDER_WALLET = "0xcb634955B8A7DF7B106f7AB47C9759B26206b777" as const;
 
+/** ShareGuard v1, deployed and verified on BSC 2026-10-02 (IDEAS §F11). `SHAREGUARD_ADDRESS` in the server env overrides it. */
+export const SHAREGUARD_DEPLOYED = "0x28F6F19bffbF25E36452c78d12090F0bC922970a" as const;
+
 /** Function selectors (blueprint Appendix B). */
 export const SELECTORS = {
   uiMultiplier: "0xa60bf13d",

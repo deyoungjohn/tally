@@ -2,7 +2,7 @@
 
 > **Naming:** Tally was called **Parity** during ideation and validation. Code under `spike/` and `research/` keeps the old identifiers (e.g. `PARITY_PK`, the `"parity.shareguard.fork"` seed behind the fork test's fixed address). Don't rename them; they're historical and some are load-bearing.
 
-> **"Shares, not tokens."** Tally compares the same US stock across the three issuers that tokenize it on BNB Chain (Ondo, bStocks, xStocks). It quotes each one in **real share units**, routes your buy to the best true price, and settles through **ShareGuard**, a contract that reverts if you'd receive fewer **shares** than promised.
+> **"Buy tokenized shares, at the best prices."** (UI tagline, changed 2026-10-02: copy must never imply users buy the underlying shares.) Tally compares the same US stock across the three issuers that tokenize it on BNB Chain (Ondo, bStocks, xStocks). It quotes each one in **share units** (tokenized shares track a stock's price; they are not the underlying shares), routes your buy to the best true price, and settles through **ShareGuard**, a contract that reverts if you'd receive fewer **shares** than promised.
 
 This document is the hand-off from the ideation and validation phase to the build phase. It is meant to be **self-contained**: a new session (human or AI) should be able to build Tally from this file, `DESIGN.md`, and the evidence they link to, without reading the earlier conversation.
 
@@ -336,6 +336,8 @@ Grades: A ≥ 90, B ≥ 75, C ≥ 60, D ≥ 40, F < 40. Every deduction is shown
 7. **User signs** in Privy or their external wallet. Show progress in the `dynamic-island`.
 8. **Receipt:** poll with failover (§7.8), decode the `Guarded` event, and show tokens received, **shares received**, USDT per share, premium vs US price, gas in USD and the BscScan link. Store the fill.
 
+> **As built (M3):** steps 1 to 6 are `prepareTrade` in `packages/engine/src/trade.ts`, called as a state machine: the same endpoint answers `needs_funds`, `needs_approval` or `ready`, because the gas estimate and simulation only work once the allowance exists. The Ondo signed update is created inside the plan (no separate endpoint). The confirm sheet shows a 15 s countdown, re-quotes on confirm if it expired, and asks again if the guaranteed minimum moved by more than 0.1%. Privy's own wallet prompt is switched off (`showWalletUIs: false`).
+
 **Error to UX mapping:**
 
 | Error | UX |
@@ -497,7 +499,9 @@ All visual rules live in `DESIGN.md`. This section covers structure.
 | `/shield` | Trap Shield cards and table (DESIGN §5.4) | public |
 | `/how-it-works`, `/faq`, `/legal/*` | Content | public |
 | `/blocked` | Region block page | — |
-| `/api/quote`, `/api/registry`, `/api/integrity`, `/api/portfolio/[address]`, `/api/trade/plan`, `/api/fills`, `/api/health` | Route handlers wrapping `packages/core`. zod-validated inputs. Rate-limited per IP. | |
+| `/api/quote`, `/api/trade/plan`, `/api/trade/receipt`, `/api/fills`, `/api/declaration`, `/api/health` (M3); `/api/registry`, `/api/integrity`, `/api/portfolio/[address]` (M4) | Route handlers wrapping `packages/core`. zod-validated inputs. Rate-limited per IP. | |
+
+> **As built (2026-10-02, owner revision):** the pages are Home `/`, Trade `/trade[/TICKER]`, Portfolio `/portfolio`, Radar `/radar` (this section's Trap Shield) and `/docs` (footer; holds the contract links). FAQ is a section of Home reached from the nav. `/api/radar` and `/api/portfolio` exist. The landing page lives on `trytally.xyz` and is built last; this app is `app.trytally.xyz`. UI copy uses "the guarantee" instead of "ShareGuard".
 
 **Requirements:**
 - Server components for static and SEO parts; client components for live data (react-query).
@@ -632,7 +636,7 @@ Today is Thu 1 Oct; submissions lock **Sun 11 Oct, 12:00 UTC**. Dates are target
 | **M0 Foundations** | Fri 2 Oct | Monorepo (§6), CI, `DESIGN.md` tokens + beUI install + base layout; Cloudflare quick tunnel on EC2; swap file; secrets file; region-gate middleware; **wallet-provider checks §8.1** | ① A landing skeleton is live on the tunnel URL with the design tokens. ② A US VPN visitor sees `/blocked`; a KR visitor sees the site. ③ A Privy embedded wallet sent a real BSC (chain 56) transaction from the app. ④ Provider AUP and restricted-country review written into §9. |
 | **M1 Engine** | Sat 3 – Sun 4 Oct | `packages/binance` (recipe §7.1 + fixtures), `packages/chain` (failover, multipliers), `packages/core` (§7.2–7.5), CLI `tally quote NVDA 25`; confirm Market/Transaction/Wallet API paths; MEV parameter; read-only $100/$1,000 ladder | ① `tally quote NVDA 25` prints the per-issuer comparison (shares, $/share, premium, ≈fee, route, grade). ② Unit tests reproduce F1/F7 vectors (NFLX 10×, NVDAx 3-source mismatch, live fills). ③ 40304 and 40375 are handled from fixtures. |
 | **M2 ShareGuard v1** | Sun 4 – Mon 5 Oct | §10 contract + tests; **user deploys** with their key; BscScan verification | ① All unit, fuzz and fork tests A–I pass. ② Verified on BscScan. ③ **Two live guarded buys** (NVDAB and NVDAon, 6 USDT each) through ShareGuard, with `Guarded` events. |
-| **M3 Web trade flow** | Tue 6 – Thu 8 Oct | Landing (§5.1 DESIGN), `/trade/[ticker]`, Privy sign-in, top-up tiers 1–2, trade plan §7.6, receipt in shares, error UX | ① Someone who has never used crypto buys $6 of NVDA in shares on a phone, end to end, without help. ② Playwright passes at 375/768/1280. ③ Reduced motion and keyboard paths pass. |
+| **M3 Web trade flow** *(built; phone test pending)* | Tue 6 – Thu 8 Oct | Landing (§5.1 DESIGN), `/trade/[ticker]`, Privy sign-in, top-up tiers 1–2, trade plan §7.6, receipt in shares, error UX | ① Someone who has never used crypto buys $6 of NVDA in shares on a phone, end to end, without help. ② Playwright passes at 375/768/1280. ③ Reduced motion and keyboard paths pass. |
 | **M4 Portfolio + Trap Shield** | Thu 8 Oct | `/portfolio`, `/shield`, integrity everywhere | The portfolio shows the test wallet's NVDAB + NVDAon in shares, with correct multipliers; Shield lists NFLX, ghost xStocks and disagreements. |
 | **M5 Agent layer** | Fri 9 Oct | Skill, MCP, upstream PR | In Claude Code: "buy half a share of Apple, cheapest issuer" goes through preview, then execute via `baw`, through ShareGuard. PR opened upstream. |
 | **M6 Telegram v1** | Fri 9 Oct | §13 read-only | `/quote NVDA 25` and `/shield` answer in under 3s; an alert fires in a test. |

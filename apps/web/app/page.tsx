@@ -1,19 +1,27 @@
-import { Check } from "lucide-react";
+import { ArrowRight, Eye, PieChart, Radar as RadarIcon, ShieldCheck } from "lucide-react";
+import {
+  HomeComparison,
+  HomePortfolioPreview,
+  HomeRadarPreview,
+  HomeTradeCard,
+  TickerStrip,
+  UnitTrapCard,
+} from "@/components/home/parts";
+import { HeroActions } from "@/components/home/hero-actions";
 import { ButtonLink } from "@/components/motion/button";
-import { AnimatedNumber } from "@/components/motion/animated-number";
 import { Reveal } from "@/components/reveal";
+import { HomeFaq } from "@/components/home/faq";
 
-/**
- * M0 landing skeleton (DESIGN.md §5.1, sections 1-2 + a placeholder for the rest).
- * Numbers below are RECORDED live fills from 2026-10-01 (IDEAS.md F6/F7), not live data.
- * M3 replaces them with the engine's output.
- */
+/** One screen per feature on a 16" desktop: Trade, Portfolio, Radar, then the FAQ. */
+const SCREEN =
+  "wrap flex scroll-mt-24 flex-col justify-center py-14 min-[981px]:min-h-[calc(100svh-96px)] min-[981px]:py-10";
+
 export default function Home() {
   return (
     <main id="main">
-      <section className="wrap pt-12 min-[981px]:pt-20" aria-labelledby="hero-title">
-        <div className="grid items-center gap-12 min-[981px]:grid-cols-[1.05fr_.95fr]">
-          <div>
+      <section className={SCREEN} aria-labelledby="hero-title">
+        <div className="grid grid-cols-1 items-center gap-12 min-[981px]:grid-cols-[1.05fr_.95fr]">
+          <div className="min-w-0">
             <p className="eyebrow glass !rounded-full blur-in">
               <span className="dot-live" aria-hidden />
               <span>
@@ -25,103 +33,215 @@ export default function Home() {
                 className="blur-in blur-in-word"
                 style={{ "--d": "60ms" } as React.CSSProperties}
               >
-                Buy <span className="fade-text">shares,</span>
-              </span>
-              <br />
-              <span
-                className="blur-in blur-in-word"
-                style={{ "--d": "140ms" } as React.CSSProperties}
-              >
-                not tokens.
+                Buy <span className="fade-text">tokenized shares,</span>
               </span>
               <br />
               <span
                 className="blur-in blur-in-word dim-text"
-                style={{ "--d": "220ms" } as React.CSSProperties}
+                style={{ "--d": "160ms" } as React.CSSProperties}
               >
-                Best price, guaranteed.
+                at the best prices.
               </span>
             </h1>
-            <p className="t-lead mt-6 max-w-[52ch]">
-              Tally quotes the same stock from every issuer in real share units, routes your buy to
-              the best true price, and settles through ShareGuard: if you would receive fewer shares
+            <p className="t-lead mt-6 max-w-[54ch]">
+              Tally compares the same US stock across every issuer on BNB Chain, shows what you get
+              in share units, and buys from the cheapest one. If you&apos;d receive fewer shares
               than promised, nothing happens.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <ButtonLink href="#compare">Get a quote</ButtonLink>
-              <ButtonLink href="#shield" variant="glassy">
-                See the trap
-              </ButtonLink>
-            </div>
-            <p className="t-meta mt-4">
-              <span className="limit-chip">Min $6</span>
-            </p>
+            <HeroActions />
+            <dl className="m-0 mt-10 grid max-w-[560px] grid-cols-3 gap-3">
+              {[
+                ["3", "issuers compared"],
+                ["$6", "minimum buy"],
+                ["≈ $0.02", "network fee"],
+              ].map(([k, v]) => (
+                <div key={v} className="panel p-4">
+                  <dt className="num text-[22px] font-bold tracking-tight">{k}</dt>
+                  <dd className="t-meta m-0 mt-1">{v}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
-
-          <div
-            className="relative mx-auto grid w-full max-w-[460px] gap-4 min-[981px]:max-w-none"
-            aria-label="Examples from recorded trades"
-          >
+          <div className="relative mx-auto w-full max-w-[520px] min-w-0 min-[981px]:max-w-none">
             <span
               aria-hidden
-              className="shape sphere drift absolute -right-6 -top-10 z-0 h-24 w-24 opacity-90"
+              className="shape sphere drift absolute -right-6 -top-10 z-0 h-20 w-20 opacity-90"
             />
             <span
               aria-hidden
-              className="shape ring float absolute -bottom-14 right-8 z-0 h-24 w-24 opacity-80"
+              className="shape ring float absolute -bottom-16 -right-5 z-0 h-20 w-20 opacity-60"
             />
-            <div className="gcard relative z-10">
-              <p className="t-meta">NVDA · Ondo · recorded live buy</p>
-              <p className="t-big mt-2">
-                <AnimatedNumber value={0.026137} decimals={4} />{" "}
-                <span className="text-2xl text-fg2">shares</span>
-              </p>
-              <p className="mt-2 text-sm text-fg2">
-                <span className="num text-up">▼ −0.12%</span> vs US price · 229.56 USDT per share
-              </p>
-            </div>
-            <div className="gcard relative z-10 ml-6 min-[981px]:ml-16">
-              <div className="flex items-center gap-3">
-                <span
-                  className="grid h-6 w-6 place-items-center rounded-full bg-up/20 text-up"
-                  aria-hidden
-                >
-                  <Check size={14} />
-                </span>
-                <p className="text-sm font-semibold">Shares delivered</p>
-              </div>
-              <p className="t-meta mt-2">Checked on-chain by ShareGuard in shares, not tokens.</p>
-            </div>
-            <div className="gcard relative z-10">
-              <p className="t-meta">The unit trap</p>
-              <p className="mt-1 text-lg font-semibold tracking-tight">
-                1 Ondo NFLX token = <span className="num text-amber">10</span> shares
-              </p>
-              <p className="t-meta mt-1">bStock and xStocks NFLX = 1 share per token.</p>
+            <div className="relative z-10">
+              <HomeTradeCard />
             </div>
           </div>
         </div>
       </section>
 
-      {[
-        "compare|One stock, three tokens|The live comparison (shares you get, price per share, real network fee, integrity grade) arrives in M3.",
-        "guard|Guaranteed in shares, on-chain|ShareGuard checks the shares you receive and reverts if they fall short. Arrives with M2.",
-        "shield|Trap Shield|The tokens that would mislead a naive tool: unit mismatches, ghost markets, disagreeing data. Arrives in M4.",
-        "faq|FAQ|Answers arrive with the full landing page in M3.",
-      ].map((s) => {
-        const [id, title, body] = s.split("|");
-        return (
-          <section key={id} id={id} className="wrap section-pad scroll-mt-24">
-            <Reveal>
-              <div className="glass p-6 min-[561px]:p-8">
-                <p className="t-kicker">Coming next</p>
-                <h2 className="t-h2 mt-3">{title}</h2>
-                <p className="t-lead mt-3 max-w-[60ch]">{body}</p>
+      <section id="trade" className={SCREEN} aria-labelledby="trade-title">
+        <Reveal>
+          <div className="grid grid-cols-1 gap-10 min-[981px]:grid-cols-[.9fr_1.1fr]">
+            <div className="min-w-0">
+              <p className="t-kicker flex items-center gap-2">
+                <Eye size={14} aria-hidden /> Trade
+              </p>
+              <h2 id="trade-title" className="t-h2 mt-3">
+                One stock, three issuers, one fair price per share.
+              </h2>
+              <p className="t-lead mt-3 max-w-[50ch]">
+                The same ticker is not the same amount of stock. Issuers define a token differently,
+                so raw prices mislead. Tally converts everything into shares first, then ranks the
+                issuers by what you actually pay, network fee included.
+              </p>
+              <ul className="m-0 mt-6 grid list-none gap-3 p-0">
+                {[
+                  [
+                    "Shares you get",
+                    "Every quote is in share units, with the price per share and the premium over the US price.",
+                  ],
+                  [
+                    "The real network fee",
+                    "Estimated from the route's real cost, not the API's placeholder.",
+                  ],
+                  [
+                    "Cheapest right now",
+                    "Quotes refresh every 10 seconds and the best issuer is marked.",
+                  ],
+                ].map(([h, b]) => (
+                  <li key={h} className="panel p-4">
+                    <p className="font-semibold">{h}</p>
+                    <p className="mt-1 text-[14px] text-fg2">{b}</p>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-6">
+                <UnitTrapCard />
               </div>
-            </Reveal>
-          </section>
-        );
-      })}
+            </div>
+            <div className="min-w-0">
+              <HomeComparison />
+              <p className="t-kicker mb-3 mt-8">Stocks you can buy</p>
+              <TickerStrip />
+              <div className="mt-8">
+                <ButtonLink href="/trade">
+                  Open Trade <ArrowRight size={16} aria-hidden />
+                </ButtonLink>
+              </div>
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
+      <section id="portfolio" className={SCREEN} aria-labelledby="portfolio-title">
+        <Reveal>
+          <div className="grid grid-cols-1 gap-10 min-[981px]:grid-cols-[.9fr_1.1fr]">
+            <div className="min-w-0">
+              <p className="t-kicker flex items-center gap-2">
+                <PieChart size={14} aria-hidden /> Portfolio
+              </p>
+              <h2 id="portfolio-title" className="t-h2 mt-3">
+                Your holdings, counted in shares.
+              </h2>
+              <p className="t-lead mt-3 max-w-[50ch]">
+                Tokens from different issuers add up in share units, so you never have to do the
+                maths yourself. Read straight from the chain: nothing to import, nothing stored.
+              </p>
+              <ul className="m-0 mt-6 grid list-none gap-3 p-0">
+                {[
+                  [
+                    "Across issuers",
+                    "1.2 shares from Ondo and 0.5 from bStock read as 1.7 shares.",
+                  ],
+                  ["Value in dollars", "At the current US price per share."],
+                  ["Dividends as shares", "Ondo grows your share count as dividends accrue. Soon."],
+                ].map(([h, b]) => (
+                  <li key={h} className="panel p-4">
+                    <p className="font-semibold">{h}</p>
+                    <p className="mt-1 text-[14px] text-fg2">{b}</p>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-6">
+                <ButtonLink href="/portfolio">
+                  Open Portfolio <ArrowRight size={16} aria-hidden />
+                </ButtonLink>
+              </div>
+            </div>
+            <div className="min-w-0">
+              <HomePortfolioPreview />
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
+      <section id="radar" className={SCREEN} aria-labelledby="radar-title">
+        <Reveal>
+          <div className="grid grid-cols-1 gap-10 min-[981px]:grid-cols-[.9fr_1.1fr]">
+            <div className="min-w-0">
+              <p className="t-kicker flex items-center gap-2">
+                <RadarIcon size={14} aria-hidden /> Radar
+              </p>
+              <h2 id="radar-title" className="t-h2 mt-3">
+                We catch the tokens that would mislead you.
+              </h2>
+              <p className="t-lead mt-3 max-w-[50ch]">
+                Ghost markets nobody trades, tokens that are ten shares each, data that disagrees
+                with itself, paused assets. Radar grades every token A to F and says why, in plain
+                words.
+              </p>
+              <ul className="m-0 mt-6 grid list-none gap-3 p-0">
+                {[
+                  ["Ghost markets", "Under $1,000 traded in a day means stale prices."],
+                  [
+                    "Unit traps",
+                    "One token can be ten shares, which makes naive comparisons wrong by 899%.",
+                  ],
+                  [
+                    "Minimum-shares guarantee",
+                    "Before any buy, Tally checks the shares you'd receive and cancels the trade if they fall short.",
+                  ],
+                ].map(([h, b]) => (
+                  <li key={h} className="panel p-4">
+                    <p className="flex items-center gap-2 font-semibold">
+                      {h === "Minimum-shares guarantee" ? (
+                        <ShieldCheck size={15} aria-hidden />
+                      ) : null}
+                      {h}
+                    </p>
+                    <p className="mt-1 text-[14px] text-fg2">{b}</p>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-6">
+                <ButtonLink href="/radar">
+                  Open Radar <ArrowRight size={16} aria-hidden />
+                </ButtonLink>
+              </div>
+            </div>
+            <div className="min-w-0">
+              <HomeRadarPreview />
+            </div>
+          </div>
+        </Reveal>
+      </section>
+
+      <section id="faq" className={SCREEN} aria-labelledby="faq-title">
+        <Reveal>
+          <div className="grid grid-cols-1 gap-10 min-[981px]:grid-cols-[.8fr_1.2fr]">
+            <div>
+              <p className="t-kicker">FAQ</p>
+              <h2 id="faq-title" className="t-h2 mt-3">
+                Questions, answered plainly.
+              </h2>
+              <p className="t-meta mt-6">
+                Not investment advice. Tally compares and executes at your instruction; it
+                doesn&apos;t recommend what to buy. Not available in restricted regions.
+              </p>
+            </div>
+            <HomeFaq />
+          </div>
+        </Reveal>
+      </section>
     </main>
   );
 }

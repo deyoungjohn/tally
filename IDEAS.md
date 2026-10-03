@@ -6,7 +6,7 @@
 >
 > | | **Idea 1: TALLY** | **Idea 2: STIPEND** |
 > |---|---|---|
-> | One line | *Shares, not tokens.* A best-execution layer that converts Ondo, bStock and xStocks into real share units, sends each order to the issuer with the best true price, and blocks trades that fall into data traps. | *The AI wealth manager paid only from your dividends.* An Agent Studio agent whose entire income is a capped cut of dividends, measured on-chain from share multipliers and enforced by a vault contract. |
+> | One line | *Buy tokenized shares, at the best prices.* A best-execution layer that converts Ondo, bStock and xStocks into share units, sends each order to the issuer with the best true price, and blocks trades that fall into data traps. | *The AI wealth manager paid only from your dividends.* An Agent Studio agent whose entire income is a capped cut of dividends, measured on-chain from share multipliers and enforced by a vault contract. |
 > | Blind spot it attacks | Unit of account and data integrity. The same ticker means 10× different amounts of stock depending on the issuer, and the APIs disagree with the chain. | Nobody uses the multiplier as a dividend ledger. It tracks dividend yield at **r = 0.917**. |
 > | Special prize it targets | Best Use of Agentic Wallet / Wallet Skills | Best Use of BNB Agent Studio (identity, runtime, **self-funding via x402**) |
 > | Pattern from past winners it uses | Precise financial primitive + upstream fix to the sponsor's own tooling (Meld, PRECEDENCE, Tilt) | AI bounded by on-chain policy + paid x402 calls + verifiable profit and loss (Faktura, Flattora, Watchdog, Infinite Money Glitch) |
@@ -67,7 +67,7 @@ The track page lists 10 example ideas, and most entries will cluster around them
 
 ---
 
-## Idea 1: TALLY: "Shares, not tokens."
+## Idea 1: TALLY: "Buy tokenized shares, at the best prices."
 
 ### The pitch
 Robinhood users think in shares and dollars, and they expect best execution. On-chain they get three issuers, each with its own units, disagreeing metadata and ghost pools. Tally is the **consolidated tape and share-true order router for tokenized equities on BSC**. You say "buy half a share of NVDA" or "$50 of Apple". Tally quotes every issuer in real share units, picks the best true price, and settles through an on-chain guard that reverts if you'd get fewer **shares** than promised.
@@ -536,6 +536,33 @@ Offline: **72 unit and fuzz tests pass** (swap, admin, feed bounds, monotonic re
 **Operational findings while deploying (for the DX report's "tooling" notes, none caused by Binance):** the owner's terminal passed `# comment` text after a command as arguments, which broke `gen_assets.py` (it took `#`, `seeds`, `expire` for tickers and silently dropped `SPY`) and `forge script` (`encode length mismatch: expected 0 types, got 1`); the clone had a stale `lib/forge-std` gitlink so submodules failed; and a pasted command wrapped onto two lines. The tool now rejects non-tickers and unknown tickers, and the README has no trailing comments. A fresh Python venv was needed on the EC2 (`eth-account`).
 
 **Not done / still open after M2:** an independent review of the contract (still unaudited; amounts stay at test size); the TS feed-signer service and the engine's use of `Guarded` receipts (M3); whether the bStock pause manager can change without notice; the corporate-action and stale-feed paths have not been exercised on mainnet.
+
+### F12. M3 web trade flow: what the build and the tests showed (2026-10-02)
+Evidence: `packages/engine/src/trade.ts` and `trade.test.ts` (recorded Seoul quotes and swap builds), `apps/web/e2e/` (Playwright at 375/768/1280, mock wallet, fixture server). **Status: built and green offline; the two checks that need real money (the live trade plan on the EC2, the phone test with a first-time user) are not done yet and are filled in below when they are.**
+
+**What the trade plan does (and why it is two-phase).** The gas estimate and the simulation need the allowance to exist, otherwise the guarded call reverts on `transferFrom` and says nothing useful. So one endpoint answers `needs_funds`, `needs_approval` (exact amount) or `ready`, and the page calls it again after the approval mines. In fixture mode the numbers match the live M2 buy: estimate 554,149 → limit 692,687 (×1.25), against the API's 450,000 (F11).
+
+**Offline verification of the contract interface.** The ShareGuard ABI is hand-written in `packages/chain/src/shareguard.ts` and the tests decode the calldata back with it. A signed feed update is built, decoded and its EIP-712 signature recovered to the signer's address with viem, using the same typed data the contract's digest uses (the M2 Python signer was already checked against the contract). The Ondo signer is only used when the guard's stored multiplier is stale or differs by more than 1 ppm from the engine's accepted value.
+
+**Bugs the 375px tests found (all would have broken the phone test):**
+- The bottom sheet rendered at the *bottom of the page* instead of the viewport. `.glass { position: relative }` in unlayered CSS beats Tailwind's `fixed`. The M0 mobile menu had the same bug; its test only checked "visible". The review sheet's *Confirm* was unreachable.
+- Even when positioned, the sheet's scroll area had no `min-h-0`, so on a short phone *Confirm and buy* was clipped.
+- The sheet was see-through (the same override on `background`), so the page text showed through the review.
+- The page was 414px wide at a 375px viewport: grid tracks sized by content. Fixed with `grid-cols-1` and `min-w-0`.
+- Focus moved back to the dialog every second while the countdown ran, because the sheet's effect depended on an inline callback. A keyboard user could not tab through the review.
+- `/trade` on a phone put the trade card below ~900px of header and chart. On mobile the card now follows the title.
+
+**Decisions and deviations (for review):**
+1. **No historical chart.** The Market candlestick endpoint does not work (F10), so the ticker page shows a session line built from our own 10 s polling, labelled as such.
+2. **Only five tickers are buyable** (NVDA, AAPL, TSLA, QQQ, SPY): those are the ShareGuard assets. Others show quotes and a disabled "Quotes only for now" button.
+3. **Sheets everywhere.** DESIGN §3.2 asks for a morphing modal on desktop; M3 uses the bottom sheet at every width. The FAQ uses native `<details>` instead of `bouncy-accordion`.
+4. **Region declaration** is stored in `declarations.jsonl` under `TALLY_DATA_DIR` (country and region headers, no IP), versioned by date; SQLite replaces it later.
+5. **The feed signer has no endpoint.** It signs inside the trade plan, bounded by the contract's `maxStepBps`.
+6. TSLA, QQQ and SPY have no recorded quote fixtures, so they only work live. Recording them (`spike/record_m1_fixtures.py` on the EC2) would let the whole ticker strip run offline.
+
+**Owner review of the first deploy (2026-10-02) and what changed:** the single long page was split into Home, Trade, Portfolio, Radar and Docs (see blueprint §11 note); the tagline became "Buy tokenized shares, at the best prices" because the old one implied buying real shares; dialogs are centered at every width (the bottom-sheet look the owner saw was intended but wrong for sign-in); contract links moved to the docs; the FAQ is Spectrum UI's FAQ Tabs Card; the nav bar blurs more on scroll; the header shows the short wallet address after sign-in. A real bug found on the way: when the wallet SDK finished loading, the provider swap remounted the whole page and wiped on-screen state. **Open from the review:** Google sign-in fails with "not allowed" in Privy (the Google login method and the exact origin must be enabled in the Privy dashboard); the three blinking dots in the top-left corner are not in the page: nothing in Tally animates there on the production build, so it is most likely a browser extension (to confirm in a private window).
+
+**To fill in after the EC2 runs:** `/api/health` output, a live `/api/trade/plan` for the test wallet (`needs_funds`, then `needs_approval`, then `ready`), a real buy through the web page with its `Guarded` receipt, and the phone test (who, device, where they hesitated, time to receipt).
 
 ## The DX report (25%): write it yourself, as you go
 The rules reject AI-generated reports, so **keep a timestamped human log from the first minute**. That covers time to first successful call, each error message copied verbatim, and page URL plus section for every doc problem. The items below are leads we found from outside with public endpoints. **Confirm each one yourself with your key before it goes in the report:**
