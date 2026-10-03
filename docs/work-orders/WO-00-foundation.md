@@ -18,6 +18,8 @@
 - Root: `package.json` (scripts), `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `.github/workflows/ci.yml` (only to include new packages)
 - Empty skeletons for every module package (see task 6) and every `apps/web/modules/<name>/` folder (task 8)
 - `apps/web/app/dev/page.tsx` (dev preview index)
+- Approved 2026-10-03 (scope questions): `apps/web/components/module-boundary-client.tsx`, `apps/web/e2e/module-boundary.spec.ts`, `apps/web/app/dev/foundation/**` (gated like the dev index)
+- Approved 2026-10-03, **additive only**: collector APIs in `packages/binance/src/**` (typed `rwa/tokens` list and batch `rwa/price` with zod schemas, through the existing client) and `packages/engine/src/**` (an `engine.collectors` accessor), with tests. No change to existing signatures or behaviour.
 
 ## Tasks
 
@@ -31,8 +33,9 @@
      history<T>(kind: string, key: string, sinceMs: number, limit?: number): Snapshot<T>[];
    }
    export function openStore(path?: string): SnapshotStore;            // node:sqlite DatabaseSync; default $TALLY_DATA_DIR/tally.db; ":memory:" in tests
-   export interface HealthRow { module: ModuleName; ok: boolean; lastRunAt: number; lastOkAt?: number; lastError?: string }
-   export interface ModuleHealth { report(module: ModuleName, r: { ok: boolean; error?: string; now?: number }): void; get(m: ModuleName): HealthRow | null; all(): HealthRow[] }
+   export type JobName = ModuleName | `collect-${string}`;   // collectors get their own health rows
+   export interface HealthRow { module: JobName; ok: boolean; lastRunAt: number; lastOkAt?: number; lastError?: string }
+   export interface ModuleHealth { report(module: JobName, r: { ok: boolean; error?: string; now?: number }): void; get(m: JobName): HealthRow | null; all(): HealthRow[] }
    export async function withFallback<T>(steps: { name: string; run: () => Promise<T> }[], onWarn: (msg: string) => void): Promise<{ value: T; source: string }>;
    ```
    - bigint values must round-trip (serialise as strings with a marker; test it).
