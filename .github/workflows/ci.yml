@@ -40,6 +40,8 @@ jobs:
         env:
           CI: "1"
           TALLY_ALLOW_MISSING_GEO: "1"
+      - name: Foundation workers and isolated module boundaries (fixture mode)
+        run: pnpm e2e:foundation
       - uses: actions/upload-artifact@v4
         if: always()
         with:

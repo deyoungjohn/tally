@@ -25,6 +25,34 @@ importers:
         version: 8.71.0(eslint@9.39.5(jiti@2.7.0))(typescript@5.9.3)
 
   apps/bot:
+    dependencies:
+      '@tally/mod-autopilot':
+        specifier: workspace:*
+        version: link:../../packages/mod-autopilot
+      '@tally/mod-flow':
+        specifier: workspace:*
+        version: link:../../packages/mod-flow
+      '@tally/mod-guardian':
+        specifier: workspace:*
+        version: link:../../packages/mod-guardian
+      '@tally/mod-pies':
+        specifier: workspace:*
+        version: link:../../packages/mod-pies
+      '@tally/mod-receipts':
+        specifier: workspace:*
+        version: link:../../packages/mod-receipts
+      '@tally/mod-rewards':
+        specifier: workspace:*
+        version: link:../../packages/mod-rewards
+      '@tally/mod-statement':
+        specifier: workspace:*
+        version: link:../../packages/mod-statement
+      '@tally/modkit':
+        specifier: workspace:*
+        version: link:../../packages/modkit
+      grammy:
+        specifier: ^1.38.0
+        version: 1.46.0
     devDependencies:
       typescript:
         specifier: ^5.6.0
@@ -50,6 +78,30 @@ importers:
       '@tally/engine':
         specifier: workspace:*
         version: link:../../packages/engine
+      '@tally/mod-autopilot':
+        specifier: workspace:*
+        version: link:../../packages/mod-autopilot
+      '@tally/mod-flow':
+        specifier: workspace:*
+        version: link:../../packages/mod-flow
+      '@tally/mod-guardian':
+        specifier: workspace:*
+        version: link:../../packages/mod-guardian
+      '@tally/mod-pies':
+        specifier: workspace:*
+        version: link:../../packages/mod-pies
+      '@tally/mod-receipts':
+        specifier: workspace:*
+        version: link:../../packages/mod-receipts
+      '@tally/mod-rewards':
+        specifier: workspace:*
+        version: link:../../packages/mod-rewards
+      '@tally/mod-statement':
+        specifier: workspace:*
+        version: link:../../packages/mod-statement
+      '@tally/modkit':
+        specifier: workspace:*
+        version: link:../../packages/modkit
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
@@ -102,6 +154,52 @@ importers:
       tailwindcss:
         specifier: ^4.3.3
         version: 4.3.3
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.20.4)(lightningcss@1.32.0)
+
+  apps/worker:
+    dependencies:
+      '@tally/binance':
+        specifier: workspace:*
+        version: link:../../packages/binance
+      '@tally/engine':
+        specifier: workspace:*
+        version: link:../../packages/engine
+      '@tally/mod-autopilot':
+        specifier: workspace:*
+        version: link:../../packages/mod-autopilot
+      '@tally/mod-flow':
+        specifier: workspace:*
+        version: link:../../packages/mod-flow
+      '@tally/mod-guardian':
+        specifier: workspace:*
+        version: link:../../packages/mod-guardian
+      '@tally/mod-pies':
+        specifier: workspace:*
+        version: link:../../packages/mod-pies
+      '@tally/mod-receipts':
+        specifier: workspace:*
+        version: link:../../packages/mod-receipts
+      '@tally/mod-rewards':
+        specifier: workspace:*
+        version: link:../../packages/mod-rewards
+      '@tally/mod-statement':
+        specifier: workspace:*
+        version: link:../../packages/mod-statement
+      '@tally/modkit':
+        specifier: workspace:*
+        version: link:../../packages/modkit
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.4
+      tsx:
+        specifier: ^4.19.0
+        version: 4.23.15
       typescript:
         specifier: ^5.6.0
         version: 5.9.3
@@ -208,6 +306,134 @@ importers:
 
   packages/mcp:
     devDependencies:
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.20.4)(lightningcss@1.32.0)
+
+  packages/mod-autopilot:
+    dependencies:
+      '@tally/core':
+        specifier: workspace:*
+        version: link:../core
+      '@tally/modkit':
+        specifier: workspace:*
+        version: link:../modkit
+    devDependencies:
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.20.4)(lightningcss@1.32.0)
+
+  packages/mod-flow:
+    dependencies:
+      '@tally/core':
+        specifier: workspace:*
+        version: link:../core
+      '@tally/modkit':
+        specifier: workspace:*
+        version: link:../modkit
+    devDependencies:
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.20.4)(lightningcss@1.32.0)
+
+  packages/mod-guardian:
+    dependencies:
+      '@tally/core':
+        specifier: workspace:*
+        version: link:../core
+      '@tally/modkit':
+        specifier: workspace:*
+        version: link:../modkit
+    devDependencies:
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.20.4)(lightningcss@1.32.0)
+
+  packages/mod-pies:
+    dependencies:
+      '@tally/core':
+        specifier: workspace:*
+        version: link:../core
+      '@tally/modkit':
+        specifier: workspace:*
+        version: link:../modkit
+    devDependencies:
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.20.4)(lightningcss@1.32.0)
+
+  packages/mod-receipts:
+    dependencies:
+      '@tally/core':
+        specifier: workspace:*
+        version: link:../core
+      '@tally/modkit':
+        specifier: workspace:*
+        version: link:../modkit
+    devDependencies:
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.20.4)(lightningcss@1.32.0)
+
+  packages/mod-rewards:
+    dependencies:
+      '@tally/core':
+        specifier: workspace:*
+        version: link:../core
+      '@tally/modkit':
+        specifier: workspace:*
+        version: link:../modkit
+    devDependencies:
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.20.4)(lightningcss@1.32.0)
+
+  packages/mod-statement:
+    dependencies:
+      '@tally/core':
+        specifier: workspace:*
+        version: link:../core
+      '@tally/modkit':
+        specifier: workspace:*
+        version: link:../modkit
+    devDependencies:
+      typescript:
+        specifier: ^5.6.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.20.4)(lightningcss@1.32.0)
+
+  packages/modkit:
+    dependencies:
+      '@tally/config':
+        specifier: workspace:*
+        version: link:../config
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.20.4
       typescript:
         specifier: ^5.6.0
         version: 5.9.3
@@ -675,6 +901,9 @@ packages:
     resolution: {integrity: sha512-Z4aHi3ECFf5oWYWM3F1rW83GJfB9OvhBYPTmb5q+VyK3uvzvS48lwo+jwh2eOoCRWEuT/crpb9Vwp2QaS5JqgQ==}
     peerDependencies:
       viem: '>=2.0.0'
+
+  '@grammyjs/types@5.0.0':
+    resolution: {integrity: sha512-iq1Qrq1iPKkB8yAa0qSuIURMZOCuqTY5pWy5gHpCeL1oQ+GPadGhw/cDTVE8waJwuCzacUzuIjRv1sESvk7u7A==}
 
   '@hcaptcha/loader@2.4.2':
     resolution: {integrity: sha512-+Pf0Vin6iJlJj5u/mq6XMgbJT1mi/Sg5LWHxxqO4YHt2YvdZgecp5V2sbC6vRaNPJUqQGk2HOu1K/i12mqs5vw==}
@@ -2848,6 +3077,10 @@ packages:
   graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
 
+  grammy@1.46.0:
+    resolution: {integrity: sha512-/8Qw+iisrUdOMk+p2mjEHouMm/BBdBEN1DHh16wiTpRUZkxDG3PxexdjCvR+wvK3LWPdrEvnQbdrwpU954sPhg==}
+    engines: {node: ^12.20.0 || >=14.13.1}
+
   h3@1.15.11:
     resolution: {integrity: sha512-L3THSe2MPeBwgIZVSH5zLdBBU90TOxarvhK9d04IDY2AmVS8j2Jz2LIWtwsGOU3lu2I5jCN7FNvVfY2+XyF+mg==}
 
@@ -4744,6 +4977,8 @@ snapshots:
       viem: 2.57.2(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
     transitivePeerDependencies:
       - supports-color
+
+  '@grammyjs/types@5.0.0': {}
 
   '@hcaptcha/loader@2.4.2': {}
 
@@ -8461,6 +8696,16 @@ snapshots:
   gopd@1.2.0: {}
 
   graceful-fs@4.2.11: {}
+
+  grammy@1.46.0:
+    dependencies:
+      '@grammyjs/types': 5.0.0
+      abort-controller: 3.0.0
+      debug: 4.4.3
+      node-fetch: 2.7.0
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
 
   h3@1.15.11:
     dependencies:

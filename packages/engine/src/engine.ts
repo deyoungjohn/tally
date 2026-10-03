@@ -13,6 +13,8 @@ const ONDO_PROBE = "0xa9ee28c80f960b889dfbd1902055218cba016f75" as Address;
 import {
   BinanceApi,
   BinanceClient,
+  BinanceCollectors,
+  createCollectorFixtureFetch,
   BinanceData,
   PublicApi,
   SNAPSHOT_DIR,
@@ -60,6 +62,8 @@ export interface HealthReport {
 }
 
 export interface Engine {
+  /** Scheduled read-only calls. Existing trade/quote ports are unchanged. */
+  collectors: Pick<BinanceCollectors, "registry" | "prices">;
   quote(input: QuoteInput): Promise<ConsolidatedQuote>;
   /** Every token of a ticker with its facts, bounds and the full integrity check log, and no quote (`tally facts`). */
   facts(ticker: string): Promise<TokenInspection[]>;
@@ -179,6 +183,7 @@ function build(o: BuildOptions): Engine {
   };
   const radar = radarFor(ports, now);
   return {
+    collectors: new BinanceCollectors(client),
     ports,
     health,
     radar,
@@ -251,7 +256,7 @@ export function createFixtureEngine(
     return typeof v === "number" ? parseDecimal(String(v), 18) : undefined;
   };
   return build({
-    fetch: base,
+    fetch: o.blockRegion ? base : createCollectorFixtureFetch(base),
     apiKey: "fixture",
     apiSecret: "fixture",
     onchain,

@@ -36,3 +36,7 @@ spike/shareguard/cache/
 
 # os
 .DS_Store
+
+# multi-agent review packs (scripts/review-pack.*)
+review/
+.review-wt/

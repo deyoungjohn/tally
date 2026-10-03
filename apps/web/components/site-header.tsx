@@ -4,6 +4,7 @@ import { Check, ChevronDown, Copy, LogOut, Menu } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { MODULE_NAMES, type ModuleName } from "@tally/config";
 import { BottomSheet } from "@/components/motion/bottom-sheet";
 import { Button, ButtonLink } from "@/components/motion/button";
 import { SharedLayoutBg } from "@/components/motion/shared-layout-bg";
@@ -16,6 +17,13 @@ export const NAV_LINKS = [
   { href: "/radar", label: "Radar" },
   { href: "/#faq", label: "FAQ" },
 ] as const;
+
+/** Feature-flagged modules from other work orders. Portfolio and Radar are core pages here, so they are not repeated. */
+const MODULE_LINKS: { href: string; label: string; flag: ModuleName }[] = [
+  { href: "/guardian", label: "Guardian", flag: "guardian" },
+  { href: "/pies", label: "Pies", flag: "pies" },
+  { href: "/quality", label: "Quality", flag: "quality" },
+];
 
 export function Logo() {
   return (
@@ -130,6 +138,24 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
+  const [enabled, setEnabled] = useState<Partial<Record<ModuleName, boolean>>>({});
+  // WO-12 may move these flags into the server layout to render navigation before hydration.
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/modules/health", { signal: controller.signal })
+      .then(async (response) => {
+        const data: { flags?: Partial<Record<ModuleName, unknown>> } = await response.json();
+        setEnabled(
+          Object.fromEntries(MODULE_NAMES.map((name) => [name, data.flags?.[name] === true])),
+        );
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) console.warn("Module navigation flags unavailable");
+      });
+    return () => controller.abort();
+  }, []);
+  const links = [...NAV_LINKS, ...MODULE_LINKS.filter((link) => enabled[link.flag])];
+  const expanded = links.length > NAV_LINKS.length;
 
   // More opaque and blurrier once the page scrolls, so content passing behind stays faintly visible but never competes with the nav.
   useEffect(() => {
@@ -149,9 +175,12 @@ export function SiteHeader() {
         data-scrolled={scrolled}
       >
         <Logo />
-        <nav aria-label="Primary" className="hidden min-[761px]:block">
+        <nav
+          aria-label="Primary"
+          className={expanded ? "hidden min-[1200px]:block" : "hidden min-[761px]:block"}
+        >
           <SharedLayoutBg className="items-center gap-1">
-            {NAV_LINKS.map((l) => (
+            {links.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
@@ -171,7 +200,7 @@ export function SiteHeader() {
           <span className="hidden min-[561px]:block">
             <AccountButton />
           </span>
-          <span className="min-[761px]:hidden">
+          <span className={expanded ? "min-[1200px]:hidden" : "min-[761px]:hidden"}>
             <Button
               variant="icon"
               aria-label="Open menu"
@@ -186,7 +215,7 @@ export function SiteHeader() {
       </div>
       <BottomSheet open={open} onOpenChange={setOpen} snapPoints={["auto"]} title="Menu">
         <ul className="mt-2 grid gap-2">
-          {NAV_LINKS.map((l) => (
+          {links.map((l) => (
             <li key={l.href}>
               <Link
                 href={l.href}

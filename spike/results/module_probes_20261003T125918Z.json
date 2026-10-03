@@ -1,0 +1,69 @@
+{
+ "_meta": {
+  "startedAt": "2026-10-03T12:59:02.810149+00:00",
+  "finishedAt": "2026-10-03T12:59:18.116114+00:00"
+ },
+ "F_logs": {
+  "providers": {
+   "BSC_RPC_NODEREAL": {
+    "head": 125488458,
+    "maxWindowOk": 10000,
+    "ms": 3151,
+    "transfers": 4196,
+    "windowMinutes": 75.0,
+    "sample": [
+     {
+      "address": "0x02fca66c1d1afb4e2a7884261eb00f63598a7436",
+      "topics": [
+       "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+       "0x000000000000000000000000847cc0bffe3705f5cf3201abcaced11a392ceb38",
+       "0x000000000000000000000000125da5680b26e960a52de21a3080cc5d70e8e010"
+      ],
+      "data": "0x0000000000000000000000000000000000000000000000000079e7c5d71d4921",
+      "blockNumber": "0x77aa63e",
+      "transactionHash": "0x2712474bd9d284d658685999370bce8498698a33cba50759b18d167d60ec5c30",
+      "transactionIndex": "0x8",
+      "blockHash": "0x51b46593cd3195b1b88cb762a4bf89ef14cc080c6f28e1f901b6ab42d3676a06",
+      "blockTimestamp": "0x6ac0ea83",
+      "logIndex": "0x47",
+      "removed": false
+     },
+     {
+      "address": "0x02fca66c1d1afb4e2a7884261eb00f63598a7436",
+      "topics": [
+       "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+       "0x00000000000000000000000025ee4fa4bff5363d47496e68377b1241e8e21a47",
+       "0x0000000000000000000000002d9d6e538bd3f22323932782aaf89446cacaf9d3"
+      ],
+      "data": "0x00000000000000000000000000000000000000000000000019fed143860d01ae",
+      "blockNumber": "0x77aa63e",
+      "transactionHash": "0x665bc4ff329ef998b8d81d7a0e9994d0bfe4eca1547766febbd3d5c755e67a8a",
+      "transactionIndex": "0x3e",
+      "blockHash": "0x51b46593cd3195b1b88cb762a4bf89ef14cc080c6f28e1f901b6ab42d3676a06",
+      "blockTimestamp": "0x6ac0ea83",
+      "logIndex": "0x1d0",
+      "removed": false
+     }
+    ]
+   },
+   "BSC_RPC_ANKR": {
+    "exception": "<HTTPError 404: 'Not Found'>"
+   },
+   "public_dataseed": {
+    "head": 125488471,
+    "windowErrors": {
+     "10000": "{'code': -32005, 'message': 'limit exceeded'}",
+     "5000": "{'code': -32005, 'message': 'limit exceeded'}",
+     "2000": "{'code': -32005, 'message': 'limit exceeded'}",
+     "1000": "{'code': -32005, 'message': 'limit exceeded'}",
+     "500": "{'code': -32005, 'message': 'limit exceeded'}",
+     "100": "{'code': -32005, 'message': 'limit exceeded'}",
+     "50": "{'code': -32005, 'message': 'limit exceeded'}",
+     "20": "{'code': -32005, 'message': 'limit exceeded'}",
+     "10": "{'code': -32005, 'message': 'limit exceeded'}",
+     "5": "{'code': -32005, 'message': 'limit exceeded'}"
+    }
+   }
+  }
+ }
+}
