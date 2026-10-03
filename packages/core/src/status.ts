@@ -25,7 +25,10 @@ export function sessionFromMarketStatus(s: string | null | undefined): Session {
     case "overnight":
       return "overnight";
     case "closed":
+    case "offhours":
       return "closed";
+    case "paused":
+      return "unknown"; // A pause identifies availability, not the underlying market session.
     default:
       return "unknown";
   }
@@ -44,6 +47,7 @@ export function statusFromInfo(info: RawStatusInfo | null | undefined): TokenSta
     session: sessionFromMarketStatus(info.marketStatus),
   };
   const code = (reasonCode ?? "").toUpperCase();
+  if ((info.marketStatus ?? "").toLowerCase() === "paused") return { kind: "paused", ...base };
   if (code === "TRADING" && info.openState !== false) return { kind: "open", ...base };
   if (code === "ASSET_LIMITED" || code === "ASSET_LIMITED_EARNINGS")
     return { kind: "limited", ...base };

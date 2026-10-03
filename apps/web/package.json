@@ -20,7 +20,15 @@
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "tailwind-merge": "^3.7.0",
-    "viem": "^2.57.2"
+    "viem": "^2.57.2",
+    "@tally/mod-receipts": "workspace:*",
+    "@tally/mod-statement": "workspace:*",
+    "@tally/mod-flow": "workspace:*",
+    "@tally/mod-guardian": "workspace:*",
+    "@tally/mod-autopilot": "workspace:*",
+    "@tally/mod-pies": "workspace:*",
+    "@tally/mod-rewards": "workspace:*",
+    "@tally/modkit": "workspace:*"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
