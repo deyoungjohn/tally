@@ -13,6 +13,7 @@ const COLS = [
   {
     h: "Learn",
     links: [
+      ["How it works", "/docs#how"],
       ["FAQ", "/#faq"],
       ["Docs", "/docs"],
       ["Contracts and proof", "/docs#contracts"],

@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle, Check, Copy, ExternalLink, Lock, ShieldCheck, Wallet } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { Modal } from "@/components/motion/modal";
 import { Button } from "@/components/motion/button";
@@ -21,9 +22,13 @@ const VIEW_TEXT: Record<string, string> = {
   done: "Shares delivered",
 };
 
-/** Top-of-screen progress pill: Quoting → Approve → Swap → Confirmed (DESIGN §3.2). Announces politely, never during confirm. */
+/**
+ * Top-of-screen progress pill: Quoting → Approve → Swap → Confirmed (DESIGN §3.2), beUI's dynamic-island on a translucent glass shell.
+ * It slides and blurs in from above and out again; its content is a fixed width so nothing is ever clipped while it morphs.
+ */
 export function ProgressIsland({ phase }: { phase: FlowPhase }) {
   const { view, step } = progressOf(phase);
+  const reduce = useReducedMotion();
   // The "delivered" pill rests for a few seconds, then leaves; the receipt card stays.
   const [doneGone, setDoneGone] = useState(false);
   useEffect(() => {
@@ -45,36 +50,57 @@ export function ProgressIsland({ phase }: { phase: FlowPhase }) {
         : view
           ? VIEW_TEXT[view]
           : "";
+  // Keep the last view while the pill leaves, so it fades out with its words instead of an empty shell.
+  const last = useRef({ view, label, step });
+  if (showing) last.current = { view, label, step };
+  const shown = last.current;
   return (
-    <div
-      className="pointer-events-none fixed inset-x-0 top-[84px] z-[60] flex justify-center px-4"
-      style={{ minHeight: 0 }}
-    >
-      {showing ? (
-        <div className="pointer-events-auto" data-testid="progress-island">
-          <DynamicIsland view={view} compact={null}>
-            {Object.keys(VIEW_TEXT).map((id) => (
-              <DynamicIslandView
-                key={id}
-                id={id}
-                className="min-w-[250px] flex-col items-stretch gap-2.5"
-              >
-                <span
-                  className="text-center text-[13.5px] font-semibold"
-                  aria-label={`Step ${step} of 4: ${label}`}
+    <div className="pointer-events-none fixed inset-x-0 top-[84px] z-[60] flex justify-center px-4">
+      <AnimatePresence>
+        {showing ? (
+          <motion.div
+            key="island"
+            className="pointer-events-auto"
+            data-testid="progress-island"
+            initial={
+              reduce ? { opacity: 0 } : { opacity: 0, y: -18, scale: 0.94, filter: "blur(8px)" }
+            }
+            animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+            exit={
+              reduce ? { opacity: 0 } : { opacity: 0, y: -14, scale: 0.96, filter: "blur(8px)" }
+            }
+            transition={
+              reduce ? { duration: 0.15 } : { type: "spring", duration: 0.55, bounce: 0.25 }
+            }
+          >
+            <DynamicIsland
+              view={shown.view}
+              className="island-glass"
+              contentClassName="min-w-[min(320px,calc(100vw-56px))]"
+            >
+              {Object.keys(VIEW_TEXT).map((id) => (
+                <DynamicIslandView
+                  key={id}
+                  id={id}
+                  className="w-[min(320px,calc(100vw-56px))] flex-col items-stretch gap-3 !px-6 !py-4"
                 >
-                  {label}
-                </span>
-                <span className="seg-bar" aria-hidden>
-                  {[1, 2, 3, 4].map((n) => (
-                    <i key={n} className={n <= step ? "on" : ""} />
-                  ))}
-                </span>
-              </DynamicIslandView>
-            ))}
-          </DynamicIsland>
-        </div>
-      ) : null}
+                  <span
+                    className="text-center text-[14px] font-semibold"
+                    aria-label={`Step ${shown.step} of 4: ${shown.label}`}
+                  >
+                    {shown.label}
+                  </span>
+                  <span className="seg-bar" aria-hidden>
+                    {[1, 2, 3, 4].map((n) => (
+                      <i key={n} className={n <= shown.step ? "on" : ""} />
+                    ))}
+                  </span>
+                </DynamicIslandView>
+              ))}
+            </DynamicIsland>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }

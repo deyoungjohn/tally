@@ -7,6 +7,7 @@ import {
   TickerStrip,
   UnitTrapCard,
 } from "@/components/home/parts";
+import { HeroActions } from "@/components/home/hero-actions";
 import { ButtonLink } from "@/components/motion/button";
 import { Reveal } from "@/components/reveal";
 import { HomeFaq } from "@/components/home/faq";
@@ -47,14 +48,7 @@ export default function Home() {
               in share units, and buys from the cheapest one. If you&apos;d receive fewer shares
               than promised, nothing happens.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <ButtonLink href="/trade">
-                Get Started <ArrowRight size={16} aria-hidden />
-              </ButtonLink>
-              <ButtonLink href="#trade" variant="glassy">
-                How it works
-              </ButtonLink>
-            </div>
+            <HeroActions />
             <dl className="m-0 mt-10 grid max-w-[560px] grid-cols-3 gap-3">
               {[
                 ["3", "issuers compared"],
@@ -125,7 +119,6 @@ export default function Home() {
               </div>
             </div>
             <div className="min-w-0">
-              <p className="t-kicker">Live comparison · $25 of NVDA</p>
               <HomeComparison />
               <p className="t-kicker mb-3 mt-8">Stocks you can buy</p>
               <TickerStrip />

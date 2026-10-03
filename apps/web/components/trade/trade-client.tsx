@@ -11,7 +11,8 @@ import { isBuyable, nameOf } from "@/lib/tickers";
 import { ComingSoon } from "./coming-soon";
 import { StockPicker } from "./stock-picker";
 import { SessionBadge } from "./badges";
-import { ProgressIsland, ReceiptCard, ReviewSheet, SignInSheet, TopUpSheet } from "./flow-sheets";
+import { TradeFlowLayer, flowActionLabel } from "./flow-host";
+import { ReceiptCard } from "./flow-sheets";
 import { IssuerList } from "./issuer-list";
 import { Sparkline } from "./sparkline";
 import { MIN_USD, TradeCard, type Unit } from "./trade-card";
@@ -117,8 +118,6 @@ function TradeInner({
   };
 
   const params = flow.params.current;
-  const reviewPlan = phase.name === "review" ? phase.plan : null;
-  const topupPlan = phase.name === "topup" ? phase.plan : null;
   const best = q?.rows.find((r) => r.isBest);
 
   const changeTicker = (t: string) => {
@@ -137,7 +136,7 @@ function TradeInner({
 
   return (
     <main id="main" className="wrap pb-24 pt-8 min-[561px]:pt-12">
-      <ProgressIsland phase={phase} />
+      <TradeFlowLayer flow={flow} />
       <div className="flex flex-col gap-4 min-[981px]:grid min-[981px]:grid-cols-[minmax(0,1fr)_minmax(0,480px)] min-[981px]:items-start min-[981px]:gap-8">
         {/* Left on desktop: the stock, its price, then the issuers compared. On a phone the trade card comes second. */}
         <div className="contents min-[981px]:grid min-[981px]:min-w-0 min-[981px]:grid-cols-1 min-[981px]:gap-4">
@@ -262,6 +261,11 @@ function TradeInner({
               authenticated={wallet.authenticated}
               walletReady={wallet.ready}
               busy={busy}
+              phaseLabel={
+                wallet.authenticated && phase.name !== "idle"
+                  ? flowActionLabel(phase, "")
+                  : undefined
+              }
               quoteLoading={quote.loading}
               onBuy={onBuy}
             />
@@ -277,22 +281,6 @@ function TradeInner({
           </div>
         </div>
       </div>
-
-      <SignInSheet open={phase.name === "signin"} onClose={flow.cancel} />
-      {params ? (
-        <TopUpSheet
-          plan={topupPlan}
-          params={params}
-          onFunded={() => void flow.run()}
-          onClose={flow.cancel}
-        />
-      ) : null}
-      <ReviewSheet
-        plan={reviewPlan}
-        notice={phase.name === "review" ? phase.notice : undefined}
-        onConfirm={() => void flow.confirm()}
-        onClose={flow.cancel}
-      />
     </main>
   );
 }

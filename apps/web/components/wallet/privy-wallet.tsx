@@ -40,7 +40,7 @@ const isUserRejection = (e: unknown) =>
   typeof e === "object" && e !== null && (e as { code?: number }).code === 4001;
 
 function Bridge({ onChange }: { onChange: (w: TallyWallet) => void }) {
-  const { ready, authenticated, login, logout, connectWallet } = usePrivy();
+  const { ready, authenticated, login, logout, connectWallet, exportWallet } = usePrivy();
   const { wallets } = useWallets();
   const { sendTransaction } = useSendTransaction();
 
@@ -53,8 +53,8 @@ function Bridge({ onChange }: { onChange: (w: TallyWallet) => void }) {
   // Privy hands back NEW function objects on every render. If they were dependencies of the value pushed to the app, every
   // render would publish a new value, re-render the app, re-render this bridge and loop forever (React error #185). So the
   // functions live in refs and the published value depends only on primitives.
-  const live = useRef({ login, logout, connectWallet, sendTransaction, wallet });
-  live.current = { login, logout, connectWallet, sendTransaction, wallet };
+  const live = useRef({ login, logout, connectWallet, exportWallet, sendTransaction, wallet });
+  live.current = { login, logout, connectWallet, exportWallet, sendTransaction, wallet };
   const address = wallet?.address as `0x${string}` | undefined;
   const embedded = wallet?.walletClientType === "privy";
 
@@ -67,6 +67,10 @@ function Bridge({ onChange }: { onChange: (w: TallyWallet) => void }) {
       login: () => live.current.login(),
       logout: () => void live.current.logout(),
       connectExternal: () => live.current.connectWallet(),
+      exportWallet: () => {
+        const w = live.current.wallet;
+        if (w) void live.current.exportWallet({ address: w.address });
+      },
       async sendTx(tx) {
         const w = live.current.wallet;
         if (!w) throw new Error("No wallet is connected");
@@ -78,7 +82,7 @@ function Bridge({ onChange }: { onChange: (w: TallyWallet) => void }) {
               {
                 to: tx.to,
                 data: tx.data,
-                value: 0,
+                value: tx.value === undefined ? 0 : toHex(tx.value),
                 chainId: 56,
                 gasLimit: tx.gas === undefined ? undefined : toHex(tx.gas),
               },
@@ -91,7 +95,12 @@ function Bridge({ onChange }: { onChange: (w: TallyWallet) => void }) {
           const chainHex = (await provider.request({ method: "eth_chainId" })) as string;
           if (parseInt(chainHex, 16) !== 56) await w.switchChain(56);
           const wc = createWalletClient({ account: from, chain: bsc, transport: custom(provider) });
-          return await wc.sendTransaction({ to: tx.to, data: tx.data, value: 0n, gas: tx.gas });
+          return await wc.sendTransaction({
+            to: tx.to,
+            data: tx.data,
+            value: tx.value ?? 0n,
+            gas: tx.gas,
+          });
         } catch (e) {
           if (isUserRejection(e))
             throw Object.assign(new Error("Signature rejected"), { code: 4001 });

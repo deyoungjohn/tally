@@ -800,3 +800,50 @@ body {
     transition: none;
   }
 }
+
+/* ---------- beUI Select, glass (DESIGN §2.4, §2.8) ---------- */
+.select-trigger {
+  min-height: 44px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--edge);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  font-weight: 600;
+}
+.select-trigger:hover {
+  background: rgba(255, 255, 255, 0.11);
+  border-color: var(--edge2);
+}
+.select-panel {
+  background: linear-gradient(180deg, rgba(44, 46, 53, 0.86), rgba(27, 28, 33, 0.82));
+  border: 1px solid var(--edge);
+  backdrop-filter: blur(26px) saturate(160%);
+  -webkit-backdrop-filter: blur(26px) saturate(160%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 24px 60px -24px rgba(0, 0, 0, 0.9);
+}
+.select-panel [role="option"] {
+  min-height: 44px;
+  font-size: 14.5px;
+}
+.select-panel [role="option"][aria-selected="true"] {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--fg);
+}
+.select-panel [role="option"]:hover {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+/* ---------- Progress island: translucent glass pill (DESIGN §3.2) ---------- */
+.island-glass {
+  background: linear-gradient(180deg, rgba(48, 50, 57, 0.72), rgba(28, 29, 34, 0.66)) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(28px) saturate(170%);
+  -webkit-backdrop-filter: blur(28px) saturate(170%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+    0 22px 50px -22px rgba(0, 0, 0, 0.9);
+}

@@ -200,7 +200,7 @@ export function PortfolioPage() {
           </section>
           <aside className="grid content-start gap-4" aria-label="Summary">
             <div className="glass p-5">
-              <p className="t-meta">Total value of holdings</p>
+              <p className="t-meta">Total value of tokenized stock holdings</p>
               <p className="t-big mt-1" data-testid="total-value">
                 {data ? fmtUsd(data.totalValueUsd) : "–"}
               </p>
@@ -209,7 +209,7 @@ export function PortfolioPage() {
               </p>
             </div>
             <div className="panel p-5">
-              <p className="t-meta">In this wallet</p>
+              <p className="t-meta">Other assets in this wallet</p>
               <dl className="mt-2">
                 <div className="detail-row">
                   <dt>USDT</dt>

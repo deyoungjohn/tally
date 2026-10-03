@@ -77,15 +77,26 @@ export function DynamicIsland({
   compact,
   children,
   className,
+  contentClassName,
 }: {
   view: string | null;
   compact?: ReactNode;
   children?: ReactNode;
   className?: string;
+  /** Sizing for the measured content box (a minimum width keeps the shell from collapsing around absolutely positioned views). */
+  contentClassName?: string;
 }) {
   const reduce = useReducedMotion();
   const expanded = view !== null;
   const [sizerRef, size] = useContentSize();
+  // The shell must not grow out of the compact pill the first time it appears (that is where its content looked clipped): it snaps
+  // to its measured size, and only later size changes (between views) are sprung.
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!size || armed) return;
+    const id = requestAnimationFrame(() => setArmed(true));
+    return () => cancelAnimationFrame(id);
+  }, [size, armed]);
   const ctx = useMemo(() => ({ view }), [view]);
   return (
     <IslandContext.Provider value={ctx}>
@@ -98,14 +109,14 @@ export function DynamicIsland({
             ? { width: size.width, height: size.height }
             : { width: PILL_WIDTH, height: PILL_HEIGHT }
         }
-        transition={reduce ? { duration: 0 } : SHELL_SPRING}
+        transition={reduce || !armed ? { duration: 0 } : SHELL_SPRING}
         style={{ borderRadius: RADIUS }}
         className={cn(
           "glass relative inline-flex max-w-full items-start justify-center overflow-hidden text-fg",
           className,
         )}
       >
-        <div ref={sizerRef} className="w-max max-w-full">
+        <div ref={sizerRef} className={cn("w-max max-w-full", contentClassName)}>
           <AnimatePresence mode="popLayout" initial={false}>
             {!expanded && compact ? (
               <Slot

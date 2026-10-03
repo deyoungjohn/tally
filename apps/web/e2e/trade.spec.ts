@@ -273,7 +273,8 @@ test.describe("layout order", () => {
     await mockWallet(page);
     await page.goto("/trade/NVDA");
     await quoteLoaded(page);
-    await page.getByTestId("stock-picker").selectOption("AAPL");
+    await page.getByTestId("stock-picker").click();
+    await page.getByRole("option", { name: /AAPL/ }).click();
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Apple");
     await expect(page).toHaveURL(/\/trade\/AAPL/);
   });

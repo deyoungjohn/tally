@@ -18,6 +18,8 @@ export interface SendTx {
   data: Hex;
   /** Exact gas limit to send (estimate × 1.25, simulated at this limit). Never the API's 450000. */
   gas?: bigint;
+  /** BNB to send with the call, in wei. Zero for every trade; used by the Send screen. */
+  value?: bigint;
 }
 
 export interface TallyWallet {
@@ -33,6 +35,8 @@ export interface TallyWallet {
   logout(): void;
   /** Link or switch to an external wallet (top-up tier 2). */
   connectExternal(): void;
+  /** Opens Privy's own export dialog (the key is shown in Privy's isolated frame; Tally never sees it). Embedded wallets only. */
+  exportWallet(): void;
   /** Reads the wallet's real chain, switches to BSC (56) if needed, signs and sends. Resolves with the tx hash. */
   sendTx(tx: SendTx): Promise<Hex>;
 }
@@ -44,6 +48,7 @@ const IDLE: TallyWallet = {
   login() {},
   logout() {},
   connectExternal() {},
+  exportWallet() {},
   async sendTx() {
     throw new Error("Wallet is not ready");
   },
@@ -83,6 +88,7 @@ function MockBridge({ spec, onChange }: { spec: MockSpec; onChange: (w: TallyWal
       login: () => setSignedIn(true),
       logout: () => setSignedIn(false),
       connectExternal: () => setSignedIn(true),
+      exportWallet: () => undefined,
       async sendTx(tx) {
         await new Promise((r) => setTimeout(r, 250));
         if (spec.reject)

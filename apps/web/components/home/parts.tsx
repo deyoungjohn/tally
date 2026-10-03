@@ -4,7 +4,11 @@ import { ArrowRight, Check } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AnimatedNumber } from "@/components/motion/animated-number";
-import { ButtonLink } from "@/components/motion/button";
+import { Button, ButtonLink } from "@/components/motion/button";
+import { Segmented } from "@/components/motion/segmented";
+import { ActionLabel, TradeFlowLayer, flowActionLabel } from "@/components/trade/flow-host";
+import { ReceiptCard } from "@/components/trade/flow-sheets";
+import { useTradeFlow, type FlowParams } from "@/components/trade/use-trade-flow";
 import { IssuerList } from "@/components/trade/issuer-list";
 import { ComingSoon } from "@/components/trade/coming-soon";
 import { StockPicker } from "@/components/trade/stock-picker";
@@ -22,17 +26,35 @@ import type { PortfolioReport } from "@tally/engine";
 
 /** The minimalist trade card on Home: pick a stock, type dollars, see the best live price. The real flow lives on /trade. */
 export function HomeTradeCard() {
+  const wallet = useTallyWallet();
+  const flow = useTradeFlow();
+  const { phase } = flow;
   const [ticker, setTicker] = useState("NVDA");
   const [text, setText] = useState("6");
   const usd = Number(text);
-  const q = useLiveQuote(ticker, usd >= 6 ? { usd } : null);
+  const q = useLiveQuote(ticker, usd >= 6 ? { usd } : null, phase.name === "review");
   const row = q.data?.rows.find((r) => r.isBest) ?? q.data?.rows.find((r) => r.executable);
   const tooSmall = text !== "" && usd < 6;
   const href = `/trade/${ticker}?usd=${usd >= 6 ? usd : 6}`;
+  const busy = phase.name !== "idle" && phase.name !== "error" && phase.name !== "done";
+  const idleLabel = `Buy ${fmtUsd(usd >= 6 ? usd : 6)} of ${ticker}`;
+  const canBuy =
+    !!row?.executable &&
+    usd >= 6 &&
+    (row.issuer === "ondo" || row.issuer === "bstock") &&
+    isBuyable(ticker);
+
+  const buy = () => {
+    if (!row || (row.issuer !== "ondo" && row.issuer !== "bstock")) return;
+    const p: FlowParams = { ticker, issuer: row.issuer, symbol: row.symbol, usd, tolerancePct: 1 };
+    flow.start(p);
+  };
+
   return (
     <section className="gcard w-full" aria-label="Quick quote" data-testid="home-card">
+      <TradeFlowLayer flow={flow} />
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <StockPicker value={ticker} onChange={setTicker} id="home-stock" />
+        <StockPicker value={ticker} onChange={setTicker} />
         <span className="limit-chip">Min $6</span>
       </div>
       <div className="field mt-4">
@@ -87,12 +109,48 @@ export function HomeTradeCard() {
         ) : null}
       </div>
       <div className="mt-4">
-        <ButtonLink href={href} big aria-disabled={tooSmall || !isBuyable(ticker)}>
-          Get Started <ArrowRight size={16} aria-hidden />
-        </ButtonLink>
+        {wallet.authenticated ? (
+          // Signed in: the button is the transaction. It says what is happening (price, approve, confirm, buying, done).
+          <Button
+            big
+            disabled={busy || (phase.name === "idle" && !canBuy)}
+            onClick={buy}
+            data-testid="home-action"
+          >
+            <ActionLabel text={flowActionLabel(phase, idleLabel)} />
+          </Button>
+        ) : (
+          <ButtonLink
+            href={href}
+            big
+            aria-disabled={tooSmall || !isBuyable(ticker)}
+            data-testid="home-action"
+          >
+            <ActionLabel text="Get Started" /> <ArrowRight size={16} aria-hidden />
+          </ButtonLink>
+        )}
       </div>
+      {phase.name === "done" ? (
+        <div className="mt-3">
+          <ReceiptCard
+            receipt={phase.receipt}
+            plan={phase.plan}
+            ticker={ticker}
+            symbol={flow.params.current?.symbol ?? ticker}
+            onDismiss={flow.cancel}
+          />
+        </div>
+      ) : null}
+      {phase.name === "error" ? (
+        <p role="alert" className="mt-3 text-[13.5px] text-red" data-testid="home-error">
+          {phase.message}
+        </p>
+      ) : null}
       <div className="mt-3">
-        <ComingSoon title="Swap out" items={["Sell to USDT", "Sell to BNB"]} />
+        <ComingSoon
+          title="Coming soon"
+          items={["Sell to USDT", "Sell to BNB", "Migrate between issuers"]}
+        />
       </div>
       <p className="t-meta mt-3">
         Tokenized shares track a US stock&apos;s price. They are not the underlying shares.
@@ -104,31 +162,19 @@ export function HomeTradeCard() {
 /* ---------------------------------------------------------------- trade part */
 
 export function UnitTrapCard() {
-  const [perShare, setPerShare] = useState(false);
+  const [view, setView] = useState<"token" | "share">("token");
+  const perShare = view === "share";
   return (
     <div className="gcard">
-      <div
-        role="group"
-        aria-label="Show price as"
-        className="inline-flex gap-1 rounded-full border border-[var(--edge)] bg-white/[0.05] p-1"
-      >
-        {(
-          [
-            [false, "Price per token"],
-            [true, "Price per share"],
-          ] as const
-        ).map(([v, l]) => (
-          <button
-            key={l}
-            type="button"
-            aria-pressed={perShare === v}
-            onClick={() => setPerShare(v)}
-            className={`min-h-[36px] rounded-full px-4 text-[14px] font-semibold ${perShare === v ? "bg-[var(--silver)] text-[var(--silver-ink)]" : "text-fg2"}`}
-          >
-            {l}
-          </button>
-        ))}
-      </div>
+      <Segmented
+        label="Show price as"
+        value={view}
+        onChange={setView}
+        options={[
+          { value: "token", label: "Price per token" },
+          { value: "share", label: "Price per share" },
+        ]}
+      />
       <dl className="mt-4">
         <div className="detail-row">
           <dt>Ondo NFLX (10 shares per token)</dt>
@@ -188,16 +234,22 @@ export function TickerStrip() {
   );
 }
 
-/** The live comparison for the Trade section: the same list as the trade page, with a $25 example. */
+/** The live comparison for the Trade section: the same list as the trade page, for any of the five stocks. */
 export function HomeComparison() {
-  const q = useLiveQuote("NVDA", { usd: 25 });
+  const [ticker, setTicker] = useState("NVDA");
+  const q = useLiveQuote(ticker, { usd: 25 });
   return (
     <div data-testid="home-comparison">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h3 className="t-h3 !text-[18px]">Live comparison</h3>
+        <StockPicker value={ticker} onChange={setTicker} className="!w-[min(100%,230px)]" />
+      </div>
       <IssuerList
-        quote={q.data}
+        quote={q.data?.ticker === ticker ? q.data : null}
         selected={q.data?.best}
         onSelect={() => undefined}
         loading={q.loading}
+        showTitle={false}
       />
       {q.error && !q.data ? (
         <p role="alert" className="mt-3 text-[14px] text-amber">

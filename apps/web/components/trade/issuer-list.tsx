@@ -153,11 +153,13 @@ export function IssuerList({
   selected,
   onSelect,
   loading,
+  showTitle = true,
 }: {
   quote: QuoteDto | null;
   selected: string | undefined;
   onSelect: (symbol: string) => void;
   loading: boolean;
+  showTitle?: boolean;
 }) {
   if (!quote)
     return (
@@ -174,7 +176,7 @@ export function IssuerList({
   return (
     <div className="mt-4">
       <div className="mb-2 flex items-center justify-between">
-        <h2 className="t-h3 !text-[18px]">Compared by issuer</h2>
+        {showTitle ? <h2 className="t-h3 !text-[18px]">Compared by issuer</h2> : <span />}
         <span className="t-meta" aria-live="off">
           {loading ? "Refreshing…" : "Live"}
         </span>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronDown, Copy, LogOut, Menu } from "lucide-react";
+import { Check, ChevronDown, Copy, KeyRound, LogOut, Menu, Send } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -8,6 +8,7 @@ import { MODULE_NAMES, type ModuleName } from "@tally/config";
 import { BottomSheet } from "@/components/motion/bottom-sheet";
 import { Button, ButtonLink } from "@/components/motion/button";
 import { SharedLayoutBg } from "@/components/motion/shared-layout-bg";
+import { SendModal } from "@/components/wallet/send-modal";
 import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +16,7 @@ export const NAV_LINKS = [
   { href: "/trade", label: "Trade" },
   { href: "/portfolio", label: "Portfolio" },
   { href: "/radar", label: "Radar" },
-  { href: "/#faq", label: "FAQ" },
+  { href: "/docs#how", label: "How it works" },
 ] as const;
 
 /** Feature-flagged modules from other work orders. Portfolio and Radar are core pages here, so they are not repeated. */
@@ -41,7 +42,15 @@ export function Logo() {
 export const shortAddress = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 
 /** "Get Started" until the user signs in, then their wallet as a short address with a small account menu. */
-function AccountButton({ onNavigate, big }: { onNavigate?: () => void; big?: boolean }) {
+function AccountButton({
+  onNavigate,
+  onSend,
+  big,
+}: {
+  onNavigate?: () => void;
+  onSend: () => void;
+  big?: boolean;
+}) {
   const wallet = useTallyWallet();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -106,6 +115,33 @@ function AccountButton({ onNavigate, big }: { onNavigate?: () => void; big?: boo
             {copied ? <Check size={15} aria-hidden /> : <Copy size={15} aria-hidden />}
             {copied ? "Copied" : "Copy address"}
           </button>
+          <button
+            role="menuitem"
+            type="button"
+            className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-left text-sm hover:bg-white/[0.06]"
+            onClick={() => {
+              setOpen(false);
+              onNavigate?.();
+              onSend();
+            }}
+            data-testid="menu-send"
+          >
+            <Send size={15} aria-hidden /> Send
+          </button>
+          {wallet.embedded ? (
+            <button
+              role="menuitem"
+              type="button"
+              className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-left text-sm hover:bg-white/[0.06]"
+              onClick={() => {
+                setOpen(false);
+                wallet.exportWallet();
+              }}
+              data-testid="menu-export"
+            >
+              <KeyRound size={15} aria-hidden /> Export wallet
+            </button>
+          ) : null}
           <Link
             role="menuitem"
             href="/portfolio"
@@ -137,6 +173,7 @@ function AccountButton({ onNavigate, big }: { onNavigate?: () => void; big?: boo
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [sending, setSending] = useState(false);
   const pathname = usePathname();
   const [enabled, setEnabled] = useState<Partial<Record<ModuleName, boolean>>>({});
   // WO-12 may move these flags into the server layout to render navigation before hydration.
@@ -186,7 +223,7 @@ export function SiteHeader() {
                 href={l.href}
                 className="nav-link"
                 aria-current={
-                  pathname === l.href || (l.href !== "/#faq" && pathname.startsWith(l.href))
+                  pathname === l.href || (!l.href.includes("#") && pathname.startsWith(l.href))
                     ? "page"
                     : undefined
                 }
@@ -198,7 +235,7 @@ export function SiteHeader() {
         </nav>
         <div className="flex items-center gap-2">
           <span className="hidden min-[561px]:block">
-            <AccountButton />
+            <AccountButton onSend={() => setSending(true)} />
           </span>
           <span className={expanded ? "min-[1200px]:hidden" : "min-[761px]:hidden"}>
             <Button
@@ -228,9 +265,10 @@ export function SiteHeader() {
           ))}
         </ul>
         <div className="mt-4">
-          <AccountButton big onNavigate={() => setOpen(false)} />
+          <AccountButton big onNavigate={() => setOpen(false)} onSend={() => setSending(true)} />
         </div>
       </BottomSheet>
+      <SendModal open={sending} onClose={() => setSending(false)} />
     </header>
   );
 }

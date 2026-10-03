@@ -4,6 +4,7 @@ import { ArrowDown, Lock } from "lucide-react";
 import { AnimatedNumber } from "@/components/motion/animated-number";
 import { Button } from "@/components/motion/button";
 import { Segmented } from "@/components/motion/segmented";
+import { ActionLabel } from "./flow-host";
 import type { RowDto } from "@/lib/dto";
 import { ISSUER_LABEL, fmtPct, fmtShares, fmtUsd } from "@/lib/format";
 import { TokenLogo } from "./badges";
@@ -27,6 +28,8 @@ export interface TradeCardProps {
   authenticated: boolean;
   walletReady: boolean;
   busy: boolean;
+  /** The transaction state in words (approve, confirm, buying…), shown on the button once signed in and a buy is under way. */
+  phaseLabel?: string;
   quoteLoading: boolean;
   onBuy: () => void;
 }
@@ -42,6 +45,7 @@ export function TradeCard(p: TradeCardProps) {
   let label: string;
   let icon = false;
   if (!p.buyable) label = "Quotes only for now";
+  else if (p.phaseLabel) label = p.phaseLabel;
   else if (p.busy) label = "Working…";
   else if (!p.row?.executable) label = "Not available";
   else if (tooSmall) label = `Minimum is $${MIN_USD}`;
@@ -209,7 +213,7 @@ export function TradeCard(p: TradeCardProps) {
           data-testid="buy-button"
         >
           {icon ? <Lock size={18} aria-hidden /> : null}
-          {label}
+          <ActionLabel text={label} />
         </Button>
         <p className="t-meta mt-3 text-center">
           If you&apos;d get fewer shares than the minimum above, the trade doesn&apos;t happen. Not
