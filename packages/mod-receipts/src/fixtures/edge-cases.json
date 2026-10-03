@@ -1,0 +1,134 @@
+[
+  {
+    "synthetic": true,
+    "id": "wrong-decimals",
+    "base": "F11_NVDAB",
+    "change": "decimals",
+    "value": "6"
+  },
+  {
+    "synthetic": true,
+    "id": "later-multiplier",
+    "base": "F11_NVDAon",
+    "change": "laterMultiplier",
+    "value": "2000000000000000000"
+  },
+  { "synthetic": true, "id": "missing-transfer", "base": "F11_NVDAB", "change": "removeTransfers" },
+  {
+    "synthetic": true,
+    "id": "wrong-asset",
+    "base": "F11_NVDAB",
+    "change": "asset",
+    "value": "0xa9ee28c80f960b889dfbd1902055218cba016f75"
+  },
+  {
+    "synthetic": true,
+    "id": "unexplained-transfer",
+    "base": "F11_NVDAB",
+    "change": "incrementTransfer"
+  },
+  { "synthetic": true, "id": "wrong-transaction", "base": "F11_NVDAB", "change": "otherTx" },
+  { "synthetic": true, "id": "duplicate-log", "base": "F11_NVDAB", "change": "duplicateLog" },
+  { "synthetic": true, "id": "removed-log", "base": "F11_NVDAB", "change": "removedLog" },
+  { "synthetic": true, "id": "guard-missing", "base": "F11_NVDAB", "change": "removeGuard" },
+  { "synthetic": true, "id": "below-minimum", "base": "F11_NVDAB", "change": "raiseMinimum" },
+  { "synthetic": true, "id": "pending", "base": "F11_NVDAB", "change": "pending" },
+  {
+    "synthetic": true,
+    "id": "no-revert-bytes",
+    "base": "F6_failed_NVDAon",
+    "change": "noRevertBytes"
+  },
+  {
+    "synthetic": true,
+    "id": "exact-threshold",
+    "base": "F11_NVDAB",
+    "change": "threshold",
+    "expectedTokens": "10000000000000000",
+    "receivedTokens": "10001000000000000"
+  },
+  {
+    "synthetic": true,
+    "id": "above-threshold",
+    "base": "F11_NVDAB",
+    "change": "threshold",
+    "expectedTokens": "10000000000000000",
+    "receivedTokens": "10001000000000001"
+  },
+  {
+    "synthetic": true,
+    "id": "negative-threshold",
+    "base": "F11_NVDAB",
+    "change": "threshold",
+    "expectedTokens": "10000000000000000",
+    "receivedTokens": "9999000000000000"
+  },
+  {
+    "synthetic": true,
+    "id": "reference-valuation",
+    "base": "F11_NVDAon",
+    "change": "reference",
+    "usdPerShare": "233.935417",
+    "spendTokenUsd": "1"
+  },
+  { "synthetic": true, "id": "five-fills", "base": "F11_NVDAB", "change": "fiveFills" },
+  {
+    "synthetic": true,
+    "id": "refund",
+    "base": "F11_NVDAB",
+    "change": "refund",
+    "value": "1000000000000000000"
+  },
+  {
+    "synthetic": true,
+    "id": "insufficient-shares-revert",
+    "base": "F11_NVDAB",
+    "change": "revert",
+    "name": "InsufficientShares",
+    "args": "1,2"
+  },
+  {
+    "synthetic": true,
+    "id": "token-paused-revert",
+    "base": "F11_NVDAB",
+    "change": "revert",
+    "name": "TokenPaused",
+    "args": "0x02fca66c1d1afb4e2a7884261eb00f63598a7436"
+  },
+  {
+    "synthetic": true,
+    "id": "nested-revert",
+    "base": "F11_NVDAB",
+    "change": "nestedRevert",
+    "inner": "0x1425ea42"
+  },
+  { "synthetic": true, "id": "truncated-event", "base": "F11_NVDAB", "change": "truncatedEvent" },
+  {
+    "synthetic": true,
+    "id": "simulation-overrides-quote",
+    "base": "F11_NVDAB",
+    "change": "quote",
+    "value": "30000000000000000"
+  },
+  {
+    "synthetic": true,
+    "id": "simulation-wrong-gas",
+    "base": "F11_NVDAB",
+    "change": "wrongSimulationGas",
+    "value": "1"
+  },
+  {
+    "synthetic": true,
+    "id": "spoofed-guard",
+    "base": "F11_NVDAB",
+    "change": "spoofedGuard",
+    "value": "0x0000000000000000000000000000000000000001"
+  },
+  {
+    "synthetic": true,
+    "id": "wrong-conversion",
+    "base": "F11_NVDAB",
+    "change": "wrongConversion",
+    "value": "2000000000000000000"
+  }
+]
