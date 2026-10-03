@@ -10,7 +10,7 @@
 ## Owns
 
 - `packages/mod-rewards/**`
-- `apps/web/components/portfolio/defi-card/**` (plugs into Portfolio)
+- `apps/web/modules/rewards/**`, `apps/web/app/dev/rewards/**`
 
 ## Tasks
 
@@ -20,6 +20,7 @@
 4. Buy budget = reward amount from the claim tx's own Transfer logs (never wallet balance); then a guarded buy (WO-01).
 5. Economic filter: disable when fee ÷ reward > 2% or reward < 6 USDT.
 6. Idle-cash view: list the USDT Earn products (APY, TVL, protocol) as information only; no auto-deposit.
+7. View model (UI split: you ship the logic and a typed view model plus a plain, unstyled component in `apps/web/modules/<name>/`; the UI agent (WO-12, Sonnet) builds the real page from your view model. Don't style, don't create pages outside `apps/web/app/dev/<name>/`.): `DefiCardVM` (positions, claimable, economic-filter state, idle-cash products).
 
 ## Exit checks
 

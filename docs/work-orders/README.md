@@ -6,15 +6,18 @@ Roles: **orchestrator** (Claude, in the Cowork session) writes work orders and r
 
 | Agent (tool · model) | Strength we use it for | Wave 1 (Sat 3 – Mon 5) | Wave 2 (Tue 6 – Thu 8) |
 |---|---|---|---|
-| **A: Claude Code** (Claude Pro) | Follows `CLAUDE.md` closely; Solidity/Foundry; the critical path | **WO-01 M3 trade flow** | **WO-07 Sell + Switch** (fork tests J/K) |
-| **B: Codex** (ChatGPT Plus #1) | Solid TypeScript, infra | **WO-00 Foundation**, then **WO-04 Flow + Radar** | **WO-09 Pies** |
-| **C: Codex** (ChatGPT Plus #2) | Careful pure logic + tests | **WO-02 Receipts + Quality** (pure part first) | **WO-08 Guardian autopilot** |
-| **D: Antigravity** (Gemini, Pro) | UI-heavy pages | **WO-03 Portfolio + Statement** | **WO-10 Rewards → Stocks** (if gates pass) / polish |
+| **A: Sonnet** (Claude Code cloud session, Claude Pro) | Owns **all UI**: reads screenshots, follows `DESIGN.md`, built the current screens | **WO-01 M3 trade flow** (in progress), then **WO-12** correction pass | **WO-12** screens (Portfolio, Radar, Guardian, Receipt/Quality, Pies) as view models merge |
+| **B: Codex** (ChatGPT Plus #1) | Solid TypeScript, infra | **WO-00 Foundation**, then **WO-04 Flow** | **WO-09 Pies** |
+| **C: Codex** (ChatGPT Plus #2) | Careful pure logic + tests, Foundry | **WO-02 Receipts + Quality** (pure part first) | **WO-07 Sell + Switch** (fork tests J/K), then **WO-08 Autopilot** |
+| **D: Antigravity** (Gemini, Pro) | Logic + view models; **backup UI agent** | **WO-03 Portfolio + Statement** (logic + view models) | **WO-10 Rewards** (if gates pass) / takes over WO-12 slices if Sonnet is out of quota |
 | **E: OpenCode** (strongest model you can connect) | Rules engine, bot | **WO-06 Guardian alerts** | Integration tests, e2e |
 | **F: Cline · Muse Spark (free)** | Low-risk support only | **WO-11 Evidence, fixtures, docs** | README, demo script, screenshots |
 
+**UI split:** module agents ship logic + a typed view model + a plain component in `apps/web/modules/<name>/`; Sonnet (WO-12) owns every page and visual component and builds them from those view models. No file has two owners. See `AGENTS.md`.
+
 Notes:
-- Claude Pro and ChatGPT Plus have usage windows. If agent A hits its limit during WO-01, C pauses WO-02 and continues WO-01 from A's branch (same work order, handover note in the PR).
+- Claude Pro and ChatGPT Plus have usage windows. If Sonnet hits its limit, Antigravity continues the same WO-12 slice from Sonnet's branch (handover note in the PR). If a Codex account hits its limit, the other Codex or OpenCode continues the same branch.
+- Work orders belong to the module, not the agent: you can reassign any of them; tell the orchestrator when you do.
 - Agent F never touches money paths, contracts or engine code.
 - Never run two agents on the same work order at once.
 
@@ -61,15 +64,16 @@ When done, open a PR with .github/pull_request_template.md filled in, with evide
 | WO | Title | Agent | Branch |
 |---|---|---|---|
 | 00 | Foundation: modkit, worker, flags, health, ModuleBoundary | B | `mod/WO-00-foundation` |
-| 01 | M3 web trade flow (blueprint §17) | A | `mod/WO-01-m3-trade` |
+| 01 | M3 web trade flow (blueprint §17) | A | Sonnet's existing M3 branch |
 | 02 | Receipts + Execution quality report | C | `mod/WO-02-receipts` |
 | 03 | Portfolio + Statement | D | `mod/WO-03-statement` |
 | 04 | Flow + Radar page | B | `mod/WO-04-flow` |
 | 06 | Guardian alerts (rules, Telegram, web feed) | E | `mod/WO-06-guardian` |
-| 07 | Sell + Switch issuer | A | `mod/WO-07-switch` |
+| 07 | Sell + Switch issuer | C | `mod/WO-07-switch` |
 | 08 | Guardian autopilot | C | `mod/WO-08-autopilot` |
 | 09 | Pies | B | `mod/WO-09-pies` |
 | 10 | Rewards → Stocks + idle-cash yield | D | `mod/WO-10-rewards` |
 | 11 | Evidence, fixtures, docs support | F | `mod/WO-11-support` |
+| 12 | UI: every page and visual component | A (backup D) | `mod/WO-12-ui`, then `mod/WO-12-ui-<screen>` |
 
 (WO-05 is intentionally unused: the Radar page is part of WO-04.)

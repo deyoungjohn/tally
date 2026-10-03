@@ -39,6 +39,7 @@ The order is the cut line: if time runs out, everything above the cut ships and 
 | 6 | **Guardian autopilot** (Agentic Wallet, caps, kill switch, decision log) | Guardian settings | WO-08 | 1–1½ d | WO-06, WO-02, `baw` check |
 | 7 | **Pies** (fixed templates, drift rebalance) | Pies | WO-09 | 1½–2 d | M3, WO-07 sell path |
 | 8 | **Rewards → Stocks + idle-cash yield** | Portfolio → DeFi card | WO-10 | 1 d | WO-02, gates V-C1…V-C3 |
+| — | **UI** (all pages, built from each module's view model) | all | WO-12 | continuous | each module's view model |
 | 9 | Venus collateral guard (NVDAB is a Venus market) | Guardian rule | roadmap | — | WO-06 |
 
 **Cut line:** a module not merged by **Thu 8 Oct 23:59 UTC** ships flag-off and is listed as roadmap. Code freeze Sat 10 Oct 23:59 UTC. Submission Sun 11 Oct before 12:00 UTC.
@@ -71,6 +72,7 @@ The order is the cut line: if time runs out, everything above the cut ships and 
 5. **Own UI boundary.** Each card is wrapped in `<ModuleBoundary module="flow">`: React error boundary + health check + flag check. A failing module renders one degraded card ("Flow is catching up, last update 4 min ago"), never a broken page.
 6. **Feature flag, default off.** `FEATURE_<MODULE>` in `packages/config/src/flags.ts` (created once in WO-00 for every module, so no later PR touches it). A flag turns on only after the module's exit checks pass and both reviews approve.
 7. **Pure core, thin shell.** Business logic lives in `packages/mod-<name>` as pure functions over typed inputs, tested against recorded fixtures. Web, bot, worker and MCP only wire it.
+7b. **View model is the UI contract.** Each module exposes a typed view model in `apps/web/modules/<name>/view-model.ts` (with stale, empty and error states). One UI agent (WO-12) builds every page from those view models, so the product looks like one product.
 8. **No new dependencies** without orchestrator approval (lockfile conflicts across parallel branches). WO-00 adds the expected ones up front.
 
 **Data sources confirmed on 2026-10-03** (full responses in the probe files):

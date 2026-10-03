@@ -16,7 +16,8 @@
 - `packages/config/src/flags.ts` (new), `packages/config/src/index.ts` (export only)
 - `packages/core/src/status.ts` + its test (the `offhours` mapping only)
 - Root: `package.json` (scripts), `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `.github/workflows/ci.yml` (only to include new packages)
-- Empty skeletons for every module package (see task 6)
+- Empty skeletons for every module package (see task 6) and every `apps/web/modules/<name>/` folder (task 8)
+- `apps/web/app/dev/page.tsx` (dev preview index)
 
 ## Tasks
 
@@ -43,6 +44,8 @@
 5. **Status**: map `marketStatus: "offhours"` (Ondo, observed 2026-10-03 in `spike/results/module_probes_20261003T121018Z.json`, `G_underlying_market_NVDAon`) to `closed`, and `"paused"` explicitly; add test cases. Don't change anything else in core.
 6. **Skeletons** so later work orders never touch root files: `packages/mod-receipts`, `mod-statement`, `mod-flow`, `mod-guardian`, `mod-autopilot`, `mod-pies`, `mod-rewards`, each with `package.json` (deps: `@tally/core`, `@tally/modkit`, vitest), `tsconfig.json`, `src/index.ts` (empty export) and a passing placeholder test; added to the workspace and to `apps/web`, `apps/worker`, `apps/bot` dependencies. Also add dependency `grammy` to `apps/bot` now (WO-06 needs it).
 7. **Nav**: add Portfolio, Radar, Guardian, Pies, Quality entries to the header, each shown only when its flag is on.
+
+8. **UI contract skeletons**: `apps/web/modules/<name>/` for receipts, quality, statement, flow, guardian, autopilot, switch, pies, rewards, each with `view-model.ts` (exported placeholder type + loader returning an empty state) and `plain.tsx` (renders the empty state inside `<ModuleBoundary>`). `apps/web/app/dev/page.tsx` lists `/dev/<name>` previews, available only when `NODE_ENV !== "production"` or `TALLY_DEV_PREVIEWS=1`. Write a short `apps/web/modules/README.md` explaining the view-model contract (see `AGENTS.md`, UI split).
 
 ## Exit checks
 

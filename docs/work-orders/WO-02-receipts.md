@@ -10,7 +10,7 @@
 
 - `packages/mod-receipts/**`
 - `apps/worker/src/jobs/receipts.ts` (reconciles `PENDING` receipts)
-- `apps/web/app/receipt/[txHash]/**`, `apps/web/app/quality/**`, `apps/web/components/receipts/**`
+- `apps/web/modules/receipts/**`, `apps/web/modules/quality/**`, `apps/web/app/dev/receipts/**`, `apps/web/app/dev/quality/**`
 - `packages/mcp/src/tools/get-receipt.ts`
 
 ## Tasks
@@ -25,14 +25,14 @@
 **Slice B (after WO-00 and WO-01):**
 6. Subscribe to WO-01's `onStage` events; persist via `SnapshotStore` (kind `receipt`, key txHash or intent id).
 7. Worker job: fetch receipts for `PENDING` hashes over NodeReal with fallback; never mark failed on RPC errors.
-8. UI: receipt card (ladder Quoted → Simulated → Received, provenance line, evidence drawer), `/receipt/[txHash]` share link, Portfolio → Activity list component exported for WO-03, `/quality` page.
+8. View models + plain components (UI split: you ship the logic and a typed view model plus a plain, unstyled component in `apps/web/modules/<name>/`; the UI agent (WO-12, Sonnet) builds the real page from your view model. Don't style, don't create pages outside `apps/web/app/dev/<name>/`.): `ReceiptVM` (ladder stages Quoted → Simulated → Received with values, status badge, provenance line, evidence drawer data), `ActivityVM` (list for Portfolio → Activity), `QualityVM` (per-issuer and per-route rows, `insufficient`, pending count). The UI agent builds `/receipt/[txHash]`, the Activity tab and `/quality`.
 9. MCP tool `get_receipt(txHash)`.
 
 ## Exit checks
 
 - [ ] Slice A tests above, all from recorded data (no network).
 - [ ] RPC down (mocked) → receipt stays `PENDING` with the hash; quality page excludes and counts pending.
-- [ ] `/quality` shows "not enough fills yet" honestly at n < 5; renders correctly at 375/768/1280.
+- [ ] `QualityVM` reports `insufficient: true` at n < 5 and the plain component says so; view-model unit tests for empty, pending-only and stale states.
 - [ ] Flag `FEATURE_RECEIPTS` / `FEATURE_QUALITY` off → nothing renders; trade flow unaffected.
 
 ## Out of scope

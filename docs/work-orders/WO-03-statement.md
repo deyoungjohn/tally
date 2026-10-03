@@ -2,15 +2,15 @@
 
 | | |
 |---|---|
-| Agent | D (Antigravity) |
-| Branch | `mod/WO-03-statement` (slice A pure logic now; slice B UI after WO-00) |
+| Agent | D (Antigravity), also the backup UI agent if Sonnet is out of quota |
+| Branch | `mod/WO-03-statement` (slice A pure logic now; slice B view models after WO-00) |
 | Read first | `MODULES.md` §4.2, blueprint §11 (Portfolio), M4 row of §17, `DESIGN.md` |
 | Fixtures | `spike/results/module_probes_20261003T130122Z.json` keys `X_recent_pnl`, `X_token_pnl`, `X_dex_history`, `X_portfolio_overview_tf`; burner wallet `0x2Bf7EdF53bc6BE6FF98F149387F3818cE28d2930` |
 
 ## Owns
 
 - `packages/mod-statement/**`
-- `apps/web/app/portfolio/**`, `apps/web/components/portfolio/**`
+- `apps/web/modules/statement/**`, `apps/web/app/dev/statement/**`
 - `apps/worker/src/jobs/statement.ts`
 
 ## Tasks
@@ -21,17 +21,17 @@
 3. `statement(holdings, trades, receipts?)`: holdings in shares per ticker across issuers, average cost per share, realized P&L, and a `differsFromApi` note when the API figure and receipts disagree by > 1%.
 4. CSV export function (pure). PDF optional only if it needs no new dependency.
 
-**Slice B (UI, after WO-00):**
-5. Portfolio page: holdings in shares (headline), per-issuer breakdown, tabs Holdings · Activity (render WO-02's Activity component when its flag is on, otherwise hide the tab) · Statement.
+**Slice B (view models, after WO-00):**
+5. UI split: you ship the logic and a typed view model plus a plain, unstyled component in `apps/web/modules/<name>/`; the UI agent (WO-12, Sonnet) builds the real page from your view model. Don't style, don't create pages outside `apps/web/app/dev/<name>/`. `PortfolioVM` (holdings in shares as the headline, per-issuer breakdown, which tabs are available: Holdings · Activity only when `FEATURE_RECEIPTS` · Statement) and `StatementVM` (lines, totals, export actions, `differsFromApi` and `convertedAtTodaysRatio` notes). Each holding row carries `rowActionsSlot` metadata (token, issuer, balance) so WO-07 and WO-10 can attach actions.
 6. Worker job: refresh portfolio snapshots for connected wallets every 5 min (keys from Privy session on the server, never stored client-side beyond the address).
 
 ## Exit checks
 
 - [ ] Unit tests from the fixture keys above, including a per-token → per-share conversion and the today's-ratio flag.
 - [ ] API failure (mocked 50000) → statement from receipts only, with a visible note.
-- [ ] 375/768/1280 + reduced motion screenshots in the PR.
+- [ ] View-model unit tests: empty wallet, one issuer, two issuers of the same ticker, API down.
 - [ ] Flag off → Portfolio shows holdings only (no statement), no errors.
 
 ## Out of scope
 
-Sell/Switch buttons (WO-07 adds them to your row component via a prop slot; leave `rowActions?: ReactNode`).
+Styling and the Portfolio page itself (WO-12). Sell/Switch actions (WO-07).

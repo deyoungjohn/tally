@@ -10,7 +10,7 @@
 
 - `packages/mod-autopilot/**`
 - `apps/worker/src/jobs/autopilot.ts`
-- `apps/web/app/guardian/autopilot/**`
+- `apps/web/modules/autopilot/**`, `apps/web/app/dev/autopilot/**`
 - `skills/share-true-trading/**` (Wallet Skill, blueprint §12)
 
 ## Tasks
@@ -20,6 +20,7 @@
 3. Executor: via `baw` (Agentic Wallet CLI) in a subprocess with a timeout; sell = API transaction, switch = ShareGuard call; then hand to Receipts. Any failure, cap or missing capability → downgrade to an alert. Never retry automatically.
 4. If gate V-AW says `baw` has no spend caps / session policy on BSC: ship "one-tap approve from the alert" instead, and say so in the UI.
 5. Wallet Skill doc per blueprint §12, including Tally's multiplier rules and the 6 USDT minimum.
+6. View model (UI split: you ship the logic and a typed view model plus a plain, unstyled component in `apps/web/modules/<name>/`; the UI agent (WO-12, Sonnet) builds the real page from your view model. Don't style, don't create pages outside `apps/web/app/dev/<name>/`.): `AutopilotVM` (armed rules, caps, spent today, kill switch, decision log rows).
 
 ## Exit checks
 

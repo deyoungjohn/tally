@@ -12,7 +12,7 @@
 - `packages/mod-guardian/**`
 - `apps/bot/**` (except `package.json` deps, which WO-00 adds)
 - `apps/worker/src/jobs/guardian.ts`
-- `apps/web/app/guardian/**`, `apps/web/components/guardian/**`
+- `apps/web/modules/guardian/**`, `apps/web/app/dev/guardian/**`
 
 ## Tasks
 
@@ -25,7 +25,7 @@
 **Slice B (after WO-00):**
 5. Worker job `guardian`: evaluate holdings of subscribed users each minute from snapshots; write alerts to the store.
 6. Telegram (grammY, long polling): `/start` link flow (one-time code shown in the web app), `/alerts on|off`, `/quiet 22-07`, delivery of alerts. Bot token from env `TELEGRAM_BOT_TOKEN` only.
-7. Web: Guardian page with the alert feed and rule settings.
+7. View models (UI split: you ship the logic and a typed view model plus a plain, unstyled component in `apps/web/modules/<name>/`; the UI agent (WO-12, Sonnet) builds the real page from your view model. Don't style, don't create pages outside `apps/web/app/dev/<name>/`.): `AlertFeedVM` and `GuardianSettingsVM` (rules, thresholds, quiet hours, Telegram link state). The UI agent builds the Guardian page.
 8. Earnings rule: only if the orchestrator confirms a source (gate V-E); otherwise leave a disabled rule stub with a reason.
 
 ## Exit checks
@@ -33,7 +33,7 @@
 - [ ] Slice A tests above.
 - [ ] Telegram down (mocked) → alerts still written and visible on the web feed; error in health.
 - [ ] One rule throws → other rules still evaluate (test).
-- [ ] 375/768/1280 + reduced motion for the Guardian page.
+- [ ] View-model tests: empty feed, de-duplicated feed, Telegram not linked.
 
 ## Out of scope
 

@@ -28,7 +28,12 @@ Cloud agents usually run in US data centres, and the authenticated Binance Web3 
 - I/O: only through `@tally/modkit` (snapshot store, health, fallbacks) and `@tally/engine`. Never rebuild the engine wiring; never call Binance from a module or a page except through the engine/collector.
 - Every fallback calls `onWarn` and every missing fact carries a reason. No silent `catch {}`. No `any` without an eslint-disable comment explaining why.
 - Shares are bigint 1e18 fixed point (`@tally/core` units). Never do share maths in floating point.
-- UI: follow `DESIGN.md` exactly; beUI components restyled with our tokens; check 375/768/1280 px and reduced motion. Wrap your module's UI in `<ModuleBoundary module="…">`.
+- **UI split.** Pages and visual components (`apps/web/app/**`, `apps/web/components/**`) belong to the UI agent (WO-12). Module agents write only `apps/web/modules/<name>/`:
+  - `view-model.ts`: the typed data the screen needs (`FlowPanelVM`, `useFlowPanel(ticker)` or a server loader), including `stale`, `ageMs`, `source`, empty and error states. This is the contract with the UI agent; unit-test it.
+  - `plain.tsx`: a plain, working component that renders the view model with existing primitives, wrapped in `<ModuleBoundary module="…">`. No styling effort.
+  - Optional dev preview at `apps/web/app/dev/<name>/page.tsx` (flag-gated, not linked in navigation).
+  If the UI agent needs a field your view model lacks, it asks in review; you add it.
+- The UI agent follows `DESIGN.md` exactly (beUI components restyled with our tokens; 375/768/1280 px and reduced motion) and never changes a view model; it requests changes instead.
 - Behind your feature flag (`FEATURE_<MODULE>`), default off.
 
 ## Definition of done (put the evidence in the PR)

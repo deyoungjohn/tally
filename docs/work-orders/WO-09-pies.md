@@ -9,7 +9,7 @@
 ## Owns
 
 - `packages/mod-pies/**` (including `templates/*.json`)
-- `apps/web/app/pies/**`, `apps/web/components/pies/**`
+- `apps/web/modules/pies/**`, `apps/web/app/dev/pies/**`
 - `apps/worker/src/jobs/pies.ts`
 
 ## Tasks
@@ -18,13 +18,13 @@
 2. Weights in **dollars of shares** using each issuer's multiplier (bigint).
 3. `rebalancePlan(holdings, template, prices, minOrderUsdt = 6)`: sells first, then buys; legs below 6 USDT are deferred and shown; drift threshold configurable.
 4. Execution: legs through WO-07 Sell and WO-01 guarded buy; each leg a receipt; partial completion state is persisted and shown exactly.
-5. UI: create pie from template, current vs target, drift, rebalance button with the full plan before signing.
+5. View models (UI split: you ship the logic and a typed view model plus a plain, unstyled component in `apps/web/modules/<name>/`; the UI agent (WO-12, Sonnet) builds the real page from your view model. Don't style, don't create pages outside `apps/web/app/dev/<name>/`.): `PieTemplatesVM`, `PieVM` (current vs target, drift, unavailable tickers) and `RebalancePlanVM` (legs, deferred legs, fees, partial state). The UI agent builds the Pies page.
 
 ## Exit checks
 
 - [ ] Plan tests: Ondo 10-shares-per-token token weighted correctly vs bStock 1:1; sub-6-USDT legs deferred; sells before buys.
 - [ ] A failed leg → "partially rebalanced" with exact state, no retry.
-- [ ] 375/768/1280 + reduced motion.
+- [ ] View-model tests: empty pie, drift below threshold (no plan), partial state.
 
 ## Out of scope
 

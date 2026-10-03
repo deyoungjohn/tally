@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Agent | A (Claude Code), after WO-01 |
+| Agent | C (Codex #2), after WO-02 (moved from Sonnet so its quota goes to UI) |
 | Branch | `mod/WO-07-switch` |
 | Read first | `MODULES.md` §4.5 and `docs/archive/MODULES-v1.md` §3.1–3.2, §5, §7, `contracts/README.md`, `IDEAS.md` F4, F11 |
 | Gates | V-B1/V-B2 results from the user (Mon) decide whether one-route Switch ships |
@@ -10,7 +10,8 @@
 ## Owns
 
 - `contracts/test/ShareGuardSwitch.t.sol` (fork tests J, K), new captures in `contracts/captures/`
-- `apps/web/components/portfolio/row-actions/**` (plugs into WO-03's `rowActions` slot), `apps/web/lib/trade-plan/sell.ts`, `apps/web/lib/trade-plan/switch.ts`
+- `apps/web/modules/switch/**` (row-action view models for Portfolio), `apps/web/app/dev/switch/**`
+- New files `apps/web/lib/trade-plan/sell.ts` and `apps/web/lib/trade-plan/switch.ts` only (the rest of `trade-plan/` is WO-01's; reuse it, don't edit it)
 - `packages/mcp/src/tools/sell.ts`, `packages/mcp/src/tools/switch.ts`
 
 ## Tasks
@@ -20,6 +21,7 @@
 3. Switch: one route through the **deployed** ShareGuard (`tokenIn` = source stock, `stock` = destination, floor in destination shares); show shares in, shares out, cost %, fee, both grades. If no direct route: show "Sell then buy" as two clearly separate steps, or hide Switch (no fake atomicity).
 4. Fork tests J (switch succeeds through deployed bytecode, floor holds, source spent or refunded) and K (floor too high reverts, user tokens untouched).
 5. xStocks as source: "No market to exit this token on BNB Chain" (from WO-04's ghost flag).
+6. View models (UI split: you ship the logic and a typed view model plus a plain, unstyled component in `apps/web/modules/<name>/`; the UI agent (WO-12, Sonnet) builds the real page from your view model. Don't style, don't create pages outside `apps/web/app/dev/<name>/`.): `SellSheetVM`, `SwitchSheetVM` (shares in, shares out, cost %, fee, both grades, floor, availability reason).
 
 ## Exit checks
 
