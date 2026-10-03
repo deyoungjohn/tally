@@ -1,24 +1,26 @@
 "use client";
 
-import { Menu } from "lucide-react";
+import { Check, ChevronDown, Copy, KeyRound, LogOut, Menu, Send } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MODULE_NAMES, type ModuleName } from "@tally/config";
 import { BottomSheet } from "@/components/motion/bottom-sheet";
 import { Button, ButtonLink } from "@/components/motion/button";
 import { SharedLayoutBg } from "@/components/motion/shared-layout-bg";
+import { SendModal } from "@/components/wallet/send-modal";
+import { useTallyWallet } from "@/components/wallet/wallet-context";
+import { cn } from "@/lib/utils";
 
 export const NAV_LINKS = [
-  { href: "/#compare", label: "Compare" },
-  { href: "/#guard", label: "ShareGuard" },
-  { href: "/#shield", label: "Trap Shield" },
-  { href: "/#faq", label: "FAQ" },
+  { href: "/trade", label: "Trade" },
+  { href: "/portfolio", label: "Portfolio" },
+  { href: "/radar", label: "Radar" },
+  { href: "/docs#how", label: "How it works" },
 ] as const;
 
+/** Feature-flagged modules from other work orders. Portfolio and Radar are core pages here, so they are not repeated. */
 const MODULE_LINKS: { href: string; label: string; flag: ModuleName }[] = [
-  { href: "/portfolio", label: "Portfolio", flag: "statement" },
-  { href: "/radar", label: "Radar", flag: "flow" },
   { href: "/guardian", label: "Guardian", flag: "guardian" },
   { href: "/pies", label: "Pies", flag: "pies" },
   { href: "/quality", label: "Quality", flag: "quality" },
@@ -37,8 +39,141 @@ export function Logo() {
   );
 }
 
+export const shortAddress = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
+
+/** "Get Started" until the user signs in, then their wallet as a short address with a small account menu. */
+function AccountButton({
+  onNavigate,
+  onSend,
+  big,
+}: {
+  onNavigate?: () => void;
+  onSend: () => void;
+  big?: boolean;
+}) {
+  const wallet = useTallyWallet();
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: MouseEvent) => {
+      if (!box.current?.contains(e.target as Node)) setOpen(false);
+    };
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", away);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("mousedown", away);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [open]);
+
+  if (!wallet.authenticated || !wallet.address) {
+    return (
+      <ButtonLink href="/trade" big={big} className={cn(!big && "!h-10")} onClick={onNavigate}>
+        Get Started
+      </ButtonLink>
+    );
+  }
+  const address = wallet.address;
+  return (
+    <div ref={box} className={cn("relative", big && "w-full")}>
+      <Button
+        variant="glassy"
+        big={big}
+        className={cn(!big && "!h-10")}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        data-testid="account-button"
+      >
+        <span className="dot-live" aria-hidden />
+        <span className="mono text-[13px]">{shortAddress(address)}</span>
+        <ChevronDown size={14} aria-hidden />
+      </Button>
+      {open ? (
+        <div
+          role="menu"
+          className="glass !bg-[var(--g2)] absolute right-0 top-[calc(100%+8px)] z-50 grid min-w-[220px] gap-1 p-2"
+        >
+          <button
+            role="menuitem"
+            type="button"
+            className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-left text-sm hover:bg-white/[0.06]"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(address);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1500);
+              } catch {
+                /* clipboard blocked */
+              }
+            }}
+          >
+            {copied ? <Check size={15} aria-hidden /> : <Copy size={15} aria-hidden />}
+            {copied ? "Copied" : "Copy address"}
+          </button>
+          <button
+            role="menuitem"
+            type="button"
+            className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-left text-sm hover:bg-white/[0.06]"
+            onClick={() => {
+              setOpen(false);
+              onNavigate?.();
+              onSend();
+            }}
+            data-testid="menu-send"
+          >
+            <Send size={15} aria-hidden /> Send
+          </button>
+          {wallet.embedded ? (
+            <button
+              role="menuitem"
+              type="button"
+              className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-left text-sm hover:bg-white/[0.06]"
+              onClick={() => {
+                setOpen(false);
+                wallet.exportWallet();
+              }}
+              data-testid="menu-export"
+            >
+              <KeyRound size={15} aria-hidden /> Export wallet
+            </button>
+          ) : null}
+          <Link
+            role="menuitem"
+            href="/portfolio"
+            onClick={() => {
+              setOpen(false);
+              onNavigate?.();
+            }}
+            className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-sm text-fg no-underline hover:bg-white/[0.06]"
+          >
+            Portfolio
+          </Link>
+          <button
+            role="menuitem"
+            type="button"
+            className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-left text-sm hover:bg-white/[0.06]"
+            onClick={() => {
+              setOpen(false);
+              wallet.logout();
+            }}
+          >
+            <LogOut size={15} aria-hidden /> Sign out
+          </button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [sending, setSending] = useState(false);
   const pathname = usePathname();
   const [enabled, setEnabled] = useState<Partial<Record<ModuleName, boolean>>>({});
   // WO-12 may move these flags into the server layout to render navigation before hydration.
@@ -59,9 +194,23 @@ export function SiteHeader() {
   const links = [...NAV_LINKS, ...MODULE_LINKS.filter((link) => enabled[link.flag])];
   const expanded = links.length > NAV_LINKS.length;
 
+  // More opaque and blurrier once the page scrolls, so content passing behind stays faintly visible but never competes with the nav.
+  useEffect(() => {
+    const on = () => setScrolled(window.scrollY > 8);
+    on();
+    window.addEventListener("scroll", on, { passive: true });
+    return () => window.removeEventListener("scroll", on);
+  }, []);
+
   return (
     <header className="sticky top-0 z-40 px-4 pt-3.5">
-      <div className="glass mx-auto flex h-[62px] max-w-[var(--w)] items-center justify-between !rounded-full pl-3 pr-[9px]">
+      <div
+        className={cn(
+          "site-bar glass mx-auto flex h-[62px] max-w-[var(--w)] items-center justify-between !rounded-full pl-3 pr-[9px]",
+          scrolled && "site-bar-scrolled",
+        )}
+        data-scrolled={scrolled}
+      >
         <Logo />
         <nav
           aria-label="Primary"
@@ -73,7 +222,11 @@ export function SiteHeader() {
                 key={l.href}
                 href={l.href}
                 className="nav-link"
-                aria-current={pathname === l.href ? "page" : undefined}
+                aria-current={
+                  pathname === l.href || (!l.href.includes("#") && pathname.startsWith(l.href))
+                    ? "page"
+                    : undefined
+                }
               >
                 {l.label}
               </Link>
@@ -81,19 +234,20 @@ export function SiteHeader() {
           </SharedLayoutBg>
         </nav>
         <div className="flex items-center gap-2">
-          <ButtonLink href="/#compare" className="hidden min-[561px]:inline-flex !h-10">
-            Get a quote
-          </ButtonLink>
-          <Button
-            variant="icon"
-            className={expanded ? "min-[1200px]:hidden" : "min-[761px]:hidden"}
-            aria-label="Open menu"
-            aria-haspopup="dialog"
-            aria-expanded={open}
-            onClick={() => setOpen(true)}
-          >
-            <Menu size={18} aria-hidden />
-          </Button>
+          <span className="hidden min-[561px]:block">
+            <AccountButton onSend={() => setSending(true)} />
+          </span>
+          <span className={expanded ? "min-[1200px]:hidden" : "min-[761px]:hidden"}>
+            <Button
+              variant="icon"
+              aria-label="Open menu"
+              aria-haspopup="dialog"
+              aria-expanded={open}
+              onClick={() => setOpen(true)}
+            >
+              <Menu size={18} aria-hidden />
+            </Button>
+          </span>
         </div>
       </div>
       <BottomSheet open={open} onOpenChange={setOpen} snapPoints={["auto"]} title="Menu">
@@ -110,10 +264,11 @@ export function SiteHeader() {
             </li>
           ))}
         </ul>
-        <ButtonLink href="/#compare" big className="mt-4" onClick={() => setOpen(false)}>
-          Get a quote
-        </ButtonLink>
+        <div className="mt-4">
+          <AccountButton big onNavigate={() => setOpen(false)} onSend={() => setSending(true)} />
+        </div>
       </BottomSheet>
+      <SendModal open={sending} onClose={() => setSending(false)} />
     </header>
   );
 }

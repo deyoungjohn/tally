@@ -5,20 +5,22 @@ const COLS = [
   {
     h: "Product",
     links: [
-      ["Compare issuers", "/#compare"],
-      ["ShareGuard", "/#guard"],
-      ["Trap Shield", "/#shield"],
+      ["Trade", "/trade"],
+      ["Portfolio", "/portfolio"],
+      ["Radar", "/radar"],
     ],
   },
   {
     h: "Learn",
     links: [
-      ["How it works", "/#how"],
+      ["How it works", "/docs#how"],
       ["FAQ", "/#faq"],
+      ["Docs", "/docs"],
+      ["Contracts and proof", "/docs#contracts"],
     ],
   },
   { h: "Community", links: [["GitHub", "https://github.com/deyoungjohn/tally"]] },
-  { h: "Legal", links: [["Not investment advice", "/#disclaimer"]] },
+  { h: "Legal", links: [["Not investment advice", "/docs#disclaimer"]] },
 ] as const;
 
 export function SiteFooter() {
@@ -29,7 +31,7 @@ export function SiteFooter() {
           <div>
             <Logo />
             <p className="mt-3 max-w-[28ch] text-sm text-fg2">
-              Shares, not tokens. One stock, compared across every issuer on BNB Chain.
+              Tokenized stocks, compared across every issuer on BNB Chain, at the best price.
             </p>
           </div>
           {COLS.map((c) => (
