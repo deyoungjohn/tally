@@ -1,209 +1,197 @@
-# Tally modules: Receipts, Switch and Rewards → Stocks
+# Tally modules (v2)
 
-Three proposed extensions to Tally, with a verdict, an architecture and a viability gate for each.
+Supersedes the 2026-10-02 version (Receipts, Switch, Rewards → Stocks), archived at `docs/archive/MODULES-v1.md`. Those three modules are carried over below, unchanged in substance, alongside the new ones.
 
 | | |
 |---|---|
-| Written | 2026-10-02, after M2 (ShareGuard v1 deployed at `0x28F6F19bffbF25E36452c78d12090F0bC922970a`) and during M3 |
-| Inputs | `Composable_Modules.md` (Compound Yield, Migrate Shares) and `LotLens_Module_Concept.md` (Trace), supplied by the user |
-| Rule | **No module may regress the existing buy flow, Portfolio or Radar.** See §8. |
-| Status | Proposal. Modules ship only after their viability gate (§6) passes. |
+| Written | 2026-10-03, after M2 (ShareGuard v1 at `0x28F6F19bffbF25E36452c78d12090F0bC922970a`), before M3 |
+| Evidence | `spike/results/module_probes_20261003T121018Z.json` … `…T130122Z.json` (read-only API + RPC probes from the team's PC in Nigeria) |
+| Delivery | Parallel AI-agent team, one branch per work order. See `AGENTS.md` and `docs/work-orders/`. |
+| Rule | **No module may regress the buy flow, Portfolio or Radar.** Every module is behind a feature flag and fails on its own (§3). |
 
 ---
 
-## 1. Verdicts
+## 1. Positioning change
 
-| Module | Source name | Tally name (UI) | Verdict | Priority | Why |
+The quote comparison ("best price across issuers") is now an **internal library**, not the product's front page. Several hackathon teams ship routers and quote guards (Orchard, OneTicker, Executable Gap Desk, yostocks). Tally's moat is **share-true data**: every module below is correct in *shares* across issuers whose tokens represent different amounts of stock (Ondo NFLX = 10 shares/token, bStock NFLX = 1). Nobody else's flow tape, basket, statement or alert is.
+
+Pitch line: **Buy in shares → Prove every fill → Watch over what you hold → See who's moving the market → Build a portfolio that rebalances itself.**
+
+What stays: the engine (`@tally/engine`), ShareGuard v1, the integrity grade, the region gate, the minimums.
+What changes: the landing page leads with Portfolio, Radar and Guardian; "Trade" is one action among several.
+What's dropped: the stand-alone read-only Telegram bot (M6) as its own milestone (its channel becomes Guardian's), the EIP-7702 stretch, card on-ramp.
+
+---
+
+## 2. Module catalogue and build order (cheapest first)
+
+The order is the cut line: if time runs out, everything above the cut ships and everything below goes to the README roadmap, flag-off.
+
+| # | Module | Surface | Work order | Est. | Depends on |
 |---|---|---|---|---|---|
-| **A. Receipts** | Trace | **Receipt** ("Reconciled") | **Build now** | P0 | Tally already has most of it (share math, ShareGuard events, Ondo baseline, working Transaction API `simulate`). It turns every trade into verifiable evidence, which 57% of past winners were built on. ~1–1.5 days. |
-| **B. Switch** (incl. **Sell**) | Migrate Shares | **Switch issuer** and **Sell** | **Build after gate V-B** | P1 | The deployed ShareGuard **already accepts a stock as the input token** (no USDT-only check), so a one-route switch may need **no new contract**. Sell is missing from Tally anyway. ~1.5–2 days. |
-| **C. Rewards → Stocks** | Compound Yield | **Rewards → Stocks** | **Manual version only if gate V-C passes; automation after the hackathon** | P2 | Real rewards must reach the **$5 minimum order**, which needs capital and time. Automation needs delegated authority (session keys/7702), which is beyond scope before 11 Oct. |
+| 0 | **Foundation** (snapshot store, collector, flags, health, module boundary) | none (infra) | WO-00 | ½–1 d | — |
+| — | **M3 trade flow** (blueprint §17, unchanged) | Trade | WO-01 | 2–3 d | WO-00 flags only |
+| 1 | **Receipts + Execution quality report** | Trade result, Portfolio → Activity, `/quality` | WO-02 | 1–1½ d | M3 plan/simulate (pure part starts now on F6 vectors) |
+| 2 | **Statement** (holdings in shares, average cost per share, realized P&L) | Portfolio → Statement | WO-03 | 1 d | WO-00 |
+| 3 | **Flow in the Radar** (+ Radar page itself) | Radar | WO-04 | 1½ d | WO-00 |
+| 4 | **Guardian alerts** | Telegram + web feed | WO-06 | 1 d | WO-00, WO-04 snapshots |
+| 5 | **Sell + Switch issuer** | Portfolio row actions | WO-07 | 1½–2 d | M3, gates V-B1…V-B4 |
+| 6 | **Guardian autopilot** (Agentic Wallet, caps, kill switch, decision log) | Guardian settings | WO-08 | 1–1½ d | WO-06, WO-02, `baw` check |
+| 7 | **Pies** (fixed templates, drift rebalance) | Pies | WO-09 | 1½–2 d | M3, WO-07 sell path |
+| 8 | **Rewards → Stocks + idle-cash yield** | Portfolio → DeFi card | WO-10 | 1 d | WO-02, gates V-C1…V-C3 |
+| 9 | Venus collateral guard (NVDAB is a Venus market) | Guardian rule | roadmap | — | WO-06 |
 
-Product story (one line for the pitch): **Buy at the true best price → Hold in shares → Prove every fill → Switch issuers safely → Grow from rewards.**
-
----
-
-## 2. Where they live in the UI (no new top-level pages)
-Navigation stays **Tally · Trade · Portfolio · Radar** (+ Docs).
-
-| Module | Surface |
-|---|---|
-| Receipts | Every trade's result screen becomes a Receipt. **Portfolio → Activity** tab lists all receipts. `/receipt/[txHash]` is a shareable deep link. |
-| Sell | **Portfolio → holding row → Sell** (and a Buy/Sell toggle on the Trade card). |
-| Switch | **Portfolio → holding row → Switch issuer**. Also a contextual prompt on Radar when a held token's grade drops (e.g. paused, ghost). Facts only, never "you should". |
-| Rewards → Stocks | **Portfolio → "DeFi rewards" card**, shown only when the connected wallet has a supported position with claimable rewards. |
+**Cut line:** a module not merged by **Thu 8 Oct 23:59 UTC** ships flag-off and is listed as roadmap. Code freeze Sat 10 Oct 23:59 UTC. Submission Sun 11 Oct before 12:00 UTC.
 
 ---
 
-## 3. Shared foundations (built once, used by all three)
+## 3. Architecture: modular, redundant, fail-alone
 
-### 3.1 Trade intents
-One typed object describes any guarded operation, so all modules share the same plan → simulate → sign → reconcile pipeline (blueprint §7.6):
-
-```ts
-type TradeIntent =
-  | { kind: "buy";    tokenIn: "USDT"; amountIn: bigint; stock: Address; minShares: bigint }
-  | { kind: "sell";   stock: Address; amountIn: bigint; minUsdtOut: bigint }
-  | { kind: "switch"; from: Address; amountIn: bigint; to: Address; minSharesOut: bigint }
-  | { kind: "rewardsToStock"; claim: ClaimSpec; stock: Address; minShares: bigint };
+```
+            Binance Web3 API ─┐        ┌─ NodeReal RPC (primary chain + logs)
+                              ▼        ▼  Ankr RPC (second), public RPC (reads only)
+                       apps/worker  collector  (the ONLY process that calls external sources on a schedule)
+                              │  writes timestamped snapshots, each with source + observedAt + notes
+                              ▼
+                     SQLite  $TALLY_DATA_DIR/tally.db   (node:sqlite, no native deps)
+            ┌─────────────┬─────────────┬─────────────┬─────────────┐
+            ▼             ▼             ▼             ▼             ▼
+       mod-flow     mod-guardian   mod-statement  mod-receipts   mod-pies …   (pure logic packages + one loop each in apps/worker)
+            └─────────────┴──────┬──────┴─────────────┴─────────────┘
+                                 ▼
+               apps/web (one <ModuleBoundary> card per module) · apps/bot (Guardian channel) · packages/mcp
 ```
 
-### 3.2 Contract usage
-- **Buy and Switch** use the **deployed** `ShareGuard.swapForShares` / `swapForSharesWithFeed` unchanged:
-  - Switch passes `tokenIn = source stock`, `stock = destination stock`, and route calldata built for the guard.
-  - The contract measures the destination in **shares** and refunds unspent input.
-  - `SameToken`, router allow-list and pause checks already apply.
-- **Sell** needs a **minimum-USDT** check, which v1 doesn't have (it only checks shares of an enabled stock).
-  - **Preferred:** no contract change. The user's wallet sends the API's swap transaction directly; the router's own `minReceiveAmount` enforces the floor; and Receipts reconciles the result.
-  - **If an on-chain guard is wanted later:** add `ShareGuard v1.1` with `swapForMinOut(tokenIn, amountIn, tokenOut, minOut, …)` as a **separate deployment**. v1 stays untouched for buys.
-- **Rewards → Stocks:** the claim is the DeFi API's own transaction, signed by the user; the buy goes through the deployed ShareGuard. No new contract in the manual version.
+**Rules every module follows**
 
-### 3.3 Evidence store
-SQLite (blueprint §14), tables `intents`, `quotes`, `simulations`, `transactions`, `observations` (multiplier and price readings with IDs), `receipts`. The Ondo baseline (`data/ondo-multiplier-baseline.json`) moves here as `observations`.
+1. **Reads snapshots, never the network, on the hot path.** Only the collector (and the trade plan, which must quote live) calls Binance or RPC.
+2. **Every source has a fallback and every fallback warns.** `onWarn` / integrity-log style: a missing fact carries its reason; nothing fails silently (CLAUDE.md).
+3. **Staleness is explicit.** `latest(kind, key, { maxAgeMs })` returns `{ data, observedAt, ageMs, stale, source }`. Stale data is shown with its age, never as live.
+4. **Own process, own health row.** Each module's worker loop runs as its own process (`pnpm worker flow`, `pnpm worker guardian` …) and writes `module_health(module, ok, lastRunAt, lastError)`. A crash restarts that loop only.
+5. **Own UI boundary.** Each card is wrapped in `<ModuleBoundary module="flow">`: React error boundary + health check + flag check. A failing module renders one degraded card ("Flow is catching up, last update 4 min ago"), never a broken page.
+6. **Feature flag, default off.** `FEATURE_<MODULE>` in `packages/config/src/flags.ts` (created once in WO-00 for every module, so no later PR touches it). A flag turns on only after the module's exit checks pass and both reviews approve.
+7. **Pure core, thin shell.** Business logic lives in `packages/mod-<name>` as pure functions over typed inputs, tested against recorded fixtures. Web, bot, worker and MCP only wire it.
+8. **No new dependencies** without orchestrator approval (lockfile conflicts across parallel branches). WO-00 adds the expected ones up front.
 
----
+**Data sources confirmed on 2026-10-03** (full responses in the probe files):
 
-## 4. Module A: Receipts (Trace)
-
-**Job:** answer *"Did I receive what Tally said I'd receive?"* for every guarded operation, with evidence.
-
-**Captured at each step of the trade plan** (blueprint §7.6), in `packages/receipts`:
-
-| Stage | What's stored | Source |
-|---|---|---|
-| Intent | asset address + issuer, spend token and amount, min shares/out, tolerance, approvedAt | the confirm sheet |
-| Quote | quoteId, expected out, route text, observedAt, expiresAt | Trading API |
-| Simulation | predicted balance changes, gas limit sent | **Transaction API `POST /pre-transaction/simulate`** (works, F10) + `eth_call` at the exact limit |
-| Conversion | multiplier value, source (on-chain `uiMultiplier` / feed / API), observationId, observedAt | engine |
-| Realized | txHash, block, status, **ShareGuard `Guarded` event** (tokensOut, shares, multiplier used on-chain), ERC-20 `Transfer` logs **from this tx only** | BSC receipt |
-
-**Reconciliation** is deterministic, never AI-generated:
-
-| Status | When |
-|---|---|
-| `RECONCILED` | realized within 0.01% of simulation, same asset |
-| `RECONCILED_WITH_DIFFERENCE` | realized ≠ simulation, but ≥ the signed minimum; show the difference without guessing a cause |
-| `PENDING` | no receipt yet (keep the hash; RPC failover) |
-| `FAILED` | reverted (decode `InsufficientShares`, `TokenPaused`, `FailedInnerCall`, …) |
-| `UNRECONCILED` | wrong asset received, or no transfer evidence explains the amount |
-
-**Rules:**
-- **Raw token units are authoritative.** Shares are derived and shown with *"ratio 1.000778, observed 14:23:11 UTC, on-chain"*.
-- **A receipt never changes when the multiplier changes later**, because it stores its observationId.
-- The on-chain `Guarded` event is the primary realized evidence; Transfer logs cross-check it.
-
-**UI** (DESIGN.md glass card): a stage ladder **Quoted → Simulated → Received**, a "Why different?" disclosure, the conversion provenance line, and an evidence drawer (tx, block, observation IDs). Badge: **✓ Reconciled** (or amber "Reconciled, 0.51% below quote").
-
-**Agents:** MCP tool `get_receipt(txHash)` returns the structured result. The Wallet Skill reports *"confirmed and reconciled: received 0.025957 NVDAB = 0.025977 shares, 0.51% below quote, above your minimum"* instead of "done".
-
-**Real test vectors already on record** (F6):
-- the NVDAB live buy (realized −0.51% vs quote → `RECONCILED_WITH_DIFFERENCE`);
-- the NVDAon live buy (+0.01% → `RECONCILED`);
-- the out-of-gas NVDAon revert (→ `FAILED`, `FailedInnerCall`).
-
-**Required edge tests** (from Trace): wrong decimals, a later multiplier change (receipt must not move), and missing transfer evidence (→ `UNRECONCILED`).
-
-**Not in scope:** tax/accounting, dividend tracking, legal analysis, an on-chain receipt registry.
-
----
-
-## 5. Module B: Sell and Switch issuer (Migrate Shares)
-
-### 5.1 Sell
-**Flow:** Portfolio row → Sell → amount in shares or $ → quote stock → USDT (with `userWalletAddress = user`) → simulate → user signs the API transaction directly → Receipt.
-
-**Guards:**
-- the router's `minReceiveAmount` from the user's tolerance;
-- Receipts checks realized USDT ≥ min.
-
-**Limits:**
-- the minimum order ($5, so 6 USDT-equivalent);
-- Ondo trading status (pre-market, regular, closed);
-- the RFQ path stays P2.
-
-### 5.2 Switch issuer
-**What the user sees** (Portfolio → Switch issuer):
-```
-From   NVDA via Ondo     0.026093 tokens = 0.026137 shares
-To     NVDA via bStock   ≈ 0.026110 shares  (cost ≈ 0.10%, fee ≈ $0.03)
-At least 0.025849 shares or nothing happens.   ✓ Assured
-```
-
-**Execution, in order of preference:**
-1. **One route, one transaction (preferred).** Quote `from = source stock, to = destination stock`, with the route built for **ShareGuard**. We already know a Uniswap v4 NVDAB/NVDAon pool exists (F4). Call the deployed `swapForShares(tokenIn = source, stock = destination, minShares = destination share floor, …)`. It's atomic: either both sides happen or neither, and the floor is in **shares**, stronger than the token floor the source idea proposed.
-2. **Two legs** (source → USDT → destination) only if no direct route exists. A single atomic transaction then needs a contract that runs both legs (`ShareGuard v1.1 switch()`, separate deployment) or an EIP-7702 batch. **If neither is available, don't ship Switch** rather than present two separate transactions as atomic (the source idea's own rule).
-
-**Product rules:**
-- Show the facts: shares in, shares out, cost %, fee, each issuer's integrity grade and reasons.
-- **No automatic "switch now" recommendations.** The user decides, and the copy states that the two issuers' tokens are different products.
-- **xStocks as a source:** the BSC market has about $0 volume (F1), so Switch will usually fail to quote. Say so plainly ("No market to exit this token on BNB Chain") instead of failing silently.
-
-**Feed assets:** switching *into* Ondo uses `swapForSharesWithFeed` with a fresh signed multiplier (M3's signer service).
-
----
-
-## 6. Module C: Rewards → Stocks (Compound Yield), manual version
-
-**Job:** turn **realized** DeFi rewards into a stock, never principal.
-
-**What Binance's DeFi tooling gives us** (Agentic Wallet `defi.md`):
-- positions expose `tokenList.reward[]` (claimable);
-- claims are typed: `REWARD_PROTOCOL`, `REWARD_INVESTMENT`, `LP_FEE`, `REDEMPTION`;
-- `defi preview` returns balance changes before signing.
-
-**Flow** (two signatures, no automation, no custody):
-1. **Read:** DeFi Data shows the supported position and its claimable rewards (only one allow-listed protocol and investment ID in v1).
-2. **Claim:** DeFi Transaction builds the claim.
-   - **Allowed claim types:** `REWARD_PROTOCOL`, `REWARD_INVESTMENT`, `LP_FEE`. **`REDEMPTION` is hard-blocked** (it returns principal).
-   - Before signing, simulate (Transaction API) and require that the supply/position amounts are **unchanged** and only reward tokens increase. Otherwise refuse.
-3. **Buy:** the budget is the **reward amount received in the claim transaction's own Transfer logs** (Receipts decoding), never the wallet balance. Then a normal guarded buy of the chosen stock with that budget.
-4. **Receipt** links both transactions: "Claimed 12.4 CAKE → bought 0.0261 NVDA shares; position unchanged at 100 units".
-
-**Economic filter:** show *fee ÷ reward value*; disable "Convert" when that's above 2% or the reward is below the **$6 minimum**.
-
-**Why it's P2:**
-- **Money and time:** a demo needs about $6+ of *claimable* rewards. At 20% APR that's roughly $3,000 deposited for 4 days, or a high-fee LP position.
-- **Unknowns:** the DeFi REST paths aren't verified yet (we've only seen the `baw` CLI). The reward token also needs a route to the stock (CAKE/XVS → USDT → stock should exist; to be verified).
-
-**Automation** (rewards → stocks on a schedule) needs delegated, limited authority (session keys or 7702 with a policy contract), plus a keeper and an isolated receiver. That's post-hackathon. Do not ship a simulated or fake "auto-harvest".
-
----
-
-## 7. Viability gates (run before building each module)
-
-| Gate | Module | How | Pass if |
+| Need | Primary | Fallback | Notes |
 |---|---|---|---|
-| **V-A** | Receipts | Reconcile the three recorded live transactions (F6) offline from their BscScan receipts + stored quotes | Statuses come out `RECONCILED_WITH_DIFFERENCE`, `RECONCILED`, `FAILED` with correct numbers; the three edge tests pass |
-| **V-B1** | Switch | On the Seoul EC2: `cd ~/tally/spike && python3 ../research/module_viability.py --guard 0x28F6F19bffbF25E36452c78d12090F0bC922970a`, in pre-market **and** regular hours | Direct stock → stock quotes return `SWAP` for NVDA and AAPL in both directions, cost < 0.5% at $7 |
-| **V-B2** | Sell | Same script (sell rows) | Stock → USDT returns `SWAP` for bStock and Ondo; USDT per share within 0.3% of the reference |
-| **V-B3** | Switch | Fork test (new test J): impersonate a real NVDAB holder, replay the captured switch calldata through the **deployed** ShareGuard bytecode | Shares measured in NVDAon ≥ floor; source fully spent or refunded; test K (floor too high) reverts atomically |
-| **V-B4** | Switch, Sell | One live $6 switch and one live $6 sell from the burner | Both reconcile in Receipts |
-| **V-C1** | Rewards | `baw defi position` on the team's agent wallet; `baw defi investment-list --investType Earn --binanceChainId 56` | A BSC position with non-empty `tokenList.reward[]` is reachable; the claim type is a REWARD_* or LP_FEE |
-| **V-C2** | Rewards | `baw defi preview --action CLAIM …`, then the Transaction API simulate | The supply amount is unchanged, only the reward balance rises |
-| **V-C3** | Rewards | Trading API quote reward token → stock | A route exists at ≥ $6 |
-
-If V-B1 fails (no direct route), Switch drops to "Sell then Buy" **shown honestly as two steps**, or is cut. If any V-C gate fails, Rewards → Stocks is cut and documented as future work.
+| Trades per token | `GET /market/trades` (cursor, 100/page) | NodeReal `eth_getLogs` Transfer (10,000 blocks ≈ 75 min per call, 3 s) | Public RPC refuses `eth_getLogs` at any range; QuickNode returns 413 |
+| Holders, top traders | `GET /market/token/holder`, `/token/top-trader` | — (show "unavailable", reason) | Includes `fundingSourceLabel` (e.g. CEX wallet) |
+| Candles | `GET /market/candles` (`bar` lower-case: `1h`, `1d`) | — | NVDAB 114 days, NVDAon 284 days of 1d history |
+| Prices | `GET /market/rwa/price?tokenContractAddresses=a,b` (batch) | public RWA dynamic | `POST /market/price` and `/price-info` return 50000 for stock tokens |
+| Status / session | `rwa/tokens` + `rwa/underlying-market` `statusInfo` | — | Ondo only. **bStock `marketStatus` is always `null`** → pause from on-chain pause manager (as ShareGuard does) |
+| Wallet P&L | `portfolio/overview` (`timeFrame` 1–4), `recent-pnl`, `token/latest-pnl`, `dex-history` | Receipts + logs | Token units; Tally converts to shares |
+| DeFi | `POST /defi/data/investment/list` (`investType` required), `position/list` (`addresses[]`) | — | 58 Earn products on BSC; NVDAB has a Venus market and PancakeSwap V3 pools |
+| Leaderboard / tracker | `leaderboard/list` (`timeFrame`, `sortBy`), `address-tracker/trades` (`trackerType` 1/2/3) | — | Mostly memecoin wallets; filter by our registry |
 
 ---
 
-## 8. No-regression guardrails
-1. **Additive only.** No change to the deployed ShareGuard or to the existing buy path. New contracts, if any, are separate deployments (`v1.1`).
-2. **Feature flags** (`FEATURE_RECEIPTS`, `FEATURE_SELL`, `FEATURE_SWITCH`, `FEATURE_REWARDS`) in `packages/config`, default off. Each turns on only after its gate passes.
-3. **Every existing test stays green** (unit, fuzz, fork A–I, Playwright at 375/768/1280) before and after each module. New fork tests J and K for Switch.
-4. **Same pipeline:** every module goes through plan → simulate at the exact gas limit → sign → reconcile. No module gets its own shortcut.
-5. **Same region gate and minimums** (6 USDT, Ondo RFQ handling) apply to Sell, Switch and Rewards.
+## 4. Modules
+
+Each section: job · data · how it fails safely · exit checks. Work orders carry the full task lists.
+
+### 4.0 Foundation (WO-00)
+
+`packages/modkit`: `SnapshotStore` (node:sqlite), `ModuleHealth`, `flags`, `withFallback(primary, fallback, onWarn)`, `stale()` helpers, shared types. `apps/worker`: collector jobs + per-module loop runner. `apps/web`: `<ModuleBoundary>`, `/api/modules/health`, nav entries behind flags. Also: map Ondo's undocumented `marketStatus: "offhours"` in `packages/core/src/status.ts` (observed 2026-10-03; today it falls to `unknown`).
+
+Exit: a module that throws on every run shows one degraded card while the rest of the page works (Playwright test); killing one worker process leaves the others' `module_health` fresh; all existing tests green.
+
+### 4.1 Receipts + Execution quality (WO-02)
+
+*Carried over from v1 §4 (Receipts / "Trace").* Job: *"Did I receive what Tally said I'd receive?"* for every guarded operation, with evidence.
+
+Captured per stage in `packages/mod-receipts`: intent (asset, issuer, spend, min shares, tolerance, approvedAt) → quote (quoteId, expected out, route, observedAt, expiresAt) → simulation (`POST /pre-transaction/simulate` + `eth_call` at the exact limit) → conversion (multiplier value, source, observationId, observedAt) → realized (txHash, block, status, ShareGuard `Guarded` event, Transfer logs of this tx only).
+
+Reconciliation is deterministic: `RECONCILED` (within 0.01% of simulation) · `RECONCILED_WITH_DIFFERENCE` (≠ simulation, ≥ signed minimum) · `PENDING` · `FAILED` (decode `InsufficientShares`, `TokenPaused`, `FailedInnerCall` …) · `UNRECONCILED` (wrong asset or unexplained amount). Raw token units are authoritative; shares are derived and labelled with their observation. A receipt never changes when the multiplier changes later.
+
+**Execution quality report (new, Rule 605 style)**: a public `/quality` page aggregating receipts: fills, fill rate, median and p90 difference vs quote, vs simulation and vs the US reference price per share, by issuer and by route length. Pure aggregation over receipts; shows "not enough fills yet (n < 5)" honestly.
+
+Test vectors on record (F6): NVDAB buy −0.51% vs quote → `RECONCILED_WITH_DIFFERENCE`; NVDAon +0.01% → `RECONCILED`; out-of-gas NVDAon → `FAILED`. Edge tests: wrong decimals, later multiplier change, missing transfer evidence.
+
+Fails safely: if RPC is down, receipts stay `PENDING` with the hash; the quality page excludes pending ones and says how many.
+
+### 4.2 Statement (WO-03)
+
+Broker-style statement: holdings **in shares** across issuers, average cost per share, realized P&L, trade history; monthly export (PDF/CSV). Sources: `portfolio/token/latest-pnl`, `recent-pnl`, `dex-history`, `overview` (needs `timeFrame`), plus Tally's own receipts. All API figures are per token and are converted with the multiplier observed at each trade (from receipts) or flagged "converted at today's ratio" when no observation exists.
+
+Fails safely: if the API P&L disagrees with receipts by > 1%, show receipts and a "differs from Binance's figure" note; if the API is down, show receipts only.
+
+### 4.3 Flow in the Radar (WO-04)
+
+The Radar page (Trap Shield, blueprint M4) gains a flow panel per ticker:
+
+- **Net flow in shares** by issuer (1h / 24h / 7d), buys vs sells, last real trade age.
+- **Cleaning** (mandatory, probes showed why): count only legs whose counterpart is USDT/USDC/USD1/USDon (the first NVDAB trade sampled was against a memecoin at `price 4778237`); recompute price from amounts; label **bots** (high turnover, near-zero holdings: the top NVDAB trader made $17k realized holding ~0); label **custody** (top holder with 48% of NVDAB, funded by a Binance CEX wallet) and exclude it from concentration stats.
+- **Holder concentration** (top-10 % excluding custody) and **whale prints** (single trades ≥ $10k).
+- **Feeds the integrity grade**: no real trade in N days or < $1,000 24h real volume = ghost (extends the M1 rule with cleaned volume).
+
+Fails safely: API down → NodeReal Transfer logs (classified with the same rules, marked "from chain logs"); both down → last snapshot with its age.
+
+### 4.4 Guardian alerts (WO-06)
+
+Watches what the user holds and tells them, in plain words, on Telegram and in a web feed. Facts only, never advice.
+
+| Rule | Input | Alert |
+|---|---|---|
+| Paused / halted | Ondo `statusInfo`; bStock on-chain pause manager | "NVDA via Ondo is paused: session transition. Your shares are unchanged." |
+| Share count changed | multiplier observations (Ondo bounds, bStock `uiMultiplier`) | "Your token count is the same; your shares rose 0.6% (dividend reinvested)." |
+| Integrity grade dropped | Radar snapshots | "TSLA via bStock dropped B → D: no real trade for 3 days." |
+| Ghost / no exit | Flow | "There's no market to sell this token on BNB Chain right now." |
+| Price threshold (per share) | reference price | user-set level, regular session only |
+| Earnings | **external calendar** (the API's `tabId=3` is ignored) | cut if no reliable source by Wed |
+
+De-duplication and quiet hours; every alert links to the evidence (snapshot id). Telegram via `apps/bot` (grammY). Fails safely: Telegram down → web feed still updates; a rule that errors is skipped and logged, others run.
+
+### 4.5 Sell + Switch issuer (WO-07)
+
+*Carried over from v1 §5 unchanged.* Sell: Portfolio row → quote stock → USDT (`userWalletAddress` = user) → simulate → user signs the API transaction directly; the router's `minReceiveAmount` enforces the floor; Receipts checks it. Switch: one route through the **deployed** ShareGuard (`tokenIn` = source stock, `stock` = destination, floor in destination shares), atomic; two-leg switches only via a separate v1.1 contract or 7702 batch, otherwise not shipped. No "switch now" recommendations; xStocks as source → "No market to exit this token on BNB Chain". Gates V-B1…V-B4 (`docs/archive/MODULES-v1.md` §7) must pass first; fork tests J (switch succeeds) and K (floor too high reverts).
+
+### 4.6 Guardian autopilot (WO-08)
+
+Opt-in, Agentic Wallet users only. Allowed actions: sell to USDT, or switch issuer, when a rule the user armed fires (pause lasting > X h, grade ≤ D, per-share stop level in regular session). Hard limits: per-trade cap, daily cap, allow-listed tokens, kill switch, every decision written to an append-only decision log (inputs, rule, action, receipt id). Execution through `baw` → ShareGuard (switch) or the API transaction (sell), then Receipts. Fails safely: any check fails, `baw` unavailable, or a cap reached → downgrade to an alert; never retries a failed trade automatically.
+
+Pre-check (orchestrator + user, Sun): does `baw` support contract calls with spend limits / session policies on BSC? If not, autopilot = "one-tap approve from the alert", and this is stated plainly.
+
+### 4.7 Pies (WO-09)
+
+M1-Finance-style baskets that stay in the user's own wallet (no pooled vault: RFQ signing and fund-law reasons). Templates are **fixed lists in the repo** (`tabId` sector filters are ignored by the API): Mag 7, AI Chips, a "Berkshire 13F" pie (top holdings from the latest 13F, mapped to available tokens, with the filing date shown). Weights are **in dollars of shares**, computed with each issuer's multiplier. Rebalance when drift > threshold: sells first (Sell path), then guarded buys; each leg a receipt; minimum order 6 USDT per leg enforced (small pies rebalance less often; the UI says so).
+
+Fails safely: a leg that fails leaves the pie "partially rebalanced" with the exact state shown; no retries without the user.
+
+### 4.8 Rewards → Stocks + idle-cash yield (WO-10)
+
+*Carried over from v1 §6 (manual version only).* Claim realized rewards (`REWARD_PROTOCOL`, `REWARD_INVESTMENT`, `LP_FEE`; `REDEMPTION` hard-blocked), simulate and require principal unchanged, buy the stock with exactly the claimed amount (from the claim tx's Transfer logs). New: the DeFi API lists 8 USDT Earn products on BSC (Plume 10.82%, Lista, Venus …) and NVDAB pools (PancakeSwap V3 NVDAB-USDT, 155% APR on $374k at probe time), so a demo is fundable. Gates V-C1…V-C3 (`docs/archive/MODULES-v1.md` §7). Automation stays post-hackathon.
 
 ---
 
-## 9. Schedule against the 11 Oct 12:00 UTC lock
+## 5. Viability gates still open
 
-| When | Work |
-|---|---|
-| Fri 2 – Sat 3 Oct | Finish M3. **Receipts (A)** built into the trade flow (it reuses M3's plan/simulate code). Run gate V-B1/V-B2 on the EC2. |
-| Sun 4 – Mon 5 Oct | **Sell + Switch (B)** if V-B passes. Fork tests J/K, then live $6 switch and sell. |
-| Tue 6 – Wed 7 Oct | M5 agent layer (Skill + MCP, now including `get_receipt` and switch/sell intents). Upstream PR. |
-| Thu 8 Oct | Rewards → Stocks (C) **only if** V-C passed and real rewards ≥ $6 exist; otherwise Telegram v1 or polish. |
-| Fri 9 – Sat 10 Oct | Polish, README, demo video. Code freeze Sat 23:59 UTC. |
-| Sun 11 Oct | Submit before 12:00 UTC. |
+| Gate | Module | Who / how | Pass if |
+|---|---|---|---|
+| V-B1, V-B2 | Sell, Switch | user, `research/module_viability.py` on PC or EC2, pre-market **and** regular hours (Mon) | direct stock→stock and stock→USDT quotes return `SWAP`, cost < 0.5% at $7 |
+| V-B3 | Switch | WO-07 fork tests J, K | floor holds; too-high floor reverts atomically |
+| V-B4 | Sell, Switch | user, one live $6 each | both reconcile |
+| V-AW | Autopilot | user + orchestrator, `baw --help`, `baw` policy docs | spend caps or session policy exist on BSC |
+| V-C1…C3 | Rewards | user, `baw defi …` + DeFi API | claimable reward ≥ $6 reachable, principal unchanged in simulation, route reward → stock exists |
+| V-E | Guardian earnings rule | orchestrator | a free, reliable earnings-date source exists; else the rule is cut |
 
-**Demo additions:** the receipt ladder (Quoted → Simulated → Received) on the live NVDAB buy that came in 0.51% under quote; then a Switch from Ondo to bStock with its floor shown in shares, plus a deliberately failing switch (floor too high) that reverts and leaves the user's tokens untouched.
+---
+
+## 6. Raw notes for the Developer Experience Report
+
+The report is written by the user (AI-written reports are rejected). These are evidence pointers only; file and key names refer to the probe files above.
+
+- `rwa/tokens?tabId=…` ignores `tabId`: tabs 3, 4, 9, 11, 13 return the same 488 tokens (`P_tab_*`, `G_rwa_tokens_earnings`).
+- `POST /market/price` and `/market/price-info` return `50000 Internal server error` for every stock token tried (`F_price_*`, `F_price_info_*`), while `rwa/price` works.
+- `marketStatus: "offhours"` (Ondo, Saturday) is not in the documented enum (`G_underlying_market_NVDAon`).
+- bStock `statusInfo.marketStatus` is always `null`, `nextOpenTime` null (`G_underlying_market_NVDAB`, 92/92 in the 10-02 list).
+- bStock `protections.collateralReport.supported: true` with `url: null` (`G_underlying_profile_NVDAB`).
+- `trades[].price` is meaningless when the counterpart isn't a dollar stablecoin (NVDAB vs JARVIS: `4778237`) (`F_trades_NVDAB`).
+- `top-trader` AAPLB entry with `avgSellPrice 20742` for a ~$335 stock (`F_top_trader_AAPLB`).
+- `portfolio/overview` error says "timeFrame is required" when `walletAddress` was sent, then "walletAddress is required" when `address` was sent: the two errors arrive one at a time (`X_portfolio_overview*`).
+- `defi/data/investment/list` answers a generic `Parameter error` when `investType` is missing instead of naming it (`R_investment_list*`); `position/list` the same for `addresses`.
+- `transactions-by-address` returns `Parameter error` for every combination tried (`X_tx_by_address`).
+- The leaderboard and address tracker reveal required parameters one per call (`timeFrame` → `sortBy`).
+- Public BSC RPC (`bsc-dataseed`) refuses `eth_getLogs` at any range, 5 blocks included (`F_logs.providers.public_dataseed`).

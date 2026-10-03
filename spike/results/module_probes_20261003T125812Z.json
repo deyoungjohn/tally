@@ -1,0 +1,25 @@
+{
+ "_meta": {
+  "startedAt": "2026-10-03T12:58:03.237273+00:00",
+  "finishedAt": "2026-10-03T12:58:12.471995+00:00"
+ },
+ "F_logs": {
+  "providers": {
+   "public_dataseed": {
+    "head": 125488325,
+    "windowErrors": {
+     "10000": "{'code': -32005, 'message': 'limit exceeded'}",
+     "5000": "{'code': -32005, 'message': 'limit exceeded'}",
+     "2000": "{'code': -32005, 'message': 'limit exceeded'}",
+     "1000": "{'code': -32005, 'message': 'limit exceeded'}",
+     "500": "{'code': -32005, 'message': 'limit exceeded'}",
+     "100": "{'code': -32005, 'message': 'limit exceeded'}",
+     "50": "{'code': -32005, 'message': 'limit exceeded'}",
+     "20": "{'code': -32005, 'message': 'limit exceeded'}",
+     "10": "{'code': -32005, 'message': 'limit exceeded'}",
+     "5": "{'code': -32005, 'message': 'limit exceeded'}"
+    }
+   }
+  }
+ }
+}
