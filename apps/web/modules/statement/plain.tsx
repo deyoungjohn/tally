@@ -98,12 +98,11 @@ export function StatementPlain({ walletAddress }: { walletAddress?: string } = {
               <button
                 type="button"
                 onClick={() => {
-                  const csv = vm.exportActions.exportCsv();
-                  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+                  const blob = new Blob([vm.csv.content], { type: "text/csv;charset=utf-8;" });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement("a");
                   a.href = url;
-                  a.download = vm.exportActions.csvFilename;
+                  a.download = vm.csv.filename;
                   a.click();
                   URL.revokeObjectURL(url);
                 }}

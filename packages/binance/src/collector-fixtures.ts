@@ -59,6 +59,14 @@ export function createCollectorFixtureFetch(fallback: typeof fetch): typeof fetc
         addresses.some((a) => a.toLowerCase() === r.tokenContractAddress.toLowerCase()),
       );
       // Missing entries stay missing: the worker records a reason rather than fabricating prices.
+    } else if (path.endsWith("/market/portfolio/recent-pnl")) {
+      data = collectorRecording("X_recent_pnl").data;
+    } else if (path.endsWith("/market/portfolio/dex-history")) {
+      data = collectorRecording("X_dex_history").data;
+    } else if (path.endsWith("/market/portfolio/overview")) {
+      data = collectorRecording("X_portfolio_overview_tf").data;
+    } else if (path.endsWith("/market/portfolio/token/latest-pnl")) {
+      data = collectorRecording("X_token_pnl").data;
     } else return fallback(input, init);
     return new Response(JSON.stringify({ code: 0, msg: "fixture", data }), {
       headers: { "content-type": "application/json" },

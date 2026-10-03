@@ -1,18 +1,20 @@
-import { formatUnits, exportStatementCsv, type Issuer, type Statement } from "@tally/mod-statement";
+import {
+  formatUnits,
+  formatUsd,
+  exportStatementCsv,
+  type Issuer,
+  type Statement,
+  type HoldingRowActionMeta,
+} from "@tally/mod-statement";
 import { flags as getFlags, type ModuleName } from "@tally/config";
 import type { SnapshotStore } from "@tally/modkit";
 
 export type PortfolioTab = "holdings" | "activity" | "statement";
 
-export interface HoldingRowActionMeta {
-  token: string;
-  issuer: Issuer;
-  balanceTokens: string;
-  balanceShares: string;
-}
+export type { HoldingRowActionMeta };
 
 export interface IssuerHoldingVM {
-  issuer: Issuer;
+  issuer: Issuer | null;
   tokenSymbol: string;
   tokenContractAddress: string;
   balanceTokens: string;
@@ -54,7 +56,7 @@ export interface PortfolioVM {
 export interface StatementLineVM {
   date: string;
   ticker: string;
-  issuer: Issuer;
+  issuer: Issuer | null;
   type: "BUY" | "SELL";
   amountTokens: string;
   multiplier: string;
@@ -69,7 +71,8 @@ export interface StatementLineVM {
 export interface StatementVM {
   state: "ready" | "empty" | "error" | "degraded";
   walletAddress: string | null;
-  asOf: string;
+  asOf: string | null;
+  asOfReason?: string;
   lines: StatementLineVM[];
   totalValueUsd: string;
   totalCostBasisUsd: string;
@@ -80,9 +83,9 @@ export interface StatementVM {
   convertedAtTodaysRatio: boolean;
   convertedAtTodaysRatioNote?: string;
   notes: string[];
-  exportActions: {
-    exportCsv: () => string;
-    csvFilename: string;
+  csv: {
+    filename: string;
+    content: string;
   };
   stale: boolean;
   ageMs: number | null;
@@ -149,39 +152,54 @@ export function buildPortfolioVM(
   }
 
   const holdings: HeadlineHoldingVM[] = Object.values(stmt.holdingsByTicker).map((group) => {
-    const issuers: IssuerHoldingVM[] = group.issuers.map((h) => ({
-      issuer: h.issuer,
-      tokenSymbol: h.tokenSymbol,
-      tokenContractAddress: h.tokenContractAddress,
-      balanceTokens: formatUnits(h.balanceTokens, 18, 4),
-      multiplier: formatUnits(h.multiplier, 18, 4),
-      balanceShares: formatUnits(h.balanceShares, 18, 4),
-      convertedAtTodaysRatio: h.convertedAtTodaysRatio,
-      valueUsd: h.tokenBalanceUsd.toFixed(2),
-      pricePerShareUsd: h.pricePerShareUsd.toFixed(2),
-      rowActionsSlot: {
-        token: h.tokenContractAddress,
+    const issuers: IssuerHoldingVM[] = group.issuers.map((h) => {
+      const balanceSharesStr =
+        h.balanceShares !== null ? formatUnits(h.balanceShares, 18, 4) : "unavailable";
+      return {
         issuer: h.issuer,
+        tokenSymbol: h.tokenSymbol,
+        tokenContractAddress: h.tokenContractAddress,
         balanceTokens: formatUnits(h.balanceTokens, 18, 4),
-        balanceShares: formatUnits(h.balanceShares, 18, 4),
-      },
-    }));
+        multiplier: h.multiplier !== null ? formatUnits(h.multiplier, 18, 4) : "unavailable",
+        balanceShares: balanceSharesStr,
+        convertedAtTodaysRatio: h.convertedAtTodaysRatio,
+        valueUsd: formatUsd(h.tokenBalanceUsdE18),
+        pricePerShareUsd: h.pricePerShareUsdE18 ? formatUsd(h.pricePerShareUsdE18) : "-",
+        rowActionsSlot: {
+          token: h.tokenContractAddress,
+          issuer: h.issuer,
+          balanceTokens: formatUnits(h.balanceTokens, 18, 4),
+          balanceShares: h.balanceShares !== null ? balanceSharesStr : null,
+          ticker: h.ticker,
+        },
+      };
+    });
 
     const primary = group.issuers[0];
+    const totalSharesStr = formatUnits(group.totalShares, 18, 4);
     const rowActionsSlot: HoldingRowActionMeta = {
       token: primary?.tokenContractAddress ?? "",
-      issuer: primary?.issuer ?? "ondo",
+      issuer: primary?.issuer ?? null,
       balanceTokens: formatUnits(primary?.balanceTokens ?? 0n, 18, 4),
-      balanceShares: formatUnits(group.totalShares, 18, 4),
+      balanceShares: totalSharesStr,
+      ticker: group.ticker,
     };
+
+    let pnlPct = "0.00";
+    if (group.totalCostBasisUsdE18 > 0n) {
+      const basisNum = Number(formatUnits(group.totalCostBasisUsdE18, 18));
+      const pnlNum = Number(formatUnits(group.unrealizedPnlUsdE18, 18));
+      pnlPct = ((pnlNum / basisNum) * 100).toFixed(2);
+    }
 
     return {
       ticker: group.ticker,
-      totalShares: formatUnits(group.totalShares, 18, 4),
-      totalValueUsd: group.totalValueUsd.toFixed(2),
-      avgCostPerShareUsd: group.avgCostPerShareUsd.toFixed(2),
-      unrealizedPnlUsd: group.unrealizedPnlUsd.toFixed(2),
-      unrealizedPnlPercent: group.unrealizedPnlPercent.toFixed(2),
+      totalShares: totalSharesStr,
+      totalValueUsd: formatUsd(group.totalValueUsdE18),
+      avgCostPerShareUsd:
+        group.avgCostPerShareUsdE18 !== null ? formatUsd(group.avgCostPerShareUsdE18) : "-",
+      unrealizedPnlUsd: formatUsd(group.unrealizedPnlUsdE18),
+      unrealizedPnlPercent: pnlPct,
       issuers,
       rowActionsSlot,
     };
@@ -190,9 +208,9 @@ export function buildPortfolioVM(
   return {
     state: "ready",
     walletAddress,
-    totalValueUsd: stmt.totalValueUsd.toFixed(2),
-    totalRealizedPnlUsd: stmt.totalRealizedPnlUsd.toFixed(2),
-    totalUnrealizedPnlUsd: stmt.totalUnrealizedPnlUsd.toFixed(2),
+    totalValueUsd: formatUsd(stmt.totalValueUsdE18),
+    totalRealizedPnlUsd: formatUsd(stmt.totalRealizedPnlUsdE18),
+    totalUnrealizedPnlUsd: formatUsd(stmt.totalUnrealizedPnlUsdE18),
     holdings,
     availableTabs,
     activeTab: "holdings",
@@ -212,6 +230,7 @@ export function buildStatementVM(
     ageMs?: number | null;
     source?: string | null;
     error?: string | null;
+    asOf?: number | null;
   },
 ): StatementVM {
   const walletAddress = stmt?.walletAddress ?? opts?.walletAddress ?? null;
@@ -223,7 +242,8 @@ export function buildStatementVM(
     return {
       state: "error",
       walletAddress,
-      asOf: new Date().toISOString(),
+      asOf: null,
+      asOfReason: "Error loading statement",
       lines: [],
       totalValueUsd: "0.00",
       totalCostBasisUsd: "0.00",
@@ -232,9 +252,9 @@ export function buildStatementVM(
       differsFromApi: false,
       convertedAtTodaysRatio: false,
       notes: [],
-      exportActions: {
-        exportCsv: () => "",
-        csvFilename: "statement-error.csv",
+      csv: {
+        filename: "statement-error.csv",
+        content: "",
       },
       stale,
       ageMs,
@@ -244,10 +264,12 @@ export function buildStatementVM(
   }
 
   if (!stmt || (stmt.holdings.length === 0 && stmt.trades.length === 0)) {
+    const asOfMs = opts?.asOf ?? null;
     return {
       state: "empty",
       walletAddress,
-      asOf: new Date().toISOString(),
+      asOf: asOfMs ? new Date(asOfMs).toISOString() : null,
+      asOfReason: asOfMs ? undefined : "Statement has no observations yet.",
       lines: [],
       totalValueUsd: "0.00",
       totalCostBasisUsd: "0.00",
@@ -256,9 +278,9 @@ export function buildStatementVM(
       differsFromApi: false,
       convertedAtTodaysRatio: false,
       notes: [],
-      exportActions: {
-        exportCsv: () => "",
-        csvFilename: "statement-empty.csv",
+      csv: {
+        filename: "statement-empty.csv",
+        content: "",
       },
       stale,
       ageMs,
@@ -274,11 +296,11 @@ export function buildStatementVM(
     issuer: t.issuer,
     type: t.type,
     amountTokens: formatUnits(t.amountTokens, 18, 4),
-    multiplier: formatUnits(t.multiplier, 18, 4),
-    amountShares: formatUnits(t.amountShares, 18, 4),
-    pricePerShareUsd: t.pricePerShareUsd.toFixed(2),
-    valueUsd: t.valueUsd.toFixed(2),
-    realizedPnlUsd: t.realizedPnlUsd !== undefined ? t.realizedPnlUsd.toFixed(2) : undefined,
+    multiplier: t.multiplier !== null ? formatUnits(t.multiplier, 18, 4) : "unavailable",
+    amountShares: t.amountShares !== null ? formatUnits(t.amountShares, 18, 4) : "unavailable",
+    pricePerShareUsd: t.pricePerShareUsdE18 ? formatUsd(t.pricePerShareUsdE18) : "-",
+    valueUsd: formatUsd(t.valueUsdE18),
+    realizedPnlUsd: t.realizedPnlUsdE18 !== undefined ? formatUsd(t.realizedPnlUsdE18) : undefined,
     convertedAtTodaysRatio: t.convertedAtTodaysRatio,
     txHash: t.txHash,
   }));
@@ -289,26 +311,27 @@ export function buildStatementVM(
     : undefined;
 
   const addrPrefix = (walletAddress ?? "wallet").slice(0, 8);
-  const dateStr = new Date(stmt.asOf).toISOString().slice(0, 10);
+  const dateStr = stmt.asOf ? new Date(stmt.asOf).toISOString().slice(0, 10) : "undated";
   const csvFilename = `tally-statement-${addrPrefix}-${dateStr}.csv`;
 
   return {
     state: stmt.source === "receipts" ? "degraded" : "ready",
     walletAddress,
-    asOf: new Date(stmt.asOf).toISOString(),
+    asOf: stmt.asOf ? new Date(stmt.asOf).toISOString() : null,
+    asOfReason: stmt.asOfReason,
     lines,
-    totalValueUsd: stmt.totalValueUsd.toFixed(2),
-    totalCostBasisUsd: stmt.totalCostBasisUsd.toFixed(2),
-    totalRealizedPnlUsd: stmt.totalRealizedPnlUsd.toFixed(2),
-    totalUnrealizedPnlUsd: stmt.totalUnrealizedPnlUsd.toFixed(2),
+    totalValueUsd: formatUsd(stmt.totalValueUsdE18),
+    totalCostBasisUsd: formatUsd(stmt.totalCostBasisUsdE18),
+    totalRealizedPnlUsd: formatUsd(stmt.totalRealizedPnlUsdE18),
+    totalUnrealizedPnlUsd: formatUsd(stmt.totalUnrealizedPnlUsdE18),
     differsFromApi: stmt.differsFromApi,
     differsFromApiNote: stmt.differsFromApiNote,
     convertedAtTodaysRatio,
     convertedAtTodaysRatioNote,
     notes: stmt.notes,
-    exportActions: {
-      exportCsv: () => exportStatementCsv(stmt),
-      csvFilename,
+    csv: {
+      filename: csvFilename,
+      content: exportStatementCsv(stmt),
     },
     stale,
     ageMs,
@@ -366,6 +389,7 @@ export async function loadStatement(opts?: {
         stale: snap.stale,
         ageMs: snap.ageMs,
         source: snap.source,
+        asOf: snap.observedAt,
       });
     }
   }

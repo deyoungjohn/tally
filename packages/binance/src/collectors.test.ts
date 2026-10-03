@@ -77,4 +77,31 @@ describe("additive collector endpoints", () => {
     expect(await api(transient).prices(addresses)).toEqual(recorded);
     expect(calls).toBe(2);
   });
+  it("portfolio endpoints parse from recorded probe fixtures through the signed client", async () => {
+    const wallet = "0x2Bf7EdF53bc6BE6FF98F149387F3818cE28d2930";
+    const token = "0x02fca66c1d1afb4e2a7884261eb00f63598a7436";
+    const client = api();
+
+    // 1. recentPnl
+    const recent = await client.recentPnl(wallet);
+    expect(recent.pnlList.length).toBeGreaterThan(0);
+    expect(recent.pnlList[0]?.tokenContractAddress).toMatch(/^0x[0-9a-fA-F]{40}$/);
+
+    // 2. dexHistory
+    const history = await client.dexHistory(wallet);
+    expect(history.transactionList.length).toBeGreaterThan(0);
+    expect(history.transactionList[0]?.txHash).toMatch(/^0x/);
+
+    // 3. portfolioOverview
+    const overview = await client.portfolioOverview(wallet);
+    expect(overview.realizedPnlUsd).toBeDefined();
+
+    // 4. tokenLatestPnl
+    const tokenPnl = await client.tokenLatestPnl(wallet, token);
+    expect(tokenPnl.realizedPnlUsd).toBeDefined();
+    expect(tokenPnl.buyAvgPrice).toBeDefined();
+
+    // Rejects invalid wallet address before requesting
+    expect(() => client.recentPnl("invalid")).toThrow();
+  });
 });

@@ -32,7 +32,10 @@ import {
 
 export interface Engine {
   /** Scheduled read-only calls. Existing trade/quote ports are unchanged. */
-  collectors: Pick<BinanceCollectors, "registry" | "prices">;
+  collectors: Pick<
+    BinanceCollectors,
+    "registry" | "prices" | "portfolioOverview" | "recentPnl" | "tokenLatestPnl" | "dexHistory"
+  >;
   quote(input: QuoteInput): Promise<ConsolidatedQuote>;
   /** Every token of a ticker with its facts, bounds and the full integrity check log, and no quote (`tally facts`). */
   facts(ticker: string): Promise<TokenInspection[]>;

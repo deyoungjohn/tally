@@ -9,27 +9,57 @@ export interface MultiplierObservation {
 }
 
 export interface ToSharesResult {
-  amountShares: bigint;
-  multiplier: bigint;
+  amountShares: bigint | null;
+  multiplier: bigint | null;
   convertedAtTodaysRatio: boolean;
+  sharesUnavailableReason?: string;
+}
+
+export interface TokenRegistryInfo {
+  ticker: string;
+  issuer: Issuer;
+  symbol?: string;
+  decimals?: number;
+  tokenToShareRatio?: bigint;
+}
+
+export type TokenRegistryLookup = (address: string) => TokenRegistryInfo | undefined;
+
+export interface MultiplierEntry {
+  multiplier: bigint;
+  isTodaysRatio?: boolean;
+  source?: string;
+}
+
+export type MultiplierMap = Record<string, MultiplierEntry | bigint>;
+
+export interface HoldingRowActionMeta {
+  token: string;
+  issuer: Issuer | null;
+  balanceTokens: string;
+  balanceShares: string | null;
+  ticker: string;
 }
 
 export interface Holding {
   tokenContractAddress: string;
   tokenSymbol: string;
   ticker: string;
-  issuer: Issuer;
+  issuer: Issuer | null;
+  isRecognized: boolean;
+  unrecognizedReason?: string;
   balanceTokens: bigint;
-  multiplier: bigint;
-  balanceShares: bigint;
+  multiplier: bigint | null;
+  balanceShares: bigint | null;
+  sharesUnavailableReason?: string;
   convertedAtTodaysRatio: boolean;
-  tokenBalanceUsd: number;
-  pricePerShareUsd: number;
-  costBasisUsd: number;
-  avgCostPerShareUsd: number;
-  unrealizedPnlUsd: number;
-  unrealizedPnlPercent: number;
+  tokenBalanceUsdE18: bigint;
+  costBasisUsdE18: bigint;
+  avgCostPerShareUsdE18: bigint | null;
+  pricePerShareUsdE18: bigint | null;
+  unrealizedPnlUsdE18: bigint;
   source: string;
+  rowActionsSlot?: HoldingRowActionMeta;
 }
 
 export interface Trade {
@@ -39,30 +69,33 @@ export interface Trade {
   tokenContractAddress: string;
   tokenSymbol: string;
   ticker: string;
-  issuer: Issuer;
+  issuer: Issuer | null;
+  isRecognized: boolean;
+  unrecognizedReason?: string;
   amountTokens: bigint;
-  multiplier: bigint;
-  amountShares: bigint;
+  multiplier: bigint | null;
+  amountShares: bigint | null;
+  sharesUnavailableReason?: string;
   convertedAtTodaysRatio: boolean;
-  pricePerTokenUsd: number;
-  pricePerShareUsd: number;
-  valueUsd: number;
-  realizedPnlUsd?: number;
+  pricePerTokenUsdE18: bigint;
+  pricePerShareUsdE18: bigint | null;
+  valueUsdE18: bigint;
+  realizedPnlUsdE18?: bigint;
 }
 
 export interface PnlLine {
   tokenContractAddress: string;
   tokenSymbol: string;
   ticker: string;
-  issuer: Issuer;
-  realizedPnlUsd: number;
-  realizedPnlPercent: number;
-  buyVolumeUsd: number;
-  sellVolumeUsd: number;
+  issuer: Issuer | null;
+  isRecognized: boolean;
+  realizedPnlUsdE18: bigint;
+  buyVolumeUsdE18: bigint;
+  sellVolumeUsdE18: bigint;
   buyTxCount: number;
   sellTxCount: number;
   lastActiveTimestamp: number;
-  holdingShares?: bigint;
+  holdingShares?: bigint | null;
 }
 
 export interface StatementReceipt {
@@ -76,7 +109,7 @@ export interface StatementReceipt {
   tokens: bigint;
   shares: bigint;
   multiplier: bigint;
-  usdSpentOrReceived: number;
+  usdSpentOrReceivedE18: bigint;
   executedAt: number;
   status?: "RECONCILED" | "RECONCILED_WITH_DIFFERENCE" | "PENDING" | "FAILED" | "UNRECONCILED";
 }
@@ -84,25 +117,27 @@ export interface StatementReceipt {
 export interface TickerHoldingsGroup {
   ticker: string;
   totalShares: bigint;
-  totalValueUsd: number;
-  totalCostBasisUsd: number;
-  avgCostPerShareUsd: number;
-  unrealizedPnlUsd: number;
-  unrealizedPnlPercent: number;
+  totalValueUsdE18: bigint;
+  totalCostBasisUsdE18: bigint;
+  avgCostPerShareUsdE18: bigint | null;
+  unrealizedPnlUsdE18: bigint;
   issuers: Holding[];
+  hasUnavailableShares: boolean;
 }
 
 export interface Statement {
   walletAddress: string;
-  asOf: number;
+  asOf: number | null;
+  asOfReason?: string;
   holdingsByTicker: Record<string, TickerHoldingsGroup>;
   holdings: Holding[];
+  unrecognizedHoldings: Holding[];
   trades: Trade[];
   pnlLines: PnlLine[];
-  totalValueUsd: number;
-  totalCostBasisUsd: number;
-  totalRealizedPnlUsd: number;
-  totalUnrealizedPnlUsd: number;
+  totalValueUsdE18: bigint;
+  totalCostBasisUsdE18: bigint;
+  totalRealizedPnlUsdE18: bigint;
+  totalUnrealizedPnlUsdE18: bigint;
   differsFromApi: boolean;
   differsFromApiNote?: string;
   convertedAtTodaysRatioCount: number;

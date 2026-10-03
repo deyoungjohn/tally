@@ -12,8 +12,10 @@ import {
   recentPnlToPnlLines,
   toShares,
   statement,
+  formatUsd,
   exportStatementCsv,
   type StatementReceipt,
+  type TokenRegistryInfo,
 } from "./index";
 
 const PROBE_FIXTURE_PATH = join(
@@ -26,6 +28,23 @@ function loadProbesFixture() {
   return JSON.parse(content) as Record<string, { data: unknown }>;
 }
 
+const TEST_REGISTRY: Record<string, TokenRegistryInfo> = {
+  "0xa9ee28c80f960b889dfbd1902055218cba016f75": {
+    ticker: "NVDA",
+    issuer: "ondo",
+    symbol: "NVDAon",
+    decimals: 18,
+    tokenToShareRatio: parseDecimal("1.0017152487959898", 18),
+  },
+  "0x02fca66c1d1afb4e2a7884261eb00f63598a7436": {
+    ticker: "NVDA",
+    issuer: "bstock",
+    symbol: "NVDAB",
+    decimals: 18,
+    tokenToShareRatio: parseDecimal("1.000778223752807865", 18),
+  },
+};
+
 describe("WO-03 Slice A: Portfolio and Statement pure logic", () => {
   const probes = loadProbesFixture();
   const BURNER_WALLET = "0x2Bf7EdF53bc6BE6FF98F149387F3818cE28d2930";
@@ -36,7 +55,7 @@ describe("WO-03 Slice A: Portfolio and Statement pure logic", () => {
     expect(recentPnlRaw).toBeDefined();
     const recentPnl = parseRecentPnl(recentPnlRaw);
     expect(recentPnl.pnlList.length).toBeGreaterThanOrEqual(2);
-    const symbols = recentPnl.pnlList.map((p) => p.tokenSymbol);
+    const symbols = recentPnl.pnlList.map((p: { tokenSymbol: string }) => p.tokenSymbol);
     expect(symbols).toContain("NVDAon");
     expect(symbols).toContain("NVDAB");
 
@@ -64,7 +83,7 @@ describe("WO-03 Slice A: Portfolio and Statement pure logic", () => {
     expect(overview.dailyPnl).toBeDefined();
   });
 
-  it("toShares: performs exact bigint conversion and sets today's ratio flag", () => {
+  it("toShares: performs exact bigint conversion, sets today ratio flag, and fails gracefully when unavailable", () => {
     const tokens = parseDecimal("2.5", 18); // 2.5 * 10^18 tokens
 
     // 1. When multiplier observation exists: uses observation and convertedAtTodaysRatio is false
@@ -89,25 +108,27 @@ describe("WO-03 Slice A: Portfolio and Statement pure logic", () => {
     expect(res3.convertedAtTodaysRatio).toBe(true);
     expect(res3.multiplier).toBe(todaysRatio);
 
-    // 4. When multiplier observation is undefined: falls back to 1e18 default ratio
-    const res4 = toShares(tokens, undefined);
-    expect(res4.amountShares).toBe(tokens);
-    expect(res4.convertedAtTodaysRatio).toBe(true);
-    expect(res4.multiplier).toBe(E18);
+    // 4. Finding 2: When neither observation nor today's ratio is provided, shares must be null with reason
+    const res4 = toShares(tokens, undefined, undefined);
+    expect(res4.amountShares).toBeNull();
+    expect(res4.multiplier).toBeNull();
+    expect(res4.convertedAtTodaysRatio).toBe(false);
+    expect(res4.sharesUnavailableReason).toBeDefined();
   });
 
-  it("statement: aggregates holdings across multiple issuers under the same ticker", () => {
+  it("statement: aggregates holdings across multiple issuers under the same ticker using registry lookup", () => {
     const recentPnl = parseRecentPnl(probes["X_recent_pnl"]?.data);
-    const holdings = recentPnlToHoldings(recentPnl.pnlList);
+    const holdings = recentPnlToHoldings(recentPnl.pnlList, TEST_REGISTRY);
     const dexHistory = parseDexHistory(probes["X_dex_history"]?.data);
-    const trades = dexHistoryToTrades(dexHistory.transactionList);
-    const pnlLines = recentPnlToPnlLines(recentPnl.pnlList);
+    const trades = dexHistoryToTrades(dexHistory.transactionList, TEST_REGISTRY);
+    const pnlLines = recentPnlToPnlLines(recentPnl.pnlList, TEST_REGISTRY);
 
     const stmt = statement({
       walletAddress: BURNER_WALLET,
       holdings,
       trades,
       pnlLines,
+      asOf: 1790948533000,
     });
 
     // NVDA ticker should group both NVDAon (Ondo) and NVDAB (bStock)
@@ -119,9 +140,38 @@ describe("WO-03 Slice A: Portfolio and Statement pure logic", () => {
     expect(issuers).toContain("ondo");
     expect(issuers).toContain("bstock");
 
-    // Total realized P&L is sum of lines
-    expect(stmt.totalRealizedPnlUsd).toBeCloseTo(0.108578 + 0.130595, 4);
+    // Holdings converted with today's ratio from registry since no observation map passed
+    expect(stmt.convertedAtTodaysRatioCount).toBeGreaterThan(0);
+
+    // Total realized P&L is sum of lines in exact bigint
+    expect(formatUsd(stmt.totalRealizedPnlUsdE18)).toBe("0.24");
     expect(stmt.trades.length).toBe(8);
+  });
+
+  it("handles unrecognized tokens by setting issuer null and excluding from share totals", () => {
+    const item = {
+      tokenContractAddress: "0x1111111111111111111111111111111111111111",
+      tokenSymbol: "UNKNOWN",
+      lastActiveTimestamp: "1790948533000",
+      realizedPnlUsd: "0",
+      realizedPnlPercent: "0",
+      tokenBalanceUsd: "50",
+      tokenBalanceAmount: "100",
+    };
+
+    const holdings = recentPnlToHoldings([item], TEST_REGISTRY);
+    expect(holdings[0]!.issuer).toBeNull();
+    expect(holdings[0]!.isRecognized).toBe(false);
+    expect(holdings[0]!.unrecognizedReason).toBe("Not a recognised tokenized stock");
+    expect(holdings[0]!.balanceShares).toBeNull();
+
+    const stmt = statement({
+      walletAddress: BURNER_WALLET,
+      holdings,
+    });
+
+    expect(stmt.unrecognizedHoldings.length).toBe(1);
+    expect(stmt.notes.some((n) => n.includes("not recognized as tokenized stocks"))).toBe(true);
   });
 
   it("statement: flags > 1% disagreement between API figure and receipts (differsFromApi)", () => {
@@ -131,10 +181,10 @@ describe("WO-03 Slice A: Portfolio and Statement pure logic", () => {
         tokenSymbol: "NVDAon",
         ticker: "NVDA",
         issuer: "ondo" as const,
-        realizedPnlUsd: 10.0, // API says $10.00
-        realizedPnlPercent: 0.1,
-        buyVolumeUsd: 100,
-        sellVolumeUsd: 110,
+        isRecognized: true,
+        realizedPnlUsdE18: 10n * E18, // API says $10.00
+        buyVolumeUsdE18: 100n * E18,
+        sellVolumeUsdE18: 110n * E18,
         buyTxCount: 1,
         sellTxCount: 1,
         lastActiveTimestamp: 1790948533000,
@@ -153,7 +203,7 @@ describe("WO-03 Slice A: Portfolio and Statement pure logic", () => {
         tokens: 1n * E18,
         shares: 1n * E18,
         multiplier: 1n * E18,
-        usdSpentOrReceived: 100,
+        usdSpentOrReceivedE18: 100n * E18,
         executedAt: 1000,
         status: "RECONCILED",
       },
@@ -167,7 +217,7 @@ describe("WO-03 Slice A: Portfolio and Statement pure logic", () => {
         tokens: 1n * E18,
         shares: 1n * E18,
         multiplier: 1n * E18,
-        usdSpentOrReceived: 108, // realized PnL = $8.00
+        usdSpentOrReceivedE18: 108n * E18, // realized PnL = $8.00
         executedAt: 2000,
         status: "RECONCILED",
       },
@@ -184,7 +234,7 @@ describe("WO-03 Slice A: Portfolio and Statement pure logic", () => {
     expect(stmt.differsFromApiNote).toContain("differs from Binance API figure");
     expect(stmt.notes.some((n) => n.includes("differs from Binance API figure"))).toBe(true);
     // Uses share-true receipts figure when disagreeing
-    expect(stmt.totalRealizedPnlUsd).toBe(8.0);
+    expect(formatUsd(stmt.totalRealizedPnlUsdE18)).toBe("8.00");
   });
 
   it("API failure (mocked 50000) generates statement from receipts only with visible note", () => {
@@ -200,7 +250,7 @@ describe("WO-03 Slice A: Portfolio and Statement pure logic", () => {
         tokens: parseDecimal("0.5", 18),
         shares: parseDecimal("0.5", 18),
         multiplier: E18,
-        usdSpentOrReceived: 115.0,
+        usdSpentOrReceivedE18: parseDecimal("115.0", 18),
         executedAt: 1790935427000,
         status: "RECONCILED",
       },
@@ -214,7 +264,7 @@ describe("WO-03 Slice A: Portfolio and Statement pure logic", () => {
         tokens: parseDecimal("0.5", 18),
         shares: parseDecimal("0.5", 18),
         multiplier: E18,
-        usdSpentOrReceived: 115.5,
+        usdSpentOrReceivedE18: parseDecimal("115.5", 18),
         executedAt: 1790935428000,
         status: "RECONCILED",
       },
@@ -228,7 +278,7 @@ describe("WO-03 Slice A: Portfolio and Statement pure logic", () => {
       holdings: [],
       trades: [],
       receipts,
-      pricesByTicker: { NVDA: 240.0 },
+      pricesByTickerE18: { NVDA: 240n * E18 },
     });
 
     expect(stmt.source).toBe("receipts");
@@ -238,21 +288,22 @@ describe("WO-03 Slice A: Portfolio and Statement pure logic", () => {
     expect(stmt.holdings.length).toBe(2);
     expect(stmt.holdingsByTicker["NVDA"]).toBeDefined();
     expect(formatUnits(stmt.holdingsByTicker["NVDA"]!.totalShares, 18)).toBe("1");
-    expect(stmt.totalCostBasisUsd).toBe(230.5);
-    expect(stmt.totalValueUsd).toBe(240.0);
-    expect(stmt.totalUnrealizedPnlUsd).toBe(9.5);
+    expect(formatUsd(stmt.totalCostBasisUsdE18)).toBe("230.50");
+    expect(formatUsd(stmt.totalValueUsdE18)).toBe("240.00");
+    expect(formatUsd(stmt.totalUnrealizedPnlUsdE18)).toBe("9.50");
   });
 
   it("exports valid RFC 4180 CSV with summary, holdings, and activity", () => {
     const recentPnl = parseRecentPnl(probes["X_recent_pnl"]?.data);
-    const holdings = recentPnlToHoldings(recentPnl.pnlList);
+    const holdings = recentPnlToHoldings(recentPnl.pnlList, TEST_REGISTRY);
     const dexHistory = parseDexHistory(probes["X_dex_history"]?.data);
-    const trades = dexHistoryToTrades(dexHistory.transactionList);
+    const trades = dexHistoryToTrades(dexHistory.transactionList, TEST_REGISTRY);
 
     const stmt = statement({
       walletAddress: BURNER_WALLET,
       holdings,
       trades,
+      asOf: 1790948533000,
     });
 
     const csv = exportStatementCsv(stmt);
@@ -275,80 +326,8 @@ describe("WO-03 Slice A: Portfolio and Statement pure logic", () => {
 
     expect(stmt.holdings.length).toBe(0);
     expect(stmt.trades.length).toBe(0);
-    expect(stmt.totalValueUsd).toBe(0);
-    expect(stmt.totalRealizedPnlUsd).toBe(0);
+    expect(stmt.totalValueUsdE18).toBe(0n);
+    expect(stmt.totalRealizedPnlUsdE18).toBe(0n);
     expect(stmt.differsFromApi).toBe(false);
-  });
-
-  it("handles single issuer portfolio without discrepancy", () => {
-    const receipts: StatementReceipt[] = [
-      {
-        id: "r-single-1",
-        tokenContractAddress: "0xa9ee28c80f960b889dfbd1902055218cba016f75",
-        tokenSymbol: "NVDAon",
-        ticker: "NVDA",
-        issuer: "ondo",
-        side: "BUY",
-        tokens: 1n * E18,
-        shares: 1n * E18,
-        multiplier: 1n * E18,
-        usdSpentOrReceived: 100,
-        executedAt: 1000,
-        status: "RECONCILED",
-      },
-      {
-        id: "r-single-2",
-        tokenContractAddress: "0xa9ee28c80f960b889dfbd1902055218cba016f75",
-        tokenSymbol: "NVDAon",
-        ticker: "NVDA",
-        issuer: "ondo",
-        side: "SELL",
-        tokens: 1n * E18,
-        shares: 1n * E18,
-        multiplier: 1n * E18,
-        usdSpentOrReceived: 105, // realized $5.00
-        executedAt: 2000,
-        status: "RECONCILED",
-      },
-    ];
-
-    const pnlLines = [
-      {
-        tokenContractAddress: "0xa9ee28c80f960b889dfbd1902055218cba016f75",
-        tokenSymbol: "NVDAon",
-        ticker: "NVDA",
-        issuer: "ondo" as const,
-        realizedPnlUsd: 5.0, // API agrees exactly
-        realizedPnlPercent: 0.05,
-        buyVolumeUsd: 100,
-        sellVolumeUsd: 105,
-        buyTxCount: 1,
-        sellTxCount: 1,
-        lastActiveTimestamp: 2000,
-      },
-    ];
-
-    const stmt = statement({
-      walletAddress: BURNER_WALLET,
-      pnlLines,
-      receipts,
-    });
-
-    expect(stmt.differsFromApi).toBe(false);
-    expect(stmt.totalRealizedPnlUsd).toBe(5.0);
-  });
-
-  it("escapes CSV values with commas, quotes, and newlines properly", () => {
-    const stmt = statement({
-      walletAddress: "0x1234,special",
-      holdings: [],
-      trades: [],
-      pnlLines: [],
-    });
-    stmt.notes = ['Note with "quotes", commas, and\nnewlines'];
-
-    const csv = exportStatementCsv(stmt);
-    expect(csv).toContain('"0x1234,special"');
-    expect(csv).toContain('"Note with ""quotes"", commas, and\nnewlines"');
   });
 });

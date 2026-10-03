@@ -24,6 +24,7 @@ describe("WO-03 Slice B: View-model tests", () => {
     expect(statementVM.lines).toEqual([]);
     expect(statementVM.reason).toBe("Statement has no observations yet.");
     expect(statementVM.error).toBeNull();
+    expect(statementVM.asOf).toBeNull();
   });
 
   it("one issuer wallet produces headline holding and single issuer row with rowActionsSlot metadata", () => {
@@ -32,16 +33,16 @@ describe("WO-03 Slice B: View-model tests", () => {
       tokenSymbol: "NVDAon",
       ticker: "NVDA",
       issuer: "ondo",
+      isRecognized: true,
       balanceTokens: parseDecimal("0.5", 18),
       multiplier: E18,
       balanceShares: parseDecimal("0.5", 18),
       convertedAtTodaysRatio: false,
-      tokenBalanceUsd: 120.0,
-      pricePerShareUsd: 240.0,
-      costBasisUsd: 115.0,
-      avgCostPerShareUsd: 230.0,
-      unrealizedPnlUsd: 5.0,
-      unrealizedPnlPercent: 4.35,
+      tokenBalanceUsdE18: 120n * E18,
+      costBasisUsdE18: 115n * E18,
+      avgCostPerShareUsdE18: 230n * E18,
+      pricePerShareUsdE18: 240n * E18,
+      unrealizedPnlUsdE18: 5n * E18,
       source: "api/portfolio/recent-pnl",
     };
 
@@ -68,6 +69,7 @@ describe("WO-03 Slice B: View-model tests", () => {
       issuer: "ondo",
       balanceTokens: "0.5",
       balanceShares: "0.5",
+      ticker: "NVDA",
     });
   });
 
@@ -77,16 +79,16 @@ describe("WO-03 Slice B: View-model tests", () => {
       tokenSymbol: "NVDAon",
       ticker: "NVDA",
       issuer: "ondo",
+      isRecognized: true,
       balanceTokens: parseDecimal("0.75", 18),
       multiplier: E18,
       balanceShares: parseDecimal("0.75", 18),
       convertedAtTodaysRatio: false,
-      tokenBalanceUsd: 180.0,
-      pricePerShareUsd: 240.0,
-      costBasisUsd: 172.5,
-      avgCostPerShareUsd: 230.0,
-      unrealizedPnlUsd: 7.5,
-      unrealizedPnlPercent: 4.35,
+      tokenBalanceUsdE18: 180n * E18,
+      costBasisUsdE18: parseDecimal("172.5", 18),
+      avgCostPerShareUsdE18: 230n * E18,
+      pricePerShareUsdE18: 240n * E18,
+      unrealizedPnlUsdE18: parseDecimal("7.5", 18),
       source: "api/portfolio/recent-pnl",
     };
 
@@ -95,16 +97,16 @@ describe("WO-03 Slice B: View-model tests", () => {
       tokenSymbol: "NVDAB",
       ticker: "NVDA",
       issuer: "bstock",
+      isRecognized: true,
       balanceTokens: parseDecimal("0.25", 18),
       multiplier: E18,
       balanceShares: parseDecimal("0.25", 18),
       convertedAtTodaysRatio: false,
-      tokenBalanceUsd: 60.0,
-      pricePerShareUsd: 240.0,
-      costBasisUsd: 57.5,
-      avgCostPerShareUsd: 230.0,
-      unrealizedPnlUsd: 2.5,
-      unrealizedPnlPercent: 4.35,
+      tokenBalanceUsdE18: 60n * E18,
+      costBasisUsdE18: parseDecimal("57.5", 18),
+      avgCostPerShareUsdE18: 230n * E18,
+      pricePerShareUsdE18: 240n * E18,
+      unrealizedPnlUsdE18: parseDecimal("2.5", 18),
       source: "api/portfolio/recent-pnl",
     };
 
@@ -140,7 +142,7 @@ describe("WO-03 Slice B: View-model tests", () => {
         tokens: parseDecimal("0.5", 18),
         shares: parseDecimal("0.5", 18),
         multiplier: E18,
-        usdSpentOrReceived: 115.0,
+        usdSpentOrReceivedE18: parseDecimal("115.0", 18),
         executedAt: 1790935427000,
         status: "RECONCILED",
       },
@@ -151,7 +153,7 @@ describe("WO-03 Slice B: View-model tests", () => {
       apiFailed: true,
       apiError: "50000 Internal server error",
       receipts,
-      pricesByTicker: { NVDA: 240.0 },
+      pricesByTickerE18: { NVDA: 240n * E18 },
     });
 
     const statementVM = buildStatementVM(stmt);
@@ -160,7 +162,7 @@ describe("WO-03 Slice B: View-model tests", () => {
     expect(statementVM.notes).toContain(
       "Generated from on-chain receipts only (Binance API unavailable).",
     );
-    expect(statementVM.exportActions.exportCsv()).toContain("# Tally Portfolio Statement");
+    expect(statementVM.csv.content).toContain("# Tally Portfolio Statement");
 
     const portfolioVM = buildPortfolioVM(stmt);
     expect(portfolioVM.state).toBe("ready");
@@ -174,16 +176,16 @@ describe("WO-03 Slice B: View-model tests", () => {
       tokenSymbol: "NVDAon",
       ticker: "NVDA",
       issuer: "ondo",
+      isRecognized: true,
       balanceTokens: parseDecimal("1", 18),
       multiplier: E18,
       balanceShares: parseDecimal("1", 18),
       convertedAtTodaysRatio: false,
-      tokenBalanceUsd: 240.0,
-      pricePerShareUsd: 240.0,
-      costBasisUsd: 230.0,
-      avgCostPerShareUsd: 230.0,
-      unrealizedPnlUsd: 10.0,
-      unrealizedPnlPercent: 4.35,
+      tokenBalanceUsdE18: 240n * E18,
+      costBasisUsdE18: 230n * E18,
+      avgCostPerShareUsdE18: 230n * E18,
+      pricePerShareUsdE18: 240n * E18,
+      unrealizedPnlUsdE18: 10n * E18,
       source: "api/portfolio/recent-pnl",
     };
 
@@ -225,16 +227,16 @@ describe("WO-03 Slice B: View-model tests", () => {
         tokenSymbol: "NVDAon",
         ticker: "NVDA",
         issuer: "ondo",
+        isRecognized: true,
         balanceTokens: parseDecimal("1", 18),
         multiplier: E18,
         balanceShares: parseDecimal("1", 18),
         convertedAtTodaysRatio: false,
-        tokenBalanceUsd: 240.0,
-        pricePerShareUsd: 240.0,
-        costBasisUsd: 230.0,
-        avgCostPerShareUsd: 230.0,
-        unrealizedPnlUsd: 10.0,
-        unrealizedPnlPercent: 4.35,
+        tokenBalanceUsdE18: 240n * E18,
+        costBasisUsdE18: 230n * E18,
+        avgCostPerShareUsdE18: 230n * E18,
+        pricePerShareUsdE18: 240n * E18,
+        unrealizedPnlUsdE18: 10n * E18,
         source: "api/portfolio/recent-pnl",
       };
 

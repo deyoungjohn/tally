@@ -1,6 +1,13 @@
 import { z } from "zod";
 import { parseDecimal, E18, mulDiv, formatUnits } from "@tally/core";
-import type { Holding, Trade, PnlLine, Issuer } from "./types";
+import type {
+  Holding,
+  Trade,
+  PnlLine,
+  TokenRegistryInfo,
+  TokenRegistryLookup,
+  MultiplierMap,
+} from "./types";
 
 const numString = z.string().regex(/^-?\d+(\.\d+)?([eE][-+]?\d+)?$/, "not a number string");
 
@@ -154,129 +161,204 @@ export function parsePortfolioOverview(data: unknown): PortfolioOverview {
   return portfolioOverviewSchema.parse(unwrapData(data));
 }
 
-/** Infer ticker and issuer from symbol and contract address */
-export function inferTickerAndIssuer(
-  symbol: string,
-  _address?: string,
-): { ticker: string; issuer: Issuer } {
-  const s = symbol.trim();
-  if (s.endsWith("on")) {
-    return { ticker: s.slice(0, -2).toUpperCase(), issuer: "ondo" };
+function resolveRegistryToken(
+  address: string,
+  registry: Record<string, TokenRegistryInfo> | TokenRegistryLookup,
+): TokenRegistryInfo | undefined {
+  if (typeof registry === "function") {
+    return registry(address);
   }
-  if (s.endsWith("B")) {
-    return { ticker: s.slice(0, -1).toUpperCase(), issuer: "bstock" };
-  }
-  if (s.endsWith("x")) {
-    return { ticker: s.slice(0, -1).toUpperCase(), issuer: "xstocks" };
-  }
-  return { ticker: s.toUpperCase(), issuer: "ondo" };
+  return registry[address.toLowerCase()];
 }
 
-/** Map recent PnL list items to Holding domain objects */
+/** Map recent PnL list items to Holding domain objects using registry lookup */
 export function recentPnlToHoldings(
   items: RecentPnlItem[],
-  multiplierMap: Record<string, bigint> = {},
+  registry: Record<string, TokenRegistryInfo> | TokenRegistryLookup,
+  multiplierMap: MultiplierMap = {},
 ): Holding[] {
   return items.map((item) => {
-    const { ticker, issuer } = inferTickerAndIssuer(item.tokenSymbol, item.tokenContractAddress);
+    const addr = item.tokenContractAddress.toLowerCase();
+    const regToken = resolveRegistryToken(addr, registry);
+
+    const isRecognized = regToken !== undefined;
+    const ticker = regToken ? regToken.ticker : item.tokenSymbol;
+    const issuer = regToken ? regToken.issuer : null;
+    const unrecognizedReason = isRecognized ? undefined : "Not a recognised tokenized stock";
+
     const balanceTokens = parseDecimal(item.tokenBalanceAmount, 18);
-    const observedMultiplier =
-      multiplierMap[item.tokenContractAddress.toLowerCase()] ??
-      multiplierMap[item.tokenSymbol.toLowerCase()] ??
-      null;
 
-    const multiplier = observedMultiplier ?? E18;
-    const convertedAtTodaysRatio = observedMultiplier === null;
-    const balanceShares = mulDiv(balanceTokens, multiplier, E18);
+    let multiplier: bigint | null = null;
+    let convertedAtTodaysRatio = false;
 
-    const tokenBalanceUsd = Number(item.tokenBalanceUsd);
-    const buyVolumeUsd = item.buyTxVolume ? Number(item.buyTxVolume) : 0;
-    const sellVolumeUsd = item.sellTxVolume ? Number(item.sellTxVolume) : 0;
-    const costBasisUsd = Math.max(0, buyVolumeUsd - sellVolumeUsd);
+    if (isRecognized) {
+      const multEntry = multiplierMap[addr];
+      if (multEntry !== undefined) {
+        if (typeof multEntry === "bigint") {
+          multiplier = multEntry;
+          convertedAtTodaysRatio = false;
+        } else {
+          multiplier = multEntry.multiplier;
+          convertedAtTodaysRatio = multEntry.isTodaysRatio ?? false;
+        }
+      } else if (regToken.tokenToShareRatio !== undefined && regToken.tokenToShareRatio > 0n) {
+        multiplier = regToken.tokenToShareRatio;
+        convertedAtTodaysRatio = true;
+      }
+    }
 
-    const balanceSharesNum = Number(formatUnits(balanceShares, 18));
-    const pricePerShareUsd = balanceSharesNum > 0 ? tokenBalanceUsd / balanceSharesNum : 0;
-    const avgCostPerShareUsd = balanceSharesNum > 0 ? costBasisUsd / balanceSharesNum : 0;
-    const unrealizedPnlUsd = tokenBalanceUsd - costBasisUsd;
-    const unrealizedPnlPercent = costBasisUsd > 0 ? (unrealizedPnlUsd / costBasisUsd) * 100 : 0;
+    const balanceShares = multiplier !== null ? mulDiv(balanceTokens, multiplier, E18) : null;
+    const sharesUnavailableReason =
+      balanceShares === null
+        ? isRecognized
+          ? "Multiplier unavailable from observation or registry today ratio"
+          : "Not a recognised tokenized stock"
+        : undefined;
+
+    const tokenBalanceUsdE18 = parseDecimal(item.tokenBalanceUsd, 18);
+    const buyVolumeUsdE18 = item.buyTxVolume ? parseDecimal(item.buyTxVolume, 18) : 0n;
+    const sellVolumeUsdE18 = item.sellTxVolume ? parseDecimal(item.sellTxVolume, 18) : 0n;
+    const costBasisUsdE18 =
+      buyVolumeUsdE18 > sellVolumeUsdE18 ? buyVolumeUsdE18 - sellVolumeUsdE18 : 0n;
+
+    const avgCostPerShareUsdE18 =
+      balanceShares !== null && balanceShares > 0n
+        ? mulDiv(costBasisUsdE18, E18, balanceShares)
+        : null;
+    const pricePerShareUsdE18 =
+      balanceShares !== null && balanceShares > 0n
+        ? mulDiv(tokenBalanceUsdE18, E18, balanceShares)
+        : null;
+    const unrealizedPnlUsdE18 = tokenBalanceUsdE18 - costBasisUsdE18;
 
     return {
-      tokenContractAddress: item.tokenContractAddress.toLowerCase(),
+      tokenContractAddress: addr,
       tokenSymbol: item.tokenSymbol,
       ticker,
       issuer,
+      isRecognized,
+      unrecognizedReason,
       balanceTokens,
       multiplier,
       balanceShares,
+      sharesUnavailableReason,
       convertedAtTodaysRatio,
-      tokenBalanceUsd,
-      pricePerShareUsd,
-      costBasisUsd,
-      avgCostPerShareUsd,
-      unrealizedPnlUsd,
-      unrealizedPnlPercent,
+      tokenBalanceUsdE18,
+      costBasisUsdE18,
+      avgCostPerShareUsdE18,
+      pricePerShareUsdE18,
+      unrealizedPnlUsdE18,
       source: "api/portfolio/recent-pnl",
+      rowActionsSlot: {
+        token: addr,
+        issuer,
+        balanceTokens: formatUnits(balanceTokens, 18, 4),
+        balanceShares: balanceShares !== null ? formatUnits(balanceShares, 18, 4) : null,
+        ticker,
+      },
     };
   });
 }
 
-/** Map DEX history transactions to Trade domain objects */
+/** Map DEX history transactions to Trade domain objects using registry lookup */
 export function dexHistoryToTrades(
   transactions: DexHistoryTransaction[],
-  multiplierMap: Record<string, bigint> = {},
+  registry: Record<string, TokenRegistryInfo> | TokenRegistryLookup,
+  multiplierMap: MultiplierMap = {},
 ): Trade[] {
   return transactions.map((tx) => {
-    const { ticker, issuer } = inferTickerAndIssuer(tx.tokenSymbol, tx.tokenContractAddress);
+    const addr = tx.tokenContractAddress.toLowerCase();
+    const regToken = resolveRegistryToken(addr, registry);
+
+    const isRecognized = regToken !== undefined;
+    const ticker = regToken ? regToken.ticker : tx.tokenSymbol;
+    const issuer = regToken ? regToken.issuer : null;
+    const unrecognizedReason = isRecognized ? undefined : "Not a recognised tokenized stock";
+
     const amountTokens = parseDecimal(tx.amount, 18);
-    const observedMultiplier =
-      multiplierMap[tx.tokenContractAddress.toLowerCase()] ??
-      multiplierMap[tx.tokenSymbol.toLowerCase()] ??
-      null;
 
-    const multiplier = observedMultiplier ?? E18;
-    const convertedAtTodaysRatio = observedMultiplier === null;
-    const amountShares = mulDiv(amountTokens, multiplier, E18);
+    let multiplier: bigint | null = null;
+    let convertedAtTodaysRatio = false;
 
-    const pricePerTokenUsd = Number(tx.price);
-    const multNum = Number(formatUnits(multiplier, 18));
-    const pricePerShareUsd = multNum > 0 ? pricePerTokenUsd / multNum : pricePerTokenUsd;
-    const valueUsd = Number(tx.valueUsd);
-    const realizedPnlUsd =
-      tx.pnlUsd !== null && tx.pnlUsd !== undefined ? Number(tx.pnlUsd) : undefined;
+    if (isRecognized) {
+      const multEntry = multiplierMap[addr];
+      if (multEntry !== undefined) {
+        if (typeof multEntry === "bigint") {
+          multiplier = multEntry;
+          convertedAtTodaysRatio = false;
+        } else {
+          multiplier = multEntry.multiplier;
+          convertedAtTodaysRatio = multEntry.isTodaysRatio ?? false;
+        }
+      } else if (regToken.tokenToShareRatio !== undefined && regToken.tokenToShareRatio > 0n) {
+        multiplier = regToken.tokenToShareRatio;
+        convertedAtTodaysRatio = true;
+      }
+    }
+
+    const amountShares = multiplier !== null ? mulDiv(amountTokens, multiplier, E18) : null;
+    const sharesUnavailableReason =
+      amountShares === null
+        ? isRecognized
+          ? "Multiplier unavailable from observation or registry today ratio"
+          : "Not a recognised tokenized stock"
+        : undefined;
+
+    const valueUsdE18 = parseDecimal(tx.valueUsd, 18);
+    const pricePerTokenUsdE18 = parseDecimal(tx.price, 18);
+    const pricePerShareUsdE18 =
+      amountShares !== null && amountShares > 0n ? mulDiv(valueUsdE18, E18, amountShares) : null;
+    const realizedPnlUsdE18 =
+      tx.pnlUsd !== null && tx.pnlUsd !== undefined ? parseDecimal(tx.pnlUsd, 18) : undefined;
 
     return {
       txHash: tx.txHash,
       time: Number(tx.time),
       type: tx.type === "1" ? "BUY" : "SELL",
-      tokenContractAddress: tx.tokenContractAddress.toLowerCase(),
+      tokenContractAddress: addr,
       tokenSymbol: tx.tokenSymbol,
       ticker,
       issuer,
+      isRecognized,
+      unrecognizedReason,
       amountTokens,
       multiplier,
       amountShares,
+      sharesUnavailableReason,
       convertedAtTodaysRatio,
-      pricePerTokenUsd,
-      pricePerShareUsd,
-      valueUsd,
-      realizedPnlUsd,
+      pricePerTokenUsdE18,
+      pricePerShareUsdE18,
+      valueUsdE18,
+      realizedPnlUsdE18,
     };
   });
 }
 
-/** Map recent PnL list items to PnlLine domain objects */
-export function recentPnlToPnlLines(items: RecentPnlItem[]): PnlLine[] {
+/** Map recent PnL list items to PnlLine domain objects using registry lookup */
+export function recentPnlToPnlLines(
+  items: RecentPnlItem[],
+  registry: Record<string, TokenRegistryInfo> | TokenRegistryLookup,
+): PnlLine[] {
   return items.map((item) => {
-    const { ticker, issuer } = inferTickerAndIssuer(item.tokenSymbol, item.tokenContractAddress);
+    const addr = item.tokenContractAddress.toLowerCase();
+    const regToken = resolveRegistryToken(addr, registry);
+    const isRecognized = regToken !== undefined;
+    const ticker = regToken ? regToken.ticker : item.tokenSymbol;
+    const issuer = regToken ? regToken.issuer : null;
+
+    const buyVolumeUsdE18 = item.buyTxVolume ? parseDecimal(item.buyTxVolume, 18) : 0n;
+    const sellVolumeUsdE18 = item.sellTxVolume ? parseDecimal(item.sellTxVolume, 18) : 0n;
+    const realizedPnlUsdE18 = parseDecimal(item.realizedPnlUsd, 18);
+
     return {
-      tokenContractAddress: item.tokenContractAddress.toLowerCase(),
+      tokenContractAddress: addr,
       tokenSymbol: item.tokenSymbol,
       ticker,
       issuer,
-      realizedPnlUsd: Number(item.realizedPnlUsd),
-      realizedPnlPercent: Number(item.realizedPnlPercent),
-      buyVolumeUsd: item.buyTxVolume ? Number(item.buyTxVolume) : 0,
-      sellVolumeUsd: item.sellTxVolume ? Number(item.sellTxVolume) : 0,
+      isRecognized,
+      realizedPnlUsdE18,
+      buyVolumeUsdE18,
+      sellVolumeUsdE18,
       buyTxCount: item.buyTxCount ? Number(item.buyTxCount) : 0,
       sellTxCount: item.sellTxCount ? Number(item.sellTxCount) : 0,
       lastActiveTimestamp: Number(item.lastActiveTimestamp),
