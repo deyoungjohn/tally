@@ -14,6 +14,7 @@ import {
   statement,
   formatUsd,
   exportStatementCsv,
+  assertBinanceCredentials,
   type StatementReceipt,
   type TokenRegistryInfo,
 } from "./index";
@@ -149,7 +150,8 @@ describe("WO-03 Slice A: Portfolio and Statement pure logic", () => {
   });
 
   it("handles unrecognized tokens by setting issuer null and excluding from share totals", () => {
-    const item = {
+    // 1. Unrecognized token address not in registry
+    const item1 = {
       tokenContractAddress: "0x1111111111111111111111111111111111111111",
       tokenSymbol: "UNKNOWN",
       lastActiveTimestamp: "1790948533000",
@@ -159,18 +161,43 @@ describe("WO-03 Slice A: Portfolio and Statement pure logic", () => {
       tokenBalanceAmount: "100",
     };
 
-    const holdings = recentPnlToHoldings([item], TEST_REGISTRY);
-    expect(holdings[0]!.issuer).toBeNull();
-    expect(holdings[0]!.isRecognized).toBe(false);
-    expect(holdings[0]!.unrecognizedReason).toBe("Not a recognised tokenized stock");
-    expect(holdings[0]!.balanceShares).toBeNull();
+    const holdings1 = recentPnlToHoldings([item1], TEST_REGISTRY);
+    expect(holdings1[0]!.issuer).toBeNull();
+    expect(holdings1[0]!.isRecognized).toBe(false);
+    expect(holdings1[0]!.unrecognizedReason).toBe("Not a recognised tokenized stock");
+    expect(holdings1[0]!.balanceShares).toBeNull();
+
+    // 2. Token in registry with unknown platform (issuer: null)
+    const registryWithUnknownPlatform: Record<string, TokenRegistryInfo> = {
+      "0x2222222222222222222222222222222222222222": {
+        ticker: "RANDOM",
+        issuer: null,
+        symbol: "RNDM",
+        decimals: 18,
+      },
+    };
+    const item2 = {
+      tokenContractAddress: "0x2222222222222222222222222222222222222222",
+      tokenSymbol: "RNDM",
+      lastActiveTimestamp: "1790948533000",
+      realizedPnlUsd: "0",
+      realizedPnlPercent: "0",
+      tokenBalanceUsd: "50",
+      tokenBalanceAmount: "100",
+    };
+
+    const holdings2 = recentPnlToHoldings([item2], registryWithUnknownPlatform);
+    expect(holdings2[0]!.issuer).toBeNull();
+    expect(holdings2[0]!.isRecognized).toBe(false);
+    expect(holdings2[0]!.unrecognizedReason).toBe("Not a recognised tokenized stock");
+    expect(holdings2[0]!.balanceShares).toBeNull();
 
     const stmt = statement({
       walletAddress: BURNER_WALLET,
-      holdings,
+      holdings: [...holdings1, ...holdings2],
     });
 
-    expect(stmt.unrecognizedHoldings.length).toBe(1);
+    expect(stmt.unrecognizedHoldings.length).toBe(2);
     expect(stmt.notes.some((n) => n.includes("not recognized as tokenized stocks"))).toBe(true);
   });
 
@@ -329,5 +356,46 @@ describe("WO-03 Slice A: Portfolio and Statement pure logic", () => {
     expect(stmt.totalValueUsdE18).toBe(0n);
     expect(stmt.totalRealizedPnlUsdE18).toBe(0n);
     expect(stmt.differsFromApi).toBe(false);
+  });
+
+  it("assertBinanceCredentials: throws when live credentials missing and not in fixture mode", () => {
+    // 1. In fixture mode: should not throw even with missing credentials
+    expect(() =>
+      assertBinanceCredentials({
+        TALLY_FIXTURES: "1",
+      }),
+    ).not.toThrow();
+
+    // 2. In live mode: throws when keys are missing
+    expect(() =>
+      assertBinanceCredentials({
+        TALLY_FIXTURES: "0",
+        BINANCE_W3_API_KEY: undefined,
+        BINANCE_W3_API_SECRET: undefined,
+      }),
+    ).toThrow("Binance API credentials missing");
+
+    expect(() =>
+      assertBinanceCredentials({
+        TALLY_FIXTURES: "",
+        BINANCE_W3_API_KEY: "key_only",
+      }),
+    ).toThrow("Binance API credentials missing");
+
+    expect(() =>
+      assertBinanceCredentials({
+        TALLY_FIXTURES: "0",
+        BINANCE_W3_API_SECRET: "secret_only",
+      }),
+    ).toThrow("Binance API credentials missing");
+
+    // 3. In live mode with both keys present: should not throw
+    expect(() =>
+      assertBinanceCredentials({
+        TALLY_FIXTURES: "0",
+        BINANCE_W3_API_KEY: "my_key",
+        BINANCE_W3_API_SECRET: "my_secret",
+      }),
+    ).not.toThrow();
   });
 });

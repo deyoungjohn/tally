@@ -7,6 +7,7 @@ import {
   recentPnlToPnlLines,
   statement as calculateStatement,
   parseDecimal,
+  assertBinanceCredentials,
   type Issuer,
   type Statement,
   type StatementReceipt,
@@ -24,6 +25,9 @@ export const job: WorkerJob = {
   name: "statement",
   intervalMs: 300_000, // 5 minutes
   async run(ctx) {
+    // Assert credentials upfront when running in live mode
+    assertBinanceCredentials(process.env);
+
     // 1. Discover active/connected wallet addresses
     // In production, addresses come from server-side Privy sessions.
     const activeWalletSnaps = ctx.store.history<{ address: string }>("wallet:active", "bsc", 0, 50);
@@ -67,8 +71,14 @@ export const job: WorkerJob = {
     for (const r of rwaTokens) {
       const addr = r.tokenContractAddress.toLowerCase();
       const platform = r.platformId.toLowerCase();
-      const issuer: Issuer =
-        platform === "bstock" ? "bstock" : platform === "xstocks" ? "xstocks" : "ondo";
+      const issuer: Issuer | null =
+        platform === "ondo"
+          ? "ondo"
+          : platform === "bstock"
+            ? "bstock"
+            : platform === "xstocks"
+              ? "xstocks"
+              : null;
       let tokenToShareRatio: bigint | undefined;
       if (r.tokenToShareRatio) {
         try {
@@ -86,7 +96,16 @@ export const job: WorkerJob = {
       };
     }
 
-    let successCount = 0;
+    // 3. Fetch raw portfolio data for each target wallet
+    interface FetchedWalletData {
+      wallet: string;
+      parsedRecent: ReturnType<typeof parseRecentPnl>;
+      dexHistoryRaw: unknown;
+      source: string;
+      observedAt: number;
+    }
+
+    const fetchedWallets: FetchedWalletData[] = [];
     const errors: Error[] = [];
 
     for (const wallet of targetWallets) {
@@ -96,12 +115,8 @@ export const job: WorkerJob = {
         let source: string;
         let observedAt: number;
 
-        // If fixtures mode or live API not configured, read recorded probes
-        if (
-          process.env.TALLY_FIXTURES === "1" ||
-          !process.env.BINANCE_W3_API_KEY ||
-          !process.env.BINANCE_W3_API_SECRET
-        ) {
+        // If fixtures mode is set, read recorded probes
+        if (process.env.TALLY_FIXTURES === "1") {
           const recentRec = collectorRecording("X_recent_pnl");
           const dexRec = collectorRecording("X_dex_history");
           recentPnlRaw = recentRec.data;
@@ -120,94 +135,123 @@ export const job: WorkerJob = {
           observedAt = ctx.now();
         }
 
-        // Parse through zod schemas
         const parsedRecent = parseRecentPnl(recentPnlRaw);
+        fetchedWallets.push({
+          wallet,
+          parsedRecent,
+          dexHistoryRaw,
+          source,
+          observedAt,
+        });
+      } catch (err) {
+        ctx.onWarn(`Portfolio fetch failed for ${wallet}: ${err}`);
+        errors.push(err instanceof Error ? err : new Error(String(err)));
+      }
+    }
 
-        // Build multiplier map from engine facts and registry readings
-        const multiplierMap: Record<string, MultiplierEntry | bigint> = {};
-        const tickersToInspect = new Set<string>();
-
-        for (const item of parsedRecent.pnlList) {
-          const regToken = registryMap[item.tokenContractAddress.toLowerCase()];
-          if (regToken) {
-            tickersToInspect.add(regToken.ticker);
-          }
+    // 4. Build multiplier map once per run from the union of tickers across all wallets
+    const tickersToInspect = new Set<string>();
+    for (const fw of fetchedWallets) {
+      for (const item of fw.parsedRecent.pnlList) {
+        const regToken = registryMap[item.tokenContractAddress.toLowerCase()];
+        if (regToken?.ticker && regToken.issuer !== null) {
+          tickersToInspect.add(regToken.ticker);
         }
-
-        for (const ticker of tickersToInspect) {
-          try {
-            const inspections = await ctx.engine.facts(ticker);
-            for (const insp of inspections) {
-              const inspAddr = insp.address.toLowerCase();
-              if (insp.multiplier?.value) {
-                multiplierMap[inspAddr] = {
-                  multiplier: insp.multiplier.value,
-                  isTodaysRatio: false,
-                  source: insp.multiplier.source,
-                };
-              }
+      }
+      if (fw.dexHistoryRaw) {
+        try {
+          const parsedDex = parseDexHistory(fw.dexHistoryRaw);
+          for (const tx of parsedDex.transactionList) {
+            const regToken = registryMap[tx.tokenContractAddress.toLowerCase()];
+            if (regToken?.ticker && regToken.issuer !== null) {
+              tickersToInspect.add(regToken.ticker);
             }
-          } catch (err) {
-            ctx.onWarn(`Failed to inspect facts for ${ticker}: ${err}`);
+          }
+        } catch {
+          // dexHistory parse errors will be handled during wallet processing
+        }
+      }
+    }
+
+    const multiplierMap: Record<string, MultiplierEntry | bigint> = {};
+    for (const ticker of tickersToInspect) {
+      try {
+        const inspections = await ctx.engine.facts(ticker);
+        for (const insp of inspections) {
+          const inspAddr = insp.address.toLowerCase();
+          if (insp.multiplier?.value) {
+            multiplierMap[inspAddr] = {
+              multiplier: insp.multiplier.value,
+              isTodaysRatio: false,
+              source: insp.multiplier.source,
+            };
           }
         }
+      } catch (err) {
+        ctx.onWarn(`Failed to inspect facts for ${ticker}: ${err}`);
+      }
+    }
 
-        const holdings = recentPnlToHoldings(parsedRecent.pnlList, registryMap, multiplierMap);
-        const pnlLines = recentPnlToPnlLines(parsedRecent.pnlList, registryMap);
+    // 5. Compute and store statement and portfolio snapshots for each fetched wallet
+    let successCount = 0;
+    for (const fw of fetchedWallets) {
+      try {
+        const holdings = recentPnlToHoldings(fw.parsedRecent.pnlList, registryMap, multiplierMap);
+        const pnlLines = recentPnlToPnlLines(fw.parsedRecent.pnlList, registryMap);
 
         let trades: ReturnType<typeof dexHistoryToTrades> = [];
-        if (dexHistoryRaw) {
-          const parsedDex = parseDexHistory(dexHistoryRaw);
+        if (fw.dexHistoryRaw) {
+          const parsedDex = parseDexHistory(fw.dexHistoryRaw);
           trades = dexHistoryToTrades(parsedDex.transactionList, registryMap, multiplierMap);
         }
 
         // Read any on-chain receipts recorded for this wallet
-        const receiptSnaps = ctx.store.history<StatementReceipt>("receipt", wallet, 0, 500);
+        const receiptSnaps = ctx.store.history<StatementReceipt>("receipt", fw.wallet, 0, 500);
         const receipts = receiptSnaps.map((s) => s.data);
 
         // Compute statement domain object
         const stmt: Statement = calculateStatement({
-          walletAddress: wallet,
+          walletAddress: fw.wallet,
           holdings,
           trades,
           pnlLines,
           receipts,
-          asOf: observedAt,
+          asOf: fw.observedAt,
         });
 
         // Put statement snapshot in SQLite store
         ctx.store.put({
           kind: "statement",
-          key: wallet,
+          key: fw.wallet,
           data: stmt,
-          source,
-          observedAt,
+          source: fw.source,
+          observedAt: fw.observedAt,
           notes: stmt.notes,
         });
 
         // Put portfolio snapshot in SQLite store
         ctx.store.put({
           kind: "portfolio",
-          key: wallet,
+          key: fw.wallet,
           data: {
-            walletAddress: wallet,
+            walletAddress: fw.wallet,
             holdings: stmt.holdings,
             holdingsByTicker: stmt.holdingsByTicker,
             totalValueUsdE18: stmt.totalValueUsdE18,
             totalRealizedPnlUsdE18: stmt.totalRealizedPnlUsdE18,
             totalUnrealizedPnlUsdE18: stmt.totalUnrealizedPnlUsdE18,
             differsFromApi: stmt.differsFromApi,
-            source,
-            asOf: observedAt,
+            source: fw.source,
+            asOf: fw.observedAt,
           },
-          source,
-          observedAt,
+          source: fw.source,
+          observedAt: fw.observedAt,
           notes: stmt.notes,
         });
 
         successCount++;
       } catch (err) {
-        ctx.onWarn(`Portfolio fetch/calculate failed for ${wallet}: ${err}`);
+        ctx.onWarn(`Portfolio calculation failed for ${fw.wallet}: ${err}`);
         errors.push(err instanceof Error ? err : new Error(String(err)));
       }
     }

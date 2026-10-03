@@ -17,7 +17,7 @@ export interface ToSharesResult {
 
 export interface TokenRegistryInfo {
   ticker: string;
-  issuer: Issuer;
+  issuer: Issuer | null;
   symbol?: string;
   decimals?: number;
   tokenToShareRatio?: bigint;

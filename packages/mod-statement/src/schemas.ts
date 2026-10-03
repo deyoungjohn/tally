@@ -181,7 +181,7 @@ export function recentPnlToHoldings(
     const addr = item.tokenContractAddress.toLowerCase();
     const regToken = resolveRegistryToken(addr, registry);
 
-    const isRecognized = regToken !== undefined;
+    const isRecognized = regToken !== undefined && regToken.issuer !== null;
     const ticker = regToken ? regToken.ticker : item.tokenSymbol;
     const issuer = regToken ? regToken.issuer : null;
     const unrecognizedReason = isRecognized ? undefined : "Not a recognised tokenized stock";
@@ -270,7 +270,7 @@ export function dexHistoryToTrades(
     const addr = tx.tokenContractAddress.toLowerCase();
     const regToken = resolveRegistryToken(addr, registry);
 
-    const isRecognized = regToken !== undefined;
+    const isRecognized = regToken !== undefined && regToken.issuer !== null;
     const ticker = regToken ? regToken.ticker : tx.tokenSymbol;
     const issuer = regToken ? regToken.issuer : null;
     const unrecognizedReason = isRecognized ? undefined : "Not a recognised tokenized stock";
@@ -342,7 +342,7 @@ export function recentPnlToPnlLines(
   return items.map((item) => {
     const addr = item.tokenContractAddress.toLowerCase();
     const regToken = resolveRegistryToken(addr, registry);
-    const isRecognized = regToken !== undefined;
+    const isRecognized = regToken !== undefined && regToken.issuer !== null;
     const ticker = regToken ? regToken.ticker : item.tokenSymbol;
     const issuer = regToken ? regToken.issuer : null;
 

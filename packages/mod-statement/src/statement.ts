@@ -21,6 +21,16 @@ export interface StatementOptions {
   apiError?: string;
 }
 
+/** Ensures required Binance Web3 API credentials exist unless running in fixture mode */
+export function assertBinanceCredentials(
+  env: Record<string, string | undefined> = process.env,
+): void {
+  if (env.TALLY_FIXTURES === "1") return;
+  if (!env.BINANCE_W3_API_KEY || !env.BINANCE_W3_API_SECRET) {
+    throw new Error("Binance API credentials missing");
+  }
+}
+
 /** Formats a 1e18 fixed point USD bigint to standard 2-decimal string with round-to-nearest-cent */
 export function formatUsd(amountE18: bigint): string {
   const neg = amountE18 < 0n;
