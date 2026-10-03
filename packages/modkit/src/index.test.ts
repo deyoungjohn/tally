@@ -3,7 +3,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { flags, MODULE_NAMES } from "@tally/config";
-import { openStore, withFallback, type OpenSnapshotStore } from "./index";
+import {
+  EVIDENCE_SNAPSHOT_KINDS,
+  moduleHealthState,
+  openStore,
+  withFallback,
+  type OpenSnapshotStore,
+} from "./index";
 
 const stores: OpenSnapshotStore[] = [];
 const store = () => {
@@ -16,6 +22,51 @@ afterEach(() => {
 });
 
 describe("snapshot store", () => {
+  it("skips identical latest observations but retains changed payloads and new timestamps", () => {
+    const s = store();
+    const snapshot = {
+      kind: "price",
+      key: "NVDA",
+      data: { price: "180", shares: 1n },
+      source: "fixture",
+      observedAt: 100,
+    };
+    for (let poll = 0; poll < 100; poll++) s.put(snapshot);
+    expect(s.history("price", "NVDA", 0)).toHaveLength(1);
+    s.put({ ...snapshot, data: { price: "181", shares: 1n } });
+    s.put({ ...snapshot, observedAt: 101 });
+    s.put({ ...snapshot, key: "AAPL" });
+    expect(s.history("price", "NVDA", 0)).toHaveLength(3);
+    expect(s.history("price", "AAPL", 0)).toHaveLength(1);
+  });
+  it("prunes old history by kind/key, always keeps the latest, and supports keeping more observations", () => {
+    const s = store();
+    for (const kind of ["price", "registry"])
+      for (const key of ["NVDA", "AAPL"])
+        for (const observedAt of [10, 20, 30])
+          s.put({ kind, key, data: observedAt, source: "fixture", observedAt });
+    expect(s.prune({ kind: "price", olderThanMs: 100, keepLatest: 2 })).toBe(2);
+    expect(s.history("price", "NVDA", 0).map((r) => r.observedAt)).toEqual([20, 30]);
+    expect(s.history("registry", "NVDA", 0)).toHaveLength(3);
+    expect(s.prune({ olderThanMs: 30 })).toBe(6);
+    for (const kind of ["price", "registry"])
+      for (const key of ["NVDA", "AAPL"])
+        expect(s.history(kind, key, 0).map((r) => r.observedAt)).toEqual([30]);
+    expect(s.prune({ olderThanMs: 100 })).toBe(0);
+    expect(() => s.prune({ olderThanMs: 100, keepLatest: 0 })).toThrow(RangeError);
+    expect(() => s.prune({ olderThanMs: NaN })).toThrow(RangeError);
+  });
+  it("protects receipt, decision and alert evidence by default, including explicit-kind pruning", () => {
+    const s = store();
+    for (const kind of EVIDENCE_SNAPSHOT_KINDS)
+      for (const observedAt of [10, 20])
+        s.put({ kind, key: "NVDA", data: observedAt, source: "fixture", observedAt });
+    expect(s.prune({ olderThanMs: 100 })).toBe(0);
+    expect(s.prune({ kind: "receipt", olderThanMs: 100 })).toBe(0);
+    for (const kind of EVIDENCE_SNAPSHOT_KINDS) expect(s.history(kind, "NVDA", 0)).toHaveLength(2);
+    expect(s.prune({ kind: "receipt", olderThanMs: 100, excludeKinds: [] })).toBe(1);
+    expect(s.history("receipt", "NVDA", 0)[0]?.observedAt).toBe(20);
+  });
   it("put/latest/history isolate kind and key, order by observation time and honor since/limit", () => {
     const s = store();
     expect(s.latest("flow", "NVDA", { maxAgeMs: 10, now: 0 })).toBeNull();
@@ -77,9 +128,14 @@ describe("snapshot store", () => {
       const b = openStore(path);
       try {
         a.put({ kind: "registry", key: "bsc", data: [1n], source: "fixture", observedAt: 100 });
-        a.health.report("collect-registry", { ok: true, now: 100 });
+        a.health.report("collect-registry", { ok: true, now: 100, intervalMs: 60_000 });
+        b.put({ kind: "registry", key: "bsc", data: [1n], source: "fixture", observedAt: 100 });
+        expect(a.history("registry", "bsc", 0)).toHaveLength(1);
         expect(b.latest("registry", "bsc", { maxAgeMs: 10, now: 100 })?.data).toEqual([1n]);
-        expect(b.health.get("collect-registry")?.lastOkAt).toBe(100);
+        expect(b.health.get("collect-registry")).toMatchObject({
+          lastOkAt: 100,
+          intervalMs: 60_000,
+        });
       } finally {
         a.close();
         b.close();
@@ -110,6 +166,44 @@ describe("snapshot store", () => {
     health.report("flow", { ok: true, now: 300 });
     expect(health.get("flow")).toEqual({ module: "flow", ok: true, lastRunAt: 300, lastOkAt: 300 });
     expect(health.all().map((r) => r.module)).toEqual(["collect-prices", "flow"]);
+  });
+});
+
+describe("module health freshness", () => {
+  it("uses three job intervals for a five-minute module and the legacy 120s threshold when unknown", () => {
+    const base = { module: "statement" as const, ok: true, lastRunAt: 0, lastOkAt: 0 };
+    expect(moduleHealthState({ ...base, intervalMs: 300_000 }, 240_000)).toMatchObject({
+      degraded: false,
+      stale: false,
+      ageMs: 240_000,
+    });
+    expect(moduleHealthState({ ...base, intervalMs: 300_000 }, 900_000).stale).toBe(false);
+    expect(moduleHealthState({ ...base, intervalMs: 300_000 }, 900_001)).toMatchObject({
+      degraded: true,
+      stale: true,
+      reason: "Worker update is overdue",
+    });
+    expect(moduleHealthState(base, 120_000).stale).toBe(false);
+    expect(moduleHealthState(base, 120_001).stale).toBe(true);
+  });
+  it("exposes last-good age and failure reason, distinguishes never-succeeded, and retains the recorded cadence", () => {
+    const { health } = store();
+    health.report("guardian", { ok: true, now: 100, intervalMs: 60_000 });
+    health.report("guardian", { ok: false, now: 200, error: "upstream unavailable" });
+    expect(moduleHealthState(health.get("guardian"), 300)).toMatchObject({
+      degraded: true,
+      stale: false,
+      ageMs: 200,
+      reason: "upstream unavailable",
+      health: { intervalMs: 60_000 },
+    });
+    health.report("rewards", { ok: false, now: 200, intervalMs: 60_000 });
+    expect(moduleHealthState(health.get("rewards"), 300)).toMatchObject({
+      degraded: true,
+      ageMs: null,
+      reason: "No successful update yet",
+    });
+    expect(moduleHealthState(null, 300).ageMs).toBeNull();
   });
 });
 

@@ -18,6 +18,7 @@ const env = {
   FEATURE_GUARDIAN: "1",
   FEATURE_AUTOPILOT: "1",
   FEATURE_QUALITY: "0",
+  FEATURE_REWARDS: "1",
   PORT: "3101",
   HOSTNAME: "127.0.0.1",
 };
@@ -59,11 +60,20 @@ async function main() {
     }
     if (!ready) throw new Error("Fixture registry worker did not write a snapshot");
     const lastOkAt = Date.now() - 240_000;
-    store.health.report("flow", { ok: true, now: Date.now() });
-    store.health.report("guardian", { ok: true, now: lastOkAt });
-    store.health.report("guardian", { ok: false, error: "Fixture primary source unavailable" });
-    store.health.report("autopilot", { ok: true, now: lastOkAt });
-    store.health.report("statement", { ok: true });
+    store.health.report("flow", { ok: true, now: Date.now(), intervalMs: 15_000 });
+    store.health.report("guardian", { ok: true, now: lastOkAt, intervalMs: 60_000 });
+    store.health.report("guardian", {
+      ok: false,
+      error: "Fixture primary source unavailable",
+      intervalMs: 60_000,
+    });
+    store.health.report("autopilot", { ok: true, now: lastOkAt, intervalMs: 60_000 });
+    store.health.report("statement", { ok: true, now: lastOkAt, intervalMs: 300_000 });
+    store.health.report("rewards", {
+      ok: false,
+      error: "First fixture run failed",
+      intervalMs: 60_000,
+    });
     const web = spawn(process.execPath, ["apps/web/.next/standalone/apps/web/server.js"], {
       cwd: root,
       env,

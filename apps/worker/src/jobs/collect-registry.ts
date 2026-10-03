@@ -12,6 +12,7 @@ export const job: WorkerJob = {
       );
       if (!data.length) throw new Error("RWA registry returned no BSC tokens");
       const fixture =
+        // tabId=3 is ignored by the API: this recorded earnings call contains the full authenticated list.
         process.env.TALLY_FIXTURES === "1" ? collectorRecording("G_rwa_tokens_earnings") : null;
       return {
         kind: "registry",

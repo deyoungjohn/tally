@@ -15,7 +15,7 @@ it("fixture collector jobs write recorded registry/status and prices with origin
     store,
     health: store.health,
     engine: createFixtureEngine(),
-    now: () => Date.now(),
+    now: () => collectorRecording("G_rwa_tokens_earnings").observedAt,
     onWarn,
   };
   try {
@@ -35,6 +35,13 @@ it("fixture collector jobs write recorded registry/status and prices with origin
       expect(
         store.latest("price", row.tokenContractAddress, { maxAgeMs: 15_000 })?.observedAt,
       ).toBe(row.tokenPriceUpdatedAt);
+    // Replaying an unchanged poll must not add a registry, batch, or per-token row.
+    await registryJob.run(ctx);
+    await pricesJob.run(ctx);
+    expect(store.history("registry", "bsc", 0)).toHaveLength(1);
+    expect(store.history("prices", "bsc", 0)).toHaveLength(1);
+    for (const row of prices!.data)
+      expect(store.history("price", row.tokenContractAddress, 0)).toHaveLength(1);
     expect(onWarn).toHaveBeenCalled();
   } finally {
     store.close();

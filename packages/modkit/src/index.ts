@@ -23,19 +23,68 @@ export interface SnapshotStore {
   latest<T>(kind: string, key: string, opts: { maxAgeMs: number; now?: number }): Latest<T> | null;
   /** Oldest first, inclusive of sinceMs. */
   history<T>(kind: string, key: string, sinceMs: number, limit?: number): Snapshot<T>[];
+  /** Cutoff is an absolute timestamp. Latest observations and evidence are protected by default. */
+  prune(opts: {
+    kind?: string;
+    olderThanMs: number;
+    keepLatest?: number;
+    excludeKinds?: readonly string[];
+  }): number;
 }
-export type JobName = ModuleName | `collect-${string}`;
+export type JobName = ModuleName | `collect-${string}` | "prune";
+export const EVIDENCE_SNAPSHOT_KINDS = [
+  "receipt",
+  "receipts",
+  "decision",
+  "decisions",
+  "alert",
+  "alerts",
+] as const;
 export interface HealthRow {
   module: JobName;
   ok: boolean;
   lastRunAt: number;
   lastOkAt?: number;
   lastError?: string;
+  intervalMs?: number;
 }
 export interface ModuleHealth {
-  report(module: JobName, result: { ok: boolean; error?: string; now?: number }): void;
+  report(
+    module: JobName,
+    result: { ok: boolean; error?: string; now?: number; intervalMs?: number },
+  ): void;
   get(module: JobName): HealthRow | null;
   all(): HealthRow[];
+}
+
+export interface ModuleHealthState {
+  health: HealthRow | null;
+  degraded: boolean;
+  stale: boolean;
+  ageMs: number | null;
+  reason: string | null;
+}
+
+/** Health freshness follows each job's cadence; old rows without a cadence retain the 120s policy. */
+export function moduleHealthState(health: HealthRow | null, now = Date.now()): ModuleHealthState {
+  const interval = health?.intervalMs;
+  const maxAge =
+    interval !== undefined && Number.isFinite(interval) && interval > 0 ? 3 * interval : 120_000;
+  const stale = health !== null && now - health.lastRunAt > maxAge;
+  return {
+    health,
+    degraded: !health?.ok || stale,
+    stale,
+    ageMs: health?.lastOkAt === undefined ? null : Math.max(0, now - health.lastOkAt),
+    reason:
+      health?.lastOkAt === undefined
+        ? "No successful update yet"
+        : !health.ok
+          ? (health.lastError ?? "Latest update failed")
+          : stale
+            ? "Worker update is overdue"
+            : null,
+  };
 }
 export interface OpenSnapshotStore extends SnapshotStore {
   health: ModuleHealth;
@@ -83,6 +132,11 @@ export function openStore(
   `);
   const health: ModuleHealth = {
     report(module, result) {
+      if (
+        result.intervalMs !== undefined &&
+        (!Number.isFinite(result.intervalMs) || result.intervalMs <= 0)
+      )
+        throw new RangeError("intervalMs must be positive and finite");
       const now = result.now ?? Date.now();
       const previous = health.get(module);
       const row: HealthRow = {
@@ -91,6 +145,7 @@ export function openStore(
         lastRunAt: now,
         lastOkAt: result.ok ? now : previous?.lastOkAt,
         lastError: result.ok ? undefined : (result.error ?? "Job failed without an error message"),
+        intervalMs: result.intervalMs ?? previous?.intervalMs,
       };
       db.prepare(
         "INSERT INTO module_health(module,payload) VALUES (?,?) ON CONFLICT(module) DO UPDATE SET payload=excluded.payload",
@@ -112,10 +167,22 @@ export function openStore(
     close: () => db.close(),
     put(snapshot) {
       if (!Number.isFinite(snapshot.observedAt)) throw new RangeError("observedAt must be finite");
-      db.prepare("INSERT INTO snapshots(kind,key,payload,observed_at) VALUES (?,?,?,?)").run(
+      const payload = encode(snapshot);
+      // Single SQL statement makes the latest-row check and insertion atomic across writers.
+      db.prepare(
+        `INSERT INTO snapshots(kind,key,payload,observed_at)
+        SELECT ?,?,?,? WHERE NOT EXISTS (
+          SELECT 1 FROM (SELECT payload, observed_at FROM snapshots WHERE kind=? AND key=? ORDER BY observed_at DESC,id DESC LIMIT 1)
+          WHERE payload=? AND observed_at=?
+        )`,
+      ).run(
         snapshot.kind,
         snapshot.key,
-        encode(snapshot),
+        payload,
+        snapshot.observedAt,
+        snapshot.kind,
+        snapshot.key,
+        payload,
         snapshot.observedAt,
       );
     },
@@ -141,6 +208,27 @@ export function openStore(
         )
         .all(kind, key, sinceMs, limit)
         .map((r) => decode<Snapshot<T>>(String(r.payload)));
+    },
+    prune({ kind, olderThanMs, keepLatest = 1, excludeKinds = EVIDENCE_SNAPSHOT_KINDS }) {
+      if (!Number.isFinite(olderThanMs)) throw new RangeError("olderThanMs must be finite");
+      if (!Number.isInteger(keepLatest) || keepLatest < 1)
+        throw new RangeError("keepLatest must be at least 1");
+      const filter = [
+        kind === undefined ? "1=1" : "kind=?",
+        excludeKinds.length ? `kind NOT IN (${excludeKinds.map(() => "?").join(",")})` : "1=1",
+      ].join(" AND ");
+      const params = [...(kind === undefined ? [] : [kind]), ...excludeKinds];
+      const result = db
+        .prepare(
+          `DELETE FROM snapshots WHERE id IN (
+        SELECT id FROM (
+          SELECT id, observed_at, ROW_NUMBER() OVER (PARTITION BY kind,key ORDER BY observed_at DESC,id DESC) AS position
+          FROM snapshots WHERE ${filter}
+        ) WHERE observed_at < ? AND position > ?
+      )`,
+        )
+        .run(...params, olderThanMs, keepLatest);
+      return Number(result.changes);
     },
   };
 }

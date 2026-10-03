@@ -35,13 +35,113 @@ it("a job that always throws keeps running with backoff while a sibling stays he
     expect(bad).toHaveBeenCalledTimes(3); // t=0,20,60; backoff doubles
     expect(good).toHaveBeenCalledTimes(11);
     expect(store.health.get("flow")).toMatchObject({ ok: false, lastError: "primary is down" });
-    expect(store.health.get("guardian")).toMatchObject({ ok: true, lastOkAt: Date.now() });
+    expect(store.health.get("guardian")).toMatchObject({
+      ok: true,
+      lastOkAt: Date.now(),
+      intervalMs: 10,
+    });
     expect(onWarn).toHaveBeenCalledTimes(3);
     stop.abort();
     await loop;
     await vi.advanceTimersByTimeAsync(100);
     expect(bad).toHaveBeenCalledTimes(3);
     expect(good).toHaveBeenCalledTimes(11);
+  } finally {
+    stop.abort();
+    await loop;
+    store.close();
+  }
+});
+
+it.each([
+  { intervalMs: 10_000, timeoutMs: 30_000 },
+  { intervalMs: 20_000, timeoutMs: 40_000 },
+])(
+  "hung jobs time out by default after $timeoutMs ms while siblings continue, and shutdown cancels an active run",
+  async ({ intervalMs, timeoutMs }) => {
+    vi.useFakeTimers();
+    const store = openStore(":memory:");
+    const stop = new AbortController();
+    const runs: WorkerContext[] = [];
+    const ctx: WorkerContext = {
+      store,
+      health: store.health,
+      engine: createFixtureEngine(),
+      now: Date.now,
+      onWarn: vi.fn(),
+    };
+    const loop = runJobs(
+      [
+        {
+          name: "flow",
+          intervalMs,
+          run: async (run) => {
+            runs.push(run);
+            await new Promise<void>(() => {});
+          },
+        },
+        { name: "guardian", intervalMs: 10_000, run: async () => {} },
+      ],
+      ctx,
+      stop.signal,
+    );
+    try {
+      await vi.advanceTimersByTimeAsync(timeoutMs - 1);
+      expect(store.health.get("flow")).toBeNull();
+      expect(store.health.get("guardian")?.ok).toBe(true);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(store.health.get("flow")).toMatchObject({
+        ok: false,
+        intervalMs,
+        lastError: `timed out after ${timeoutMs} ms`,
+      });
+      expect(runs[0]?.signal?.aborted).toBe(true);
+      expect(() =>
+        runs[0]?.store.put({
+          kind: "flow",
+          key: "late",
+          data: {},
+          observedAt: Date.now(),
+          source: "late",
+        }),
+      ).toThrow(`timed out after ${timeoutMs} ms`);
+      expect(() => runs[0]?.health.report("flow", { ok: true })).toThrow(
+        `timed out after ${timeoutMs} ms`,
+      );
+      await vi.advanceTimersByTimeAsync(2 * intervalMs);
+      expect(runs).toHaveLength(2);
+      stop.abort();
+      await loop;
+      expect(runs[1]?.signal?.aborted).toBe(true);
+      expect(store.health.get("flow")?.lastError).toBe(`timed out after ${timeoutMs} ms`);
+    } finally {
+      stop.abort();
+      await loop;
+      store.close();
+    }
+  },
+);
+
+it("honors an explicit run timeout and retries after backoff", async () => {
+  vi.useFakeTimers();
+  const store = openStore(":memory:");
+  const stop = new AbortController();
+  const run = vi.fn(async () => {
+    await new Promise<void>(() => {});
+  });
+  const ctx: WorkerContext = {
+    store,
+    health: store.health,
+    engine: createFixtureEngine(),
+    now: Date.now,
+    onWarn: vi.fn(),
+  };
+  const loop = runJobs([{ name: "flow", intervalMs: 10, timeoutMs: 25, run }], ctx, stop.signal);
+  try {
+    await vi.advanceTimersByTimeAsync(25);
+    expect(store.health.get("flow")?.lastError).toBe("timed out after 25 ms");
+    await vi.advanceTimersByTimeAsync(20);
+    expect(run).toHaveBeenCalledTimes(2);
   } finally {
     stop.abort();
     await loop;
