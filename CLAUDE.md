@@ -11,6 +11,7 @@
 - **Don't rename** the old `parity` identifiers inside `spike/` and `research/` (historical; the fork test's fixed address is derived from `"parity.shareguard.fork"`).
 - **Git:** one branch and one PR per milestone. Keep `main` deployable.
 - **The Developer Experience Report is written by the user**, not by an AI (the hackathon rejects AI-generated reports). You may point to evidence in `IDEAS.md`.
+- Never add Co-Authored-By or Claude-Session lines to commits or PRs.
 
 ## Repo state and conventions (updated during M2, 2026-10-02)
 

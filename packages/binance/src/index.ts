@@ -6,3 +6,5 @@ export * from "./trading";
 export * from "./public";
 export * from "./adapters";
 export * from "./fixtures";
+export * from "./collectors";
+export * from "./collector-fixtures";

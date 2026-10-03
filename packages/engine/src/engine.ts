@@ -5,6 +5,8 @@ import { QUOTE_PLACEHOLDER_WALLET, TTL_MS } from "@tally/config";
 import {
   BinanceApi,
   BinanceClient,
+  BinanceCollectors,
+  createCollectorFixtureFetch,
   BinanceData,
   PublicApi,
   SNAPSHOT_DIR,
@@ -29,6 +31,8 @@ import {
 } from "@tally/core";
 
 export interface Engine {
+  /** Scheduled read-only calls. Existing trade/quote ports are unchanged. */
+  collectors: Pick<BinanceCollectors, "registry" | "prices">;
   quote(input: QuoteInput): Promise<ConsolidatedQuote>;
   /** Every token of a ticker with its facts, bounds and the full integrity check log, and no quote (`tally facts`). */
   facts(ticker: string): Promise<TokenInspection[]>;
@@ -80,6 +84,7 @@ function build(o: BuildOptions): Engine {
   };
   const quotes = new TtlCache<ConsolidatedQuote>(TTL_MS.quote, now);
   return {
+    collectors: new BinanceCollectors(client),
     ports,
     facts: (ticker) => inspectTicker(ports, ticker),
     quote: (input) => {
@@ -143,7 +148,7 @@ export function createFixtureEngine(
     return typeof v === "number" ? parseDecimal(String(v), 18) : undefined;
   };
   return build({
-    fetch: base,
+    fetch: o.blockRegion ? base : createCollectorFixtureFetch(base),
     apiKey: "fixture",
     apiSecret: "fixture",
     onchain,

@@ -1,0 +1,29 @@
+{
+  "name": "@tally/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "worker": "tsx src/cli.ts",
+    "typecheck": "tsc -p .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tally/engine": "workspace:*",
+    "@tally/modkit": "workspace:*",
+    "@tally/mod-receipts": "workspace:*",
+    "@tally/mod-statement": "workspace:*",
+    "@tally/mod-flow": "workspace:*",
+    "@tally/mod-guardian": "workspace:*",
+    "@tally/mod-autopilot": "workspace:*",
+    "@tally/mod-pies": "workspace:*",
+    "@tally/mod-rewards": "workspace:*",
+    "@tally/binance": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

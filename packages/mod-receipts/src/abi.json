@@ -1,0 +1,484 @@
+{
+  "source": "contracts/src/ShareGuard.sol; Solidity Error/Panic and imported OpenZeppelin 5.4 errors",
+  "abi": [
+    {
+      "type": "event",
+      "name": "Guarded",
+      "anonymous": false,
+      "inputs": [
+        {
+          "name": "user",
+          "type": "address",
+          "indexed": true
+        },
+        {
+          "name": "recipient",
+          "type": "address",
+          "indexed": true
+        },
+        {
+          "name": "stock",
+          "type": "address",
+          "indexed": true
+        },
+        {
+          "name": "tokenIn",
+          "type": "address",
+          "indexed": false
+        },
+        {
+          "name": "amountIn",
+          "type": "uint256",
+          "indexed": false
+        },
+        {
+          "name": "tokensOut",
+          "type": "uint256",
+          "indexed": false
+        },
+        {
+          "name": "shares",
+          "type": "uint256",
+          "indexed": false
+        },
+        {
+          "name": "multiplier",
+          "type": "uint256",
+          "indexed": false
+        },
+        {
+          "name": "router",
+          "type": "address",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "name": "Transfer",
+      "anonymous": false,
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address",
+          "indexed": true
+        },
+        {
+          "name": "to",
+          "type": "address",
+          "indexed": true
+        },
+        {
+          "name": "value",
+          "type": "uint256",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "Expired",
+      "inputs": [
+        {
+          "name": "deadline",
+          "type": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ZeroAmount",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ZeroMinShares",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ZeroAddress",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "SameToken",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "RouterNotAllowed",
+      "inputs": [
+        {
+          "name": "router",
+          "type": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "InvalidRouterConfig",
+      "inputs": [
+        {
+          "name": "router",
+          "type": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "InvalidAssetConfig",
+      "inputs": [
+        {
+          "name": "stock",
+          "type": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "AssetNotEnabled",
+      "inputs": [
+        {
+          "name": "stock",
+          "type": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "TokenPaused",
+      "inputs": [
+        {
+          "name": "stock",
+          "type": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "PauseCheckFailed",
+      "inputs": [
+        {
+          "name": "stock",
+          "type": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "MultiplierUnavailable",
+      "inputs": [
+        {
+          "name": "stock",
+          "type": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "NoOutput",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "InsufficientShares",
+      "inputs": [
+        {
+          "name": "shares",
+          "type": "uint256"
+        },
+        {
+          "name": "minShares",
+          "type": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "RouterCallFailed",
+      "inputs": [
+        {
+          "name": "reason",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "NotAFeedAsset",
+      "inputs": [
+        {
+          "name": "stock",
+          "type": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "FeedStale",
+      "inputs": [
+        {
+          "name": "stock",
+          "type": "address"
+        },
+        {
+          "name": "updatedAt",
+          "type": "uint64"
+        },
+        {
+          "name": "maxAge",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "FeedNotSeeded",
+      "inputs": [
+        {
+          "name": "stock",
+          "type": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "InvalidSigner",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "UpdateNotValidNow",
+      "inputs": [
+        {
+          "name": "validAfter",
+          "type": "uint64"
+        },
+        {
+          "name": "validUntil",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "UpdateOlderThanStored",
+      "inputs": [
+        {
+          "name": "validAfter",
+          "type": "uint64"
+        },
+        {
+          "name": "storedValidAfter",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "UpdateConflictsWithStored",
+      "inputs": [
+        {
+          "name": "validAfter",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "UpdateOutOfBounds",
+      "inputs": [
+        {
+          "name": "stock",
+          "type": "address"
+        },
+        {
+          "name": "current",
+          "type": "uint256"
+        },
+        {
+          "name": "proposed",
+          "type": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "CorporateActionNotReady",
+      "inputs": [
+        {
+          "name": "stock",
+          "type": "address"
+        },
+        {
+          "name": "notBefore",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "InvalidMaxAge",
+      "inputs": [
+        {
+          "name": "maxAge",
+          "type": "uint64"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "NativeRescueFailed",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "FailedInnerCall",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "SafeERC20FailedOperation",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "AddressInsufficientBalance",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "OwnableUnauthorizedAccount",
+      "inputs": [
+        {
+          "name": "account",
+          "type": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "OwnableInvalidOwner",
+      "inputs": [
+        {
+          "name": "owner",
+          "type": "address"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "EnforcedPause",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ExpectedPause",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ReentrancyGuardReentrantCall",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ECDSAInvalidSignature",
+      "inputs": []
+    },
+    {
+      "type": "error",
+      "name": "ECDSAInvalidSignatureLength",
+      "inputs": [
+        {
+          "name": "length",
+          "type": "uint256"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "ECDSAInvalidSignatureS",
+      "inputs": [
+        {
+          "name": "s",
+          "type": "bytes32"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "Error",
+      "inputs": [
+        {
+          "name": "message",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "Panic",
+      "inputs": [
+        {
+          "name": "code",
+          "type": "uint256"
+        }
+      ]
+    }
+  ],
+  "selectors": {
+    "Guarded": "0x073c946b19b4a99cebb5f2a0899a940f0b518b598943a4e4def5bf9c0dbc6fb2",
+    "Transfer": "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+    "Expired": "0xf80dbaea",
+    "ZeroAmount": "0x1f2a2005",
+    "ZeroMinShares": "0x1603f909",
+    "ZeroAddress": "0xd92e233d",
+    "SameToken": "0x201b580a",
+    "RouterNotAllowed": "0xc665406f",
+    "InvalidRouterConfig": "0xb9809e3f",
+    "InvalidAssetConfig": "0xfb298f5a",
+    "AssetNotEnabled": "0xf6f24b83",
+    "TokenPaused": "0xf017c0de",
+    "PauseCheckFailed": "0x6733b214",
+    "MultiplierUnavailable": "0xd317a89f",
+    "NoOutput": "0x5a7cfa65",
+    "InsufficientShares": "0xcb1d8bba",
+    "RouterCallFailed": "0x0ef439b9",
+    "NotAFeedAsset": "0xf2f60b28",
+    "FeedStale": "0xe71033ac",
+    "FeedNotSeeded": "0x6db21ba9",
+    "InvalidSigner": "0x815e1d64",
+    "UpdateNotValidNow": "0x925a874b",
+    "UpdateOlderThanStored": "0x5035244d",
+    "UpdateConflictsWithStored": "0x0d9f8b1a",
+    "UpdateOutOfBounds": "0x9e55eaa2",
+    "CorporateActionNotReady": "0x341daa73",
+    "InvalidMaxAge": "0xaa0cf1ba",
+    "NativeRescueFailed": "0x440e9b73",
+    "FailedInnerCall": "0x1425ea42",
+    "SafeERC20FailedOperation": "0x5274afe7",
+    "AddressInsufficientBalance": "0xcd786059",
+    "OwnableUnauthorizedAccount": "0x118cdaa7",
+    "OwnableInvalidOwner": "0x1e4fbdf7",
+    "EnforcedPause": "0xd93c0665",
+    "ExpectedPause": "0x8dfc202b",
+    "ReentrancyGuardReentrantCall": "0x3ee5aeb5",
+    "ECDSAInvalidSignature": "0xf645eedf",
+    "ECDSAInvalidSignatureLength": "0xfce698f7",
+    "ECDSAInvalidSignatureS": "0xd78bce0c",
+    "Error": "0x08c379a0",
+    "Panic": "0x4e487b71"
+  }
+}
