@@ -16,7 +16,8 @@
 - `packages/config/src/flags.ts` (new), `packages/config/src/index.ts` (export only)
 - `packages/core/src/status.ts` + its test (the `offhours` mapping only)
 - Root: `package.json` (scripts), `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `.github/workflows/ci.yml` (only to include new packages)
-- Empty skeletons for every module package (see task 6) and every `apps/web/modules/<name>/` folder (task 8)
+- Skeletons (tasks 6, 8): `packages/mod-*/**`, `apps/web/modules/**`; dependency lines in `apps/web/package.json`, `apps/bot/package.json`; `packages/core/src/status.test.ts`
+- `apps/web/e2e/foundation.config.ts` (foundation Playwright config, see review)
 - `apps/web/app/dev/page.tsx` (dev preview index)
 - Approved 2026-10-03 (scope questions): `apps/web/components/module-boundary-client.tsx`, `apps/web/e2e/module-boundary.spec.ts`, `apps/web/app/dev/foundation/**` (gated like the dev index)
 - Approved 2026-10-03, **additive only**: collector APIs in `packages/binance/src/**` (typed `rwa/tokens` list and batch `rwa/price` with zod schemas, through the existing client) and `packages/engine/src/**` (an `engine.collectors` accessor), with tests. No change to existing signatures or behaviour.

@@ -26,13 +26,18 @@ for line in section.splitlines():
 patterns = [p.rstrip("/") for p in patterns]
 
 
+def _glob(p):
+    # literal [ ] (e.g. [txHash]) and ** for any depth; fnmatch's * already crosses "/"
+    return p.replace("[", "[[]").replace("**", "*")
+
+
 def covered(path):
     for p in patterns:
         if p.endswith("/**"):
-            if path.startswith(p[:-2]):
+            if fnmatch.fnmatchcase(path, _glob(p[:-3]) + "/*"):
                 return True
         elif "*" in p:
-            if fnmatch.fnmatchcase(path, p):
+            if fnmatch.fnmatchcase(path, _glob(p)):
                 return True
         elif path == p or path.startswith(p + "/"):
             return True
