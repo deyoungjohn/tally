@@ -14,7 +14,9 @@
     "test": "pnpm -r --if-present test",
     "build": "pnpm --filter @tally/web build",
     "e2e": "pnpm --filter @tally/web e2e",
-    "tally": "pnpm --filter @tally/engine tally"
+    "tally": "pnpm --filter @tally/engine tally",
+    "worker": "pnpm --filter @tally/worker worker",
+    "e2e:foundation": "TALLY_FOUNDATION_E2E=1 pnpm --filter @tally/web exec playwright test --config app/dev/foundation/playwright.config.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
