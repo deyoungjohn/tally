@@ -1,11 +1,11 @@
 import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
-  testDir: "../../../e2e",
+  testDir: ".",
   testMatch: "module-boundary.spec.ts",
   fullyParallel: true,
   workers: 2,
-  outputDir: "../../../test-results/foundation-run",
+  outputDir: "../test-results/foundation-run",
   reporter: [["list"]],
   use: {
     baseURL: "http://127.0.0.1:3101",

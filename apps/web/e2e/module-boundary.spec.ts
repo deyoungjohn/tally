@@ -75,19 +75,40 @@ test.describe("foundation boundaries", () => {
     expect(Object.keys(data).sort()).toEqual(["flags", "health"]);
     expect(JSON.stringify(data)).not.toMatch(/BINANCE_W3_API|BSC_RPC|PRIVATE|SECRET/);
   });
-  test("failed worker health and stale worker health each degrade only their own card", async ({
+  test("failed and stale workers keep last-good content with an age notice and expose health to loaders and clients", async ({
     page,
   }) => {
     await page.goto("/dev/foundation?health=1");
-    await expect(page.getByRole("status", { name: "Guardian degraded" })).toContainText(
-      "Last good update:",
+    await expect(page.getByRole("status", { name: "guardian update delayed" })).toContainText(
+      "Last update 4 min ago; retrying",
     );
-    await expect(page.getByText("Unhealthy module content")).toHaveCount(0);
+    await expect(page.getByText(/Unhealthy module content/)).toContainText("degraded=true");
+    await expect(page.getByText(/Unhealthy module content/)).toContainText(
+      "Fixture primary source unavailable",
+    );
+    await expect(page.getByRole("status", { name: "Guardian degraded" })).toHaveCount(0);
     await expect(page.getByText("Statement remains available")).toBeVisible();
     await page.goto("/dev/foundation?stale=1");
-    await expect(page.getByRole("status", { name: "Autopilot degraded" })).toBeVisible();
-    await expect(page.getByText("Stale module content")).toHaveCount(0);
+    await expect(page.getByRole("status", { name: "autopilot update delayed" })).toContainText(
+      "Last update 4 min ago; retrying",
+    );
+    await expect(page.getByText(/Stale module content/)).toContainText("degraded=true, stale=true");
+    await expect(page.getByRole("status", { name: "Autopilot degraded" })).toHaveCount(0);
     await expect(page.getByText("Statement remains available")).toBeVisible();
+    await page.screenshot({ path: "test-results/foundation-last-good.png", fullPage: true });
+  });
+  test("never-succeeded workers show a full degraded card; a five-minute cadence stays healthy after four minutes", async ({
+    page,
+  }) => {
+    await page.goto("/dev/foundation?never=1");
+    await expect(page.getByRole("status", { name: "Rewards degraded" })).toContainText(
+      "No successful update yet",
+    );
+    await expect(page.getByText("Never-succeeded module content")).toHaveCount(0);
+    await expect(page.getByText("Statement remains available")).toBeVisible();
+    await page.goto("/dev/foundation?cadence=1");
+    await expect(page.getByText("Five-minute statement: degraded=false")).toBeVisible();
+    await expect(page.getByRole("status")).toHaveCount(0);
   });
   test("navigation exposes only enabled module links and mobile menu still closes by keyboard", async ({
     page,

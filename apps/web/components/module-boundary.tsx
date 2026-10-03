@@ -1,7 +1,13 @@
 import "server-only";
 import type { ReactNode } from "react";
 import type { ModuleName } from "@tally/config";
-import { openStore, type HealthRow, type OpenSnapshotStore } from "@tally/modkit";
+import {
+  moduleHealthState,
+  openStore,
+  type HealthRow,
+  type ModuleHealthState,
+  type OpenSnapshotStore,
+} from "@tally/modkit";
 import { moduleFlags } from "@/lib/flags";
 import { DegradedCard, ModuleBoundaryClient } from "./module-boundary-client";
 
@@ -19,18 +25,24 @@ export async function ModuleBoundary({
 }: {
   module: ModuleName;
   children?: ReactNode;
-  load?: () => ReactNode | Promise<ReactNode>;
+  load?: (state: ModuleHealthState) => ReactNode | Promise<ReactNode>;
   fallback?: ReactNode;
 }) {
   if (!moduleFlags()[module]) return null;
   let health: HealthRow | undefined;
   try {
     health = readModuleHealth().find((r) => r.module === module);
-    if (health && (!health.ok || Date.now() - health.lastRunAt > 120_000))
-      return fallback ?? <DegradedCard module={module} lastOkAt={health.lastOkAt} />;
-    const content = load ? await load() : children;
+    const state = moduleHealthState(health ?? null);
+    if (health?.lastOkAt === undefined)
+      return fallback ?? <DegradedCard module={module} lastOkAt={health?.lastOkAt} />;
+    const content = load ? await load(state) : children;
     return (
-      <ModuleBoundaryClient module={module} lastOkAt={health?.lastOkAt} fallback={fallback}>
+      <ModuleBoundaryClient
+        module={module}
+        lastOkAt={health?.lastOkAt}
+        health={state}
+        fallback={fallback}
+      >
         {content}
       </ModuleBoundaryClient>
     );

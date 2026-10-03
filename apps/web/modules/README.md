@@ -7,3 +7,5 @@ WO-12 owns pages and visual components. It consumes the view model without chang
 Use the boundary's `load` callback for server loaders and rendering that can throw. A React client error boundary catches client render errors, but cannot catch evaluation of an arbitrary server component passed as a child. `load` runs only after the server flag and health checks, and its failures render the same degraded card. Client children get a separate React boundary.
 
 Module flags default off. `/dev` and `/dev/foundation` require a non-production server or `TALLY_DEV_PREVIEWS=1`. The dev index links to the previews module agents will add; skeletons do not provide full pages.
+
+Server loaders receive `load({ health, degraded, stale, ageMs, reason })`. Client descendants can read the same state with `useModuleHealth()` from `module-boundary-client`. Incorporate it into the view model without hiding still-valid last-good data. Failed/stale health shows a default age notice, which WO-12 can restyle; a worker without any successful run shows the full degraded card.

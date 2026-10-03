@@ -41,6 +41,7 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const [enabled, setEnabled] = useState<Partial<Record<ModuleName, boolean>>>({});
+  // WO-12 may move these flags into the server layout to render navigation before hydration.
   useEffect(() => {
     const controller = new AbortController();
     fetch("/api/modules/health", { signal: controller.signal })

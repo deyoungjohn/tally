@@ -1,7 +1,28 @@
 "use client";
 
-import { Component, type ReactNode } from "react";
+import { Component, createContext, useContext, type ReactNode } from "react";
 import type { ModuleName } from "@tally/config";
+import type { ModuleHealthState } from "@tally/modkit";
+
+const ModuleHealthContext = createContext<ModuleHealthState | null>(null);
+export function useModuleHealth(): ModuleHealthState | null {
+  return useContext(ModuleHealthContext);
+}
+
+function UpdateNotice({ module, health }: { module: ModuleName; health: ModuleHealthState }) {
+  const minutes = Math.floor((health.ageMs ?? 0) / 60_000);
+  const age = minutes === 0 ? "less than a minute" : `${minutes} min`;
+  return (
+    <p
+      role="status"
+      aria-label={`${module} update delayed`}
+      className="text-sm text-fg2"
+      title={health.reason ?? undefined}
+    >
+      Last update {age} ago; retrying.
+    </p>
+  );
+}
 
 export function DegradedCard({ module, lastOkAt }: { module: ModuleName; lastOkAt?: number }) {
   const label = module.charAt(0).toUpperCase() + module.slice(1);
@@ -30,6 +51,7 @@ interface Props {
   lastOkAt?: number;
   fallback?: ReactNode;
   children: ReactNode;
+  health: ModuleHealthState;
 }
 export class ModuleBoundaryClient extends Component<Props, { failed: boolean }> {
   state = { failed: false };
@@ -46,6 +68,13 @@ export class ModuleBoundaryClient extends Component<Props, { failed: boolean }> 
           <DegradedCard module={this.props.module} lastOkAt={this.props.lastOkAt} />
         )
       );
-    return this.props.children;
+    return (
+      <ModuleHealthContext.Provider value={this.props.health}>
+        {this.props.health.degraded && (
+          <UpdateNotice module={this.props.module} health={this.props.health} />
+        )}
+        {this.props.children}
+      </ModuleHealthContext.Provider>
+    );
   }
 }
