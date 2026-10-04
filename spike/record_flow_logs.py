@@ -71,7 +71,7 @@ def main():
     finished = datetime.now(timezone.utc)
     recording["_meta"]["finishedAt"] = finished.isoformat()
     path = Path(__file__).parent / "results" / ("flow_logs_" + finished.strftime("%Y%m%dT%H%M%SZ") + ".json")
-    path.write_text(json.dumps(recording, indent=2) + "\n")
+    path.write_text(json.dumps(recording, separators=(",", ":")) + "\n")
     print(path)
 
 
