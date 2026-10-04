@@ -12,6 +12,7 @@
 - `apps/worker/src/jobs/receipts.ts` (reconciles `PENDING` receipts)
 - `apps/web/modules/receipts/**`, `apps/web/modules/quality/**`, `apps/web/app/dev/receipts/**`, `apps/web/app/dev/quality/**`
 - `packages/mcp/src/tools/get-receipt.ts`
+- Approved 2026-10-03: `spike/record_receipt_vectors.py`, `spike/results/receipt_vectors_*.json` (new files only; read-only recorder of F6/F11 on-chain receipts)
 
 ## Tasks
 

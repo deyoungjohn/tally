@@ -27,6 +27,11 @@
 6. Telegram (grammY, long polling): `/start` link flow (one-time code shown in the web app), `/alerts on|off`, `/quiet 22-07`, delivery of alerts. Bot token from env `TELEGRAM_BOT_TOKEN` only.
 7. View models (UI split: you ship the logic and a typed view model plus a plain, unstyled component in `apps/web/modules/<name>/`; the UI agent (WO-12, Sonnet) builds the real page from your view model. Don't style, don't create pages outside `apps/web/app/dev/<name>/`.): `AlertFeedVM` and `GuardianSettingsVM` (rules, thresholds, quiet hours, Telegram link state). The UI agent builds the Guardian page.
 8. Earnings rule: only if the orchestrator confirms a source (gate V-E); otherwise leave a disabled rule stub with a reason.
+9. **Read-only bot commands (restored from blueprint M6, §13)**, answered from snapshots and `@tally/engine` only (no keys held, nothing signed):
+   - `/quote <TICKER> [usd]` → issuer comparison in shares (price per share, premium vs US, fee, grade, `best`), same numbers as the web app.
+   - `/shares <address>` → holdings in shares per ticker across issuers (`null` + reason when a multiplier is unknown, never 1:1).
+   - `/shield` → tokens currently flagged (paused, ghost, unit mismatch, stale data) with plain-English reasons.
+   Replies within 3 s from cached snapshots; when data is stale, say how old it is.
 
 ## Exit checks
 
@@ -34,6 +39,7 @@
 - [ ] Telegram down (mocked) → alerts still written and visible on the web feed; error in health.
 - [ ] One rule throws → other rules still evaluate (test).
 - [ ] View-model tests: empty feed, de-duplicated feed, Telegram not linked.
+- [ ] Command tests (fixture mode): `/quote NVDA 25` shows both issuers in shares; `/shares` on the burner wallet; `/shield` lists a paused and a ghost token; stale snapshot → age shown.
 
 ## Out of scope
 

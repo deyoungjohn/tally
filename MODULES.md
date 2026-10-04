@@ -38,6 +38,7 @@ The order is the cut line: if time runs out, everything above the cut ships and 
 | 5 | **Sell + Switch issuer** | Portfolio row actions | WO-07 | 1½–2 d | M3, gates V-B1…V-B4 |
 | 6 | **Guardian autopilot** (Agentic Wallet, caps, kill switch, decision log) | Guardian settings | WO-08 | 1–1½ d | WO-06, WO-02, `baw` check |
 | 7 | **Pies** (fixed templates, drift rebalance) | Pies | WO-09 | 1½–2 d | M3, WO-07 sell path |
+| 6b | **Agent layer** (MCP server, Wallet Skill, upstream PR; blueprint M5) | Claude Code / Cursor / Agent Studio | WO-05 | 1 d | engine (done), ShareGuard (done) |
 | 8 | **Rewards → Stocks + idle-cash yield** | Portfolio → DeFi card | WO-10 | 1 d | WO-02, gates V-C1…V-C3 |
 | — | **UI** (all pages, built from each module's view model) | all | WO-12 | continuous | each module's view model |
 | 9 | Venus collateral guard (NVDAB is a Venus market) | Guardian rule | roadmap | — | WO-06 |
