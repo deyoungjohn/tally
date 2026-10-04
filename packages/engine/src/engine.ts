@@ -131,7 +131,7 @@ function build(o: BuildOptions): Engine {
   const transport = pace?.fetch ?? o.fetch;
   const onWarn = pace
     ? (message: string) => {
-        if (!pace.aborted()) (o.onWarn ?? console.warn)(message);
+        if (!pace.aborted()) o.onWarn?.(message);
       }
     : o.onWarn;
   const client = new BinanceClient({

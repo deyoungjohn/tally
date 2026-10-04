@@ -3,6 +3,35 @@ import { BinanceClient, createFixtureFetch, rwaPricesResponse } from "@tally/bin
 import { createFixtureEngine, createLiveEngine } from "./engine";
 import { workerRequestPace } from "./worker-request-pace";
 
+it("a live engine built without onWarn does not call console.warn on a facts fallback", async () => {
+  const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  const fixture = createFixtureFetch();
+  const failedList = vi.fn();
+  vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+    if (String(input).includes("/market/rwa/tokens")) {
+      failedList();
+      return new Response(JSON.stringify({ code: 40001, msg: "mock list failure" }));
+    }
+    return fixture(input, init);
+  });
+  try {
+    const token = (await createFixtureEngine().ports.registry.tokensFor("NVDA")).find(
+      (row) => row.issuer === "ondo",
+    )!;
+    const engine = createLiveEngine({
+      BINANCE_W3_API_KEY: "fixture",
+      BINANCE_W3_API_SECRET: "fixture",
+      BSC_RPC_PRIMARY: "https://rpc.example.invalid",
+    });
+    const facts = await engine.ports.facts.market(token);
+    expect(failedList).toHaveBeenCalledOnce();
+    expect(facts.status).not.toBeNull();
+    expect(warn).not.toHaveBeenCalled();
+  } finally {
+    vi.restoreAllMocks();
+  }
+});
+
 it("opt-in live worker pacing spaces concurrent collector requests without changing unconfigured engines", async () => {
   vi.useFakeTimers();
   try {
