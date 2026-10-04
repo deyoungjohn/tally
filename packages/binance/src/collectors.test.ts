@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { BinanceClient } from "./client";
-import { BinanceCollectors } from "./collectors";
+import { BinanceCollectors, marketHolder } from "./collectors";
 import {
   collectorRecording,
   createCollectorFixtureFetch,
@@ -104,4 +104,43 @@ describe("additive collector endpoints", () => {
     // Rejects invalid wallet address before requesting
     expect(() => client.recentPnl("invalid")).toThrow();
   });
+});
+
+it("flow collectors validate all four recorded tokens and send cursor/limit through the signed client", async () => {
+  const tokens = [
+    "0x02fca66c1d1afb4e2a7884261eb00f63598a7436",
+    "0xa9ee28c80f960b889dfbd1902055218cba016f75",
+    "0x431a3bee82e2ca41e49895cbece5bb0f76a89b7a",
+    "0x390a684ef9cade28a7ad0dfa61ab1eb3842618c4",
+  ];
+  const fetch = vi.fn(createCollectorFixtureFetch(createFixtureFetch())),
+    client = api(fetch);
+  for (const token of tokens) {
+    expect((await client.trades(token)).trades.length).toBeGreaterThan(0);
+    expect((await client.holders(token)).length).toBeGreaterThan(0);
+    expect((await client.topTraders(token)).length).toBeGreaterThan(0);
+    expect((await client.topLiquidity(token)).length).toBeGreaterThan(0);
+  }
+  expect(() => client.trades(tokens[0]!, undefined, 101)).toThrow("1..100");
+  expect(() => client.trades(tokens[0]!, undefined, 0)).toThrow("1..100");
+  expect(() => client.trades("invalid")).toThrow();
+  const page = await client.trades(tokens[0]!);
+  await expect(client.trades(tokens[0]!, page.cursor!)).rejects.toThrow("history is incomplete");
+  expect((await client.trades(tokens[0]!, undefined, 10)).trades).toHaveLength(10);
+  const request = new URL(String(fetch.mock.calls.at(-1)![0]));
+  expect(request.searchParams.get("limit")).toBe("10");
+  expect(request.searchParams.get("binanceChainId")).toBe("56");
+});
+
+it("top-trader null holdingPercent reported by the user's EC2 run on 2026-10-04 parses through the signed client", async () => {
+  // Apply the user-observed EC2 shape to an existing recorded row; recorded evidence is immutable.
+  const recorded = collectorRecording("F_top_trader_NVDAB").data as Record<string, unknown>[];
+  const row = { ...recorded[0]!, holdingPercent: null };
+  const request = vi.fn<typeof fetch>(
+    async () => new Response(JSON.stringify({ code: 0, data: [row] })),
+  );
+  const parsed = await api(request).topTraders("0x02fca66c1d1afb4e2a7884261eb00f63598a7436");
+  expect(parsed).toEqual([row]);
+  expect(request.mock.calls[0]![1]?.headers).toHaveProperty("X-OC-SIGN");
+  expect(marketHolder.safeParse({ ...row, holdingPercent: "invalid" }).success).toBe(false);
 });

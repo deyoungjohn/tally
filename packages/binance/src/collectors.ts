@@ -19,6 +19,47 @@ export const rwaPrice = z
 export const rwaPricesResponse = z.array(rwaPrice);
 export type RwaPrice = z.infer<typeof rwaPrice>;
 
+export const marketTrade = z
+  .object({
+    binanceChainId: z.literal("56"),
+    tokenContractAddress: address,
+    txHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/),
+    userAddress: address,
+    type: z.enum(["buy", "sell"]),
+    time: z.number().int().nonnegative(),
+    changedTokenInfo: z.array(
+      z.object({ tokenContractAddress: address, amount: signedDecimal, tokenSymbol: z.string() }),
+    ),
+  })
+  .passthrough();
+export const tradesPage = z.object({ cursor: z.string().nullish(), trades: z.array(marketTrade) });
+export const marketHolder = z
+  .object({
+    holderWalletAddress: address,
+    holdAmount: decimal,
+    holdingPercent: decimal.nullable(),
+    boughtAmount: decimal,
+    soldAmount: decimal,
+    avgBuyPrice: decimal.nullish(),
+    avgSellPrice: decimal.nullish(),
+    fundingSourceLabel: z.object({ tagName: z.string(), tagValue: z.string().nullish() }).nullish(),
+  })
+  .passthrough();
+export const marketLiquidity = z
+  .object({
+    // V4 returns a bytes32 pool ID, which is NOT a Transfer endpoint address.
+    poolAddress: z.string().regex(/^0x(?:[0-9a-fA-F]{40}|[0-9a-fA-F]{64})$/),
+    pool: z.string(),
+    liquidityAmount: z.array(
+      z.object({ tokenContractAddress: address, tokenSymbol: z.string() }).passthrough(),
+    ),
+  })
+  .passthrough();
+export type MarketTrade = z.infer<typeof marketTrade>;
+export type TradesPage = z.infer<typeof tradesPage>;
+export type MarketHolder = z.infer<typeof marketHolder>;
+export type MarketLiquidity = z.infer<typeof marketLiquidity>;
+
 export const recentPnlItem = z
   .object({
     binanceChainId: z.string().optional(),
@@ -132,6 +173,50 @@ export type TokenLatestPnlResponse = z.infer<typeof tokenLatestPnlResponse>;
 /** Additive scheduled-data interface. Reuses the signed client's pacing, retries and error mapping. */
 export class BinanceCollectors {
   constructor(private readonly client: BinanceClient) {}
+  trades(token: string, cursor?: string, limit = 100): Promise<TradesPage> {
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100)
+      throw new RangeError("trades limit must be 1..100");
+    return this.client.get(
+      "/api/v1/dex/market/trades",
+      {
+        binanceChainId: "56",
+        tokenContractAddress: address.parse(token),
+        cursor,
+        limit,
+      },
+      tradesPage,
+    );
+  }
+  holders(token: string): Promise<MarketHolder[]> {
+    return this.client.get(
+      "/api/v1/dex/market/token/holder",
+      {
+        binanceChainId: "56",
+        tokenContractAddress: address.parse(token),
+      },
+      z.array(marketHolder),
+    );
+  }
+  topTraders(token: string): Promise<MarketHolder[]> {
+    return this.client.get(
+      "/api/v1/dex/market/token/top-trader",
+      {
+        binanceChainId: "56",
+        tokenContractAddress: address.parse(token),
+      },
+      z.array(marketHolder),
+    );
+  }
+  topLiquidity(token: string): Promise<MarketLiquidity[]> {
+    return this.client.get(
+      "/api/v1/dex/market/token/top-liquidity",
+      {
+        binanceChainId: "56",
+        tokenContractAddress: address.parse(token),
+      },
+      z.array(marketLiquidity),
+    );
+  }
   registry(platformId?: "ondo" | "bstock") {
     return this.client.get(
       "/api/v1/dex/market/rwa/tokens",
