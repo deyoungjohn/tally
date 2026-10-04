@@ -40,6 +40,15 @@ stablecoin peg-price feed. Bot-labelled trades are excluded from real flow and
 volume. Custody is excluded from top-ten concentration, which remains a
 percentage of the original supply (not a renormalized percentage).
 
+The user's EC2 run on 2026-10-04 returned `holdingPercent: null` on top-trader
+rows. The shared holder/trader schema accepts that shape. Percentage-based
+custody detection skips unknown percentages (configured custody lists still
+apply); bot turnover detection does not depend on a percentage. If any row on
+the holders endpoint has a null percentage, concentration is null with
+`Holder supply percentage unavailable; concentration unknown`, rather than a
+sum over only the available percentages. The collector regression test applies
+this user-observed shape to a recorded row without editing recorded evidence.
+
 Collection has a 45-second wall-clock budget checked between calls. An in-flight
 read can finish after the deadline; no next token/page/metadata read starts once
 it is reached. The job runs at a 60-second interval with a 120-second timeout.

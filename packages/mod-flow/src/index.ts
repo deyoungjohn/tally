@@ -91,7 +91,7 @@ export interface TradeInput {
 export interface HolderInput {
   holderWalletAddress: string;
   holdAmount: string;
-  holdingPercent: string;
+  holdingPercent: string | null;
   boughtAmount: string;
   soldAmount: string;
   avgBuyPrice?: string | null;
@@ -222,13 +222,16 @@ export function labelWallet(holder: HolderInput, lists: LabelLists = {}): Wallet
       turnoverUsd >= BOT_TURNOVER_USD);
   const custody =
     listed(lists.custody, holder.holderWalletAddress) ||
-    (fixed(holder.holdingPercent) >= CUSTODY_PERCENT &&
+    (holder.holdingPercent !== null &&
+      fixed(holder.holdingPercent) >= CUSTODY_PERCENT &&
       holder.fundingSourceLabel?.tagName === "CEX Wallet");
   if (bot) reasons.push("High turnover relative to current holding, or configured bot list");
   if (custody)
     reasons.push("CEX-funded holder with at least 20% of supply, or configured custody list");
   if ((bought > 0n && holder.avgBuyPrice == null) || (sold > 0n && holder.avgSellPrice == null))
     reasons.push("Bot turnover price unavailable");
+  if (holder.holdingPercent === null)
+    reasons.push("Holder supply percentage unavailable; custody percentage rule skipped");
   return { bot, custody, reasons };
 }
 
@@ -435,14 +438,15 @@ export function aggregateFlow(snapshot: FlowSnapshot, now: number): FlowAggregat
     (last, t) => (last === null || t.at > last ? t.at : last),
     null,
   );
-  const holders = snapshot.holders
-    ?.filter((h) => !snapshot.labels[h.holderWalletAddress.toLowerCase()]?.custody)
-    .sort((a, b) => {
-      const left = fixed(a.holdingPercent),
-        right = fixed(b.holdingPercent);
-      return left > right ? -1 : left < right ? 1 : 0;
-    })
-    .slice(0, 10);
+  const percentMissing = snapshot.holders?.some((h) => h.holdingPercent === null) ?? false;
+  const percentages = percentMissing
+    ? null
+    : snapshot.holders
+        ?.filter((h) => !snapshot.labels[h.holderWalletAddress.toLowerCase()]?.custody)
+        // The complete-holder guard above excludes nulls before conversion or sorting.
+        .map((h) => fixed(h.holdingPercent!))
+        .sort((a, b) => (a > b ? -1 : a < b ? 1 : 0))
+        .slice(0, 10);
   return {
     ticker: snapshot.token.ticker,
     issuer: snapshot.token.issuer,
@@ -451,10 +455,14 @@ export function aggregateFlow(snapshot: FlowSnapshot, now: number): FlowAggregat
     lastRealTradeAt,
     lastRealTradeAgeMs: lastRealTradeAt === null ? null : Math.max(0, now - lastRealTradeAt),
     lastRealTradeReason: lastRealTradeAt === null ? "No real trade in available history" : null,
-    top10ConcentrationPercent: holders
-      ? holders.reduce((s, h) => s + fixed(h.holdingPercent), 0n)
+    top10ConcentrationPercent: percentages
+      ? percentages.reduce((s, percent) => s + percent, 0n)
       : null,
-    concentrationReason: snapshot.holdersReason ?? (holders ? null : "Holders unavailable"),
+    concentrationReason: percentMissing
+      ? ["Holder supply percentage unavailable; concentration unknown", snapshot.holdersReason]
+          .filter(Boolean)
+          .join("; ")
+      : (snapshot.holdersReason ?? (percentages ? null : "Holders unavailable")),
     whalePrints: real
       .filter((t) => t.usd !== null && t.usd >= WHALE_USD)
       .sort((a, b) => b.at - a.at),

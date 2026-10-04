@@ -104,6 +104,31 @@ describe("labels and aggregates", () => {
       ).custody,
     ).toBe(true);
   });
+  it("null holdingPercent from the 2026-10-04 EC2 top-trader shape leaves bot detection independent and custody unknown", () => {
+    const topTrader = { ...traders[0]!, holdingPercent: null };
+    expect(labelWallet(topTrader).bot).toBe(true);
+    const cex = { ...holders[0]!, holdingPercent: null };
+    expect(labelWallet(cex).custody).toBe(false);
+    expect(labelWallet(cex).reasons).toContain(
+      "Holder supply percentage unavailable; custody percentage rule skipped",
+    );
+    expect(labelWallet(cex, { custody: [cex.holderWalletAddress] }).custody).toBe(true);
+  });
+  it("a null percentage on the holders endpoint leaves concentration unknown instead of summing a partial set", () => {
+    const snapshot = sample({
+      holders: [{ ...holders[0]!, holdingPercent: null }, ...holders.slice(1)],
+    });
+    expect(aggregateFlow(snapshot, now)).toMatchObject({
+      top10ConcentrationPercent: null,
+      concentrationReason: "Holder supply percentage unavailable; concentration unknown",
+    });
+    const missing = holders[0]!.holderWalletAddress.toLowerCase();
+    const configuredCustody = sample({
+      ...snapshot,
+      labels: { [missing]: { custody: true, bot: false, reasons: [] } },
+    });
+    expect(aggregateFlow(configuredCustody, now).top10ConcentrationPercent).toBeNull();
+  });
   it("nets bigint shares for every window, removes bots, de-duplicates trades and excludes custody from concentration", () => {
     const trade: FlowTrade = {
       id: "buy",
@@ -143,7 +168,7 @@ describe("labels and aggregates", () => {
     expect(flow.lastRealTradeAgeMs).toBe(1000);
     const percentages = holders
       .slice(1)
-      .map((h) => fixed(h.holdingPercent))
+      .map((h) => fixed(h.holdingPercent!)) // This immutable holder fixture contains known percentages.
       .sort((a, b) => (a > b ? -1 : a < b ? 1 : 0))
       .slice(0, 10);
     expect(flow.top10ConcentrationPercent).toBe(percentages.reduce((s, h) => s + h, 0n));
@@ -446,6 +471,39 @@ it("replacing volume preserves all other penalties even when the original grade 
 });
 
 describe("bounded flow collection", () => {
+  it("null top-trader percentages do not trigger metadata fallback or invalidate complete trade coverage", async () => {
+    const store = openStore(":memory:");
+    try {
+      const engine = createFixtureEngine();
+      const recorded = await engine.collectors.topTraders(token.address);
+      engine.collectors.topTraders = vi.fn(async () =>
+        recorded.map((row) => ({ ...row, holdingPercent: null })),
+      );
+      engine.collectors.trades = vi.fn(async () => ({ trades: [], cursor: null }));
+      const onWarn = vi.fn(),
+        logs = vi.spyOn(engine.chain, "blockNumber");
+      await collectFlow(
+        { store, health: store.health, engine, onWarn, now: () => now },
+        { tokens: [token], fixture: false },
+      );
+      const snapshot = store.latest<FlowSnapshot>("flow", token.address, {
+        maxAgeMs: 900000,
+        now,
+      })!;
+      expect(snapshot.source).toBe("binance");
+      expect(snapshot.data.cleaningReason).toBeNull();
+      expect(snapshot.data.coverageStartMs).toBe(now - WINDOWS["7d"]);
+      expect(snapshot.data.labels[recorded[0]!.holderWalletAddress.toLowerCase()]!.bot).toBe(true);
+      expect(aggregateFlow(snapshot.data, now).windows["24h"]).toMatchObject({
+        realVolumeUsd: 0n,
+        reason: null,
+      });
+      expect(logs).not.toHaveBeenCalled();
+      expect(onWarn).not.toHaveBeenCalled();
+    } finally {
+      store.close();
+    }
+  });
   it("a fake-clock budget stops the run and the next run services the untouched tokens first", async () => {
     const store = openStore(":memory:");
     try {

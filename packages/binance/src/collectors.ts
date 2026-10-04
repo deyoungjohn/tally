@@ -37,7 +37,7 @@ export const marketHolder = z
   .object({
     holderWalletAddress: address,
     holdAmount: decimal,
-    holdingPercent: decimal,
+    holdingPercent: decimal.nullable(),
     boughtAmount: decimal,
     soldAmount: decimal,
     avgBuyPrice: decimal.nullish(),

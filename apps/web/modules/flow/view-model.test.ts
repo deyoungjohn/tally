@@ -322,3 +322,38 @@ it("inactive raw ghosts keep an aged Radar grade and an exclusion reason without
     store.close();
   }
 });
+
+it("the panel shows unknown concentration when a holders row has a null percentage", async () => {
+  const store = openStore(":memory:");
+  try {
+    seed(store, 0);
+    const snapshot = store.latest<FlowSnapshot>("flow", token.address, {
+      maxAgeMs: 900000,
+      now,
+    })!.data;
+    snapshot.holders = [
+      {
+        holderWalletAddress: "0x" + "1".repeat(40),
+        holdAmount: "1",
+        holdingPercent: null,
+        boughtAmount: "0",
+        soldAmount: "0",
+      },
+    ];
+    snapshot.holdersReason = null;
+    store.put({
+      kind: "flow",
+      key: token.address,
+      source: "binance",
+      observedAt: now,
+      data: snapshot,
+    });
+    const vm = await loadFlow("NVDA", { store, now });
+    expect(vm.issuers[0]!.top10ConcentrationPercent).toBeNull();
+    const html = renderToStaticMarkup(React.createElement(FlowContent, { panel: displayFlow(vm) }));
+    expect(html).toContain("Holder supply percentage unavailable; concentration unknown");
+    expect(html).not.toContain("Top ten holders excluding custody: 0%");
+  } finally {
+    store.close();
+  }
+});

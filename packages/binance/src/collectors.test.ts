@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { BinanceClient } from "./client";
-import { BinanceCollectors } from "./collectors";
+import { BinanceCollectors, marketHolder } from "./collectors";
 import {
   collectorRecording,
   createCollectorFixtureFetch,
@@ -130,4 +130,17 @@ it("flow collectors validate all four recorded tokens and send cursor/limit thro
   const request = new URL(String(fetch.mock.calls.at(-1)![0]));
   expect(request.searchParams.get("limit")).toBe("10");
   expect(request.searchParams.get("binanceChainId")).toBe("56");
+});
+
+it("top-trader null holdingPercent reported by the user's EC2 run on 2026-10-04 parses through the signed client", async () => {
+  // Apply the user-observed EC2 shape to an existing recorded row; recorded evidence is immutable.
+  const recorded = collectorRecording("F_top_trader_NVDAB").data as Record<string, unknown>[];
+  const row = { ...recorded[0]!, holdingPercent: null };
+  const request = vi.fn<typeof fetch>(
+    async () => new Response(JSON.stringify({ code: 0, data: [row] })),
+  );
+  const parsed = await api(request).topTraders("0x02fca66c1d1afb4e2a7884261eb00f63598a7436");
+  expect(parsed).toEqual([row]);
+  expect(request.mock.calls[0]![1]?.headers).toHaveProperty("X-OC-SIGN");
+  expect(marketHolder.safeParse({ ...row, holdingPercent: "invalid" }).success).toBe(false);
 });
