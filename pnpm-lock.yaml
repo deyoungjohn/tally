@@ -26,6 +26,12 @@ importers:
 
   apps/bot:
     dependencies:
+      '@tally/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@tally/engine':
+        specifier: workspace:*
+        version: link:../../packages/engine
       '@tally/mod-autopilot':
         specifier: workspace:*
         version: link:../../packages/mod-autopilot
@@ -57,6 +63,9 @@ importers:
       typescript:
         specifier: ^5.6.0
         version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.20.4)(lightningcss@1.32.0)
 
   apps/web:
     dependencies:

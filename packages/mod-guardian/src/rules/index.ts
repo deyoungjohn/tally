@@ -24,3 +24,5 @@ export function createDefaultRules(): Rule[] {
     new EarningsRule(),
   ];
 }
+
+export const ALL_RULES: readonly Rule[] = createDefaultRules();

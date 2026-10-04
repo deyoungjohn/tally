@@ -1,11 +1,6 @@
 import type { Alert, TokenState, UserHolding } from "../types";
 
 export interface RulePorts {
-  /**
-   * Injected pause check port, required for bStock which has no pause getter on the token
-   * and always returns marketStatus: null from the API.
-   */
-  isPaused?: (tokenAddress: string) => boolean;
   priceThresholds?: Record<string, { minPriceUsd?: number; maxPriceUsd?: number }>;
   onWarn?: (message: string) => void;
 }

@@ -117,19 +117,19 @@ describe("Guardian tests with recorded fixtures", () => {
       issuer: "bstock",
       observedAt: 1000,
       rawStatus: mappedStatus,
-      isPausedPort: () => false,
+      isPausedOnchain: false,
     });
     const alertsWithoutPort = evaluateHoldingRules([rule], null, stateNotPaused, holding);
     expect(alertsWithoutPort).toHaveLength(0);
 
-    // 2. With injected pause port returning true: emits exactly one alert
+    // 2. With onchain pause check returning true: emits exactly one alert
     const statePaused = buildTokenStateFromSnapshots({
       tokenAddress: holding.tokenAddress,
       ticker: "NVDA",
       issuer: "bstock",
       observedAt: 2000,
       rawStatus: mappedStatus,
-      isPausedPort: () => true,
+      isPausedOnchain: true,
     });
     const alertsWithPort = evaluateHoldingRules([rule], stateNotPaused, statePaused, holding);
     expect(alertsWithPort).toHaveLength(1);

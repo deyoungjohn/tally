@@ -47,6 +47,7 @@ export class PriceThresholdRule implements Rule {
           ticker: holding.ticker,
           issuer: holding.issuer,
           severity: "warning",
+          direction: "min",
           title: `${holding.ticker} fell below $${min.toFixed(2)}`,
           body: `${holding.ticker} per-share price is $${currentPrice.toFixed(2)}, below your alert threshold of $${min.toFixed(2)}.`,
           evidence: {
@@ -73,6 +74,7 @@ export class PriceThresholdRule implements Rule {
           ticker: holding.ticker,
           issuer: holding.issuer,
           severity: "info",
+          direction: "max",
           title: `${holding.ticker} rose above $${max.toFixed(2)}`,
           body: `${holding.ticker} per-share price is $${currentPrice.toFixed(2)}, above your alert threshold of $${max.toFixed(2)}.`,
           evidence: {

@@ -1,0 +1,309 @@
+import { beforeEach, describe, expect, it } from "vitest";
+import { createFixtureEngine } from "@tally/engine";
+import { createLinkCode, type Alert } from "@tally/mod-guardian";
+import {
+  openStore,
+  type HealthRow,
+  type JobName,
+  type ModuleHealth,
+  type SnapshotStore,
+} from "@tally/modkit";
+import { deliverPendingAlerts, verifyTelegramConfig } from "./bot";
+import {
+  handleAlerts,
+  handleLink,
+  handleQuiet,
+  handleQuote,
+  handleShares,
+  handleShield,
+  handleStart,
+  resetCommandRateLimits,
+} from "./commands";
+
+class MockHealth implements ModuleHealth {
+  private rows = new Map<string, HealthRow>();
+
+  report(module: JobName, result: { ok: boolean; error?: string; now?: number }): void {
+    const now = result.now ?? Date.now();
+    this.rows.set(module, {
+      module,
+      ok: result.ok,
+      lastRunAt: now,
+      lastOkAt: result.ok ? now : undefined,
+      lastError: result.error,
+    });
+  }
+
+  get(module: JobName): HealthRow | null {
+    return this.rows.get(module) ?? null;
+  }
+
+  all(): HealthRow[] {
+    return Array.from(this.rows.values());
+  }
+}
+
+describe("Telegram Bot Commands (apps/bot)", () => {
+  let store: SnapshotStore;
+  const engine = createFixtureEngine();
+
+  beforeEach(() => {
+    resetCommandRateLimits();
+    store = openStore(":memory:");
+  });
+
+  // Exit check 1: /quote NVDA 25 shows both issuers in shares with best tag
+  it("quotes NVDA 25 comparing issuers in shares with BEST tag", async () => {
+    const reply = await handleQuote("NVDA 25", {
+      store,
+      engine,
+      chatId: 1001,
+      now: () => 1_000_000,
+    });
+
+    expect(reply).toContain("NVDA Quote");
+    expect(reply).toContain("ONDO");
+    expect(reply).toContain("BSTOCK");
+    expect(reply).toContain("Shares:");
+    expect(reply).toContain("BEST");
+    expect(reply).toContain("Price/share:");
+    expect(reply).toContain("Grade");
+  });
+
+  // Exit check 2: /shares <address> on burner wallet
+  it("handles /shares on burner wallet address", async () => {
+    const burner = "0xcb634955B8A7DF7B106f7AB47C9759B26206b777";
+    const reply = await handleShares(burner, {
+      store,
+      engine,
+      chatId: 1002,
+      now: () => 1_000_000,
+    });
+
+    expect(reply).toContain("Portfolio Holdings in Shares");
+    expect(reply).toContain(burner);
+  });
+
+  // Exit check 3: /shield lists flagged tokens and shows staleness age
+  it("lists flagged tokens on /shield and indicates snapshot age when stale", async () => {
+    // Put a stale radar snapshot (15 minutes old) into store
+    const now = 2_000_000;
+    store.put({
+      kind: "radar",
+      key: "bsc",
+      data: { asOf: new Date(now - 15 * 60_000).toISOString() },
+      source: "radar",
+      observedAt: now - 15 * 60_000,
+    });
+
+    const reply = await handleShield("", {
+      store,
+      engine,
+      chatId: 1003,
+      now: () => now,
+    });
+
+    expect(reply).toContain("Tally Trap Shield");
+    expect(reply).toContain("Shield data observed 15m ago");
+  });
+
+  // Exit check 4: Missing TELEGRAM_BOT_TOKEN gives clear error and unhealthy health row, not a crash
+  it("reports unhealthy health row when TELEGRAM_BOT_TOKEN is missing without crashing", () => {
+    const health = new MockHealth();
+    const result = verifyTelegramConfig({}, health, 1_000_000);
+
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain("Missing TELEGRAM_BOT_TOKEN");
+
+    const row = health.get("guardian");
+    expect(row?.ok).toBe(false);
+    expect(row?.lastError).toContain("Missing TELEGRAM_BOT_TOKEN");
+  });
+
+  // Exit check 5: Failing sendMessage (mocked) leaves alert stored in snapshot store, reports error in health & onWarn
+  it("preserves stored alerts in store when Telegram delivery fails", async () => {
+    const now = 1_000_000;
+    const wallet = "0x2bf7edf53bc6be6ff98f149387f3818ce28d2930";
+    const chatId = 99999;
+
+    // Link chat
+    const { code } = createLinkCode(store, wallet, now);
+    handleLink(code, { store, engine, chatId, now: () => now + 1000 });
+
+    const alert: Alert = {
+      id: `paused:${wallet}:0xnvdab:1000`,
+      walletAddress: wallet,
+      rule: "paused",
+      ticker: "NVDA",
+      issuer: "bstock",
+      severity: "warning",
+      title: "NVDA via bStock is paused",
+      body: "NVDA via bStock is paused by its pause manager.",
+      evidence: {
+        snapshotKind: "status",
+        snapshotKey: "0xnvdab",
+        observedAt: now,
+      },
+      createdAt: now,
+    };
+
+    // Store alert in the store under kind "alerts"
+    store.put({
+      kind: "alerts",
+      key: wallet,
+      data: [alert],
+      source: "guardian",
+      observedAt: now,
+    });
+
+    const warnings: string[] = [];
+    const mockSender = {
+      async sendMessage() {
+        throw new Error("Telegram API Network 502 Bad Gateway");
+      },
+    };
+
+    const deliveryResult = await deliverPendingAlerts(mockSender, [alert], store, now + 2000, (w) =>
+      warnings.push(w),
+    );
+
+    expect(deliveryResult.attempted).toBe(1);
+    expect(deliveryResult.delivered).toBe(0);
+    expect(deliveryResult.failed).toBe(1);
+    expect(deliveryResult.errors[0]).toContain("Telegram API Network 502");
+    expect(warnings.some((w) => w.includes("502 Bad Gateway"))).toBe(true);
+
+    // CRITICAL: The alert is NOT deleted from the store
+    const stored = store.latest<Alert[]>("alerts", wallet, { maxAgeMs: 60_000, now: now + 3000 });
+    expect(stored?.data).toHaveLength(1);
+    expect(stored?.data[0]?.id).toBe(alert.id);
+  });
+
+  // Input validations & minimum orders
+  it("enforces $6 minimum order on /quote", async () => {
+    const reply = await handleQuote("NVDA 5", {
+      store,
+      engine,
+      chatId: 1005,
+      now: () => 1_000_000,
+    });
+    expect(reply).toContain("Minimum order is $6");
+  });
+
+  it("returns clear error for unknown ticker on /quote", async () => {
+    const reply = await handleQuote("UNKNOWNXYZ 25", {
+      store,
+      engine,
+      chatId: 1006,
+      now: () => 1_000_000,
+    });
+    expect(reply).toContain('Unknown ticker "UNKNOWNXYZ"');
+  });
+
+  it("validates 0x address format on /shares", async () => {
+    const reply = await handleShares("notanaddress", {
+      store,
+      engine,
+      chatId: 1007,
+      now: () => 1_000_000,
+    });
+    expect(reply).toContain("Please provide a valid 0x wallet address");
+  });
+
+  // Rate limiting check
+  it("limits commands to 5 per minute per chat", async () => {
+    const chatId = 2001;
+    const now = 1_000_000;
+
+    for (let i = 0; i < 5; i++) {
+      const reply = await handleQuote("NVDA 25", {
+        store,
+        engine,
+        chatId,
+        now: () => now + i * 1000,
+      });
+      expect(reply).toContain("NVDA Quote");
+    }
+
+    // 6th command in the same minute gets rate-limited
+    const rateLimitedReply = await handleQuote("NVDA 25", {
+      store,
+      engine,
+      chatId,
+      now: () => now + 6000,
+    });
+    expect(rateLimitedReply).toContain("Rate limit reached");
+  });
+
+  // Link flow & quiet hours
+  it("links wallet, toggles alerts, and configures quiet hours", async () => {
+    const wallet = "0x2Bf7EdF53bc6BE6FF98F149387F3818cE28d2930";
+    const chatId = 3001;
+    const now = 1_000_000;
+
+    const { code } = createLinkCode(store, wallet, now);
+    const linkReply = await handleStart(code, {
+      store,
+      engine,
+      chatId,
+      now: () => now + 5000,
+    });
+    expect(linkReply).toContain("Telegram linked to wallet");
+    expect(linkReply).toContain(wallet.toLowerCase());
+
+    // Toggle alerts off
+    const offReply = await handleAlerts("off", {
+      store,
+      engine,
+      chatId,
+      now: () => now + 6000,
+    });
+    expect(offReply).toContain("turned OFF");
+
+    // Toggle alerts on
+    const onReply = await handleAlerts("on", {
+      store,
+      engine,
+      chatId,
+      now: () => now + 7000,
+    });
+    expect(onReply).toContain("turned ON");
+
+    // Configure quiet hours 22-07 UTC
+    const quietReply = await handleQuiet("22-07", {
+      store,
+      engine,
+      chatId,
+      now: () => now + 8000,
+    });
+    expect(quietReply).toContain("Quiet hours set to 22:00 - 07:00 UTC");
+
+    // Test delivery suppression during quiet hours (e.g. at 23:30 UTC)
+    // 2026-10-04T23:30:00Z = 1791156600000
+    const quietNow = new Date("2026-10-04T23:30:00Z").getTime();
+    const alert: Alert = {
+      id: `test:${wallet}:0xaddr:1`,
+      walletAddress: wallet.toLowerCase(),
+      rule: "ghost",
+      ticker: "TSLA",
+      issuer: "bstock",
+      severity: "critical",
+      title: "TSLA via bStock is a ghost token",
+      body: "There's no market to sell this token.",
+      evidence: { snapshotKind: "flow-ghost", snapshotKey: "0xaddr", observedAt: quietNow },
+      createdAt: quietNow,
+    };
+
+    const sent: string[] = [];
+    const mockSender = {
+      async sendMessage(_cid: number | string, text: string) {
+        sent.push(text);
+      },
+    };
+
+    const deliv = await deliverPendingAlerts(mockSender, [alert], store, quietNow);
+    expect(deliv.suppressedByQuiet).toBe(1);
+    expect(deliv.delivered).toBe(0);
+    expect(sent).toHaveLength(0);
+  });
+});

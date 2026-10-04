@@ -128,48 +128,44 @@ describe("buildTokenStateFromSnapshots (type guards, finding 1, 2, 8)", () => {
     expect(state.grade).toBe("C");
   });
 
-  // Finding 2 test: pause port calling and warning
-  it("calls pause port once and records boolean in isPausedOnchain", () => {
+  // Nit 2 test: pause state is passed directly as isPausedOnchain: boolean | null
+  it("records boolean in isPausedOnchain when passed", () => {
     const state = buildTokenStateFromSnapshots({
       tokenAddress: "0xnvdab",
       ticker: "NVDA",
       issuer: "bstock",
       observedAt: 1000,
-      isPausedPort: (addr) => addr === "0xnvdab",
+      isPausedOnchain: true,
     });
 
     expect(state.isPausedOnchain).toBe(true);
   });
 
-  it("warns and sets isPausedOnchain to null when pause port throws or returns non-boolean", () => {
+  it("warns and sets isPausedOnchain to null when pause check is missing for bStock", () => {
     const warnings: string[] = [];
     const onWarn = (msg: string) => warnings.push(msg);
 
-    const stateThrow = buildTokenStateFromSnapshots({
+    const stateMissing = buildTokenStateFromSnapshots({
       tokenAddress: "0xnvdab",
       ticker: "NVDA",
       issuer: "bstock",
       observedAt: 1000,
-      isPausedPort: () => {
-        throw new Error("RPC error during pause manager check");
-      },
       onWarn,
     });
 
-    expect(stateThrow.isPausedOnchain).toBeNull();
-    expect(warnings.some((w) => w.includes("RPC error during pause manager check"))).toBe(true);
+    expect(stateMissing.isPausedOnchain).toBeNull();
+    expect(warnings.some((w) => w.includes("Pause check unavailable for bStock"))).toBe(true);
 
-    const stateNull = buildTokenStateFromSnapshots({
+    const stateExplicitNull = buildTokenStateFromSnapshots({
       tokenAddress: "0xnvdab",
       ticker: "NVDA",
       issuer: "bstock",
       observedAt: 1000,
-      isPausedPort: () => null as unknown as boolean,
+      isPausedOnchain: null,
       onWarn,
     });
 
-    expect(stateNull.isPausedOnchain).toBeNull();
-    expect(warnings.some((w) => w.includes("non-boolean or null"))).toBe(true);
+    expect(stateExplicitNull.isPausedOnchain).toBeNull();
   });
 
   // Finding 8 test: reads lastRealTradeAgeMs from flow-aggregate

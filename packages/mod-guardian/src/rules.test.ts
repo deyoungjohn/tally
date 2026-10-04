@@ -362,6 +362,42 @@ describe("ShareCountRule", () => {
       "Your token count is the same; your shares rose 50.0% (3:2 stock split).",
     );
   });
+
+  // Nit 4: ratio label properly formatted for decrease as "1:2 reverse split"
+  it("formats decrease with stock_split as reverse split", () => {
+    const prev: TokenState = {
+      tokenAddress: "0xnvdaonaddress",
+      ticker: "NVDA",
+      issuer: "ondo",
+      status: {
+        kind: "limited",
+        reasonCode: "ASSET_LIMITED",
+        reasonMsg: "stock_split",
+        session: "regular",
+      },
+      multiplier: 2_000_000_000_000_000_000n,
+      grade: "A",
+      gradeReasons: [],
+      ghost: false,
+      sharePriceUsd: 230,
+      session: "regular",
+      observedAt: 1000,
+      isPausedOnchain: null,
+    };
+
+    // 0.5x ratio (1/2)
+    const next: TokenState = {
+      ...prev,
+      multiplier: 1_000_000_000_000_000_000n,
+      observedAt: 2000,
+    };
+
+    const alerts = rule.evaluate(prev, next, mockHoldingOndo);
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]!.body).toBe(
+      "Your token count is the same; your shares decreased 50.0% (1:2 reverse split).",
+    );
+  });
 });
 
 describe("GradeDropRule", () => {
