@@ -45,7 +45,7 @@ Written 2026-10-04 by Claude (chief orchestrator) for **GPT-6 Astra**, who takes
 | 03 | Portfolio + Statement | D Antigravity | **Merged** (PR #7, `a732de4`; fixes 8–10 in `af9bac6`) | none. Collectors stay additive; WO-04 rebases over `collectors.ts`. |
 | 04 | Flow + Radar | B Codex #1 | **CHANGES** (review @ 905a56d: 4 must-fix, 3 should-fix, see `review/mod_WO-04-flow/REVIEW.md`) | Re-review after fixes. Ghost wiring into core NOT applied (money path; see review note 2). The agent will **propose a one-line ghost-rule wiring** into `packages/core/src/integrity.ts`: the orchestrator applies it (you may, after checking it only injects a port and changes no existing grade without a ghost signal). |
 | 05 | Agent layer: MCP, Wallet Skill, upstream PR | B (backup E) | **New**, not dispatched | Dispatch to B after WO-04. Targets the $2k Agentic Wallet / Wallet Skills prize. |
-| 06 | Guardian alerts + read-only bot commands | D Antigravity (reassigned from E, 2026-10-04) | Slice A in progress | Task 9 (`/quote`, `/shares`, `/shield`) was added on 2026-10-04: tell D to read the WO in full. |
+| 06 | Guardian alerts + read-only bot commands | D Antigravity (reassigned from E, 2026-10-04) | **Slice A: CHANGES** (review @ ebfeff2: 5 must-fix, 3 should-fix; `review/mod_WO-06-guardian/REVIEW.md`). Slice B after slice A merges | Task 9 (`/quote`, `/shares`, `/shield`) was added on 2026-10-04: tell D to read the WO in full. |
 | 07 | Sell + Switch | C | Wave 2 | Blocked on gates V-B1/V-B2 (Mon). **Escalate review to Claude** (contracts + money). |
 | 08 | Guardian autopilot | C | Wave 2 | Blocked on V-AW. No longer owns `skills/share-true-trading/**` (moved to WO-05). **Escalate to Claude.** |
 | 09 | Pies | B | Wave 2, after WO-05 | |
