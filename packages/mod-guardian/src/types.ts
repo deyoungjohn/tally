@@ -11,6 +11,7 @@ export interface AlertEvidence {
 
 export interface Alert {
   id: string;
+  walletAddress: string;
   rule: string;
   ticker: string;
   issuer: Issuer;
@@ -44,11 +45,13 @@ export interface TokenState {
   status: TokenStatusState | null;
   multiplier: bigint | null;
   grade: "A" | "B" | "C" | "D" | "F" | null;
+  gradeReasons: string[];
   ghost: boolean | null;
+  lastRealTradeAgeDays?: number | null;
   sharePriceUsd: number | null;
   session: Session;
   observedAt: number;
-  isPausedOnchain?: boolean | null;
+  isPausedOnchain: boolean | null;
   evidenceKey?: string;
 }
 
@@ -85,8 +88,8 @@ export interface FlowAggregateSubset {
 
 export interface QuietHours {
   enabled: boolean;
-  startHour: number; // 0-23
-  endHour: number; // 0-23
+  startHourUtc: number; // 0-23 in UTC
+  endHourUtc: number; // 0-23 in UTC
 }
 
 export interface GuardianSettings {
@@ -122,8 +125,8 @@ export const DEFAULT_GUARDIAN_SETTINGS: GuardianSettings = {
   },
   quietHours: {
     enabled: false,
-    startHour: 22,
-    endHour: 7,
+    startHourUtc: 22,
+    endHourUtc: 7,
   },
   cooldownMs: 86_400_000, // 24 hours
 };

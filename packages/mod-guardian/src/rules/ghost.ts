@@ -21,11 +21,20 @@ export class GhostRule implements Rule {
     }
 
     const issuerLabel = formatIssuer(holding.issuer);
-    const body = "There's no market to sell this token on BNB Chain right now.";
+    const wallet = holding.walletAddress.toLowerCase();
+    const tokenAddr = next.tokenAddress.toLowerCase();
+
+    const days = next.lastRealTradeAgeDays;
+    const reasonDetail =
+      days !== null && days !== undefined && days >= 1
+        ? ` (no real trade for ${Math.floor(days)} days)`
+        : "";
+    const body = `There's no market to sell this token on BNB Chain right now${reasonDetail}.`;
 
     return [
       {
-        id: `ghost:${next.tokenAddress.toLowerCase()}:${next.observedAt}`,
+        id: `ghost:${wallet}:${tokenAddr}:${next.observedAt}`,
+        walletAddress: wallet,
         rule: this.id,
         ticker: holding.ticker,
         issuer: holding.issuer,
@@ -34,7 +43,7 @@ export class GhostRule implements Rule {
         body,
         evidence: {
           snapshotKind: next.evidenceKey ?? "flow-ghost",
-          snapshotKey: next.tokenAddress.toLowerCase(),
+          snapshotKey: tokenAddr,
           observedAt: next.observedAt,
         },
         createdAt: next.observedAt,

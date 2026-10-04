@@ -32,13 +32,21 @@ export class GradeDropRule implements Rule {
     }
 
     const issuerLabel = formatIssuer(holding.issuer);
-    // In Radar snapshots or token state, evidence may carry the reason for deduction
-    const reasonDetail = next.status?.reasonMsg ?? "integrity deductions increased";
+    const wallet = holding.walletAddress.toLowerCase();
+    const tokenAddr = next.tokenAddress.toLowerCase();
+
+    // Finding 1: Grade drop lists reasons from the Radar snapshot directly, never status.reasonMsg
+    const reasonDetail =
+      next.gradeReasons.length > 0
+        ? next.gradeReasons.join("; ")
+        : "reason not recorded in the snapshot";
+
     const body = `${holding.ticker} via ${issuerLabel} dropped ${prev.grade} → ${next.grade}: ${reasonDetail}.`;
 
     return [
       {
-        id: `grade-drop:${next.tokenAddress.toLowerCase()}:${next.observedAt}`,
+        id: `grade-drop:${wallet}:${tokenAddr}:${next.observedAt}`,
+        walletAddress: wallet,
         rule: this.id,
         ticker: holding.ticker,
         issuer: holding.issuer,
@@ -47,7 +55,7 @@ export class GradeDropRule implements Rule {
         body,
         evidence: {
           snapshotKind: "radar",
-          snapshotKey: next.tokenAddress.toLowerCase(),
+          snapshotKey: tokenAddr,
           observedAt: next.observedAt,
         },
         createdAt: next.observedAt,

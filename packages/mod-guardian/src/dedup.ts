@@ -3,18 +3,53 @@ import type { Alert, GuardianSettings, QuietHours } from "./types";
 export function isQuietHours(timestamp: number, quietHours?: QuietHours): boolean {
   if (!quietHours?.enabled) return false;
   const hour = new Date(timestamp).getUTCHours();
-  const { startHour, endHour } = quietHours;
-  if (startHour === endHour) return true; // 24h quiet
-  if (startHour < endHour) {
-    return hour >= startHour && hour < endHour;
+  const { startHourUtc, endHourUtc } = quietHours;
+  if (startHourUtc === endHourUtc) return true; // 24h quiet
+  if (startHourUtc < endHourUtc) {
+    return hour >= startHourUtc && hour < endHourUtc;
   }
-  // Crosses midnight, e.g. 22:00 to 07:00
-  return hour >= startHour || hour < endHour;
+  // Crosses midnight, e.g. 22:00 to 07:00 UTC
+  return hour >= startHourUtc || hour < endHourUtc;
+}
+
+/**
+ * Returns the UTC timestamp (ms) when current quiet hours end.
+ * If now is not within quiet hours, returns now.
+ */
+export function nextQuietEnd(now: number, quiet?: QuietHours): number {
+  if (!quiet?.enabled) return now;
+  if (!isQuietHours(now, quiet)) return now;
+
+  const { startHourUtc, endHourUtc } = quiet;
+  if (startHourUtc === endHourUtc) {
+    return now + 86_400_000;
+  }
+
+  // Candidate end time today
+  const endToday = new Date(now);
+  endToday.setUTCHours(endHourUtc, 0, 0, 0);
+
+  if (endToday.getTime() > now) {
+    return endToday.getTime();
+  }
+
+  // End time tomorrow
+  const endTomorrow = new Date(now + 86_400_000);
+  endTomorrow.setUTCHours(endHourUtc, 0, 0, 0);
+  return endTomorrow.getTime();
 }
 
 export function deduplicationKey(alert: Alert): string {
+  const wallet = alert.walletAddress.toLowerCase();
   const tokenKey = alert.evidence.snapshotKey.toLowerCase();
-  return `${alert.rule}:${tokenKey}`;
+
+  // Finding 7: min and max breaches have independent deduplication keys
+  if (alert.rule === "price-threshold") {
+    const direction = alert.id.includes(":min:") ? "min" : alert.id.includes(":max:") ? "max" : "";
+    return `${wallet}:${alert.rule}:${direction}:${tokenKey}`;
+  }
+
+  return `${wallet}:${alert.rule}:${tokenKey}`;
 }
 
 export function deduplicateAlerts(
@@ -83,4 +118,12 @@ export function filterAlerts(
   }
 
   return { accepted, quietSuppressed, duplicates };
+}
+
+/**
+ * Filter feed alerts strictly for a specific verified wallet address.
+ */
+export function filterAlertsForWallet(alerts: readonly Alert[], walletAddress: string): Alert[] {
+  const target = walletAddress.toLowerCase();
+  return alerts.filter((a) => a.walletAddress.toLowerCase() === target);
 }

@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { buildTokenStateFromSnapshots, evaluateHoldingRules } from "./evaluator";
+import { PriceThresholdRule } from "./rules/price-threshold";
 import type { Rule } from "./rules/interface";
-import type { TokenState, UserHolding } from "./types";
+import type { GuardianSettings, TokenState, UserHolding } from "./types";
 
 const mockHolding: UserHolding = {
   walletAddress: "0x2bf7edf53bc6be6ff98f149387f3818ce28d2930",
@@ -34,7 +35,8 @@ describe("Rule Fault Isolation", () => {
       description: "Always produces an alert",
       evaluate: (_prev, next, holding) => [
         {
-          id: `working:${next.tokenAddress}:${next.observedAt}`,
+          id: `working:${holding.walletAddress}:${next.tokenAddress}:${next.observedAt}`,
+          walletAddress: holding.walletAddress.toLowerCase(),
           rule: "working-rule",
           ticker: holding.ticker,
           issuer: holding.issuer,
@@ -59,10 +61,12 @@ describe("Rule Fault Isolation", () => {
       status: null,
       multiplier: 10n ** 18n,
       grade: "A",
+      gradeReasons: [],
       ghost: false,
       sharePriceUsd: 230,
       session: "regular",
       observedAt: 1000,
+      isPausedOnchain: null,
     };
     const next: TokenState = { ...prev, observedAt: 2000 };
 
@@ -79,6 +83,7 @@ describe("Rule Fault Isolation", () => {
     // Verify working rule's alert was produced
     expect(alerts).toHaveLength(1);
     expect(alerts[0]!.rule).toBe("working-rule");
+    expect(alerts[0]!.walletAddress).toBe(mockHolding.walletAddress.toLowerCase());
 
     // Verify warning was logged for the faulty rule without crashing
     expect(warnings).toHaveLength(1);
@@ -87,7 +92,108 @@ describe("Rule Fault Isolation", () => {
   });
 });
 
-describe("buildTokenStateFromSnapshots (type guards & fallback)", () => {
+describe("buildTokenStateFromSnapshots (type guards, finding 1, 2, 8)", () => {
+  // Finding 1 test: status.reasonMsg is never overwritten by Radar reasons
+  it("preserves status.reasonMsg untouched when Radar snapshot has reasons", () => {
+    const rawStatus = {
+      kind: "limited" as const,
+      reasonCode: "ASSET_LIMITED",
+      reasonMsg: "stock_split",
+      session: "regular" as const,
+    };
+
+    const rawRadar = {
+      ticker: "NVDA",
+      address: "0xnvdaonaddress",
+      issuer: "ondo" as const,
+      score: 75,
+      grade: "C" as const,
+      ghost: false,
+      reasons: ["No recent trade for 2 days", "High concentration"],
+    };
+
+    const state = buildTokenStateFromSnapshots({
+      tokenAddress: "0xnvdaonaddress",
+      ticker: "NVDA",
+      issuer: "ondo",
+      observedAt: 1000,
+      rawStatus,
+      rawRadar,
+    });
+
+    // status.reasonMsg MUST stay "stock_split" and NOT be overwritten by radar reason
+    expect(state.status?.reasonMsg).toBe("stock_split");
+    // Radar reasons are kept in gradeReasons
+    expect(state.gradeReasons).toEqual(["No recent trade for 2 days", "High concentration"]);
+    expect(state.grade).toBe("C");
+  });
+
+  // Finding 2 test: pause port calling and warning
+  it("calls pause port once and records boolean in isPausedOnchain", () => {
+    const state = buildTokenStateFromSnapshots({
+      tokenAddress: "0xnvdab",
+      ticker: "NVDA",
+      issuer: "bstock",
+      observedAt: 1000,
+      isPausedPort: (addr) => addr === "0xnvdab",
+    });
+
+    expect(state.isPausedOnchain).toBe(true);
+  });
+
+  it("warns and sets isPausedOnchain to null when pause port throws or returns non-boolean", () => {
+    const warnings: string[] = [];
+    const onWarn = (msg: string) => warnings.push(msg);
+
+    const stateThrow = buildTokenStateFromSnapshots({
+      tokenAddress: "0xnvdab",
+      ticker: "NVDA",
+      issuer: "bstock",
+      observedAt: 1000,
+      isPausedPort: () => {
+        throw new Error("RPC error during pause manager check");
+      },
+      onWarn,
+    });
+
+    expect(stateThrow.isPausedOnchain).toBeNull();
+    expect(warnings.some((w) => w.includes("RPC error during pause manager check"))).toBe(true);
+
+    const stateNull = buildTokenStateFromSnapshots({
+      tokenAddress: "0xnvdab",
+      ticker: "NVDA",
+      issuer: "bstock",
+      observedAt: 1000,
+      isPausedPort: () => null as unknown as boolean,
+      onWarn,
+    });
+
+    expect(stateNull.isPausedOnchain).toBeNull();
+    expect(warnings.some((w) => w.includes("non-boolean or null"))).toBe(true);
+  });
+
+  // Finding 8 test: reads lastRealTradeAgeMs from flow-aggregate
+  it("populates lastRealTradeAgeDays from rawFlowAggregate", () => {
+    const rawFlowAggregate = {
+      ticker: "NVDA",
+      issuer: "bstock" as const,
+      address: "0xnvdab",
+      lastRealTradeAt: 1000,
+      lastRealTradeAgeMs: 3 * 86_400_000, // 3 days
+      lastRealTradeReason: null,
+    };
+
+    const state = buildTokenStateFromSnapshots({
+      tokenAddress: "0xnvdab",
+      ticker: "NVDA",
+      issuer: "bstock",
+      observedAt: 1000,
+      rawFlowAggregate,
+    });
+
+    expect(state.lastRealTradeAgeDays).toBe(3);
+  });
+
   it("resolves ghost from flow-ghost when fresh and not skipped", () => {
     const flowGhostRaw = {
       id: "cleaned-flow",
@@ -101,9 +207,9 @@ describe("buildTokenStateFromSnapshots (type guards & fallback)", () => {
     const radarRaw = {
       ticker: "NVDA",
       address: "0xnvdaonaddress",
-      issuer: "ondo",
+      issuer: "ondo" as const,
       score: 95,
-      grade: "A",
+      grade: "A" as const,
       ghost: false,
     };
 
@@ -135,8 +241,8 @@ describe("buildTokenStateFromSnapshots (type guards & fallback)", () => {
     const radarRaw = {
       ticker: "NVDA",
       address: "0xnvdaonaddress",
-      issuer: "ondo",
-      grade: "B",
+      issuer: "ondo" as const,
+      grade: "B" as const,
       ghost: true,
     };
 
@@ -169,8 +275,8 @@ describe("buildTokenStateFromSnapshots (type guards & fallback)", () => {
     const radarRaw = {
       ticker: "NVDA",
       address: "0xnvdaonaddress",
-      issuer: "ondo",
-      grade: "D",
+      issuer: "ondo" as const,
+      grade: "D" as const,
       ghost: true,
     };
 
@@ -208,5 +314,53 @@ describe("buildTokenStateFromSnapshots (type guards & fallback)", () => {
 
     expect(state.grade).toBeNull();
     expect(warnings.some((w) => w.includes("unexpected shape"))).toBe(true);
+  });
+});
+
+describe("Price Threshold Settings Integration (finding 5)", () => {
+  // Finding 5 test: evaluateHoldingRules merges settings.priceThresholds with lowercased keys
+  it("evaluates price thresholds when configured only in settings and no ports are provided", () => {
+    const settings: GuardianSettings = {
+      enabled: true,
+      rules: {
+        paused: false,
+        shareCount: false,
+        gradeDrop: false,
+        ghost: false,
+        priceThreshold: true,
+        earnings: false,
+      },
+      priceThresholds: {
+        "0xNVDAonAddress": { minPriceUsd: 120 }, // Mixed case key
+      },
+    };
+
+    const rule = new PriceThresholdRule();
+    const prev: TokenState = {
+      tokenAddress: "0xnvdaonaddress",
+      ticker: "NVDA",
+      issuer: "ondo",
+      status: null,
+      multiplier: 10n ** 18n,
+      grade: "A",
+      gradeReasons: [],
+      ghost: false,
+      sharePriceUsd: 130,
+      session: "regular",
+      observedAt: 1000,
+      isPausedOnchain: null,
+    };
+
+    const next: TokenState = {
+      ...prev,
+      sharePriceUsd: 115, // crossed below 120
+      observedAt: 2000,
+    };
+
+    // No ports provided! Only settings provided
+    const alerts = evaluateHoldingRules([rule], prev, next, mockHolding, undefined, settings);
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]!.title).toBe("NVDA fell below $120.00");
+    expect(alerts[0]!.walletAddress).toBe(mockHolding.walletAddress.toLowerCase());
   });
 });

@@ -14,18 +14,28 @@ export class PausedRule implements Rule {
     ports?: RulePorts,
   ): Alert[] {
     const issuerLabel = formatIssuer(holding.issuer);
+    const wallet = holding.walletAddress.toLowerCase();
+    const tokenAddr = next.tokenAddress.toLowerCase();
 
     // 1. bStock handling:
     // Probe evidence (IDEAS.md §F11 & probe files) proves bStock marketStatus is always null
-    // and statusInfo emits TRADING. It emits NOTHING from status, only from the injected pause port.
+    // and statusInfo emits TRADING. It emits NOTHING from status, only from on-chain pause evaluation.
     if (next.issuer === "bstock") {
-      const isPaused = ports?.isPaused?.(next.tokenAddress) ?? next.isPausedOnchain ?? false;
-      const wasPaused = prev?.isPausedOnchain ?? false;
+      if (next.isPausedOnchain === null) {
+        ports?.onWarn?.(
+          `bStock pause state for ${holding.ticker} (${tokenAddr}) is unknown; no pause alert evaluated`,
+        );
+        return [];
+      }
+
+      const isPaused = next.isPausedOnchain === true;
+      const wasPaused = prev?.isPausedOnchain === true;
 
       if (isPaused && !wasPaused) {
         return [
           {
-            id: `paused:${next.tokenAddress.toLowerCase()}:${next.observedAt}`,
+            id: `paused:${wallet}:${tokenAddr}:${next.observedAt}`,
+            walletAddress: wallet,
             rule: this.id,
             ticker: holding.ticker,
             issuer: holding.issuer,
@@ -34,7 +44,7 @@ export class PausedRule implements Rule {
             body: `${holding.ticker} via ${issuerLabel} is paused by its pause manager. Your shares are unchanged.`,
             evidence: {
               snapshotKind: "onchain:pause",
-              snapshotKey: next.tokenAddress.toLowerCase(),
+              snapshotKey: tokenAddr,
               observedAt: next.observedAt,
             },
             createdAt: next.observedAt,
@@ -70,7 +80,8 @@ export class PausedRule implements Rule {
 
       return [
         {
-          id: `paused:${next.tokenAddress.toLowerCase()}:${next.observedAt}`,
+          id: `paused:${wallet}:${tokenAddr}:${next.observedAt}`,
+          walletAddress: wallet,
           rule: this.id,
           ticker: holding.ticker,
           issuer: holding.issuer,
@@ -79,7 +90,7 @@ export class PausedRule implements Rule {
           body: `${holding.ticker} via ${issuerLabel} is paused: ${reasonDetail}. Your shares are unchanged.`,
           evidence: {
             snapshotKind: "rwa:status",
-            snapshotKey: next.tokenAddress.toLowerCase(),
+            snapshotKey: tokenAddr,
             observedAt: next.observedAt,
           },
           createdAt: next.observedAt,

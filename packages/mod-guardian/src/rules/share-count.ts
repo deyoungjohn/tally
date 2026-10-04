@@ -2,6 +2,13 @@ import { corporateActionKind, JUMP_LIMIT_PPM, matchSimpleRatio, mulDiv } from "@
 import type { Alert, TokenState, UserHolding } from "../types";
 import { formatIssuer, type Rule, type RulePorts } from "./interface";
 
+function formatRatio(label: string): string {
+  if (label.includes("/")) {
+    return label.replace("/", ":");
+  }
+  return `${label}:1`;
+}
+
 export class ShareCountRule implements Rule {
   readonly id = "share-count";
   readonly name = "Share Count Changed";
@@ -21,6 +28,8 @@ export class ShareCountRule implements Rule {
     const prevM = prev.multiplier;
     const nextM = next.multiplier;
     const issuerLabel = formatIssuer(holding.issuer);
+    const wallet = holding.walletAddress.toLowerCase();
+    const tokenAddr = next.tokenAddress.toLowerCase();
 
     const isIncrease = nextM > prevM;
     const diff = isIncrease ? nextM - prevM : prevM - nextM;
@@ -36,20 +45,26 @@ export class ShareCountRule implements Rule {
       } else {
         const ratio = matchSimpleRatio(nextM, prevM);
         const action = corporateActionKind(next.status?.reasonMsg);
-        if (ratio) {
-          explanation = `${ratio.label}:1 stock split`;
-        } else if (action) {
-          explanation = action.replace("_", " ");
+        if (action) {
+          const actionText = action.replace("_", " ");
+          explanation = ratio ? `${formatRatio(ratio.label)} ${actionText}` : actionText;
+        } else if (ratio) {
+          explanation = `reason unknown (the ratio is about ${formatRatio(ratio.label)}, but there is no corporate-action status)`;
+        } else {
+          explanation = "reason unknown";
         }
       }
     } else {
       // Decreases
       const ratio = matchSimpleRatio(nextM, prevM);
       const action = corporateActionKind(next.status?.reasonMsg);
-      if (ratio) {
-        explanation = `${ratio.label} reverse split`;
-      } else if (action) {
-        explanation = action.replace("_", " ");
+      if (action) {
+        const actionText = action.replace("_", " ");
+        explanation = ratio ? `${formatRatio(ratio.label)} ${actionText}` : actionText;
+      } else if (ratio) {
+        explanation = `reason unknown (the ratio is about ${formatRatio(ratio.label)}, but there is no corporate-action status)`;
+      } else {
+        explanation = "reason unknown";
       }
     }
 
@@ -58,7 +73,8 @@ export class ShareCountRule implements Rule {
 
     return [
       {
-        id: `share-count:${next.tokenAddress.toLowerCase()}:${next.observedAt}`,
+        id: `share-count:${wallet}:${tokenAddr}:${next.observedAt}`,
+        walletAddress: wallet,
         rule: this.id,
         ticker: holding.ticker,
         issuer: holding.issuer,
@@ -67,7 +83,7 @@ export class ShareCountRule implements Rule {
         body,
         evidence: {
           snapshotKind: "multiplier",
-          snapshotKey: next.tokenAddress.toLowerCase(),
+          snapshotKey: tokenAddr,
           observedAt: next.observedAt,
         },
         createdAt: next.observedAt,

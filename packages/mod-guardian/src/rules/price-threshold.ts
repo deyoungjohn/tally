@@ -27,6 +27,8 @@ export class PriceThresholdRule implements Rule {
       return [];
     }
 
+    const wallet = holding.walletAddress.toLowerCase();
+    const tokenAddr = next.tokenAddress.toLowerCase();
     const currentPrice = next.sharePriceUsd;
     const prevPrice = prev?.sharePriceUsd;
     const alerts: Alert[] = [];
@@ -39,7 +41,8 @@ export class PriceThresholdRule implements Rule {
 
       if (breached && !wasBreached) {
         alerts.push({
-          id: `price-threshold:min:${next.tokenAddress.toLowerCase()}:${next.observedAt}`,
+          id: `price-threshold:min:${wallet}:${tokenAddr}:${next.observedAt}`,
+          walletAddress: wallet,
           rule: this.id,
           ticker: holding.ticker,
           issuer: holding.issuer,
@@ -48,7 +51,7 @@ export class PriceThresholdRule implements Rule {
           body: `${holding.ticker} per-share price is $${currentPrice.toFixed(2)}, below your alert threshold of $${min.toFixed(2)}.`,
           evidence: {
             snapshotKind: "price",
-            snapshotKey: next.tokenAddress.toLowerCase(),
+            snapshotKey: tokenAddr,
             observedAt: next.observedAt,
           },
           createdAt: next.observedAt,
@@ -64,7 +67,8 @@ export class PriceThresholdRule implements Rule {
 
       if (breached && !wasBreached) {
         alerts.push({
-          id: `price-threshold:max:${next.tokenAddress.toLowerCase()}:${next.observedAt}`,
+          id: `price-threshold:max:${wallet}:${tokenAddr}:${next.observedAt}`,
+          walletAddress: wallet,
           rule: this.id,
           ticker: holding.ticker,
           issuer: holding.issuer,
@@ -73,7 +77,7 @@ export class PriceThresholdRule implements Rule {
           body: `${holding.ticker} per-share price is $${currentPrice.toFixed(2)}, above your alert threshold of $${max.toFixed(2)}.`,
           evidence: {
             snapshotKind: "price",
-            snapshotKey: next.tokenAddress.toLowerCase(),
+            snapshotKey: tokenAddr,
             observedAt: next.observedAt,
           },
           createdAt: next.observedAt,

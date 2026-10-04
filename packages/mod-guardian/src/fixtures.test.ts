@@ -108,28 +108,33 @@ describe("Guardian tests with recorded fixtures", () => {
 
     const mappedStatus = statusFromInfo(bstockMarket)!;
 
-    const state = buildTokenStateFromSnapshots({
+    const rule = new PausedRule();
+
+    // 1. Without pause port returning true: emits nothing
+    const stateNotPaused = buildTokenStateFromSnapshots({
       tokenAddress: holding.tokenAddress,
       ticker: "NVDA",
       issuer: "bstock",
       observedAt: 1000,
       rawStatus: mappedStatus,
+      isPausedPort: () => false,
     });
-
-    const rule = new PausedRule();
-
-    // 1. Without injected pause port: emits nothing
-    const alertsWithoutPort = evaluateHoldingRules([rule], null, state, holding, {
-      isPaused: () => false,
-    });
+    const alertsWithoutPort = evaluateHoldingRules([rule], null, stateNotPaused, holding);
     expect(alertsWithoutPort).toHaveLength(0);
 
     // 2. With injected pause port returning true: emits exactly one alert
-    const alertsWithPort = evaluateHoldingRules([rule], null, state, holding, {
-      isPaused: () => true,
+    const statePaused = buildTokenStateFromSnapshots({
+      tokenAddress: holding.tokenAddress,
+      ticker: "NVDA",
+      issuer: "bstock",
+      observedAt: 2000,
+      rawStatus: mappedStatus,
+      isPausedPort: () => true,
     });
+    const alertsWithPort = evaluateHoldingRules([rule], stateNotPaused, statePaused, holding);
     expect(alertsWithPort).toHaveLength(1);
     expect(alertsWithPort[0]!.title).toBe("NVDA via bStock is paused");
+    expect(alertsWithPort[0]!.walletAddress).toBe(holding.walletAddress.toLowerCase());
     expect(alertsWithPort[0]!.body).toBe(
       "NVDA via bStock is paused by its pause manager. Your shares are unchanged.",
     );

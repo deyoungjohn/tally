@@ -1,5 +1,10 @@
 import { errorMessage } from "@tally/modkit";
-import { isFlowGhostSnapshot, isRadarSnapshot, isTokenStatusState } from "./guards";
+import {
+  isFlowAggregate,
+  isFlowGhostSnapshot,
+  isRadarSnapshot,
+  isTokenStatusState,
+} from "./guards";
 import type { Rule, RulePorts } from "./rules/interface";
 import type {
   Alert,
@@ -21,23 +26,36 @@ export interface SnapshotStateInputs {
   rawMultiplier?: bigint | null;
   rawRadar?: unknown;
   rawFlowGhost?: unknown;
+  rawFlowAggregate?: unknown;
   isFlowGhostStale?: boolean;
   isPausedOnchain?: boolean | null;
+  isPausedPort?: (tokenAddress: string) => boolean | null | undefined;
   sharePriceUsd?: number | null;
   onWarn?: (message: string) => void;
 }
+
+const RULE_SETTING_MAP: Record<string, keyof GuardianSettings["rules"]> = {
+  paused: "paused",
+  "share-count": "shareCount",
+  "grade-drop": "gradeDrop",
+  ghost: "ghost",
+  "price-threshold": "priceThreshold",
+  earnings: "earnings",
+};
 
 /**
  * Builds a validated TokenState from snapshot store payloads using hand-written type guards.
  * Follows the strict rule:
  * - Ghost comes from flow-ghost only when not skipped and not stale; otherwise falls back to radar.ghost.
- * - Grade comes from radar snapshot.
+ * - Grade and grade reasons come strictly from radar snapshot.
+ * - Status.reasonMsg is never overwritten by radar reasons.
+ * - Pause port is executed and stored in isPausedOnchain: boolean | null (warns on null or thrown error).
  * - Missing or invalid snapshots log an onWarn message with no silent defaults.
  */
 export function buildTokenStateFromSnapshots(inputs: SnapshotStateInputs): TokenState {
   const onWarn = inputs.onWarn ?? (() => {});
 
-  // 1. Status
+  // 1. Status (left untouched)
   let status: TokenStatusState | null = null;
   if (inputs.rawStatus !== undefined && inputs.rawStatus !== null) {
     if (isTokenStatusState(inputs.rawStatus)) {
@@ -47,16 +65,16 @@ export function buildTokenStateFromSnapshots(inputs: SnapshotStateInputs): Token
     }
   }
 
-  // 2. Grade & Ghost from Radar snapshot
+  // 2. Grade & Radar reasons from Radar snapshot
   let grade: TokenState["grade"] = null;
+  let gradeReasons: string[] = [];
   let radarGhost: boolean | null = null;
-  let radarReason: string | undefined;
 
   if (inputs.rawRadar !== undefined && inputs.rawRadar !== null) {
     if (isRadarSnapshot(inputs.rawRadar)) {
       grade = inputs.rawRadar.grade;
       radarGhost = inputs.rawRadar.ghost;
-      radarReason = inputs.rawRadar.reasons?.[0];
+      gradeReasons = inputs.rawRadar.reasons ?? [];
     } else {
       onWarn(
         `Radar snapshot for ${inputs.ticker} (${inputs.tokenAddress}) has unexpected shape; skipping radar grade`,
@@ -67,6 +85,7 @@ export function buildTokenStateFromSnapshots(inputs: SnapshotStateInputs): Token
   // 3. Ghost from flow-ghost, with fallback to radar
   let ghost: boolean | null = null;
   let evidenceKey: string | undefined;
+  let lastRealTradeAgeDays: number | null = null;
 
   if (inputs.rawFlowGhost !== undefined && inputs.rawFlowGhost !== null) {
     if (isFlowGhostSnapshot(inputs.rawFlowGhost)) {
@@ -87,10 +106,44 @@ export function buildTokenStateFromSnapshots(inputs: SnapshotStateInputs): Token
     }
   }
 
+  // 4. Trade age from flow-aggregate if present
+  if (inputs.rawFlowAggregate !== undefined && inputs.rawFlowAggregate !== null) {
+    if (isFlowAggregate(inputs.rawFlowAggregate)) {
+      if (inputs.rawFlowAggregate.lastRealTradeAgeMs !== null) {
+        lastRealTradeAgeDays = inputs.rawFlowAggregate.lastRealTradeAgeMs / 86_400_000;
+      }
+    } else {
+      onWarn(`Flow-aggregate snapshot for ${inputs.ticker} has unexpected shape`);
+    }
+  }
+
   // Fallback to radar ghost if not resolved from valid, fresh flow-ghost
   if (ghost === null && radarGhost !== null) {
     ghost = radarGhost;
     evidenceKey = "radar";
+  }
+
+  // 5. bStock / Onchain pause check
+  let isPausedOnchain: boolean | null = null;
+  if (inputs.isPausedPort) {
+    try {
+      const res = inputs.isPausedPort(inputs.tokenAddress);
+      if (typeof res === "boolean") {
+        isPausedOnchain = res;
+      } else {
+        onWarn(
+          `Pause port for ${inputs.ticker} (${inputs.tokenAddress}) returned non-boolean or null`,
+        );
+      }
+    } catch (err) {
+      onWarn(
+        `Pause port threw for ${inputs.ticker} (${inputs.tokenAddress}): ${errorMessage(err)}`,
+      );
+    }
+  } else if (inputs.isPausedOnchain !== undefined) {
+    isPausedOnchain = inputs.isPausedOnchain;
+  } else if (inputs.issuer === "bstock") {
+    onWarn(`Pause check unavailable for bStock token ${inputs.ticker} (${inputs.tokenAddress})`);
   }
 
   const session = inputs.session ?? status?.session ?? "unknown";
@@ -99,19 +152,16 @@ export function buildTokenStateFromSnapshots(inputs: SnapshotStateInputs): Token
     tokenAddress: inputs.tokenAddress,
     ticker: inputs.ticker,
     issuer: inputs.issuer,
-    status: status
-      ? {
-          ...status,
-          reasonMsg: radarReason ?? status.reasonMsg,
-        }
-      : null,
+    status,
     multiplier: inputs.rawMultiplier ?? null,
     grade,
+    gradeReasons,
     ghost,
+    lastRealTradeAgeDays,
     sharePriceUsd: inputs.sharePriceUsd ?? null,
     session,
     observedAt: inputs.observedAt,
-    isPausedOnchain: inputs.isPausedOnchain,
+    isPausedOnchain,
     evidenceKey,
   };
 }
@@ -133,6 +183,25 @@ export function evaluateHoldingRules(
   const alerts: Alert[] = [];
   const warn = onWarn ?? ports?.onWarn ?? (() => {});
 
+  // Merge settings.priceThresholds into ports.priceThresholds with lowercased keys (ports take priority)
+  const mergedPriceThresholds: Record<string, { minPriceUsd?: number; maxPriceUsd?: number }> = {};
+  if (settings?.priceThresholds) {
+    for (const [key, val] of Object.entries(settings.priceThresholds)) {
+      mergedPriceThresholds[key.toLowerCase()] = val;
+    }
+  }
+  if (ports?.priceThresholds) {
+    for (const [key, val] of Object.entries(ports.priceThresholds)) {
+      mergedPriceThresholds[key.toLowerCase()] = val;
+    }
+  }
+
+  const effectivePorts: RulePorts = {
+    ...ports,
+    priceThresholds: mergedPriceThresholds,
+    onWarn: warn,
+  };
+
   for (const rule of rules) {
     if (rule.disabled) {
       continue;
@@ -140,16 +209,14 @@ export function evaluateHoldingRules(
 
     // Check per-rule enable flag if settings are provided
     if (settings) {
-      if (rule.id === "paused" && !settings.rules.paused) continue;
-      if (rule.id === "share-count" && !settings.rules.shareCount) continue;
-      if (rule.id === "grade-drop" && !settings.rules.gradeDrop) continue;
-      if (rule.id === "ghost" && !settings.rules.ghost) continue;
-      if (rule.id === "price-threshold" && !settings.rules.priceThreshold) continue;
-      if (rule.id === "earnings" && !settings.rules.earnings) continue;
+      const settingKey = RULE_SETTING_MAP[rule.id];
+      if (settingKey && !settings.rules[settingKey]) {
+        continue;
+      }
     }
 
     try {
-      const ruleAlerts = rule.evaluate(prev, next, holding, ports);
+      const ruleAlerts = rule.evaluate(prev, next, holding, effectivePorts);
       if (Array.isArray(ruleAlerts) && ruleAlerts.length > 0) {
         alerts.push(...ruleAlerts);
       }
