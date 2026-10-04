@@ -67,7 +67,7 @@ When done, open a PR with .github/pull_request_template.md filled in, with evide
 |---|---|---|---|
 | 00 | Foundation: modkit, worker, flags, health, ModuleBoundary | B | `mod/WO-00-foundation` |
 | 01 | M3 follow-up (stage events + landing; base merged) | A (backup D) | `mod/WO-01-m3-followup` (fresh from main) |
-| 02 | Receipts + Execution quality report | C | `mod/WO-02-receipts` |
+| 02 | Receipts + Execution quality report | C | `mod/WO-02-receipts` (slices A and B) |
 | 03 | Portfolio + Statement | D | `mod/WO-03-statement` |
 | 04 | Flow + Radar page | B | `mod/WO-04-flow` |
 | 05 | Agent layer: MCP server, Wallet Skill, upstream PR (blueprint M5) | B (backup E) | `mod/WO-05-agent-layer` |

@@ -18,7 +18,7 @@ Written 2026-10-04 by Claude (chief orchestrator) for **GPT-6 Astra**, who takes
 3. `CLAUDE.md`: project rules (security, units, style). Applies to you too.
 4. `MODULES.md` (v2): positioning, module catalogue, §3 architecture rules, §4 specs, §5 open gates, §6 DX-report notes.
 5. `docs/work-orders/README.md`: team, calendar, review protocol, dispatch prompt, index. Then each `WO-xx-*.md`.
-6. The written reviews in `review/<branch>/REVIEW.md` (WO-00, WO-02, WO-03): copy their tone, structure and strictness.
+6. The written reviews in `review/<branch>/REVIEW.md` (WO-00, WO-02, WO-03; all three now merged): copy their tone, structure and strictness.
 7. As needed: `TALLY_BLUEPRINT.md` (§7 engine, §12 agent layer, §13 Telegram, §17 milestones), `DESIGN.md`, `IDEAS.md`, `contracts/README.md`.
 
 ## 2. The project in one paragraph
@@ -41,8 +41,8 @@ Written 2026-10-04 by Claude (chief orchestrator) for **GPT-6 Astra**, who takes
 |---|---|---|---|---|
 | 00 | Foundation (modkit, worker, flags, health, ModuleBoundary) | B Codex #1 | **Merged** | none |
 | 01 | M3 follow-up (`onStage` events, landing lead only) | A Sonnet (backup D) | **Urgent. M3 base merged** via PR #6 (`45ab557`); follow-up pending | Fresh branch `mod/WO-01-m3-followup` from latest main. WO-02B cannot start until `onStage` merges. **Escalate to Claude** (money path). |
-| 02 | Receipts + Quality | C Codex #2 | **Slice A merged.** Slice B pending WO-01 | After WO-01 merges: dispatch slice B on `mod/WO-02-receipts-b` (notes 2–3 in its REVIEW.md apply). |
-| 03 | Portfolio + Statement | D Antigravity | **APPROVE after finding 8** (re-review @ e708848) | Check fix 8 (missing keys → throw, never fixtures; one test) + `pnpm test` green, glance at 9–10. Then the user squash-merges. No full pack needed. |
+| 02 | Receipts + Quality | C Codex #2 | **Slice A merged.** Slice B pending WO-01 | After WO-01 merges: dispatch slice B on the same branch name `mod/WO-02-receipts` (fresh from main; user decision 2026-10-04). Notes 2–3 in its REVIEW.md apply. |
+| 03 | Portfolio + Statement | D Antigravity | **Merged** (PR #7, `a732de4`; fixes 8–10 in `af9bac6`) | none. Collectors stay additive; WO-04 rebases over `collectors.ts`. |
 | 04 | Flow + Radar | B Codex #1 | In progress, scope expansion approved (see its Owns) | Review. The agent will **propose a one-line ghost-rule wiring** into `packages/core/src/integrity.ts`: the orchestrator applies it (you may, after checking it only injects a port and changes no existing grade without a ghost signal). |
 | 05 | Agent layer: MCP, Wallet Skill, upstream PR | B (backup E) | **New**, not dispatched | Dispatch to B after WO-04. Targets the $2k Agentic Wallet / Wallet Skills prize. |
 | 06 | Guardian alerts + read-only bot commands | E OpenCode | Slice A in progress | Task 9 (`/quote`, `/shares`, `/shield`) was added on 2026-10-04: tell E to re-read the WO. |
@@ -167,9 +167,8 @@ Batch escalations: one message with the branch names and your own REVIEW.md draf
 
 ## 14. Pending orchestrator actions (start here)
 
-1. WO-03: verify fix 8 (+9/10) → tell the user to squash-merge.
-2. WO-04: review when ready; apply the ghost-rule wiring line yourself if it's port-only.
-3. Tell agent E to re-read WO-06 (task 9 added). Tell B that WO-05 follows WO-04.
-4. Monday: collect V-B1/V-B2 results from the user; decide WO-07 scope. Collect V-AW; decide WO-08 scope.
-5. Urgently hand WO-01 M3 follow-up to Sonnet (D if quota runs short), on a fresh branch from main. After its `onStage` merges: dispatch WO-02 slice B; tell the user when to hand WO-12 to Sonnet.
-6. Keep §4 of this file updated after every merge (commit to main).
+1. WO-04: review when ready; apply the ghost-rule wiring line yourself if it's port-only.
+2. Tell agent E to re-read WO-06 (task 9 added). Tell B that WO-05 follows WO-04.
+3. Monday: collect V-B1/V-B2 results from the user; decide WO-07 scope. Collect V-AW; decide WO-08 scope.
+4. Urgently hand WO-01 M3 follow-up to Sonnet (D if quota runs short), on a fresh branch from main. After its `onStage` merges: dispatch WO-02 slice B (same branch `mod/WO-02-receipts`); tell the user when to hand WO-12 to Sonnet.
+5. Keep §4 of this file updated after every merge (commit to main).

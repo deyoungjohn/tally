@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Agent | C (Codex #2) |
-| Branch | `mod/WO-02-receipts` (slice A: `mod/WO-02-receipts-a` pure logic, can start now; slice B on `mod/WO-02-receipts-b` only after WO-01 follow-up `onStage` merges; WO-00 and M3 base already merged) |
+| Branch | `mod/WO-02-receipts` for both slices (slice A merged; slice B starts fresh from main under the same name, only after the WO-01 follow-up `onStage` merges; WO-00 and M3 base already merged) |
 | Read first | `MODULES.md` §4.1 and `docs/archive/MODULES-v1.md` §4, `IDEAS.md` F6 and F11, blueprint §7.6 |
 
 ## Owns
