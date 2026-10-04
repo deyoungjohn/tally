@@ -77,6 +77,7 @@ async function metadata<T>(
   if (previous && previous.ageMs < 600_000) return { data: previous.data, reason: null };
   try {
     const data = await read();
+    ctx.signal?.throwIfAborted();
     const prefix = {
       "flow-holders": "F_holder",
       "flow-traders": "F_top_trader",
@@ -89,6 +90,7 @@ async function metadata<T>(
     const age = Math.max(0, ctx.now() - observedAt);
     return { data, reason: age > 600_000 ? `${kind} metadata is stale (${age} ms old)` : null };
   } catch (error) {
+    ctx.signal?.throwIfAborted();
     const reason = `${kind} unavailable: ${errorMessage(error)}`;
     ctx.onWarn(reason);
     return {
@@ -240,6 +242,7 @@ async function resolveTokens(
     counts.facts++;
     try {
       const rows = await ctx.engine.facts(ticker);
+      ctx.signal?.throwIfAborted();
       tokens = tokens.filter((t) => t.ticker !== ticker);
       radarTokens = radarTokens.filter((t) => t.ticker !== ticker);
       for (const row of rows) {
@@ -301,6 +304,7 @@ async function resolveTokens(
       }
       discovery.resolved[ticker] = ctx.now();
     } catch (error) {
+      ctx.signal?.throwIfAborted();
       ctx.onWarn(`Flow ticker ${ticker} facts unavailable: ${errorMessage(error)}`);
     }
   }
@@ -375,12 +379,29 @@ async function resolveTokens(
   return { tokens, pending: remaining };
 }
 
-/** The shared engine BinanceClient owns pacing/retries; this job never constructs a client. */
+/** Configure the existing engine transport; never construct a second client. */
 export async function collectFlow(
   ctx: WorkerContext,
   options: CollectFlowOptions = {},
 ): Promise<void> {
+  try {
+    await collectFlowRun(ctx, options);
+  } catch (error) {
+    // The runner owns shutdown/timeout health. An interrupted token is not a source failure.
+    if (ctx.signal?.aborted) return;
+    throw error;
+  }
+}
+
+async function collectFlowRun(ctx: WorkerContext, options: CollectFlowOptions): Promise<void> {
+  ctx.signal?.throwIfAborted();
   const fixture = options.fixture ?? process.env.TALLY_FIXTURES === "1";
+  if (!fixture) {
+    const requestsPerSecond = Number(process.env.TALLY_WORKER_RPS ?? "2");
+    if (!Number.isFinite(requestsPerSecond) || requestsPerSecond <= 0)
+      throw new RangeError("TALLY_WORKER_RPS must be positive and finite");
+    ctx.engine.paceWorkerRequests?.({ requestsPerSecond, signal: ctx.signal });
+  }
   if (
     options.maxPages !== undefined &&
     (!Number.isInteger(options.maxPages) || options.maxPages < 1 || options.maxPages > 10)
@@ -508,6 +529,7 @@ export async function collectFlow(
                 ctx.signal?.throwIfAborted();
                 counts.trades++;
                 const page = await ctx.engine.collectors.trades(key, cursor, 100);
+                ctx.signal?.throwIfAborted();
                 if (fixture) observedAt = collectorRecording(`F_trades_${token.symbol}`).observedAt;
                 for (const raw of page.trades) {
                   const classified = classifyTrade(raw, token);
@@ -570,6 +592,7 @@ export async function collectFlow(
               ctx.signal?.throwIfAborted();
               if (ctx.now() >= deadline) throw new RunDeferred();
               const head = await ctx.engine.chain.blockNumber();
+              ctx.signal?.throwIfAborted();
               // Live reads lag 12 blocks. The fixture recorder already used a confirmed tip.
               const toBlock = fixture ? head : head > 12n ? head - 12n : 0n;
               const fromBlock =
@@ -587,6 +610,7 @@ export async function collectFlow(
                 ctx.signal?.throwIfAborted();
                 if (ctx.now() >= deadline) throw new RunDeferred();
                 logs.push(...(await ctx.engine.chain.transferLogs(key, fromBlock, end)));
+                ctx.signal?.throwIfAborted();
               }
               const classified = classifyChainLogs(
                 logs,
@@ -632,7 +656,9 @@ export async function collectFlow(
                     trade.txHash,
                     await ctx.engine.chain.transactionReceipt(trade.txHash),
                   );
+                  ctx.signal?.throwIfAborted();
                 } catch {
+                  ctx.signal?.throwIfAborted();
                   const reason = "Whale receipt unavailable; price unavailable from chain logs";
                   notes.push(reason);
                   ctx.onWarn(reason);
@@ -664,8 +690,12 @@ export async function collectFlow(
             },
           },
         ],
-        ctx.onWarn,
+        (message) => {
+          ctx.signal?.throwIfAborted();
+          ctx.onWarn(message);
+        },
       );
+      ctx.signal?.throwIfAborted();
       // Avoid double-counting the same execution when the evidence source changes.
       const txs = new Set(result.value.trades.map((t) => t.txHash));
       const old =
@@ -717,6 +747,7 @@ export async function collectFlow(
         data: checkGhost(ghostInput(cleaned, now - result.value.observedAt > FLOW_MAX_AGE_MS)),
       });
     } catch (error) {
+      ctx.signal?.throwIfAborted();
       if (
         error instanceof AggregateError &&
         error.errors.some(
