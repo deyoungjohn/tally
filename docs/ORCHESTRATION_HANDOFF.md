@@ -88,7 +88,7 @@ Merge discipline: ≤ 4 PRs open; merge one at a time; rebase before review. Onl
 - **Ticker/issuer from the registry by address**, never inferred from symbol suffixes. Unknown → `null`, "Not a recognised tokenized stock".
 - **No fixture data labelled live.** Fixtures only when `TALLY_FIXTURES === "1"`; missing keys in non-fixture mode → throw (health shows it). Fixture `source` names the fixture file.
 - Honest labels: reconstructions vs real simulations, `chain-logs` vs API, stale data shows its age. No "you should" copy (facts only).
-- Never trust the API's gas (always 450000): local model × 1.25. Enforce the **6 USDT** minimum. Ondo is RFQ and closed outside US hours; bStock `marketStatus` is always null (pause comes from the on-chain pause manager); xStocks are AMM-only and often ghost.
+- Never trust the API's gas (always 450000): RPC estimate × 1.25, simulated at the exact limit (the web plan's rule; the local model only prices the fee). Enforce the **6 USDT** minimum. Ondo is RFQ and closed outside US hours; bStock `marketStatus` is always null (pause comes from the on-chain pause manager); xStocks are AMM-only and often ghost.
 - Raw token units are authoritative in receipts; shares derived; frozen conversion at fill time.
 
 **Architecture (MODULES.md §3)**
@@ -145,6 +145,10 @@ Batch escalations: one message with the branch names and your own REVIEW.md draf
 - xStocks aren't in the RWA Data API.
 - `fonts.googleapis.com` returns 404 at the root: any response means reachable (WSL build failures on `next/font` were network, not code).
 - Probe recorder: `spike/record_module_probes.py` (read-only; the user runs it).
+
+## 11b. Known issues for later (don't fix inside other WOs)
+
+- `engine.portfolio` / `portfolioFor` (`packages/engine/src/views.ts`) uses floats and silently skips tokens with an unknown multiplier. The web Portfolio still reads it. WO-12 should switch the page to WO-03's `PortfolioVM`; WO-05 adds a separate bigint `sharesOf` and leaves this function alone.
 
 ## 12. Hard rules you must keep
 
