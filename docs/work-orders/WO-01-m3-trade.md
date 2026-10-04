@@ -1,37 +1,43 @@
-# WO-01 M3 web trade flow
+# WO-01 M3 follow-up
 
 | | |
 |---|---|
-| Agent | A (Claude Code) |
-| Branch | `mod/WO-01-m3-trade` |
-| Priority | **Critical path.** Merge target Tue 6 Oct. |
-| Read first | Blueprint §7.6, §8, §11, §17 (M3 row), `DESIGN.md`, `CLAUDE.md` (wallet requirements carried into M3), `IDEAS.md` F6, F10, F11 |
+| Agent | A (Sonnet / Claude Code cloud). Backup: D (Antigravity) if Sonnet's quota runs short; hand over the same branch, never work concurrently. |
+| Branch | `mod/WO-01-m3-followup` — fresh branch from latest `origin/main`, not the merged M3 branch |
+| Priority | **Urgent, critical path.** Merge as soon as possible; target no later than Tue 6 Oct. WO-02 slice B cannot start until `onStage` is merged. |
+| Read first | `AGENTS.md`, `CLAUDE.md`, `MODULES.md` §1–§3, blueprint §7.6, `DESIGN.md`, WO-02 receipt types and slice B requirements |
+
+## Merged base — done
+
+The M3 base from `claude/m3-web-trade-flow` is on main via PR #6 (merge `45ab557`). The ticker/trade UI, Privy sign-in, top-up, plan/approval/re-quote/simulation/sign/receipt flow and error copy are already implemented. Do not rebuild them. This records the merged implementation, not proof that every user-run live check passed.
+
+Only two tasks remain: typed stage events and the landing page lead. The document path is retained so existing references still resolve.
 
 ## Owns
 
-- `apps/web/app/trade/**`, `apps/web/app/t/**` (ticker pages), `apps/web/components/trade/**`, `apps/web/lib/trade-plan/**`
-- `apps/web/app/api/quote/**`, `apps/web/app/api/plan/**`, the Ondo feed-signer service route (`apps/web/app/api/feed/**`)
-- `apps/web/e2e/trade*.spec.ts`
-- `apps/web/app/page.tsx` (landing copy update, see task 5)
+Approved 2026-10-04 by the chief engineer, limited to these two tasks:
+
+- `apps/web/components/trade/use-trade-flow.ts` — additive optional `onStage` integration only; preserve existing transaction behavior.
+- `apps/web/components/trade/trade-stages.ts`, `apps/web/components/trade/trade-stages.test.ts`, `apps/web/components/trade/use-trade-flow.test.ts` — new typed event contract, helpers and unit tests.
+- `apps/web/app/page.tsx`, `apps/web/components/home/parts.tsx`, `apps/web/components/home/hero-actions.tsx` — landing lead only; no changes to embedded buy behavior.
+- `apps/web/e2e/trade.spec.ts`, `apps/web/e2e/home.spec.ts` — event and landing regression evidence only.
+
+These files are reserved for WO-01 until it merges; WO-12 resumes ownership afterward. No dependencies approved. If truthful receipt-stage data requires additional engine, DTO or API files, stop and propose the exact additive paths to the orchestrator before editing them.
 
 ## Tasks
 
-The milestone exactly as the blueprint defines it (§17, M3), with these adjustments from `MODULES.md` v2:
+1. **Typed `onStage(stage, payload)` events.** Expose intent, quote, simulation, signed and realized from the existing flow so WO-02 slice B can subscribe without editing the producer. Document the subscription entry point and payload contract in the PR. Preserve share/token amounts as bigint or lossless integer strings, correlate events to the same intent/transaction, and retain the observed conversion and provenance available from the plan. Emit simulation evidence only when actually available; missing evidence has a reason, never an invented output. Keep re-quotes and resumed receipts identifiable. An absent subscriber preserves current behavior; a subscriber failure warns and must not alter approval, confirmation or transaction execution. Receipt persistence and reconciliation stay in WO-02.
+2. **Landing page lead.** Lead with "Your stocks, in shares" and Portfolio / Radar / Guardian, following `DESIGN.md`. Quote comparison belongs on ticker pages, not in the hero. Preserve sign-in behavior and feature-flag gating; do not imply unavailable modules are live.
 
-1. Ticker page with consolidated quote card (via `@tally/engine` only), integrity grade and plain-words route.
-2. Privy sign-in; embedded wallet on chain 56; read `eth_chainId` at send time and `switchChain(56)` before signing.
-3. Top-up tier 1 and 2 (deposit address with BEP-20 warning; connect funded wallet).
-4. Trade plan: amount → fresh quote → exact-amount allowance → re-quote → gas estimate (local model, never the API's 450000) → simulate at the exact limit → sign → receipt in shares. **Expose each stage as a typed event** (`onStage(stage, payload)`) so WO-02 Receipts can record intent/quote/simulation/realized without editing your code.
-5. Landing page: lead with "Your stocks, in shares" + Portfolio / Radar / Guardian; the quote comparison is shown on ticker pages, not as the hero.
-6. Error copy from blueprint §11 (40375, 40304, insufficient shares, TokenPaused).
+## Exit checks
 
-## Exit checks (blueprint M3 plus)
-
-- [ ] Fixture-mode e2e: full plan to the signature step at 375/768/1280, reduced motion.
-- [ ] `onStage` emits intent, quote, simulation, signed, realized with typed payloads (unit test).
-- [ ] The user, on the EC2/PC, buys $6 of NVDA on mobile without help (you write the steps in the PR; the user runs it and posts the tx hash).
-- [ ] No regression: existing e2e (landing, region gate) green.
+- [ ] Unit tests prove all five typed stages, their order and correlation, re-quote handling, resumed receipt handling, and honest missing simulation evidence.
+- [ ] No subscriber and a failing subscriber leave the existing buy behavior intact; failures warn, with tests.
+- [ ] WO-02 can consume the exported contract and subscription entry point without modifying WO-01 files; PR documents the handoff.
+- [ ] Landing screenshots at 375/768/1280 and reduced motion show the new lead and honest flag-off states.
+- [ ] `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm test`, `pnpm build`, `pnpm e2e` and `pnpm e2e:foundation` pass; full review pack includes existing landing, region-gate and trade regressions.
+- [ ] Only owned paths changed; no changes to ShareGuard, transaction construction, signing policy, gas, allowance, simulation gates or buy execution semantics.
 
 ## Out of scope
 
-Sell, switch, portfolio page (WO-03), receipts storage (WO-02).
+Rebuilding M3, wallet/provider changes, engine or API rewiring, sell/switch, receipts storage, new module screens and new dependencies. User-run live checks remain the chief engineer's; do not send transactions.

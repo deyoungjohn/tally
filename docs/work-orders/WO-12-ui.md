@@ -11,7 +11,7 @@
 - `apps/web/app/**` except `apps/web/app/api/modules/**` (WO-00) and `apps/web/app/dev/**` (module previews)
 - `apps/web/components/**` except `apps/web/components/module-boundary.tsx` (WO-00)
 - `apps/web/app/globals.css`, design tokens, `apps/web/e2e/*.spec.ts` for the pages you build
-- (WO-01 M3 pages are already yours.)
+- WO-01 M3 follow-up owns its explicitly listed event and landing files until it merges; do not edit those concurrently. The M3 base is already on main.
 
 ## Rules
 

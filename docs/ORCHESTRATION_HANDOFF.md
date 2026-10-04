@@ -27,10 +27,10 @@ Written 2026-10-04 by Claude (chief orchestrator) for **GPT-6 Astra**, who takes
 
 ## 3. Environment facts
 
-- **Repo:** GitHub, default branch `main`. Windows clone: `C:\Users\DELL\Projects\tally` (this is the folder you edit; Claude also reads it). WSL worktrees per agent: `~/Projects/tally-wo00`, `~/Projects/tally-wo02`, `~/Projects/tally-wo03` (more get added per work order). Sonnet (agent A) works in a Claude Code **cloud** session on its own M3 branch.
+- **Repo:** GitHub, default branch `main`. Windows clone: `C:\Users\DELL\Projects\tally` (this is the folder you edit; Claude also reads it). WSL worktrees per agent: `~/Projects/tally-wo00`, `~/Projects/tally-wo02`, `~/Projects/tally-wo03` (more get added per work order). Sonnet (agent A) works in a Claude Code **cloud** session on the fresh `mod/WO-01-m3-followup` branch after the M3 base merged.
 - **Stack:** pnpm monorepo, Node 22, Next 16, viem, Foundry, Privy, Vitest, Playwright. Packages: `core`, `binance`, `chain`, `engine`, `modkit` (WO-00), `mod-*`, `mcp`. Apps: `web`, `worker`, `bot`.
 - **Binance Web3 API:** refuses US callers (`40304`). The user is in Nigeria (allowed); deployment is a Seoul EC2. Cloud agents (US) must build against **fixtures**: `packages/binance/fixtures/raw/` and `spike/results/module_probes_*.json` (newest full set: `module_probes_20261003T130122Z.json`).
-- **RPC:** env names are hardcoded `BSC_RPC_NODEREAL` (primary) then `BSC_RPC_ANKR`. `.env` overrides the OS environment (a stray Windows `BSC_RPC_URL` used to win). The public RPC refuses `eth_getLogs`; NodeReal handles 10,000 blocks per call (~75 min).
+- **RPC:** the engine reads `BSC_RPC_PRIMARY` (NodeReal) and `BSC_RPC_FALLBACKS` (Ankr), confirmed by the user on 2026-10-04. Recorder-specific environment names may differ. `.env` overrides the OS environment (a stray Windows `BSC_RPC_URL` used to win). The public RPC refuses `eth_getLogs`; NodeReal handles 10,000 blocks per call (~75 min).
 - **Review packs** live in `review/<branch_with_underscores>/` in the Windows clone. `review/` is **git-ignored**: read it from the local folder, not GitHub.
 - The user's Cowork bridge to Claude can only copy files (no shell). If Claude must review, the user runs the pack first and Claude reads `review/`.
 
@@ -39,7 +39,7 @@ Written 2026-10-04 by Claude (chief orchestrator) for **GPT-6 Astra**, who takes
 | WO | Module | Agent | Status | Next action |
 |---|---|---|---|---|
 | 00 | Foundation (modkit, worker, flags, health, ModuleBoundary) | B Codex #1 | **Merged** | none |
-| 01 | M3 web trade flow (+ `onStage` events, landing lead) | A Sonnet (cloud) | In progress | Review when PR opens. WO-02 slice B depends on its `onStage` API. **Escalate to Claude** (money path). |
+| 01 | M3 follow-up (`onStage` events, landing lead only) | A Sonnet (backup D) | **Urgent. M3 base merged** via PR #6 (`45ab557`); follow-up pending | Fresh branch `mod/WO-01-m3-followup` from latest main. WO-02B cannot start until `onStage` merges. **Escalate to Claude** (money path). |
 | 02 | Receipts + Quality | C Codex #2 | **Slice A merged.** Slice B pending WO-01 | After WO-01 merges: dispatch slice B on `mod/WO-02-receipts-b` (notes 2–3 in its REVIEW.md apply). |
 | 03 | Portfolio + Statement | D Antigravity | **APPROVE after finding 8** (re-review @ e708848) | Check fix 8 (missing keys → throw, never fixtures; one test) + `pnpm test` green, glance at 9–10. Then the user squash-merges. No full pack needed. |
 | 04 | Flow + Radar | B Codex #1 | In progress, scope expansion approved (see its Owns) | Review. The agent will **propose a one-line ghost-rule wiring** into `packages/core/src/integrity.ts`: the orchestrator applies it (you may, after checking it only injects a port and changes no existing grade without a ghost signal). |
@@ -52,14 +52,14 @@ Written 2026-10-04 by Claude (chief orchestrator) for **GPT-6 Astra**, who takes
 | 11 | Evidence, fixtures, docs | F Cline | Support | Never money paths, contracts or engine. |
 | 12 | UI (every page) | A Sonnet (backup D) | After WO-01 | Sonnet hasn't been told about WO-12 yet: the user decides when. |
 
-Blueprint milestones M0–M7 are covered: M0–M2 done (engine, ShareGuard, CLI); M3 = WO-01; M4 Trap Shield = integrity grade + WO-04 ghost rule + WO-06 `/shield`; M5 agent layer = WO-05; M6 Telegram = WO-06; M7 polish/submission = WO-11/WO-12 + Fri–Sun calendar.
+Blueprint milestones M0–M7 are covered: M0–M2 done (engine, ShareGuard, CLI); M3 base merged; WO-01 now covers only stage events and the landing lead; M4 Trap Shield = integrity grade + WO-04 ghost rule + WO-06 `/shield`; M5 agent layer = WO-05; M6 Telegram = WO-06; M7 polish/submission = WO-11/WO-12 + Fri–Sun calendar.
 
 ## 5. Calendar (UTC; Lagos = UTC+1)
 
 | When | Milestone |
 |---|---|
 | Mon 5 Oct | User runs V-B1/V-B2 in pre-market and regular hours. WO-03 merged. |
-| Tue 6 | WO-01 merged; WO-04 merged; dispatch wave 2 (WO-02B, WO-05, WO-07). |
+| Tue 6 | WO-01 follow-up merged (urgent; earlier if ready); WO-04 merged; dispatch wave 2 (WO-02B, WO-05, WO-07). |
 | Wed 7 | WO-06 merged; V-E decided. |
 | **Thu 8, 23:59** | **Cut line**: anything unmerged ships flag-off. |
 | Fri 9 | Integration day: flags on, e2e on EC2, live $6 receipt/switch/sell by the user. Claude's quota resets: **final review window**. |
@@ -170,5 +170,5 @@ Batch escalations: one message with the branch names and your own REVIEW.md draf
 2. WO-04: review when ready; apply the ghost-rule wiring line yourself if it's port-only.
 3. Tell agent E to re-read WO-06 (task 9 added). Tell B that WO-05 follows WO-04.
 4. Monday: collect V-B1/V-B2 results from the user; decide WO-07 scope. Collect V-AW; decide WO-08 scope.
-5. After WO-01 merges: dispatch WO-02 slice B; tell the user when to hand WO-12 to Sonnet.
+5. Urgently hand WO-01 M3 follow-up to Sonnet (D if quota runs short), on a fresh branch from main. After its `onStage` merges: dispatch WO-02 slice B; tell the user when to hand WO-12 to Sonnet.
 6. Keep §4 of this file updated after every merge (commit to main).

@@ -1,12 +1,12 @@
 # Work orders: who builds what, when, and how it gets merged
 
-Roles: **orchestrator** (Claude, in the Cowork session) writes work orders and reviews every PR; **chief engineer** (the user) reviews after the orchestrator, merges, runs anything live, and owns keys and deployments; **agents** build one work order each on their own branch.
+Roles: **day-to-day orchestrator** (Astra; Claude remains chief orchestrator for escalations and final review) writes work orders and reviews every PR; **chief engineer** (the user) reviews after the orchestrator, merges, runs anything live, and owns keys and deployments; **agents** build one work order each on their own branch.
 
 ## Team and assignments
 
 | Agent (tool · model) | Strength we use it for | Wave 1 (Sat 3 – Mon 5) | Wave 2 (Tue 6 – Thu 8) |
 |---|---|---|---|
-| **A: Sonnet** (Claude Code cloud session, Claude Pro) | Owns **all UI**: reads screenshots, follows `DESIGN.md`, built the current screens | **WO-01 M3 trade flow** (in progress), then **WO-12** correction pass | **WO-12** screens (Portfolio, Radar, Guardian, Receipt/Quality, Pies) as view models merge |
+| **A: Sonnet** (Claude Code cloud session, Claude Pro) | Owns **all UI**: reads screenshots, follows `DESIGN.md`, built the current screens | **WO-01 M3 follow-up** (urgent: stage events + landing; M3 base merged; D backs up if quota runs short), then **WO-12** correction pass | **WO-12** screens (Portfolio, Radar, Guardian, Receipt/Quality, Pies) as view models merge |
 | **B: Codex** (ChatGPT Plus #1) | Solid TypeScript, infra | **WO-00 Foundation** (merged), then **WO-04 Flow** | **WO-05 Agent layer**, then **WO-09 Pies** |
 | **C: Codex** (ChatGPT Plus #2) | Careful pure logic + tests, Foundry | **WO-02 Receipts + Quality** (pure part first) | **WO-07 Sell + Switch** (fork tests J/K), then **WO-08 Autopilot** |
 | **D: Antigravity** (Gemini, Pro) | Logic + view models; **backup UI agent** | **WO-03 Portfolio + Statement** (logic + view models) | **WO-10 Rewards** (if gates pass) / takes over WO-12 slices if Sonnet is out of quota |
@@ -28,7 +28,7 @@ Notes:
 | Sat 3, evening | Orchestration docs merged. Dispatch WO-00 (B), WO-01 (A), WO-02 pure part (C), WO-03 pure part (D), WO-06 pure part (E), WO-11 (F). |
 | Sun 4, 12:00 | **WO-00 merged** (everyone rebases). Gate V-AW (`baw` capabilities) answered. |
 | Mon 5 | V-B1/V-B2 run by the user in pre-market + regular hours. WO-02, WO-03 merged. |
-| Tue 6 | **WO-01 (M3) merged.** WO-04 merged. Dispatch wave 2. |
+| Tue 6 | **WO-01 follow-up merged** (urgent; earlier if ready). WO-02B starts only after `onStage` merges. WO-04 merged. Dispatch wave 2. |
 | Wed 7 | WO-06 merged. Earnings source decided (V-E). |
 | Thu 8, 23:59 | **Cut line.** Anything unmerged ships flag-off. |
 | Fri 9 | Integration day: flags on, e2e on EC2, live $6 receipts/switch/sell. |
@@ -66,7 +66,7 @@ When done, open a PR with .github/pull_request_template.md filled in, with evide
 | WO | Title | Agent | Branch |
 |---|---|---|---|
 | 00 | Foundation: modkit, worker, flags, health, ModuleBoundary | B | `mod/WO-00-foundation` |
-| 01 | M3 web trade flow (blueprint §17) | A | Sonnet's existing M3 branch |
+| 01 | M3 follow-up (stage events + landing; base merged) | A (backup D) | `mod/WO-01-m3-followup` (fresh from main) |
 | 02 | Receipts + Execution quality report | C | `mod/WO-02-receipts` |
 | 03 | Portfolio + Statement | D | `mod/WO-03-statement` |
 | 04 | Flow + Radar page | B | `mod/WO-04-flow` |
