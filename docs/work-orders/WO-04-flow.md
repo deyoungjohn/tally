@@ -12,6 +12,11 @@
 - `packages/mod-flow/**`
 - `apps/worker/src/jobs/collect-flow.ts`, `apps/worker/src/jobs/flow.ts`
 - `apps/web/modules/flow/**`, `apps/web/app/dev/flow/**`
+- Approved 2026-10-03, **additive only** (no change to existing signatures or behaviour):
+  - Market collectors in `packages/binance/src/collectors.ts`, `packages/binance/src/collector-fixtures.ts`, `packages/binance/src/collectors.test.ts`: `trades(token, cursor?, limit?)`, `holders(token)`, `topTraders(token)`, `topLiquidity(token)` with zod schemas; fixture fetch mapped to the `F_*` probe keys
+  - Chain reader in a new file `packages/chain/src/logs.ts` (+ `packages/chain/src/logs.test.ts`, export line in `packages/chain/src/index.ts`): `transferLogs(token, fromBlock, toBlock)` (≤ 10,000 blocks), `blockNumber()`, `transactionReceipt(hash)`, over `BSC_RPC_NODEREAL` then `BSC_RPC_ANKR` with failover
+  - Exposure on the engine in `packages/engine/src/**` (`engine.collectors.*`, `engine.chain.*`)
+  - New read-only recorder `spike/record_flow_logs.py` and its output `spike/results/flow_logs_*.json`
 
 ## Tasks
 
