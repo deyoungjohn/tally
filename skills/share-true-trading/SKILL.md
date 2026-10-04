@@ -33,15 +33,18 @@ The deployed ShareGuard is `0x28F6F19bffbF25E36452c78d12090F0bC922970a`. Buyable
 - `needs_approval`: preview `approve.to`/`approve.data`, show the spender (ShareGuard) and **exact** amount, explain the authority change, and obtain explicit confirmation before executing that preview. Never approve the router directly or use unlimited approval. Wait for the approval to confirm, then call the builder again with the **same intent**. The approval is not permission to execute the buy.
 - `ready`: show the exact floor used (`floorShares`), spend, issuer, multiplier/source, route, recipient, premium, gas limit, expiry, warnings and issuer/smart-contract/price risks. `factsToShow` supplies these. Decode/check the function is `swapForShares`, destination is the deployed guard, token input is BSC USDT, amount/floor/recipient match the plan and router is allow-listed. Tally's engine already verifies the router configuration and simulates.
 
-Gas is the engine's RPC estimate **from this wallet ×1.25**, simulated at that exact limit. The quote/swap API's repeated `450000` is not an execution limit. `baw` normally estimates gas independently. Its `--gasLimit` is an advanced fallback: only pass it after the user explicitly instructs use of that numeric limit. If omitted, disclose that baw chooses the sent limit; do not claim it matches Tally's simulation. With an explicit cap, the baw preview simulates at that cap and uses it unchanged. Never pass unsupported gas-price options.
+Gas is the engine's RPC estimate **from this wallet ×1.25**, simulated at that exact limit. The quote/swap API's repeated `450000` is not an execution limit. Check `baw contract-call preview --help` before previewing. Whenever it lists `--gasLimit`, pass `--gasLimit <plan.tx.gasLimit>` so preview and execution use the limit Tally simulated. If the flag is unavailable, omit it and state in the facts shown that the sent limit is baw's own and may differ from Tally's simulation. Record the help result and actual preview/execute command lines in the live-evidence PR. Never pass unsupported gas-price options.
 
 ## Preview, confirm, execute
 
 Follow Agentic Wallet's [external-sign reference](https://github.com/binance/binance-skills-hub/blob/main/skills/binance-web3/binance-agentic-wallet/references/external-sign.md):
 
 ```bash
-baw contract-call preview --binanceChainId 56 --from <wallet> --to <plan.tx.to> --value 0 --inputData <plan.tx.data> --json
+baw contract-call preview --help
+baw contract-call preview --binanceChainId 56 --from <wallet> --to <plan.tx.to> --value 0 --inputData <plan.tx.data> --gasLimit <plan.tx.gasLimit> --json
 ```
+
+Use the preview command's `--gasLimit` only when help lists it; otherwise follow the disclosure above.
 
 Show `parsedTx`, `simulationResult`, `risks`, `authorityChanges` and Tally's share floor. Check preview success and a usable `requestId`. A preview error/interception stops the flow. If parsing does not expose the guard call, present the locally decoded fields alongside the preview and explain the parsing limitation; do not invent parsed facts.
 

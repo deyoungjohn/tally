@@ -75,7 +75,7 @@ Live clients must run in an allowed region, with the existing server environment
 
 ## Optional tools from WO-02 / WO-07
 
-At startup the server dynamically imports `src/tools/get-receipt.ts`, `sell.ts`, `switch.ts` **only if present**. Those files must export `register(registry, engine)`; `registry.add(ToolDefinition, async (args) => result)` installs a tool with the common JSON/error handling. It receives the same signer-free engine. Missing modules warn on stderr and leave the four core tools working; an installed module with a bad export/load failure stops startup rather than silently losing it. Coordinate that export with those owners; their files and business logic are untouched here.
+At startup the server dynamically imports `src/tools/get-receipt.ts`, `sell.ts`, `switch.ts` **only if present**. Those files must export `register(registry, engine)`; `registry.add(ToolDefinition, async (args) => result)` installs a tool with the common JSON/error handling. It receives the same signer-free engine. Missing files, bad exports, failed imports and throwing registrations warn through URL-redacted diagnostics and leave the four core tools working; startup continues with the other optional tools. Coordinate that export with those owners; their files and business logic are untouched here.
 
 Until WO-02 installs its MCP tool, `call receipt` delegates to **existing** `engine.trade.receipt`, without reimplementing receipt logic:
 
@@ -126,13 +126,14 @@ baw contract-call execute --requestId <approval-preview-requestId> --json
 
 Wait for on-chain confirmation (complete any pending Binance App confirmation). Then call `build_guarded_swap` again with the same 6 USDT intent. It must now be `ready`.
 
-4. Show the ready plan and get the user's explicit instruction to use its numeric gas limit if passing `--gasLimit`. The user can run:
+4. Check `baw contract-call preview --help` for `--gasLimit` first, and record the result in this PR. Show the ready plan. Whenever help lists the flag, pass the plan's exact gas limit so the preview and sent transaction use the limit Tally simulated:
 
 ```bash
+baw contract-call preview --help
 baw contract-call preview --binanceChainId 56 --from <wallet> --to 0x28F6F19bffbF25E36452c78d12090F0bC922970a --value 0 --inputData <plan.tx.data> --gasLimit <plan.tx.gasLimit> --json
 ```
 
-Without that explicit instruction, omit `--gasLimit` and disclose baw's independent estimate. Inspect parsed transaction, simulation, risks and authority changes alongside decoded plan fields and share floor. After explicit confirmation, while the **15-second plan expiry** still holds:
+If help does not list `--gasLimit`, omit it and state in the facts shown that the sent limit is baw's own and may differ from Tally's simulation. Record the actual approval/swap preview and execute command lines used in this PR. Inspect parsed transaction, simulation, risks and authority changes alongside decoded plan fields and share floor. After explicit confirmation, while the **15-second plan expiry** still holds:
 
 ```bash
 baw contract-call execute --requestId <swap-preview-requestId> --json
