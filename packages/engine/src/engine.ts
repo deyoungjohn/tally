@@ -44,6 +44,7 @@ import {
   type FlowChain,
 } from "@tally/chain";
 import { fixtureFlowChain } from "./flow-fixture";
+import { workerRequestPace, type WorkerRequestPaceOptions } from "./worker-request-pace";
 import {
   TtlCache,
   amountBucket,
@@ -69,6 +70,8 @@ export interface HealthReport {
 }
 
 export interface Engine {
+  /** Opt-in live worker pacing/cancellation; ordinary web/quote engines keep their existing rate. */
+  paceWorkerRequests?: (options: WorkerRequestPaceOptions) => void;
   /** Scheduled read-only calls. Existing trade/quote ports are unchanged. */
   collectors: Pick<
     BinanceCollectors,
@@ -119,14 +122,22 @@ interface BuildOptions {
   tradeChain: TradeChain;
   signer?: FeedSigner;
   flowChain: FlowChain;
+  workerPacing?: boolean;
 }
 
 function build(o: BuildOptions): Engine {
   const now = o.now ?? Date.now;
+  const pace = o.workerPacing ? workerRequestPace(o.fetch) : undefined;
+  const transport = pace?.fetch ?? o.fetch;
+  const onWarn = pace
+    ? (message: string) => {
+        if (!pace.aborted()) (o.onWarn ?? console.warn)(message);
+      }
+    : o.onWarn;
   const client = new BinanceClient({
     apiKey: o.apiKey,
     apiSecret: o.apiSecret,
-    fetch: o.fetch,
+    fetch: transport,
     now,
     ratePerSec: o.ratePerSec,
     burst: o.ratePerSec ? Math.max(3, o.ratePerSec) : undefined,
@@ -134,10 +145,10 @@ function build(o: BuildOptions): Engine {
   const api = new BinanceApi(client);
   const data = new BinanceData({
     api,
-    pub: new PublicApi(o.fetch),
+    pub: new PublicApi(transport),
     onchain: o.onchain,
     now,
-    onWarn: o.onWarn,
+    onWarn,
     baseline: o.baseline,
   });
   const bnb = new TtlCache<number>(TTL_MS.bnbPrice, now);
@@ -205,6 +216,7 @@ function build(o: BuildOptions): Engine {
   };
   const radar = radarFor(ports, now);
   return {
+    paceWorkerRequests: pace?.configure,
     collectors: new BinanceCollectors(client),
     chain: o.flowChain,
     ports,
@@ -246,6 +258,7 @@ export function createLiveEngine(
     tradeChain: liveTradeChain(rpc, guard),
     signer: feedSignerFromEnv(env),
     flowChain: flowChainFromEnv(env, onWarn),
+    workerPacing: true,
   });
 }
 

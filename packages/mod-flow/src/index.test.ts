@@ -2,10 +2,11 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import { E18 } from "@tally/core";
 import { openStore } from "@tally/modkit";
-import { createFixtureEngine } from "../../engine/src/engine";
+import { createFixtureEngine, createLiveEngine } from "../../engine/src/engine";
 import { readFlowRecording } from "../../engine/src/flow-fixture";
 import { collectFlow } from "../../../apps/worker/src/jobs/collect-flow";
 import type { WorkerContext } from "../../../apps/worker/src/runner";
+import { runJobs } from "../../../apps/worker/src/runner";
 import {
   aggregateFlow,
   classifyChainLogs,
@@ -939,3 +940,205 @@ it("discovery with no successful facts reports failure instead of claiming a hea
     store.close();
   }
 });
+
+it.each([undefined, "1", "2.5"])(
+  "the flow worker configures TALLY_WORKER_RPS=%s (default 2) on its existing engine",
+  async (setting) => {
+    const store = openStore(":memory:");
+    try {
+      vi.stubEnv("TALLY_WORKER_RPS", setting);
+      const engine = createFixtureEngine();
+      engine.paceWorkerRequests = vi.fn();
+      const signal = new AbortController().signal;
+      await collectFlow(
+        { store, health: store.health, engine, now: () => now, onWarn: vi.fn(), signal },
+        { tokens: [], fixture: false },
+      );
+      expect(engine.paceWorkerRequests).toHaveBeenCalledWith({
+        requestsPerSecond: setting === undefined ? 2 : Number(setting),
+        signal,
+      });
+    } finally {
+      vi.unstubAllEnvs();
+      store.close();
+    }
+  },
+);
+
+it.each(["0", "-1", "NaN", "Infinity", ""])(
+  "invalid TALLY_WORKER_RPS=%s fails before starting reads",
+  async (setting) => {
+    const store = openStore(":memory:");
+    try {
+      vi.stubEnv("TALLY_WORKER_RPS", setting);
+      const engine = createFixtureEngine();
+      const read = vi.spyOn(engine.collectors, "holders");
+      await expect(
+        collectFlow(
+          { store, health: store.health, engine, now: () => now, onWarn: vi.fn() },
+          { tokens: [token], fixture: false },
+        ),
+      ).rejects.toThrow("TALLY_WORKER_RPS must be positive and finite");
+      expect(read).not.toHaveBeenCalled();
+    } finally {
+      vi.unstubAllEnvs();
+      store.close();
+    }
+  },
+);
+
+it("a paced 33-token cold-metadata pass resumes within two runs and ten minutes at the default 2 req/s", async () => {
+  vi.useFakeTimers();
+  vi.setSystemTime(now);
+  const store = openStore(":memory:");
+  try {
+    vi.stubEnv("TALLY_WORKER_RPS", undefined);
+    const requests: number[] = [];
+    vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      requests.push(Date.now());
+      const data = String(input).includes("/market/trades") ? { trades: [], cursor: null } : [];
+      return new Response(JSON.stringify({ code: "000000", data }));
+    });
+    const engine = createLiveEngine({
+      BINANCE_W3_API_KEY: "fixture",
+      BINANCE_W3_API_SECRET: "fixture",
+    });
+    const tokens = Array.from({ length: 33 }, (_, i) => ({
+      ...token,
+      address: "0x" + (i + 1).toString(16).padStart(40, "0"),
+    }));
+    const ctx = { store, health: store.health, engine, now: Date.now, onWarn: vi.fn() };
+    const first = collectFlow(ctx, { tokens, fixture: false });
+    await vi.runAllTimersAsync();
+    await first;
+    expect(
+      store.latest("flow-collection", "bsc", { maxAgeMs: 900000, now: Date.now() })!.data,
+    ).toMatchObject({ deferred: expect.any(Number), pass: { complete: false } });
+    const firstUpdated = store.latest<{ updated: string[] }>("flow-collection", "bsc", {
+      maxAgeMs: 900000,
+      now: Date.now(),
+    })!.data.updated;
+    expect(firstUpdated.length).toBeGreaterThan(0);
+    expect(firstUpdated.length).toBeLessThan(33);
+    await vi.advanceTimersByTimeAsync(60000); // Existing runner's wait after the first run.
+    const second = collectFlow(ctx, { tokens, fixture: false });
+    await vi.runAllTimersAsync();
+    await second;
+    const report = store.latest<{
+      pass: { complete: boolean; tokenCount: number; elapsedMs: number };
+    }>("flow-collection", "bsc", { maxAgeMs: 900000, now: Date.now() })!.data;
+    expect(report.pass).toMatchObject({ complete: true, tokenCount: 33 });
+    expect(report.pass.elapsedMs).toBe(136000);
+    expect(requests).toHaveLength(154);
+    expect(report.pass.elapsedMs).toBeLessThan(600000);
+    expect(requests.slice(1).every((at, i) => at - requests[i]! >= 500)).toBe(true);
+    for (const t of tokens)
+      expect(store.latest("flow", t.address, { maxAgeMs: 900000, now: Date.now() })!.stale).toBe(
+        false,
+      );
+  } finally {
+    vi.restoreAllMocks();
+    vi.unstubAllEnvs();
+    vi.useRealTimers();
+    store.close();
+  }
+});
+
+it.each(["facts", "holders", "trades", "block", "receipt", "resolved-trades"])(
+  "shutdown during %s is quiet, preserves the in-flight token and does not report unhealthy",
+  async (stage) => {
+    const store = openStore(":memory:");
+    const shutdown = new AbortController();
+    try {
+      const engine = createFixtureEngine();
+      const onWarn = vi.fn();
+      const previous = {
+        kind: "flow",
+        key: token.address,
+        observedAt: now - 1000,
+        source: "binance",
+        data: sample(),
+      };
+      store.put(previous);
+      store.health.report("collect-flow", { ok: true, now, intervalMs: 60000 });
+      const healthBefore = store.health.get("collect-flow");
+      let run: Promise<void> | undefined;
+      await runJobs(
+        [
+          {
+            name: "collect-flow",
+            intervalMs: 60000,
+            run: (ctx) => {
+              const cancel = () => {
+                shutdown.abort();
+                throw ctx.signal!.reason;
+              };
+              if (stage === "facts") {
+                store.put({
+                  kind: "registry",
+                  key: "bsc",
+                  observedAt: now,
+                  source: "binance",
+                  data: [{ underlyingTicker: "NVDA" }],
+                });
+                engine.facts = vi.fn(async () => cancel());
+              } else if (stage === "holders") {
+                engine.collectors.holders = vi.fn(async () => cancel());
+              } else {
+                for (const [kind, data] of [
+                  ["flow-holders", holders],
+                  ["flow-traders", traders],
+                  ["flow-pools", pools],
+                ] as const)
+                  store.put({ kind, key: token.address, observedAt: now, source: "binance", data });
+                if (stage === "trades") engine.collectors.trades = vi.fn(async () => cancel());
+                else if (stage === "resolved-trades")
+                  engine.collectors.trades = vi.fn(async () => {
+                    shutdown.abort();
+                    return { trades: [], cursor: null };
+                  });
+                else {
+                  engine.collectors.trades = vi.fn(async () => {
+                    throw new Error("API offline");
+                  });
+                  if (stage === "block") engine.chain.blockNumber = vi.fn(async () => cancel());
+                  else {
+                    store.put({
+                      kind: "price",
+                      key: token.address,
+                      observedAt: now,
+                      source: "fixture",
+                      data: { tokenPrice: "234.26", tokenPriceUpdatedAt: now },
+                    });
+                    engine.chain.transactionReceipt = vi.fn(async () => cancel());
+                  }
+                }
+              }
+              run = collectFlow(ctx, {
+                ...(stage === "facts" ? {} : { tokens: [token] }),
+                fixture: true,
+              });
+              return run;
+            },
+          },
+        ],
+        { store, health: store.health, engine, now: () => now, onWarn },
+        shutdown.signal,
+      );
+      await run;
+      expect(shutdown.signal.aborted).toBe(true);
+      expect(store.health.get("collect-flow")).toEqual(healthBefore);
+      expect(store.latest("flow", token.address, { maxAgeMs: 900000, now })).toMatchObject(
+        previous,
+      );
+      expect(store.latest("flow-progress", token.address, { maxAgeMs: 900000, now })).toBeNull();
+      expect(store.latest("flow-collection", "bsc", { maxAgeMs: 900000, now })).toBeNull();
+      const warnings = onWarn.mock.calls.map(([message]) => String(message));
+      if (stage === "block" || stage === "receipt")
+        expect(warnings).toEqual([expect.stringContaining("API offline")]);
+      else expect(warnings).toEqual([]);
+    } finally {
+      store.close();
+    }
+  },
+);

@@ -59,6 +59,22 @@ Even when an active sibling shares a ticker, its inactive sibling keeps its
 original grade observation until the 30-minute refresh is due. Deferred tokens
 are serviced first on the next run.
 
+The live Flow worker opts its existing engine into `TALLY_WORKER_RPS` pacing
+(default **2** requests/second; a positive finite number). Admission is spaced,
+without a burst, at the HTTP transport, so concurrent reads inside `facts()`,
+public fallbacks and signed-client retries share the same pace. The existing
+4 req/s client limit still applies. This is per Flow worker process, not a quota
+coordinator across processes; other workers and the web app share the remaining
+API-key quota. Ordinary web/quote engines do not opt in and retain their rate.
+Offline fixture engines skip worker pacing.
+
+A shutdown abort stops collection quietly: no source fallback, metadata warning,
+`both sources failed` message or unhealthy report for the interrupted token.
+The previous snapshot and history cursor remain intact. Queued HTTP reads are
+cancelled, in-flight fetches receive the run's abort signal, and late responses
+are rejected before snapshot writes. The runner still reports genuine timeouts
+as failures; cancellation does not hide its timeout policy.
+
 API history initially uses at most ten pages per token. Later polls read one
 newest page; an unfinished initial history scan resumes at its saved cursor with
 at most one extra history page per run. Completing the backfill never starts a
@@ -91,11 +107,13 @@ calls (60 × 13). Facts refreshes and other jobs must fit the remaining shared
 4 req/s quota. The former 605-token universe needed 2,420 tail + metadata requests
 for even one pass, so it is no longer polled in full.
 
-The fake-clock 60-token timing test uses 250 ms per collector request (4 req/s),
-cold metadata and empty one-page tapes. It completes a full pass in two runs,
-131.25 seconds including the runner's 60-second wait, making 285 direct calls
-because the second run also polls already serviced tails. This is a scheduling
-proof, not an EC2 measurement or a latency guarantee. Inspect `flow-active-set`
+The fake-clock 33-token test uses the live engine with mocked HTTP responses,
+the actual default 2 req/s gate, cold metadata and empty one-page tapes. It
+completes a full pass in two runs, **136 seconds** including the runner's
+60-second wait, making **154 HTTP requests**, including already-serviced tails
+on the second run. Every adjacent request starts at least 500 ms apart. The
+original 60-token/4 req/s scheduling test is retained. These are scheduling
+proofs, not EC2 measurements or latency guarantees. Inspect `flow-active-set`
 and `flow-collection` on EC2 for the actual size, request counts and pass times;
 warm discovery before judging a stable active set. Initial discovery and failed
 refreshes are explicitly marked as pending.
@@ -130,7 +148,7 @@ product pages. `/dev/flow` requires the flow flag and the usual dev-preview gate
 processes only when enabling the module:
 
 ```sh
-FEATURE_FLOW=1 pnpm worker collect-flow
+TALLY_WORKER_RPS=2 FEATURE_FLOW=1 pnpm worker collect-flow
 FEATURE_FLOW=1 pnpm worker flow
 ```
 
@@ -174,7 +192,12 @@ port proposal is deferred, not an instruction to alter the quote path now.
   both-source failure, cursor pagination, receipt cap, pool direction/hop
   exclusions, budget resumption, one-page tails, cached discovery, active-set selection,
   raw-ghost grade retention, wallet-held inclusion, missing-label reasons,
-  and the exact grade implementation.
+  the exact grade implementation, worker rate configuration/validation, the
+  paced 33-token pass, and clean shutdown during discovery, metadata, trades,
+  chain reads and receipt reads.
+- `packages/engine/src/worker-request-pace.test.ts`: actual collector spacing,
+  internal facts reads, retries, no concurrent bursts, queued/in-flight
+  cancellation, and queue reuse on the next run.
 - `apps/web/modules/flow/view-model.test.ts`: empty/error states, age >15 min,
   chain-log label and missing price, flag-off grade rendering, filters, and parity with `extendIntegrity` for ghost/non-ghost/clamped bases.
 
