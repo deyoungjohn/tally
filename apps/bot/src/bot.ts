@@ -11,11 +11,13 @@ import {
   handleShares,
   handleShield,
   handleStart,
+  type SharesOfPort,
 } from "./commands";
 
 export interface BotDependencies {
   store: SnapshotStore;
   engine: Engine;
+  sharesOf?: SharesOfPort;
   health?: ModuleHealth;
   onWarn?: (message: string) => void;
   now?: () => number;
@@ -92,6 +94,7 @@ export function createBot(token: string, deps: BotDependencies): Bot {
     const text = await handleShares(ctx.match ?? "", {
       store: deps.store,
       engine: deps.engine,
+      sharesOf: deps.sharesOf ?? (deps.engine as unknown as { sharesOf?: SharesOfPort }).sharesOf,
       chatId: ctx.chat.id,
       now,
       onWarn: deps.onWarn,

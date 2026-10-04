@@ -9,6 +9,21 @@ import {
 import type { QuietHours } from "@tally/mod-guardian";
 import type { SnapshotStore } from "@tally/modkit";
 
+export interface SharesHolding {
+  ticker: string;
+  symbol: string;
+  issuer: string;
+  tokenAddress?: string;
+  tokensRaw: bigint;
+  /** 1e18 fixed-point shares, or null if multiplier unknown */
+  sharesRaw: bigint | null;
+  multiplierRaw?: bigint | null;
+  unavailableReason?: string;
+  decimals?: number;
+}
+
+export type SharesOfPort = (address: string) => Promise<SharesHolding[]>;
+
 export interface BotContext {
   store: SnapshotStore;
   engine: Engine;
@@ -16,6 +31,8 @@ export interface BotContext {
   chatId: number | string;
   text?: string;
   onWarn?: (message: string) => void;
+  /** Injected port for reading holdings in bigint 1e18 shares for arbitrary addresses (wires to WO-05 engine.sharesOf once merged) */
+  sharesOf?: SharesOfPort;
 }
 
 /** In-memory rate limiting: max 5 commands per minute per chat */
@@ -294,7 +311,11 @@ async function getKnownTickers(ctx: BotContext): Promise<string[]> {
   return ["NVDA", "AAPL", "TSLA", "QQQ", "SPY", "NFLX"];
 }
 
-export async function handleShares(args: string, ctx: BotContext): Promise<string> {
+export async function handleShares(
+  args: string,
+  ctx: BotContext,
+  sharesOfPort?: SharesOfPort,
+): Promise<string> {
   const now = ctx.now ? ctx.now() : Date.now();
   if (!checkCommandRateLimit(ctx.chatId, now)) {
     return "⏳ Rate limit reached. You can run up to 5 commands per minute. Please wait a moment.";
@@ -303,6 +324,63 @@ export async function handleShares(args: string, ctx: BotContext): Promise<strin
   const address = args.trim();
   if (!address || !isValidAddress(address)) {
     return "❌ Please provide a valid 0x wallet address: `/shares 0x...`";
+  }
+
+  const port =
+    sharesOfPort ?? ctx.sharesOf ?? (ctx.engine as unknown as { sharesOf?: SharesOfPort }).sharesOf;
+
+  if (typeof port === "function") {
+    try {
+      const holdings = await port(address);
+      const lines: string[] = [`💼 *Portfolio Holdings in Shares*`, `Wallet: \`${address}\``, ""];
+
+      if (holdings.length === 0) {
+        lines.push("No tokenized stock holdings found for this wallet.");
+        return lines.join("\n");
+      }
+
+      // Group holdings by underlying ticker
+      const byTicker = new Map<string, SharesHolding[]>();
+      for (const h of holdings) {
+        const list = byTicker.get(h.ticker) ?? [];
+        list.push(h);
+        byTicker.set(h.ticker, list);
+      }
+
+      for (const [ticker, items] of byTicker.entries()) {
+        const knownShares = items.filter(
+          (it): it is SharesHolding & { sharesRaw: bigint } => it.sharesRaw !== null,
+        );
+        const totalSharesRaw = knownShares.reduce((acc, it) => acc + it.sharesRaw, 0n);
+        const hasUnknown = items.some((it) => it.sharesRaw === null);
+
+        const totalStr = hasUnknown
+          ? `${formatUnits(totalSharesRaw, 18, 4)}* (some issuers unavailable)`
+          : `${formatUnits(totalSharesRaw, 18, 4)} total shares`;
+
+        lines.push(`*${ticker}*: \`${totalStr}\``);
+
+        for (const it of items) {
+          const issuerStr = it.issuer.toUpperCase();
+          if (it.sharesRaw === null) {
+            lines.push(
+              `  • ${it.symbol} (${issuerStr}): shares unavailable (${it.unavailableReason ?? "multiplier unknown, never 1:1"})`,
+            );
+          } else {
+            const dec = it.decimals ?? 18;
+            lines.push(
+              `  • ${it.symbol} (${issuerStr}): \`${formatUnits(it.sharesRaw, 18, 4)}\` shares (\`${formatUnits(it.tokensRaw, dec, 4)}\` tokens)`,
+            );
+          }
+        }
+        lines.push("");
+      }
+
+      return lines.join("\n").trim();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return `❌ Failed to load shares: ${msg}`;
+    }
   }
 
   try {

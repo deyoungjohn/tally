@@ -18,6 +18,8 @@ import {
   handleShield,
   handleStart,
   resetCommandRateLimits,
+  type SharesHolding,
+  type SharesOfPort,
 } from "./commands";
 
 class MockHealth implements ModuleHealth {
@@ -82,6 +84,60 @@ describe("Telegram Bot Commands (apps/bot)", () => {
 
     expect(reply).toContain("Portfolio Holdings in Shares");
     expect(reply).toContain(burner);
+  });
+
+  // Orchestrator requirement: injected sharesOf(address) port with bigint holdings for arbitrary addresses
+  it("handles /shares with injected sharesOf port using bigint maths for arbitrary address", async () => {
+    const target = "0x9876543210987654321098765432109876543210";
+    const fakeSharesOf: SharesOfPort = async (address: string): Promise<SharesHolding[]> => {
+      expect(address).toBe(target);
+      return [
+        {
+          ticker: "NVDA",
+          symbol: "NVDAon",
+          issuer: "ondo",
+          tokensRaw: 10n * 10n ** 18n,
+          sharesRaw: 100n * 10n ** 18n, // 10x multiplier
+          multiplierRaw: 10n * 10n ** 18n,
+          decimals: 18,
+        },
+        {
+          ticker: "NVDA",
+          symbol: "bNVDA",
+          issuer: "bstock",
+          tokensRaw: 5n * 10n ** 18n,
+          sharesRaw: 5n * 10n ** 18n, // 1x multiplier
+          multiplierRaw: 1n * 10n ** 18n,
+          decimals: 18,
+        },
+        {
+          ticker: "AAPL",
+          symbol: "AAPLon",
+          issuer: "ondo",
+          tokensRaw: 2n * 10n ** 18n,
+          sharesRaw: null, // multiplier unknown
+          multiplierRaw: null,
+          unavailableReason: "multiplier unknown, never 1:1",
+          decimals: 18,
+        },
+      ];
+    };
+
+    const reply = await handleShares(target, {
+      store,
+      engine,
+      chatId: 1003,
+      now: () => 1_000_000,
+      sharesOf: fakeSharesOf,
+    });
+
+    expect(reply).toContain("Portfolio Holdings in Shares");
+    expect(reply).toContain(target);
+    expect(reply).toContain("*NVDA*: `105 total shares`");
+    expect(reply).toContain("NVDAon (ONDO): `100` shares (`10` tokens)");
+    expect(reply).toContain("bNVDA (BSTOCK): `5` shares (`5` tokens)");
+    expect(reply).toContain("AAPLon (ONDO): shares unavailable (multiplier unknown, never 1:1)");
+    expect(reply).not.toContain("`2` shares"); // never defaults to 1:1
   });
 
   // Exit check 3: /shield lists flagged tokens and shows staleness age
