@@ -1,0 +1,103 @@
+--- a/skills/binance-web3/binance-tokenized-securities-info/SKILL.md
++++ b/skills/binance-web3/binance-tokenized-securities-info/SKILL.md
+@@ -1,7 +1,7 @@
+ ---
+ name: binance-tokenized-securities-info
+ description: |
+-  Query Ondo tokenized US stock data on Binance Web3.
++  Query Ondo, bStock and xStocks tokenized US stock data on Binance Web3, with issuer-specific share multipliers and status limitations.
+   Covers: supported stock token list, RWA metadata (company info, attestation reports),
+   market and per-asset trading status (with corporate action codes for earnings, dividends, splits),
+   real-time on-chain data (token price, holders, circulating supply, market cap),
+@@ -10,7 +10,7 @@
+   Use this skill when users ask about:
+   - Tokenized stock price, holders, or on-chain data for specific tickers
+   - Whether a stock token is tradable, paused, or halted
+-  - Ondo RWA token list or which US stocks are available on-chain
++  - Issuer-specific RWA token lists or which US stocks are available on-chain
+   - Corporate actions affecting a token (dividends, stock splits, earnings halt)
+   - Stock token K-Line or candlestick chart data
+   - Comparing on-chain token price vs US stock price
+@@ -27,7 +27,7 @@
+ 
+ | API                 | Function                  | Use Case                                                        |
+ |---------------------|---------------------------|-----------------------------------------------------------------|
+-| Token Symbol List   | List all tokenized stocks | Browse Ondo supported tickers, filter by type                   |
++| Token Symbol List   | List all tokenized stocks | Browse supported tickers across issuers, filter by type                   |
+ | RWA Meta            | Tokenized stock metadata  | Company info, concepts, attestation reports                     |
+ | Market Status       | Overall market open/close | Check if Ondo market is currently trading                       |
+ | Asset Market Status | Per-asset trading status  | Detect corporate actions (earnings, dividends, splits, mergers) |
+@@ -39,13 +39,13 @@
+ | Scenario                                         | Steps                                                                      |
+ |--------------------------------------------------|----------------------------------------------------------------------------|
+ | Look up a stock's fundamentals and on-chain data | API 1 (get `chainId` + `contractAddress` by ticker) → API 5 (dynamic data) |
+-| Check if a stock token is tradable               | API 3 (overall market status) → API 4 (per-asset status with reason code)  |
++| Check if a stock token is tradable               | Ondo: API 3 → API 4; other issuers: their on-chain pause mechanism  |
+ | Research a tokenized stock                       | API 1 (find token) → API 2 (company metadata + attestation reports)        |
+ | Get K-Line chart data                            | API 1 (find token) → API 6 (K-Line with interval)                          |
+ 
+ ## Use Cases
+ 
+-1. **List Supported Stocks**: Get all Ondo tokenized tickers with chain and contract info
++1. **List Supported Stocks**: Get Ondo, xStocks and bStock tokenized tickers with chain and contract info
+ 2. **Company Research**: Get company metadata, CEO, industry, concept tags, and attestation reports
+ 3. **Market Status Check**: Determine if the Ondo market is open, closed, or in pre/post-market session
+ 4. **Corporate Action Detection**: Check if a specific asset is paused or limited due to earnings, dividends, stock splits, mergers, or maintenance
+@@ -62,6 +62,23 @@
+ 
+ See Notes §6 for common multiplier categories.
+ 
++The formula above is a token-derived price per share, not an independent US stock reference. The authenticated RWA list's `referencePrice` is per token and must be divided by `tokenToShareRatio`; its underlying-market reference is per share. Do not divide an already per-share stock reference again.
++
++### Issuer-specific multiplier sources
++
++| Issuer | Public-list type | Source of truth | BSC execution caveat |
++|--------|------------------|-----------------|----------------------|
++| Ondo | `1` | API `sharesMultiplier`, validated against the last accepted reading; no on-chain multiplier getter | Validate status and a fresh accepted ratio before trading. |
++| xStocks | `2` | On-chain `multiplier()`; API/list values can disagree | Tally's September 30 BSC recordings show near-zero on-chain volume and stale prices; display-only in that integration. Do not generalize to other chains or dates. |
++| bStock | `3` | On-chain `uiMultiplier()` | A null API market status is unknown, not proof trading is open; use the issuer's on-chain pause mechanism. |
++
++Store share amounts as integer fixed point: `shares = rawTokens * multiplier / 10^tokenDecimals`, with result and multiplier in 1e18 units. Return null with a reason when a multiplier is unavailable, and label any weaker fallback with its source. One recorded Ondo NFLX token represented 10 shares versus bStock's 1 share; raw token-price comparisons are misleading.
++
++For Ondo, preserve the last accepted baseline rather than allowing an anomalous reading to replace it. Validate changes against corporate-action status and an independent per-share price check. Tally's implementation accepts a single increase up to 3% unless its price check fails; a decrease or larger increase requires a recent split/dividend status, a simple-ratio match and a price check after trading resumes. These are integration-specific thresholds, not issuer guarantees. A guard may use a bounded signed feed; it must fail on stale or rejected data.
++
++Market Status (API 3) and Asset Market Status (API 4) describe Ondo; do not apply their response to bStock or xStocks. Inspect each issuer separately. Discovery does not establish a liquid, executable route.
++
++
+ ## Supported Chains
+ 
+ | Chain    | chainId |
+@@ -84,7 +101,7 @@
+ 
+ | Parameter | Type    | Required | Description                                                                                                                                                                  |
+ |-----------|---------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+-| type      | integer | No       | Filter by platform: `1` = Ondo Finance (currently the only supported tokenized stock provider). Omit to return all platforms. **Use `type=1` to retrieve only Ondo tokens.** |
++| type      | integer | No       | Filter by platform: `1` = Ondo Finance, `2` = xStocks, `3` = bStock. Query each type explicitly when comparing issuers; verify chain and ticker. Do not assume an omitted filter gives a complete registry. |
+ 
+ **Headers**: `Accept-Encoding: identity`
+ 
+@@ -128,9 +145,9 @@
+ |-----------------|---------|---------------------------------------------------------------|
+ | chainId         | string  | Chain ID (`1` = Ethereum, `56` = BSC)                         |
+ | contractAddress | string  | Token contract address                                        |
+-| symbol          | string  | Token symbol (ticker + `on` suffix, e.g. `<TOKEN_SYMBOL_ON>`) |
++| symbol          | string  | Token symbol (Ondo: ticker + `on`; xStocks: ticker + `x`; bStock: ticker + `B`) |
+ | ticker          | string  | Underlying US stock ticker                                    |
+-| type            | integer | Platform type: `1` = Ondo                                     |
++| type            | integer | Platform type: `1` = Ondo, `2` = xStocks, `3` = bStock                                     |
+ | multiplier      | string  | Shares multiplier (see Key Concept above, Notes §6)           |
+ 
+ ---
+@@ -610,4 +627,11 @@
+    | Slightly above 1.0 | Cumulative cash dividend reinvestment (grows over time) |
+    | 5.0, 10.0          | Stock split reflected in token structure                |
+ 
+-   > The exact multiplier value changes over time as dividends accumulate. Always read it from the API at query time — never hardcode.
++   > The exact multiplier value changes over time. Use the issuer-specific source of truth above; never hardcode a ratio or substitute 1:1 for a missing reading.
++
++
++7. **Trading handoff: minimum and gas**. This skill is read-only; leave signing/execution to the user's wallet workflow. Recorded BSC Ondo quotes rejected 5 USDT with JSON code `40375` (HTTP 200), because the minimum is 5 **USD** and USDT may trade below $1. Enforce at least **6 USDT** in that integration and report a provider rejection if it still occurs; this application minimum does not guarantee future acceptance. Check JSON errors even with HTTP 200 (`40304` is a recorded caller-region rejection).
++
++   The recorded Trading API repeatedly returned `tx.gas` / `estimateGasFee` of **450000** regardless of route; a live buy reverted out of gas at that value. Obtain `eth_estimateGas` from the actual signing address for the final transaction (guard call if applicable), round up with a 1.25 margin and simulate at that exact limit. Re-estimate after approval or calldata changes; `tradeFee` is not a reliable fee for a multi-leg route. A route-length model supports approximate quote displays but cannot replace final estimation/simulation. `baw` normally estimates independently; its custom `--gasLimit` requires the user's explicit numeric instruction and successful preview.
++
++   Evidence (dated observations and limitations): [Tally F1](https://github.com/deyoungjohn/tally/blob/main/IDEAS.md#f1-market-data-and-units-2026-09-30-public-endpoints--bsc-rpc), [F4 quotes/minimum/gas](https://github.com/deyoungjohn/tally/blob/main/IDEAS.md#f4-trading-api-quotes-routes-and-fees-2026-10-01-all-runs), [F6 live fills/revert](https://github.com/deyoungjohn/tally/blob/main/IDEAS.md#f6-live-mainnet-buys-2026-10-01-burner-wallet-0x2bf7edf53bc6be6ff98f149387f3818ce28d2930-from-aws-seoul), [F10 accepted multipliers/reference/registry](https://github.com/deyoungjohn/tally/blob/main/IDEAS.md#f10-m1-engine-what-the-seoul-recordings-and-the-build-showed-2026-10-02), [F11 guard and pause checks](https://github.com/deyoungjohn/tally/blob/main/IDEAS.md#f11-m2-shareguard-v1-what-the-build-and-the-fork-tests-showed-2026-10-02).
