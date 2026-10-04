@@ -13,6 +13,8 @@
 - `apps/web/app/globals.css`, design tokens, `apps/web/e2e/*.spec.ts` for the pages you build
 - Landing files (`apps/web/app/page.tsx`, `apps/web/components/home/**`, `apps/web/e2e/home.spec.ts`): moved here from WO-01 on 2026-10-04. WO-01 (D) still owns `apps/web/components/trade/use-trade-flow.ts`, `trade-stages*` and `e2e/trade.spec.ts` until it merges; do not edit those concurrently.
 
+- Mount point requested by WO-02 slice B: render `<ReceiptRecorder />` (from `apps/web/modules/receipts/recorder.tsx`) once in the root layout when `FEATURE_RECEIPTS` is on. Render only; do not edit the component.
+
 ## Rules
 
 - Build screens **only from view models** (`apps/web/modules/<name>/view-model.ts`). Never call engine, store or APIs from a page directly, and never edit a view model. If you need a field, list it in your PR under "View-model requests"; the module agent adds it.
