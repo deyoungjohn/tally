@@ -20,6 +20,7 @@ Approved 2026-10-04 by the chief engineer, limited to the stage-event task:
 - `apps/web/components/trade/use-trade-flow.ts` — additive optional `onStage` integration only; preserve existing transaction behavior.
 - `apps/web/components/trade/trade-stages.ts`, `apps/web/components/trade/trade-stages.test.ts`, `apps/web/components/trade/use-trade-flow.test.ts` — new typed event contract, helpers and unit tests.
 - `apps/web/e2e/trade.spec.ts` — event regression evidence only.
+- Approved 2026-10-04, **test-only, additive**: the WO-04 follow-up may add two `await expect(review).toBeFocused()` waits to the keyboard-path test in `apps/web/e2e/trade.spec.ts` (flake fix: Esc/Tab pressed before the dialog's focus effect ran). No other change. WO-01 rebases; expect a trivial conflict at most.
 
 These files are reserved for WO-01 until it merges; WO-12 resumes ownership afterward. Landing files (`apps/web/app/page.tsx`, `apps/web/components/home/**`, `apps/web/e2e/home.spec.ts`) belong to WO-12 now. No dependencies approved. If truthful receipt-stage data requires additional engine, DTO or API files, stop and propose the exact additive paths to the orchestrator before editing them.
 
