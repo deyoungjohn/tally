@@ -14,7 +14,7 @@ export default defineConfig({
       : {},
   },
   webServer: {
-    command: `TALLY_ALLOW_MISSING_GEO=1 PORT=${PORT} node .next/standalone/apps/web/server.js`,
+    command: `TALLY_RATE_LIMIT_MULT=50 TALLY_FIXTURES=1 TALLY_ALLOW_MISSING_GEO=1 PORT=${PORT} node .next/standalone/apps/web/server.js`,
     port: PORT,
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,

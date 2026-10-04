@@ -10,8 +10,14 @@ import { fileURLToPath } from "node:url";
  * Anything not recorded answers with a clear 40001 telling you which recorder to run.
  */
 const HERE = dirname(fileURLToPath(import.meta.url));
-export const RAW_DIR = join(HERE, "..", "fixtures", "raw");
-export const SNAPSHOT_DIR = join(HERE, "..", "..", "..", "research", "snapshot-2026-09-30");
+/** Bundled servers (Next standalone) cannot locate the repo from `import.meta.url`: they set TALLY_REPO_ROOT. */
+const ROOT = process.env.TALLY_REPO_ROOT;
+export const RAW_DIR = ROOT
+  ? join(ROOT, "packages", "binance", "fixtures", "raw")
+  : join(HERE, "..", "fixtures", "raw");
+export const SNAPSHOT_DIR = ROOT
+  ? join(ROOT, "research", "snapshot-2026-09-30")
+  : join(HERE, "..", "..", "..", "research", "snapshot-2026-09-30");
 
 export function latestRaw(prefix: string, dir = RAW_DIR): string {
   const files = readdirSync(dir)

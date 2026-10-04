@@ -312,7 +312,7 @@ Each page lists its sections in order, and the BeUI components to use.
 1. **Header:** floating glass pill nav (see 2.6).
 2. **Hero** (two columns ≥980px, stacked below):
    - Eyebrow pill: "● Live on BNB Chain · **Ondo · bStocks · xStocks**".
-   - h1 with blur-in: "Buy **shares**," / "not tokens." / a third faded line: "Best price, guaranteed."
+   - h1 with blur-in: "Buy **tokenized shares**," / a second faded line: "at the best prices." (the tagline never says "buy shares" without "tokenized": these are not the underlying shares).
    - Lead paragraph (`--fg2`): one sentence on comparing issuers and the on-chain share guarantee.
    - Primary metallic CTA "Get a quote" plus glassy "See the trap" (goes to Trap Shield).
    - Right side: 2–3 **floating hero glass cards** (`gcard` + `tilt-card`) showing a real quote ("NVDA · 0.0261 shares · Ondo · −0.12% vs US price"), a receipt ("Shares delivered ✓"), and an integrity card ("NFLX token = **10** shares"). Chrome spheres and a ring drift behind them.

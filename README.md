@@ -1,6 +1,6 @@
 # Tally
 
-**Shares, not tokens.** Tally compares the same US stock across the three issuers that tokenize it on BNB Chain (Ondo, bStocks, xStocks). It quotes each one in real share units, routes your buy to the best true price, and settles through **ShareGuard**, a contract that reverts if you'd receive fewer shares than promised.
+**Buy tokenized shares, at the best prices.** Tally compares the same US stock across the three issuers that tokenize it on BNB Chain (Ondo, bStocks, xStocks). It quotes each one in share units (tokenized shares track a stock's price; they are not the underlying shares), routes your buy to the best true price, and settles through **ShareGuard**, a contract that reverts if you'd receive fewer shares than promised.
 
 Built for **BNB Hack: Tokenized Stocks Edition** (submissions lock Sun 11 Oct 2026, 12:00 UTC).
 
