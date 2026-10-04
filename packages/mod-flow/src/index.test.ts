@@ -11,8 +11,8 @@ import {
   classifyChainLogs,
   classifyTrade,
   checkGhost,
+  selectActiveFlow,
   fixed,
-  gradeWithFlow,
   labelWallet,
   priceWhaleFromReceipt,
   TRANSFER_TOPIC,
@@ -144,7 +144,7 @@ describe("labels and aggregates", () => {
     const percentages = holders
       .slice(1)
       .map((h) => fixed(h.holdingPercent))
-      .sort((a, b) => (a > b ? -1 : 1))
+      .sort((a, b) => (a > b ? -1 : a < b ? 1 : 0))
       .slice(0, 10);
     expect(flow.top10ConcentrationPercent).toBe(percentages.reduce((s, h) => s + h, 0n));
   });
@@ -176,10 +176,6 @@ describe("labels and aggregates", () => {
       checkGhost({ realVolume24hUsd: 0n, lastRealTradeAgeMs: null, reason: null, stale: true })
         .outcome,
     ).toBe("skipped");
-    expect(
-      gradeWithFlow({ score: 60, grade: "C", reasons: [], ghost: true, ghostPoints: 40 }, ghost)
-        .score,
-    ).toBe(60);
   });
 });
 describe("recorded chain fallback", () => {
@@ -447,10 +443,441 @@ it("replacing volume preserves all other penalties even when the original grade 
   expect(base.score).toBe(0);
   const input = { realVolume24hUsd: 2000n * E18, lastRealTradeAgeMs: 0, reason: null };
   expect(extendIntegrity(base, input).score).toBe(20);
-  expect(
-    gradeWithFlow(
-      { score: 0, grade: "F", reasons: [], ghost: true, ghostPoints: 40, totalDeductions: 120 },
-      checkGhost(input),
-    ).score,
-  ).toBe(20);
+});
+
+describe("bounded flow collection", () => {
+  it("a fake-clock budget stops the run and the next run services the untouched tokens first", async () => {
+    const store = openStore(":memory:");
+    try {
+      const engine = createFixtureEngine();
+      let clock = now;
+      const tokens = [1, 2, 3].map((n) => ({ ...token, address: "0x" + String(n).repeat(40) }));
+      for (const t of tokens)
+        for (const kind of ["flow-holders", "flow-traders", "flow-pools"])
+          store.put({ kind, key: t.address, observedAt: clock, source: "binance", data: [] });
+      const read = vi.fn(async (_key: string, _cursor?: string, _limit?: number) => {
+        clock += 30_000;
+        return { trades: [], cursor: null };
+      });
+      engine.collectors.trades = read;
+      const ctx = { store, health: store.health, engine, now: () => clock, onWarn: vi.fn() };
+      await collectFlow(ctx, { tokens, fixture: false });
+      expect(read.mock.calls).toHaveLength(2);
+      expect(store.latest("flow", tokens[2]!.address, { maxAgeMs: 900000, now: clock })).toBeNull();
+      expect(
+        store.latest("flow-collection", "bsc", { maxAgeMs: 900000, now: clock })!.data,
+      ).toMatchObject({
+        attempted: 2,
+        deferred: 1,
+        elapsedMs: 60_000,
+      });
+      clock += 60_000;
+      await collectFlow(ctx, { tokens, fixture: false });
+      expect(read.mock.calls.map((args) => args[0])).toEqual([
+        tokens[0]!.address,
+        tokens[1]!.address,
+        tokens[2]!.address,
+        tokens[0]!.address,
+      ]);
+    } finally {
+      store.close();
+    }
+  });
+
+  it("uses one-page tails after the initial backfill and resumes a saved cursor one page at a time", async () => {
+    const store = openStore(":memory:");
+    try {
+      const engine = createFixtureEngine();
+      const input = (await engine.collectors.trades(token.address)).trades.find(
+        (t) => classifyTrade(t, token).trade,
+      )!;
+      const read = vi.fn(async (_key: string, cursor?: string, _limit?: number) => ({
+        trades: [input],
+        cursor: cursor === "end" ? null : cursor ? "end" : "history",
+      }));
+      engine.collectors.trades = read;
+      const ctx = { store, health: store.health, engine, now: () => input.time, onWarn: vi.fn() };
+      await collectFlow(ctx, { tokens: [token], fixture: false, maxPages: 1 });
+      expect(read.mock.calls.map((a) => a[1])).toEqual([undefined]);
+      await collectFlow(ctx, { tokens: [token], fixture: false });
+      expect(read.mock.calls.slice(1).map((a) => a[1])).toEqual([undefined, "history"]);
+      await collectFlow(ctx, { tokens: [token], fixture: false });
+      expect(read.mock.calls.slice(3).map((a) => a[1])).toEqual([undefined, "end"]);
+      await collectFlow(ctx, { tokens: [token], fixture: false });
+      expect(read.mock.calls.slice(5).map((a) => a[1])).toEqual([undefined]);
+      expect(read.mock.calls.every((a) => a[2] === 100)).toBe(true);
+    } finally {
+      store.close();
+    }
+  });
+
+  it("reuses discovery and fresh Radar facts and refreshes only an expired ticker", async () => {
+    const store = openStore(":memory:");
+    try {
+      const engine = createFixtureEngine();
+      const baseRows = await engine.facts("NVDA");
+      let clock = now;
+      const facts = vi.fn(async (ticker: string) =>
+        baseRows
+          .map((r) => ({
+            ...r,
+            facts: { ...r.facts, onchainVolume24hUsd: 2000 },
+            symbol: ticker,
+            address: ("0x" + (ticker === "AAA" ? "1" : "2").repeat(40)) as `0x${string}`,
+          }))
+          .slice(0, 1),
+      );
+      engine.facts = facts;
+      engine.collectors.trades = vi.fn(async () => ({ trades: [], cursor: null }));
+      engine.collectors.holders = vi.fn(async () => []);
+      engine.collectors.topTraders = vi.fn(async () => []);
+      engine.collectors.topLiquidity = vi.fn(async () => []);
+      store.put({
+        kind: "registry",
+        key: "bsc",
+        source: "binance",
+        observedAt: clock,
+        data: [{ underlyingTicker: "AAA" }, { underlyingTicker: "BBB" }],
+      });
+      const ctx = { store, health: store.health, engine, now: () => clock, onWarn: vi.fn() };
+      await collectFlow(ctx, { fixture: false });
+      expect(facts.mock.calls.map((a) => a[0])).toEqual(["AAA", "BBB"]);
+      const registryTime = store.latest("flow-registry", "bsc", {
+        maxAgeMs: 900000,
+        now: clock,
+      })!.observedAt;
+      clock += 60_000;
+      await collectFlow(ctx, { fixture: false });
+      expect(facts).toHaveBeenCalledTimes(2);
+      expect(engine.collectors.holders).toHaveBeenCalledTimes(2);
+      expect(
+        store.latest("flow-registry", "bsc", { maxAgeMs: 900000, now: clock })!.observedAt,
+      ).toBe(registryTime);
+      clock += 600_000;
+      const address = "0x" + "2".repeat(40);
+      const radar = store.latest("radar", address, { maxAgeMs: 900000, now: clock })!;
+      store.put({
+        kind: "radar",
+        key: address,
+        source: radar.source,
+        observedAt: clock,
+        data: radar.data,
+      });
+      await collectFlow(ctx, { fixture: false });
+      expect(facts.mock.calls.map((a) => a[0])).toEqual(["AAA", "BBB", "AAA"]);
+    } finally {
+      store.close();
+    }
+  });
+
+  it("missing top-trader labels carry a cleaning reason without falsifying history coverage", async () => {
+    const store = openStore(":memory:");
+    try {
+      const engine = createFixtureEngine();
+      engine.collectors.trades = vi.fn(async () => ({ trades: [], cursor: null }));
+      engine.collectors.topTraders = vi.fn(async () => {
+        throw new Error("labels offline");
+      });
+      await collectFlow(
+        { store, health: store.health, engine, now: () => now, onWarn: vi.fn() },
+        { tokens: [token], fixture: false },
+      );
+      const snapshot = store.latest<FlowSnapshot>("flow", token.address, {
+        maxAgeMs: 900000,
+        now,
+      })!.data;
+      expect(snapshot.coverageStartMs).toBe(now - WINDOWS["7d"]);
+      for (const window of Object.values(aggregateFlow(snapshot, now).windows)) {
+        expect(window.realVolumeUsd).toBeNull();
+        expect(window.reason).toBe("Top-trader labels unavailable; volume not cleaned");
+      }
+    } finally {
+      store.close();
+    }
+  });
+});
+
+it("active flow ranks by volume under a hard cap and always reserves slots for resolved wallet holdings", () => {
+  const candidates = Array.from({ length: 65 }, (_, i) => ({
+    token: { ...token, address: "0x" + (i + 1).toString(16).padStart(40, "0") },
+    rawVolume24hUsd: BigInt(i + 1000) * E18,
+    held: false,
+  }));
+  candidates[0]!.held = true;
+  candidates[0]!.rawVolume24hUsd = 1n;
+  const result = selectActiveFlow(candidates);
+  expect(result.active).toHaveLength(60);
+  expect(result.active[0]!.address).toBe(candidates[0]!.token.address);
+  expect(result.active[1]!.address).toBe(candidates[64]!.token.address);
+  expect(result.statuses[candidates[1]!.token.address]!.reason).toContain("outside top 60");
+  const unresolved = { ...candidates[0]!, token: { ...candidates[0]!.token, multiplier: 0n } };
+  expect(selectActiveFlow([unresolved]).statuses[unresolved.token.address]!.reason).toBe(
+    "share multiplier unavailable",
+  );
+  expect(() => selectActiveFlow(candidates.map((c) => ({ ...c, held: true })))).toThrow(
+    "capacity exceeded",
+  );
+});
+
+it("a raw-ghost token is skipped by collectors but keeps its Radar grade, reason and 30-minute facts cache", async () => {
+  const store = openStore(":memory:");
+  try {
+    const engine = createFixtureEngine();
+    const row = (await engine.facts("NVDA"))[0]!;
+    let clock = now;
+    engine.facts = vi.fn(async () => [
+      { ...row, facts: { ...row.facts, onchainVolume24hUsd: 999 } },
+    ]);
+    const tails = vi.spyOn(engine.collectors, "trades"),
+      holdersRead = vi.spyOn(engine.collectors, "holders"),
+      labelsRead = vi.spyOn(engine.collectors, "topTraders"),
+      poolsRead = vi.spyOn(engine.collectors, "topLiquidity");
+    store.put({
+      kind: "registry",
+      key: "bsc",
+      source: "binance",
+      observedAt: clock,
+      data: [{ underlyingTicker: "NVDA" }],
+    });
+    const ctx = { store, health: store.health, engine, onWarn: vi.fn(), now: () => clock };
+    await collectFlow(ctx, { fixture: false });
+    expect(tails).not.toHaveBeenCalled();
+    expect(holdersRead).not.toHaveBeenCalled();
+    expect(labelsRead).not.toHaveBeenCalled();
+    expect(poolsRead).not.toHaveBeenCalled();
+    const radar = store.latest("radar", row.address.toLowerCase(), {
+      maxAgeMs: 3600000,
+      now: clock,
+    })!;
+    expect(radar.data).toMatchObject({
+      grade: row.integrity.grade,
+      integrity: row.integrity,
+      rawVolume24hUsd: 999n * E18,
+      flowActive: false,
+      flowReason: "no real market: under $1,000 24h",
+    });
+    expect(
+      store.latest<FlowToken[]>("radar-registry", "bsc", { maxAgeMs: 3600000, now: clock })!.data,
+    ).toHaveLength(1);
+    clock += 20 * 60000;
+    await collectFlow(ctx, { fixture: false });
+    expect(engine.facts).toHaveBeenCalledTimes(1);
+    expect(
+      store.latest("radar", row.address.toLowerCase(), { maxAgeMs: 3600000, now: clock })!.ageMs,
+    ).toBe(20 * 60000);
+    clock += 11 * 60000;
+    await collectFlow(ctx, { fixture: false });
+    expect(engine.facts).toHaveBeenCalledTimes(2);
+    expect(tails).not.toHaveBeenCalled();
+  } finally {
+    store.close();
+  }
+});
+
+it("a registered wallet's portfolio includes its held raw-ghost token without a new wallet API call", async () => {
+  const store = openStore(":memory:");
+  try {
+    const engine = createFixtureEngine();
+    const row = (await engine.facts("NVDA"))[0]!;
+    engine.facts = vi.fn(async () => [
+      { ...row, facts: { ...row.facts, onchainVolume24hUsd: 10 } },
+    ]);
+    engine.collectors.trades = vi.fn(async () => ({ trades: [], cursor: null }));
+    engine.collectors.holders = vi.fn(async () => []);
+    engine.collectors.topTraders = vi.fn(async () => []);
+    engine.collectors.topLiquidity = vi.fn(async () => []);
+    const wallet = "0x" + "a".repeat(40);
+    store.put({
+      kind: "wallet:active",
+      key: "bsc",
+      source: "session",
+      observedAt: now,
+      data: { address: wallet },
+    });
+    store.put({
+      kind: "portfolio",
+      key: wallet,
+      source: "binance",
+      observedAt: now,
+      data: {
+        holdings: [
+          {
+            tokenContractAddress: row.address,
+            ticker: "NVDA",
+            balanceTokens: E18,
+            isRecognized: true,
+          },
+        ],
+      },
+    });
+    store.put({ kind: "registry", key: "bsc", source: "binance", observedAt: now, data: [] });
+    await collectFlow(
+      { store, health: store.health, engine, onWarn: vi.fn(), now: () => now },
+      { fixture: false },
+    );
+    expect(engine.collectors.trades).toHaveBeenCalledWith(
+      row.address.toLowerCase(),
+      undefined,
+      100,
+    );
+    expect(
+      store.latest("radar", row.address.toLowerCase(), { maxAgeMs: 3600000, now })!.data,
+    ).toMatchObject({ flowActive: true, flowReason: null });
+  } finally {
+    store.close();
+  }
+});
+
+it("a full 60-token pass finishes under ten minutes at 4 req/s with resumable cold metadata", async () => {
+  const store = openStore(":memory:");
+  try {
+    const engine = createFixtureEngine();
+    let clock = now;
+    const tokens = Array.from({ length: 60 }, (_, i) => ({
+      ...token,
+      address: "0x" + (i + 1).toString(16).padStart(40, "0"),
+    }));
+    engine.collectors.holders = vi.fn(async () => {
+      clock += 250;
+      return [];
+    });
+    engine.collectors.topTraders = vi.fn(async () => {
+      clock += 250;
+      return [];
+    });
+    engine.collectors.topLiquidity = vi.fn(async () => {
+      clock += 250;
+      return [];
+    });
+    engine.collectors.trades = vi.fn(async () => {
+      clock += 250;
+      return { trades: [], cursor: null };
+    });
+    const ctx = { store, health: store.health, engine, onWarn: vi.fn(), now: () => clock };
+    await collectFlow(ctx, { tokens, fixture: false });
+    expect(
+      store.latest("flow-collection", "bsc", { maxAgeMs: 900000, now: clock })!.data,
+    ).toMatchObject({
+      elapsedMs: 45000,
+      updated: expect.any(Array),
+      deferred: 15,
+    });
+    clock += 60000; // The existing runner waits after completion.
+    await collectFlow(ctx, { tokens, fixture: false });
+    expect(
+      store.latest("flow-collection", "bsc", { maxAgeMs: 900000, now: clock })!.data,
+    ).toMatchObject({
+      pass: {
+        complete: true,
+        tokenCount: 60,
+        elapsedMs: 131250,
+        marketRequests: 285,
+        factsCalls: 0,
+      },
+    });
+    for (const t of tokens)
+      expect(store.latest("flow", t.address, { maxAgeMs: 900000, now: clock })!.stale).toBe(false);
+  } finally {
+    store.close();
+  }
+});
+
+it("an API outage that exhausts the run budget defers chain reads and retains the snapshot", async () => {
+  const store = openStore(":memory:");
+  try {
+    const engine = createFixtureEngine();
+    let clock = now;
+    for (const kind of ["flow-holders", "flow-traders", "flow-pools"])
+      store.put({ kind, key: token.address, observedAt: clock, source: "binance", data: [] });
+    engine.collectors.trades = vi.fn(async () => {
+      clock += 45000;
+      throw new Error("API offline");
+    });
+    const rpc = vi.spyOn(engine.chain, "blockNumber");
+    store.put({
+      kind: "flow",
+      key: token.address,
+      observedAt: now - 1000,
+      source: "binance",
+      data: sample(),
+    });
+    await collectFlow(
+      { store, health: store.health, engine, now: () => clock, onWarn: vi.fn() },
+      { tokens: [token], fixture: false },
+    );
+    expect(rpc).not.toHaveBeenCalled();
+    expect(store.latest("flow", token.address, { maxAgeMs: 900000, now: clock })!.observedAt).toBe(
+      now - 1000,
+    );
+  } finally {
+    store.close();
+  }
+});
+
+it("an inactive issuer keeps its 30-minute grade age when an active sibling refreshes", async () => {
+  const store = openStore(":memory:");
+  try {
+    const engine = createFixtureEngine();
+    const rows = (await engine.facts("NVDA")).filter((r) => r.multiplier).slice(0, 2);
+    expect(rows).toHaveLength(2);
+    let clock = now;
+    engine.facts = vi.fn(async () =>
+      rows.map((r, i) => ({
+        ...r,
+        facts: { ...r.facts, onchainVolume24hUsd: i === 0 ? 2000 : 10 },
+      })),
+    );
+    engine.collectors.trades = vi.fn(async () => ({ trades: [], cursor: null }));
+    engine.collectors.holders = vi.fn(async () => []);
+    engine.collectors.topTraders = vi.fn(async () => []);
+    engine.collectors.topLiquidity = vi.fn(async () => []);
+    store.put({
+      kind: "registry",
+      key: "bsc",
+      source: "binance",
+      observedAt: clock,
+      data: [{ underlyingTicker: "NVDA" }],
+    });
+    const ctx = { store, health: store.health, engine, onWarn: vi.fn(), now: () => clock };
+    await collectFlow(ctx, { fixture: false });
+    clock += 11 * 60000;
+    await collectFlow(ctx, { fixture: false });
+    expect(engine.facts).toHaveBeenCalledTimes(2);
+    expect(
+      store.latest("radar", rows[1]!.address.toLowerCase(), { maxAgeMs: 3600000, now: clock })!
+        .ageMs,
+    ).toBe(11 * 60000);
+    clock += 60000;
+    await collectFlow(ctx, { fixture: false });
+    expect(engine.facts).toHaveBeenCalledTimes(2);
+  } finally {
+    store.close();
+  }
+});
+
+it("discovery with no successful facts reports failure instead of claiming a healthy empty active set", async () => {
+  const store = openStore(":memory:");
+  try {
+    const engine = createFixtureEngine();
+    engine.facts = vi.fn(async () => {
+      throw new Error("facts source offline");
+    });
+    const onWarn = vi.fn();
+    store.put({
+      kind: "registry",
+      key: "bsc",
+      source: "binance",
+      observedAt: now,
+      data: [{ underlyingTicker: "NVDA" }],
+    });
+    await expect(
+      collectFlow(
+        { store, health: store.health, engine, onWarn, now: () => now },
+        { fixture: false },
+      ),
+    ).rejects.toThrow("no grade observations");
+    expect(onWarn).toHaveBeenCalledWith(expect.stringContaining("facts source offline"));
+  } finally {
+    store.close();
+  }
 });

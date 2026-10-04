@@ -1,15 +1,16 @@
 import {
   aggregateFlow,
-  checkGhost,
   ghostInput,
-  gradeWithFlow,
+  extendIntegrity,
   FLOW_MAX_AGE_MS,
+  RADAR_MAX_AGE_MS,
   type FlowAggregate,
   type FlowSnapshot,
   type FlowToken,
   type FlowWindow,
   type FlowTrade,
 } from "@tally/mod-flow";
+import type { Integrity } from "@tally/core";
 import { openStore, type SnapshotStore } from "@tally/modkit";
 
 export interface FlowPanelVM {
@@ -41,6 +42,10 @@ export interface RadarGradeSnapshot {
   ghostPoints?: number;
   ghostReasons?: string[];
   totalDeductions?: number;
+  integrity: Integrity;
+  rawVolume24hUsd?: bigint | null;
+  flowActive?: boolean;
+  flowReason?: string | null;
 }
 export interface RadarFilters {
   issuer?: FlowToken["issuer"];
@@ -49,7 +54,12 @@ export interface RadarFilters {
 }
 export interface RadarCardVM {
   ticker: string;
-  grades: (RadarGradeSnapshot & { stale: boolean; ageMs: number; source: string })[];
+  grades: (RadarGradeSnapshot & {
+    stale: boolean;
+    ageMs: number;
+    source: string;
+    gradeBasis: "engine" | "cleaned flow";
+  })[];
   flowPanel: FlowPanelVM | null;
 }
 export interface RadarVM {
@@ -158,31 +168,46 @@ export async function loadRadar(
     const store = options.store ?? owned!;
     const tokens =
       options.tokens ??
-      store.latest<FlowToken[]>("radar-registry", "bsc", { maxAgeMs: FLOW_MAX_AGE_MS, now })
+      store.latest<FlowToken[]>("radar-registry", "bsc", { maxAgeMs: RADAR_MAX_AGE_MS, now })
         ?.data ??
       store.latest<FlowToken[]>("flow-registry", "bsc", { maxAgeMs: FLOW_MAX_AGE_MS, now })?.data ??
       [];
     const cards = new Map<string, RadarCardVM>();
     for (const token of tokens) {
       const snapshot = store.latest<RadarGradeSnapshot>("radar", token.address.toLowerCase(), {
-        maxAgeMs: FLOW_MAX_AGE_MS,
+        maxAgeMs: RADAR_MAX_AGE_MS,
         now,
       });
       if (!snapshot) continue;
       let grade = snapshot.data;
-      if (flowEnabled) {
+      let gradeBasis: "engine" | "cleaned flow" = "engine";
+      if (flowEnabled && grade.flowActive !== false) {
         const flow = store.latest<FlowSnapshot>("flow", token.address.toLowerCase(), {
           maxAgeMs: FLOW_MAX_AGE_MS,
           now,
         });
-        if (flow)
+        if (flow && grade.integrity) {
+          const integrity = extendIntegrity(
+            grade.integrity,
+            ghostInput(aggregateFlow(flow.data, now), flow.stale),
+          );
           grade = {
             ...grade,
-            ...gradeWithFlow(
-              grade,
-              checkGhost(ghostInput(aggregateFlow(flow.data, now), flow.stale)),
-            ),
+            integrity,
+            score: integrity.score,
+            grade: integrity.grade,
+            reasons: integrity.reasons.map((r) => r.reason ?? r.summary),
+            ghost: integrity.flags.includes("ghost"),
+            totalDeductions: integrity.checks.reduce((sum, c) => sum + c.points, 0),
+            ghostPoints: integrity.checks
+              .filter((c) => c.flag === "ghost")
+              .reduce((sum, c) => sum + c.points, 0),
+            ghostReasons: integrity.reasons
+              .filter((c) => c.flag === "ghost")
+              .map((c) => c.reason ?? c.summary),
           };
+          if (integrity.flowCheck.outcome !== "skipped") gradeBasis = "cleaned flow";
+        }
       }
       if (
         (filters.issuer && grade.issuer !== filters.issuer) ||
@@ -193,6 +218,7 @@ export async function loadRadar(
       const card = cards.get(token.ticker) ?? { ticker: token.ticker, grades: [], flowPanel: null };
       card.grades.push({
         ...grade,
+        gradeBasis,
         stale: snapshot.stale,
         ageMs: snapshot.ageMs,
         source: snapshot.source,
@@ -200,11 +226,13 @@ export async function loadRadar(
       cards.set(token.ticker, card);
     }
     for (const card of cards.values())
-      if (flowEnabled)
+      if (flowEnabled && card.grades.some((g) => g.flowActive !== false))
         card.flowPanel = await loadFlow(card.ticker, {
           store,
           now,
-          tokens: tokens.filter((t) => !filters.issuer || t.issuer === filters.issuer),
+          tokens: tokens.filter((t) =>
+            card.grades.some((g) => g.address === t.address && g.flowActive !== false),
+          ),
         });
     result.cards = [...cards.values()];
     if (result.cards.length) {

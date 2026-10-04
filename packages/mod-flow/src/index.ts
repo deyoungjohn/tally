@@ -4,10 +4,11 @@ import {
   sharesFromTokens,
   gradeFromScore,
   type Issuer,
-  type Grade,
   type Integrity,
   type CheckRecord,
 } from "@tally/core";
+
+export type { Integrity } from "@tally/core";
 
 export const STABLECOINS: Readonly<Record<string, { symbol: string; decimals: number }>> = {
   "0x55d398326f99059ff775485246999027b3197955": { symbol: "USDT", decimals: 18 },
@@ -20,6 +21,10 @@ export const BOT_TURNOVER_USD = 50_000n * E18;
 export const CUSTODY_PERCENT = 20n * E18;
 export const WHALE_USD = 10_000n * E18;
 export const FLOW_MAX_AGE_MS = 15 * 60_000;
+export const RADAR_MAX_AGE_MS = 60 * 60_000;
+export const INACTIVE_FACTS_REFRESH_MS = 30 * 60_000;
+export const ACTIVE_FLOW_LIMIT = 60;
+export const RAW_FLOW_MIN_USD = 1000n * E18;
 export const WINDOWS = { "1h": 3_600_000, "24h": 86_400_000, "7d": 7 * 86_400_000 } as const;
 export type FlowWindow = keyof typeof WINDOWS;
 export const CHAIN_PRICE_REASON = "price unavailable from chain logs";
@@ -31,6 +36,50 @@ export interface FlowToken {
   address: string;
   symbol: string;
   multiplier: bigint;
+}
+
+export interface FlowCandidate {
+  token: FlowToken;
+  rawVolume24hUsd: bigint | null;
+  held: boolean;
+}
+/** Held assets take priority inside the hard cap; missing multipliers never become shares. */
+export function selectActiveFlow(candidates: readonly FlowCandidate[]) {
+  const eligible = candidates.filter(
+    (c) =>
+      c.token.multiplier > 0n &&
+      (c.held || (c.rawVolume24hUsd !== null && c.rawVolume24hUsd >= RAW_FLOW_MIN_USD)),
+  );
+  if (eligible.filter((c) => c.held).length > ACTIVE_FLOW_LIMIT)
+    throw new RangeError(
+      "Registered wallets hold more than 60 resolved tokens; active-set capacity exceeded",
+    );
+  const ranked = [...eligible].sort((a, b) => {
+    if (a.held !== b.held) return a.held ? -1 : 1;
+    const left = a.rawVolume24hUsd ?? 0n,
+      right = b.rawVolume24hUsd ?? 0n;
+    return (
+      (left > right ? -1 : left < right ? 1 : 0) || a.token.address.localeCompare(b.token.address)
+    );
+  });
+  const active = ranked.slice(0, ACTIVE_FLOW_LIMIT).map((c) => c.token);
+  const addresses = new Set(active.map((t) => t.address.toLowerCase()));
+  const statuses = Object.fromEntries(
+    candidates.map((c) => {
+      const selected = addresses.has(c.token.address.toLowerCase());
+      const reason = selected
+        ? null
+        : c.token.multiplier <= 0n
+          ? "share multiplier unavailable"
+          : c.rawVolume24hUsd === null
+            ? "raw 24h volume unavailable"
+            : c.rawVolume24hUsd < RAW_FLOW_MIN_USD
+              ? "no real market: under $1,000 24h"
+              : "flow inactive: outside top 60 by raw 24h volume";
+      return [c.token.address.toLowerCase(), { active: selected, held: c.held, reason }];
+    }),
+  );
+  return { active, statuses };
 }
 export interface TradeInput {
   txHash: string;
@@ -323,6 +372,7 @@ export interface FlowSnapshot {
   holders: HolderInput[] | null;
   holdersReason: string | null;
   coverageStartMs: number | null;
+  cleaningReason?: string | null;
   notes: string[];
 }
 export interface WindowAggregate {
@@ -360,11 +410,13 @@ export function aggregateFlow(snapshot: FlowSnapshot, now: number): FlowAggregat
         sellShares = sell.reduce((s, t) => s + t.shares, 0n);
       const complete = snapshot.coverageStartMs !== null && snapshot.coverageStartMs <= now - ms;
       const priced = trades.every((t) => t.usd !== null);
-      const reason = !complete
-        ? "Trade history does not cover this window"
-        : !priced
-          ? CHAIN_PRICE_REASON
-          : null;
+      const reason =
+        snapshot.cleaningReason ??
+        (!complete
+          ? "Trade history does not cover this window"
+          : !priced
+            ? CHAIN_PRICE_REASON
+            : null);
       return [
         window,
         {
@@ -385,7 +437,11 @@ export function aggregateFlow(snapshot: FlowSnapshot, now: number): FlowAggregat
   );
   const holders = snapshot.holders
     ?.filter((h) => !snapshot.labels[h.holderWalletAddress.toLowerCase()]?.custody)
-    .sort((a, b) => (fixed(a.holdingPercent) > fixed(b.holdingPercent) ? -1 : 1))
+    .sort((a, b) => {
+      const left = fixed(a.holdingPercent),
+        right = fixed(b.holdingPercent);
+      return left > right ? -1 : left < right ? 1 : 0;
+    })
     .slice(0, 10);
   return {
     ticker: snapshot.token.ticker,
@@ -458,47 +514,6 @@ export function checkGhost(input: GhostInput, maxNoTradeDays = 3): GhostCheck {
     inputs: input,
   };
 }
-export function gradeWithFlow(
-  base: {
-    score: number;
-    grade: Grade;
-    reasons: string[];
-    ghost: boolean;
-    ghostPoints?: number;
-    ghostReasons?: string[];
-    totalDeductions?: number;
-  },
-  check: GhostCheck,
-) {
-  // Replace an existing volume deduction; never charge the ghost penalty twice.
-  const score =
-    check.ghost === null || (base.score === 0 && base.totalDeductions === undefined)
-      ? base.score
-      : Math.max(
-          0,
-          Math.min(
-            100,
-            100 -
-              (base.totalDeductions ?? 100 - base.score) +
-              (base.ghostPoints ?? 0) -
-              check.points,
-          ),
-        );
-  return {
-    score,
-    grade: gradeFromScore(score),
-    reasons:
-      check.ghost === null
-        ? base.reasons
-        : [
-            ...base.reasons.filter((r) => !base.ghostReasons?.includes(r)),
-            ...(check.outcome === "deduct" ? [check.reason] : []),
-          ],
-    ghost: check.ghost ?? base.ghost,
-    flowCheck: check,
-  };
-}
-
 /** Pure implementation for the orchestrator's injected core grade port.
  * Replace the raw-volume record while retaining all unrelated checks and deductions.
  */

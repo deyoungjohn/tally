@@ -31,7 +31,85 @@ it("ordered chain failover warns without exposing provider errors, and all failu
   await expect(flowChainFromClients([dead] as PublicClient[], warn).blockNumber()).rejects.toThrow(
     "No configured chain provider",
   );
-  await expect(flowChainFromEnv({}).blockNumber()).rejects.toThrow("No configured chain provider");
+  const unconfigured = vi.fn();
+  const empty = flowChainFromEnv({}, unconfigured);
+  expect(unconfigured).toHaveBeenCalledTimes(1);
+  expect(unconfigured).toHaveBeenCalledWith(
+    "Flow chain reader has no configured provider; chain fallback unavailable",
+  );
+  await expect(empty.blockNumber()).rejects.toThrow("No configured chain provider");
+  expect(unconfigured).toHaveBeenCalledTimes(1);
+});
+it("uses engine RPC aliases in order and only the first configured fallback", async () => {
+  const request = vi.fn(async (url: string, init: RequestInit) => {
+    const { id } = JSON.parse(init.body as string) as { id: number };
+    return new Response(
+      JSON.stringify({
+        jsonrpc: "2.0",
+        id,
+        ...(url.includes("primary")
+          ? { error: { code: -32000, message: "offline" } }
+          : { result: "0x42" }),
+      }),
+      { headers: { "content-type": "application/json" } },
+    );
+  });
+  vi.stubGlobal("fetch", request);
+  try {
+    const warn = vi.fn();
+    expect(
+      await flowChainFromEnv(
+        {
+          BSC_RPC_PRIMARY: "https://primary.invalid",
+          BSC_RPC_FALLBACKS: " https://backup.invalid ,https://unused.invalid",
+        },
+        warn,
+      ).blockNumber(),
+    ).toBe(66n);
+    expect(request.mock.calls.map(([url]) => url)).toEqual([
+      "https://primary.invalid/",
+      "https://backup.invalid/",
+    ]);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls.flat().join(" ")).not.toContain("https://");
+  } finally {
+    vi.unstubAllGlobals();
+  }
+});
+it("explicit NodeReal and Ankr settings take precedence over engine aliases", async () => {
+  const request = vi.fn(async (url: string, init: RequestInit) => {
+    const { id } = JSON.parse(init.body as string) as { id: number };
+    return new Response(
+      JSON.stringify({
+        jsonrpc: "2.0",
+        id,
+        ...(url.includes("node")
+          ? { error: { code: -32000, message: "offline" } }
+          : { result: "0x7" }),
+      }),
+      { headers: { "content-type": "application/json" } },
+    );
+  });
+  vi.stubGlobal("fetch", request);
+  try {
+    expect(
+      await flowChainFromEnv(
+        {
+          BSC_RPC_NODEREAL: "https://node.invalid",
+          BSC_RPC_ANKR: "https://ankr.invalid",
+          BSC_RPC_PRIMARY: "https://unused-primary.invalid",
+          BSC_RPC_FALLBACKS: "https://unused-backup.invalid",
+        },
+        vi.fn(),
+      ).blockNumber(),
+    ).toBe(7n);
+    expect(request.mock.calls.map(([url]) => url)).toEqual([
+      "https://node.invalid/",
+      "https://ankr.invalid/",
+    ]);
+  } finally {
+    vi.unstubAllGlobals();
+  }
 });
 it("a successful primary needs no backup", async () => {
   const primary = createPublicClient({ transport: custom({ request: async () => "0x1" }) });

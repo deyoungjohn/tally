@@ -1,4 +1,5 @@
 /** Offline preview seed. Run only against a dedicated temporary TALLY_DATA_DIR. */
+import { gradeIntegrity } from "@tally/core";
 import { openStore } from "@tally/modkit";
 import { createFixtureEngine } from "../../../../packages/engine/src/engine";
 import { fixed, type FlowToken } from "@tally/mod-flow";
@@ -54,6 +55,13 @@ async function seed() {
           grade: "A",
           reasons: ["Recorded multiplier sources agree"],
           ghost: false,
+          integrity: gradeIntegrity({
+            session: "closed",
+            status: null,
+            now,
+            unitTrap: false,
+            onchainVolume24hUsd: 2000,
+          }),
         },
       });
     store.health.report("flow", { ok: true, now });

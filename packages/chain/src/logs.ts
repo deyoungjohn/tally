@@ -110,8 +110,14 @@ export function flowChainFromEnv(
   onWarn?: (message: string) => void,
 ): FlowChain {
   const providers = [
-    [env.BSC_RPC_NODEREAL, "https://bsc-mainnet.nodereal.io/v1/"],
-    [env.BSC_RPC_ANKR, "https://rpc.ankr.com/bsc/"],
+    [env.BSC_RPC_NODEREAL ?? env.BSC_RPC_PRIMARY, "https://bsc-mainnet.nodereal.io/v1/"],
+    [
+      env.BSC_RPC_ANKR ??
+        env.BSC_RPC_FALLBACKS?.split(",")
+          .map((value) => value.trim())
+          .find(Boolean),
+      "https://rpc.ankr.com/bsc/",
+    ],
   ] as const;
   const clients = providers
     .filter(([value]) => Boolean(value))
@@ -123,6 +129,10 @@ export function flowChainFromEnv(
           retryCount: 1,
         }),
       }),
+    );
+  if (!clients.length)
+    (onWarn ?? console.warn)(
+      "Flow chain reader has no configured provider; chain fallback unavailable",
     );
   // Construction stays additive: quotes still work when no logs provider is configured.
   return flowChainFromClients(clients, onWarn);

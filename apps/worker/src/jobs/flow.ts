@@ -5,6 +5,7 @@ import type { WorkerJob } from "../runner";
 export const job: WorkerJob = {
   name: "flow",
   intervalMs: 60_000,
+  timeoutMs: 120_000,
   async run(ctx) {
     if (process.env.FEATURE_FLOW !== "1") return;
     const registry = ctx.store.latest<FlowToken[]>("flow-registry", "bsc", {

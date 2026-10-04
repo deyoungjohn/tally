@@ -14,7 +14,9 @@ for (const width of [375, 768, 1280]) {
       ).toBeVisible();
       await expect(page.getByText(/Stale \d+ min ago/).first()).toBeVisible();
       await expect(
-        page.getByText("Trade history does not cover this window", { exact: false }).first(),
+        page
+          .getByText("Top-trader labels unavailable; volume not cleaned", { exact: false })
+          .first(),
       ).toBeVisible();
       const filename = `flow-${width}${reduced ? "-reduced" : ""}.png`;
       await page.screenshot({ path: testInfo.outputPath(filename), fullPage: true });

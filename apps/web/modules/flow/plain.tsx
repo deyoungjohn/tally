@@ -70,6 +70,8 @@ export function RadarContent({ vm }: { vm: RadarVM }) {
               <h3>
                 {grade.symbol}: Grade {grade.grade}
               </h3>
+              <p>Grade basis: {grade.gradeBasis}</p>
+              {grade.flowReason && <p>{grade.flowReason}</p>}
               {grade.ghost && <p>Ghost market</p>}
               {grade.reasons.map((reason) => (
                 <p key={reason}>{reason}</p>
