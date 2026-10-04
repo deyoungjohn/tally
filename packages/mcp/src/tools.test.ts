@@ -345,7 +345,7 @@ describe("MCP fixture tools", () => {
       "25654736000000000",
     );
   });
-  it("optional modules absent keeps core tools; present modules dynamically register; broken modules surface", async () => {
+  it("optional modules absent keeps core tools; present modules dynamically register", async () => {
     const rt = runtime();
     const tools = registerTools(rt);
     const load = vi.fn();
@@ -362,13 +362,51 @@ describe("MCP fixture tools", () => {
     );
     expect(register).toHaveBeenCalledTimes(3);
     expect(register).toHaveBeenCalledWith(tools, rt.engine);
-    await expect(
-      registerOptionalTools(
-        tools,
-        rt,
-        async () => ({}),
-        () => true,
-      ),
-    ).rejects.toThrow("must export register");
   });
+  it.each(["missing register", "failed import", "throwing register"])(
+    "optional module with %s is skipped with a redacted warning; four core tools still list and work",
+    async (failure) => {
+      const rt = runtime();
+      const tools = registerTools(rt);
+      const register = vi.fn();
+      const load = vi.fn(async (url: string) => {
+        if (!url.endsWith("/get-receipt.ts")) return { register };
+        if (failure === "missing register") return {};
+        const fail = () => {
+          throw new Error(
+            "Module failed at https://provider.invalid/private-path?credential=hidden",
+          );
+        };
+        if (failure === "failed import") fail();
+        return { register: fail };
+      });
+      await registerOptionalTools(tools, rt, load, () => true);
+      expect(load).toHaveBeenCalledTimes(3);
+      expect(register).toHaveBeenCalledTimes(2);
+      expect(rt.onWarn).toHaveBeenCalledTimes(1);
+      expect(rt.onWarn).toHaveBeenCalledWith(
+        failure === "missing register"
+          ? "Optional get-receipt tool was skipped: Must export register(registry, engine)."
+          : "Optional get-receipt tool was skipped: Module failed at [source URL omitted]",
+      );
+      expect(tools.list().map((tool) => tool.name)).toEqual([
+        "get_consolidated_quote",
+        "get_shares_of",
+        "get_integrity",
+        "build_guarded_swap",
+      ]);
+      const calls = [
+        ["get_consolidated_quote", { ticker: "NVDA", usd: 6 }],
+        ["get_shares_of", { address: USER, tickers: ["NVDA"] }],
+        ["get_integrity", { ticker: "NVDA" }],
+        ["build_guarded_swap", request],
+      ] as const;
+      for (const [name, args] of calls) {
+        const result = await tools.call(name, args);
+        expect(result.isError).not.toBe(true);
+        if (name === "build_guarded_swap")
+          expect(JSON.parse(result.content[0]!.text).status).toBe("ready");
+      }
+    },
+  );
 });

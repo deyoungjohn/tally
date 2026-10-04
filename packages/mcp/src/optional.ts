@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import type { Runtime } from "./runtime";
 import type { ToolRegistry } from "./registry";
+import { safeText } from "./output";
 
 /** Other work orders export register(registry, engine). Missing files are expected until those PRs merge. */
 export async function registerOptionalTools(
@@ -11,13 +12,18 @@ export async function registerOptionalTools(
 ) {
   for (const file of ["get-receipt", "sell", "switch"]) {
     const url = new URL(`./tools/${file}.ts`, import.meta.url);
-    if (!exists(url)) {
-      runtime.onWarn(`Optional ${file} tool is not installed.`);
-      continue;
+    try {
+      if (!exists(url)) {
+        runtime.onWarn(safeText(`Optional ${file} tool is not installed.`));
+        continue;
+      }
+      const module = await load(url.href);
+      if (typeof module.register !== "function")
+        throw new Error("Must export register(registry, engine).");
+      await module.register(registry, runtime.engine);
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : "Unknown module failure.";
+      runtime.onWarn(safeText(`Optional ${file} tool was skipped: ${reason}`));
     }
-    const module = await load(url.href);
-    if (typeof module.register !== "function")
-      throw new Error(`Optional ${file} tool must export register(registry, engine).`);
-    await module.register(registry, runtime.engine);
   }
 }
