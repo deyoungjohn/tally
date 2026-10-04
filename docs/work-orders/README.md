@@ -71,7 +71,7 @@ When done, open a PR with .github/pull_request_template.md filled in, with evide
 | 03 | Portfolio + Statement | D | `mod/WO-03-statement` |
 | 04 | Flow + Radar page | B | `mod/WO-04-flow` |
 | 05 | Agent layer: MCP server, Wallet Skill, upstream PR (blueprint M5) | B (backup E) | `mod/WO-05-agent-layer` |
-| 06 | Guardian alerts (rules, Telegram, web feed) + read-only bot commands | E | `mod/WO-06-guardian` |
+| 06 | Guardian alerts (rules, Telegram, web feed) + read-only bot commands | D (reassigned from E, 2026-10-04) | `mod/WO-06-guardian` |
 | 07 | Sell + Switch issuer | C | `mod/WO-07-switch` |
 | 08 | Guardian autopilot | C | `mod/WO-08-autopilot` |
 | 09 | Pies | B | `mod/WO-09-pies` |

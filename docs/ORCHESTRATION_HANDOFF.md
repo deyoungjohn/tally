@@ -43,9 +43,9 @@ Written 2026-10-04 by Claude (chief orchestrator) for **GPT-6 Astra**, who takes
 | 01 | M3 follow-up (`onStage` events, landing lead only) | A Sonnet (backup D) | **Urgent. M3 base merged** via PR #6 (`45ab557`); follow-up pending | Fresh branch `mod/WO-01-m3-followup` from latest main. WO-02B cannot start until `onStage` merges. **Escalate to Claude** (money path). |
 | 02 | Receipts + Quality | C Codex #2 | **Slice A merged.** Slice B pending WO-01 | After WO-01 merges: dispatch slice B on the same branch name `mod/WO-02-receipts` (fresh from main; user decision 2026-10-04). Notes 2–3 in its REVIEW.md apply. |
 | 03 | Portfolio + Statement | D Antigravity | **Merged** (PR #7, `a732de4`; fixes 8–10 in `af9bac6`) | none. Collectors stay additive; WO-04 rebases over `collectors.ts`. |
-| 04 | Flow + Radar | B Codex #1 | In progress, scope expansion approved (see its Owns) | Review. The agent will **propose a one-line ghost-rule wiring** into `packages/core/src/integrity.ts`: the orchestrator applies it (you may, after checking it only injects a port and changes no existing grade without a ghost signal). |
+| 04 | Flow + Radar | B Codex #1 | **CHANGES** (review @ 905a56d: 4 must-fix, 3 should-fix, see `review/mod_WO-04-flow/REVIEW.md`) | Re-review after fixes. Ghost wiring into core NOT applied (money path; see review note 2). The agent will **propose a one-line ghost-rule wiring** into `packages/core/src/integrity.ts`: the orchestrator applies it (you may, after checking it only injects a port and changes no existing grade without a ghost signal). |
 | 05 | Agent layer: MCP, Wallet Skill, upstream PR | B (backup E) | **New**, not dispatched | Dispatch to B after WO-04. Targets the $2k Agentic Wallet / Wallet Skills prize. |
-| 06 | Guardian alerts + read-only bot commands | E OpenCode | Slice A in progress | Task 9 (`/quote`, `/shares`, `/shield`) was added on 2026-10-04: tell E to re-read the WO. |
+| 06 | Guardian alerts + read-only bot commands | D Antigravity (reassigned from E, 2026-10-04) | Slice A in progress | Task 9 (`/quote`, `/shares`, `/shield`) was added on 2026-10-04: tell D to read the WO in full. |
 | 07 | Sell + Switch | C | Wave 2 | Blocked on gates V-B1/V-B2 (Mon). **Escalate review to Claude** (contracts + money). |
 | 08 | Guardian autopilot | C | Wave 2 | Blocked on V-AW. No longer owns `skills/share-true-trading/**` (moved to WO-05). **Escalate to Claude.** |
 | 09 | Pies | B | Wave 2, after WO-05 | |
@@ -168,7 +168,7 @@ Batch escalations: one message with the branch names and your own REVIEW.md draf
 ## 14. Pending orchestrator actions (start here)
 
 1. WO-04: review when ready; apply the ghost-rule wiring line yourself if it's port-only.
-2. Tell agent E to re-read WO-06 (task 9 added). Tell B that WO-05 follows WO-04.
+2. Tell D (Antigravity, took over WO-06 on 2026-10-04) to read WO-06 in full, task 9 included. Tell B that WO-05 follows WO-04.
 3. Monday: collect V-B1/V-B2 results from the user; decide WO-07 scope. Collect V-AW; decide WO-08 scope.
 4. Urgently hand WO-01 M3 follow-up to Sonnet (D if quota runs short), on a fresh branch from main. After its `onStage` merges: dispatch WO-02 slice B (same branch `mod/WO-02-receipts`); tell the user when to hand WO-12 to Sonnet.
 5. Keep §4 of this file updated after every merge (commit to main).
