@@ -13,6 +13,7 @@
 - `apps/web/modules/switch/**` (row-action view models for Portfolio), `apps/web/app/dev/switch/**`
 - New files `apps/web/lib/trade-plan/sell.ts` and `apps/web/lib/trade-plan/switch.ts` only (the rest of `trade-plan/` is WO-01's; reuse it, don't edit it)
 - `packages/mcp/src/tools/sell.ts`, `packages/mcp/src/tools/switch.ts`
+- Contract with WO-05 (decided 2026-10-04): each of these files must `export async function register(registry: ToolRegistry, engine: Engine)` (types from `packages/mcp/src/registry.ts`) and call `registry.add(definition, handler)`. WO-05's loader warns and skips a malformed file.
 
 ## Tasks
 

@@ -28,6 +28,7 @@
 7. Worker job: fetch receipts for `PENDING` hashes over NodeReal with fallback; never mark failed on RPC errors.
 8. View models + plain components (UI split: you ship the logic and a typed view model plus a plain, unstyled component in `apps/web/modules/<name>/`; the UI agent (WO-12, Sonnet) builds the real page from your view model. Don't style, don't create pages outside `apps/web/app/dev/<name>/`.): `ReceiptVM` (ladder stages Quoted → Simulated → Received with values, status badge, provenance line, evidence drawer data), `ActivityVM` (list for Portfolio → Activity), `QualityVM` (per-issuer and per-route rows, `insufficient`, pending count). The UI agent builds `/receipt/[txHash]`, the Activity tab and `/quality`.
 9. MCP tool `get_receipt(txHash)`.
+   Contract with WO-05 (decided 2026-10-04): `packages/mcp/src/tools/get-receipt.ts` must `export async function register(registry: ToolRegistry, engine: Engine)` (types from `packages/mcp/src/registry.ts`) and call `registry.add(definition, handler)`. WO-05's loader warns and skips a file that is malformed, so a bad file never takes the MCP server down.
 
 ## Exit checks
 
