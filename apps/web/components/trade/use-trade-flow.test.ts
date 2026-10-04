@@ -634,4 +634,157 @@ describe("useTradeFlow typed stage events (WO-01)", () => {
     unsubscribe();
     harness.unmount();
   });
+
+  it("proves pending tx is persisted to storage BEFORE signed stage event is emitted", async () => {
+    let pendingInStorageWhenSignedEmitted: string | null = null;
+    const hash = sampleSuccessReceipt.txHash;
+
+    globalThis.fetch = vi.fn().mockImplementation(async (url: string) => {
+      if (url === "/api/trade/plan") return { ok: true, json: async () => getReadyPlan() };
+      if (url.includes("/api/trade/receipt"))
+        return { ok: true, json: async () => sampleSuccessReceipt };
+      return { ok: false, status: 404, json: async () => ({}) };
+    });
+
+    const harness = setupTestHook({
+      onStage: (stage) => {
+        if (stage === "signed") {
+          // Verify that at the exact instant 'signed' is emitted, storage already has the pending tx
+          pendingInStorageWhenSignedEmitted = storage.get("tally.pendingTx") ?? null;
+        }
+      },
+    });
+
+    await act(async () => {
+      harness.getFlow().start(defaultParams);
+    });
+
+    await act(async () => {
+      await harness.getFlow().confirm();
+    });
+
+    expect(pendingInStorageWhenSignedEmitted).not.toBeNull();
+    const parsed = JSON.parse(pendingInStorageWhenSignedEmitted!) as {
+      hash: string;
+      ticker: string;
+    };
+    expect(parsed.hash).toBe(hash);
+    expect(parsed.ticker).toBe("NVDA");
+
+    harness.unmount();
+  });
+
+  it("proves a late subscriber with replay: true receives resumed signed and realized events emitted on mount", async () => {
+    const pendingTxHash =
+      "0xfeed00001111222233334444555566667777888899990000aaaabbbbcccc0002" as const;
+    storage.set(
+      "tally.pendingTx",
+      JSON.stringify({
+        hash: pendingTxHash,
+        ticker: "NVDA",
+        symbol: "NVDAB",
+        at: Date.now() - 5000,
+        intentId: "intent-late-resumed",
+        attempt: 2,
+      }),
+    );
+
+    globalThis.fetch = vi.fn().mockImplementation(async (url: string) => {
+      if (url.includes("/api/trade/receipt")) {
+        return {
+          ok: true,
+          json: async () => ({
+            ...sampleSuccessReceipt,
+            txHash: pendingTxHash,
+          }),
+        };
+      }
+      return { ok: false, status: 404, json: async () => ({}) };
+    });
+
+    // Mount hook with NO subscriber - simulates child component rendering before parent subscriber registers
+    const harness = setupTestHook();
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 10));
+    });
+
+    expect(harness.getFlow().phase.name).toBe("done");
+
+    // Late subscriber registers AFTER the resumed events have already fired on mount
+    const lateEvents: RecordedEvent[] = [];
+    const unsubscribe = subscribeTradeStage(
+      (stage, payload) => {
+        lateEvents.push({ stage, payload });
+      },
+      { replay: true },
+    );
+
+    expect(lateEvents.map((e) => e.stage)).toEqual(["signed", "realized"]);
+    expect(lateEvents[0]?.payload).toMatchObject({
+      stage: "signed",
+      intentId: "intent-late-resumed",
+      attempt: 2,
+      txHash: pendingTxHash,
+      isResumed: true,
+    });
+    expect(lateEvents[1]?.payload).toMatchObject({
+      stage: "realized",
+      intentId: "intent-late-resumed",
+      attempt: 2,
+      txHash: pendingTxHash,
+      status: "success",
+      isResumed: true,
+    });
+
+    unsubscribe();
+    harness.unmount();
+  });
+
+  it("proves a late subscriber with default/replay: false does NOT receive past resumed events", async () => {
+    const pendingTxHash =
+      "0xfeed00001111222233334444555566667777888899990000aaaabbbbcccc0003" as const;
+    storage.set(
+      "tally.pendingTx",
+      JSON.stringify({
+        hash: pendingTxHash,
+        ticker: "NVDA",
+        symbol: "NVDAB",
+        at: Date.now() - 5000,
+        intentId: "intent-late-resumed-default",
+        attempt: 1,
+      }),
+    );
+
+    globalThis.fetch = vi.fn().mockImplementation(async (url: string) => {
+      if (url.includes("/api/trade/receipt")) {
+        return {
+          ok: true,
+          json: async () => ({
+            ...sampleSuccessReceipt,
+            txHash: pendingTxHash,
+          }),
+        };
+      }
+      return { ok: false, status: 404, json: async () => ({}) };
+    });
+
+    const harness = setupTestHook();
+
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 10));
+    });
+
+    expect(harness.getFlow().phase.name).toBe("done");
+
+    const lateEvents: RecordedEvent[] = [];
+    const unsubscribe = subscribeTradeStage((stage, payload) => {
+      lateEvents.push({ stage, payload });
+    });
+
+    expect(lateEvents).toHaveLength(0);
+
+    unsubscribe();
+    harness.unmount();
+  });
 });

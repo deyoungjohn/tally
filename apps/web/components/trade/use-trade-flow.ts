@@ -417,6 +417,14 @@ export function useTradeFlow(options: TradeFlowOptions = {}) {
       });
       const currentIntentId = intentIdRef.current ?? createIntentId();
       const currentAttempt = attemptRef.current;
+      writePending({
+        hash,
+        ticker: p.ticker,
+        symbol: p.symbol,
+        at: Date.now(),
+        intentId: currentIntentId,
+        attempt: currentAttempt,
+      }); // before polling: never lose the hash
       emit("signed", {
         stage: "signed",
         intentId: currentIntentId,
@@ -427,14 +435,6 @@ export function useTradeFlow(options: TradeFlowOptions = {}) {
         ticker: p.ticker,
         symbol: p.symbol,
       });
-      writePending({
-        hash,
-        ticker: p.ticker,
-        symbol: p.symbol,
-        at: Date.now(),
-        intentId: currentIntentId,
-        attempt: currentAttempt,
-      }); // before polling: never lose the hash
       setPhase({ name: "swap", plan, step: "mining", txHash: hash });
       const r = await waitReceipt(hash, p, id);
       writePending(null);

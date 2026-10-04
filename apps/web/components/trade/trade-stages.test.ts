@@ -3,6 +3,7 @@ import {
   clearTradeStageSubscribersForTests,
   createIntentId,
   dispatchTradeStage,
+  getTradeStageReplayBufferSize,
   getTradeStageSubscriberCount,
   subscribeTradeStage,
   type IntentStagePayload,
@@ -270,6 +271,164 @@ describe("trade-stages contract and registry", () => {
 
     expect(listener).not.toHaveBeenCalled();
     expect(typeof unsub).toBe("function");
+    unsub();
+  });
+
+  it("replays buffered events to late subscribers when replay: true is set, then continues live without duplicates", () => {
+    const intentPayload: IntentStagePayload = {
+      stage: "intent",
+      intentId: "buffered-1",
+      attempt: 1,
+      timestamp: 1000,
+      ticker: "NVDA",
+      issuer: "bstock",
+      symbol: "NVDAB",
+      usd: 25,
+      tolerancePct: 1,
+      user: "0xuser",
+    };
+
+    const signedPayload: SignedStagePayload = {
+      stage: "signed",
+      intentId: "buffered-1",
+      attempt: 1,
+      timestamp: 2000,
+      txHash: "0xhash123",
+      isResumed: true,
+      ticker: "NVDA",
+      symbol: "NVDAB",
+    };
+
+    // Dispatch events before subscriber exists
+    dispatchTradeStage("intent", intentPayload);
+    dispatchTradeStage("signed", signedPayload);
+
+    // Late subscriber with replay: true
+    const replayedEvents: string[] = [];
+    const unsub = subscribeTradeStage(
+      (stage, payload) => {
+        replayedEvents.push(`${stage}:${payload.intentId}`);
+      },
+      { replay: true },
+    );
+
+    // Should have replayed both buffered events once in order
+    expect(replayedEvents).toEqual(["intent:buffered-1", "signed:buffered-1"]);
+
+    // Next live event should be delivered once
+    const realizedPayload: RealizedStagePayload = {
+      stage: "realized",
+      intentId: "buffered-1",
+      attempt: 1,
+      timestamp: 3000,
+      txHash: "0xhash123",
+      status: "success",
+      isResumed: true,
+    };
+
+    dispatchTradeStage("realized", realizedPayload);
+    expect(replayedEvents).toEqual([
+      "intent:buffered-1",
+      "signed:buffered-1",
+      "realized:buffered-1",
+    ]);
+
+    unsub();
+  });
+
+  it("does not replay buffered events to late subscribers when replay: false (default)", () => {
+    dispatchTradeStage("intent", {
+      stage: "intent",
+      intentId: "old-intent",
+      attempt: 1,
+      timestamp: 1000,
+      ticker: "NVDA",
+      issuer: "bstock",
+      symbol: "NVDAB",
+      usd: 10,
+      tolerancePct: 1,
+      user: "0xuser",
+    });
+
+    const received: string[] = [];
+    const unsub = subscribeTradeStage((stage, payload) => {
+      received.push(payload.intentId);
+    });
+
+    expect(received).toEqual([]);
+
+    dispatchTradeStage("signed", {
+      stage: "signed",
+      intentId: "new-signed",
+      attempt: 1,
+      timestamp: 2000,
+      txHash: "0xnew",
+      isResumed: false,
+    });
+
+    expect(received).toEqual(["new-signed"]);
+
+    unsub();
+  });
+
+  it("caps the replay buffer at 50 events", () => {
+    for (let i = 0; i < 70; i++) {
+      dispatchTradeStage("signed", {
+        stage: "signed",
+        intentId: `event-${i}`,
+        attempt: 1,
+        timestamp: 1000 + i,
+        txHash: `0x${i}`,
+        isResumed: false,
+      });
+    }
+
+    expect(getTradeStageReplayBufferSize()).toBe(50);
+
+    const replayed: string[] = [];
+    const unsub = subscribeTradeStage(
+      (_stage, payload) => {
+        replayed.push(payload.intentId);
+      },
+      { replay: true },
+    );
+
+    expect(replayed).toHaveLength(50);
+    // Oldest 20 dropped (0-19), retains 20 to 69
+    expect(replayed[0]).toBe("event-20");
+    expect(replayed[49]).toBe("event-69");
+
+    unsub();
+  });
+
+  it("safely warns if a replayed event causes subscriber to throw", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    dispatchTradeStage("intent", {
+      stage: "intent",
+      intentId: "throw-replay",
+      attempt: 1,
+      timestamp: 1000,
+      ticker: "NVDA",
+      issuer: "bstock",
+      symbol: "NVDAB",
+      usd: 10,
+      tolerancePct: 1,
+      user: "0xuser",
+    });
+
+    const failingListener = vi.fn(() => {
+      throw new Error("Crash during replay");
+    });
+
+    const unsub = subscribeTradeStage(failingListener, { replay: true });
+
+    expect(failingListener).toHaveBeenCalledTimes(1);
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("[TradeStages] subscriber threw on replayed stage 'intent':"),
+      expect.any(Error),
+    );
+
     unsub();
   });
 });

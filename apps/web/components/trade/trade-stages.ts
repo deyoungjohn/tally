@@ -133,7 +133,38 @@ export type TradeStageListener = <S extends TradeStage>(
   payload: TradeStagePayloadMap[S],
 ) => void | Promise<void>;
 
+export interface SubscribeTradeStageOptions {
+  /**
+   * If true, replays buffered stage events recorded since page load to this listener
+   * once in order before subscribing to future live events.
+   * Default is false.
+   */
+  replay?: boolean;
+}
+
+const MAX_REPLAY_BUFFER = 50;
+
+type ReplayBufferItem = {
+  [K in TradeStage]: { stage: K; payload: TradeStagePayloadMap[K] };
+}[TradeStage];
+
+const replayBuffer: ReplayBufferItem[] = [];
 const globalSubscribers = new Set<TradeStageListener>();
+
+function invokeListener(listener: TradeStageListener, item: ReplayBufferItem) {
+  switch (item.stage) {
+    case "intent":
+      return listener("intent", item.payload);
+    case "quote":
+      return listener("quote", item.payload);
+    case "simulation":
+      return listener("simulation", item.payload);
+    case "signed":
+      return listener("signed", item.payload);
+    case "realized":
+      return listener("realized", item.payload);
+  }
+}
 
 /**
  * Generate a unique intent ID for correlating an entire trade lifecycle attempt.
@@ -147,13 +178,36 @@ export function createIntentId(): string {
 
 /**
  * Subscribe a global listener to all trade stage events.
+ * If options.replay is true, re-delivers buffered events recorded since page load
+ * once in order to this listener before subscribing to live events.
  * Browser only: returns an unsubscribe cleanup function.
  * On server (Node.js/SSR), this is a no-op that returns an empty cleanup function.
  */
-export function subscribeTradeStage(listener: TradeStageListener): () => void {
+export function subscribeTradeStage(
+  listener: TradeStageListener,
+  options: SubscribeTradeStageOptions = {},
+): () => void {
   if (typeof window === "undefined") {
     return () => {};
   }
+  if (options.replay) {
+    for (const item of replayBuffer) {
+      try {
+        const result = invokeListener(listener, item);
+        if (result && typeof (result as Promise<unknown>).catch === "function") {
+          (result as Promise<unknown>).catch((err) => {
+            console.warn(
+              `[TradeStages] subscriber rejected on replayed stage '${item.stage}':`,
+              err,
+            );
+          });
+        }
+      } catch (err) {
+        console.warn(`[TradeStages] subscriber threw on replayed stage '${item.stage}':`, err);
+      }
+    }
+  }
+
   globalSubscribers.add(listener);
   return () => {
     globalSubscribers.delete(listener);
@@ -168,10 +222,18 @@ export function getTradeStageSubscriberCount(): number {
 }
 
 /**
- * Test helper to clear global subscribers between test cases.
+ * Test helper to inspect replay buffer length.
+ */
+export function getTradeStageReplayBufferSize(): number {
+  return replayBuffer.length;
+}
+
+/**
+ * Test helper to clear global subscribers and replay buffer between test cases.
  */
 export function clearTradeStageSubscribersForTests(): void {
   globalSubscribers.clear();
+  replayBuffer.length = 0;
 }
 
 /**
@@ -183,6 +245,7 @@ export function clearTradeStageSubscribersForTests(): void {
  * - Any listener that throws or returns a rejected promise is caught and logged via console.warn,
  *   never disrupting trade approval, confirmation, or execution.
  * - Browser only: returns immediately if window is undefined.
+ * - Bounded buffer: records up to the last 50 events for late subscribers requesting replay.
  */
 export function dispatchTradeStage<S extends TradeStage>(
   stage: S,
@@ -190,6 +253,11 @@ export function dispatchTradeStage<S extends TradeStage>(
   localListener?: TradeStageListener,
 ): void {
   if (typeof window === "undefined") return;
+
+  replayBuffer.push({ stage, payload } as ReplayBufferItem);
+  if (replayBuffer.length > MAX_REPLAY_BUFFER) {
+    replayBuffer.shift();
+  }
 
   const targets: TradeStageListener[] = [];
   if (localListener) {

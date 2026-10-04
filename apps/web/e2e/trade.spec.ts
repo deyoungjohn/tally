@@ -195,12 +195,14 @@ test.describe("keyboard path", () => {
     await page.keyboard.press("Enter");
     const review = page.getByRole("dialog", { name: "Review your buy" });
     await expect(review).toBeVisible({ timeout: 20_000 });
+    await expect(review).toBeFocused(); // The modal effect has installed its keyboard listener.
     // Esc closes it and focus returns to the page.
     await page.keyboard.press("Escape");
     await expect(review).toBeHidden();
     await buy.focus();
     await page.keyboard.press("Enter");
     await expect(review).toBeVisible({ timeout: 20_000 });
+    await expect(review).toBeFocused(); // The modal effect has installed its keyboard listener.
     // Tab stays inside the dialog (focus trap).
     for (let i = 0; i < 6; i++) await page.keyboard.press("Tab");
     expect(await page.evaluate(() => !!document.activeElement?.closest('[role="dialog"]'))).toBe(
@@ -341,19 +343,20 @@ test.describe("trade stages event regression (WO-01)", () => {
           ) => () => void;
         }
       ).__tallySubscribeTradeStage;
-      if (sub) {
-        sub((stage, payload) => {
-          (
-            window as unknown as {
-              __recordedEvents: Array<{ stage: string; attempt: number; intentId: string }>;
-            }
-          ).__recordedEvents.push({
-            stage,
-            attempt: payload.attempt,
-            intentId: payload.intentId,
-          });
-        });
+      if (!sub) {
+        throw new Error("__tallySubscribeTradeStage hook is missing on window");
       }
+      sub((stage, payload) => {
+        (
+          window as unknown as {
+            __recordedEvents: Array<{ stage: string; attempt: number; intentId: string }>;
+          }
+        ).__recordedEvents.push({
+          stage,
+          attempt: payload.attempt,
+          intentId: payload.intentId,
+        });
+      });
     });
 
     await buyThrough(page);
