@@ -59,6 +59,25 @@ export function createCollectorFixtureFetch(fallback: typeof fetch): typeof fetc
         addresses.some((a) => a.toLowerCase() === r.tokenContractAddress.toLowerCase()),
       );
       // Missing entries stay missing: the worker records a reason rather than fabricating prices.
+    } else if (/\/market\/(trades|token\/(holder|top-trader|top-liquidity))$/.test(path)) {
+      const symbols: Record<string, string> = {
+        "0x02fca66c1d1afb4e2a7884261eb00f63598a7436": "NVDAB",
+        "0xa9ee28c80f960b889dfbd1902055218cba016f75": "NVDAon",
+        "0x431a3bee82e2ca41e49895cbece5bb0f76a89b7a": "AAPLB",
+        "0x390a684ef9cade28a7ad0dfa61ab1eb3842618c4": "AAPLon",
+      };
+      const symbol = symbols[(url.searchParams.get("tokenContractAddress") ?? "").toLowerCase()];
+      const endpoint = path.split("/").at(-1)!.replaceAll("-", "_");
+      if (!symbol) throw new Error("No recorded flow endpoint for token");
+      data = collectorRecording(`F_${endpoint}_${symbol}`).data;
+      if (endpoint === "trades") {
+        const page = data as { cursor: string | null; trades: unknown[] };
+        // A recording is a single page, not proof of complete history.
+        if (url.searchParams.has("cursor"))
+          throw new Error("Unrecorded trades cursor; history is incomplete");
+        const limit = Number(url.searchParams.get("limit") ?? 100);
+        data = { ...page, trades: page.trades.slice(0, limit) };
+      }
     } else if (path.endsWith("/market/portfolio/recent-pnl")) {
       data = collectorRecording("X_recent_pnl").data;
     } else if (path.endsWith("/market/portfolio/dex-history")) {

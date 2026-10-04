@@ -36,7 +36,14 @@ import { feedSignerFromEnv, liveTradeChain } from "./trade-chain";
 import { fixtureTradeChain } from "./trade-fixture";
 import { portfolioFor, radarFor, type PortfolioReport, type RadarReport } from "./views";
 import type { Hex } from "viem";
-import { chainPort, clientFromEnv, onchainMultiplierReader } from "@tally/chain";
+import {
+  chainPort,
+  clientFromEnv,
+  onchainMultiplierReader,
+  flowChainFromEnv,
+  type FlowChain,
+} from "@tally/chain";
+import { fixtureFlowChain } from "./flow-fixture";
 import {
   TtlCache,
   amountBucket,
@@ -65,8 +72,19 @@ export interface Engine {
   /** Scheduled read-only calls. Existing trade/quote ports are unchanged. */
   collectors: Pick<
     BinanceCollectors,
-    "registry" | "prices" | "portfolioOverview" | "recentPnl" | "tokenLatestPnl" | "dexHistory"
+    | "registry"
+    | "prices"
+    | "portfolioOverview"
+    | "recentPnl"
+    | "tokenLatestPnl"
+    | "dexHistory"
+    | "trades"
+    | "holders"
+    | "topTraders"
+    | "topLiquidity"
   >;
+  /** Read-only flow evidence; independent from the existing trade chain. */
+  chain: FlowChain;
   quote(input: QuoteInput): Promise<ConsolidatedQuote>;
   /** Every token of a ticker with its facts, bounds and the full integrity check log, and no quote (`tally facts`). */
   facts(ticker: string): Promise<TokenInspection[]>;
@@ -100,6 +118,7 @@ interface BuildOptions {
   guard: Address;
   tradeChain: TradeChain;
   signer?: FeedSigner;
+  flowChain: FlowChain;
 }
 
 function build(o: BuildOptions): Engine {
@@ -187,6 +206,7 @@ function build(o: BuildOptions): Engine {
   const radar = radarFor(ports, now);
   return {
     collectors: new BinanceCollectors(client),
+    chain: o.flowChain,
     ports,
     health,
     radar,
@@ -225,6 +245,7 @@ export function createLiveEngine(
     guard,
     tradeChain: liveTradeChain(rpc, guard),
     signer: feedSignerFromEnv(env),
+    flowChain: flowChainFromEnv(env, onWarn),
   });
 }
 
@@ -271,7 +292,9 @@ export function createFixtureEngine(
     guard: SHAREGUARD_DEPLOYED,
     tradeChain: o.tradeChain ?? fixtureTradeChain(),
     signer: o.signer,
+    flowChain: fixtureFlowChain(),
   });
 }
 
 export type { Address };
+export type { FlowChain, FlowReceipt, TransferLog } from "@tally/chain";
