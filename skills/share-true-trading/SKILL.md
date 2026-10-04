@@ -25,7 +25,7 @@ Read [the setup and live runbook](../../packages/mcp/README.md) for tool paramet
 
 ## Build without signing
 
-Call `build_guarded_swap` with `ticker`, `issuer` (`bstock` or `ondo`), `usdtAmount`, `wallet` and `recipient`. Recipient must equal the signing wallet. Provide **either** a decimal-string `minShares` (an **at least** constraint) **or** `tolerance` in percent (0.1–5, default 1). The wrapper derives tolerance from the quote and verifies the fresh plan's actual floor. `floor_not_achievable` is a stop: never lower the user's floor or raise their spend automatically.
+Call `build_guarded_swap` with `ticker`, `issuer` (`bstock` or `ondo`), `usdtAmount`, `wallet` and `recipient`. Recipient must equal the signing wallet. Provide **either** a decimal-string `minShares` (an **at least** constraint) **or** `tolerancePct` in percent (0.1–5, default 1). The wrapper derives tolerance from the quote and verifies the fresh plan's actual floor. `floor_not_achievable` is a stop: never lower the user's floor or raise their spend automatically.
 
 The deployed ShareGuard is `0x28F6F19bffbF25E36452c78d12090F0bC922970a`. Buyable assets depend on its configuration (currently NVDA, AAPL, TSLA, QQQ and SPY); registry presence alone does not authorize a trade.
 

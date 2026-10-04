@@ -26,7 +26,7 @@ TALLY_FIXTURES=1 pnpm --silent --filter @tally/mcp call get_integrity <<'JSON'
 {"ticker":"NFLX"}
 JSON
 TALLY_FIXTURES=1 pnpm --silent --filter @tally/mcp call build_guarded_swap <<'JSON'
-{"ticker":"NVDA","issuer":"bstock","usdtAmount":6,"wallet":"0x1111111111111111111111111111111111111111","tolerance":1}
+{"ticker":"NVDA","issuer":"bstock","usdtAmount":6,"wallet":"0x1111111111111111111111111111111111111111","tolerancePct":1}
 JSON
 ```
 
@@ -39,7 +39,7 @@ The default fixture wallet needs approval, so the last command returns `needs_ap
 | `get_consolidated_quote` | `ticker`, exactly one of numeric `usd` / `shares` | Every issuer, engine's price/premium/fee/route/integrity and `best`; missing values are null; bigint fields serialize as decimal integer strings. |
 | `get_shares_of` | `address`, optional `tickers` (1–100) | Every registry token in the requested scope, zero balances included; `balance` in token decimals, `multiplier` and `shares` in bigint 1e18 units; `sharesDisplay`, source, degraded indicator and missing-data reasons. |
 | `get_integrity` | optional `ticker` | Same radar grades/reasons as web; explicit `ghost`, `paused`, failed tickers and freshness. |
-| `build_guarded_swap` | `ticker`, `issuer`, numeric `usdtAmount`, `wallet`, optional `recipient`, **either** string `minShares` / numeric `tolerance` | Unchanged web `TradePlan` status/approval/shortfall/transaction, plus exact approval target/amount, share floor and review facts. No signing/sending. |
+| `build_guarded_swap` | `ticker`, `issuer`, numeric `usdtAmount`, `wallet`, optional `recipient`, **either** string `minShares` / numeric `tolerancePct` | Unchanged web `TradePlan` status/approval/shortfall/transaction, plus exact approval target/amount, share floor and review facts. No signing/sending. |
 
 Holdings and untargeted integrity default to **NVDA, AAPL, TSLA, QQQ, SPY, NFLX**, matching the web picker. This is explicitly scoped coverage, not a claim to enumerate every asset in a wallet. Supply more tickers to `get_shares_of` or query integrity by ticker. The existing engine registry cannot enumerate its entire public universe through the exported interface; its authenticated collector list is truncated (IDEAS F10), so it is not used to silently choose wallet coverage.
 

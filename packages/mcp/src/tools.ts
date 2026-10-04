@@ -48,7 +48,7 @@ const definitions: Tool[] = [
   {
     name: "build_guarded_swap",
     description:
-      "Build an unsigned ShareGuard buy using the unchanged web plan. Never signs or sends. wallet is the signing wallet; recipient must match. minShares is a human decimal at-least constraint; tolerance is percent (default 1). Passes needs_funds/needs_approval through. Rebuild after approval and expiry.",
+      "Build an unsigned ShareGuard buy using the unchanged web plan. Never signs or sends. wallet is the signing wallet; recipient must match. minShares is a human decimal at-least constraint; tolerancePct is percent (default 1). Passes needs_funds/needs_approval through. Rebuild after approval and expiry.",
     inputSchema: {
       type: "object",
       properties: {
@@ -58,11 +58,11 @@ const definitions: Tool[] = [
         wallet: address,
         recipient: address,
         minShares: { type: "string", pattern: "^\\d+(?:\\.\\d{1,18})?$" },
-        tolerance: { type: "number", minimum: 0.1, maximum: 5 },
+        tolerancePct: { type: "number", minimum: 0.1, maximum: 5 },
       },
       required: ["ticker", "issuer", "usdtAmount", "wallet"],
       additionalProperties: false,
-      not: { required: ["minShares", "tolerance"] },
+      not: { required: ["minShares", "tolerancePct"] },
     },
   },
 ];

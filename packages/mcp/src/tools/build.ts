@@ -9,7 +9,15 @@ import type { Runtime } from "../runtime";
 /** Adapts intent only. The unchanged engine prepares, estimates and simulates the transaction. */
 export async function buildGuardedSwap(runtime: Runtime, input: unknown) {
   const args = object(input);
-  only(args, ["ticker", "issuer", "usdtAmount", "wallet", "recipient", "minShares", "tolerance"]);
+  only(args, [
+    "ticker",
+    "issuer",
+    "usdtAmount",
+    "wallet",
+    "recipient",
+    "minShares",
+    "tolerancePct",
+  ]);
   const symbol = ticker(args.ticker);
   if (args.issuer !== "bstock" && args.issuer !== "ondo")
     throw new ToolError("invalid_request", "Choose bstock or ondo. xStocks are display-only.");
@@ -17,11 +25,11 @@ export async function buildGuardedSwap(runtime: Runtime, input: unknown) {
   const recipient = args.recipient === undefined ? wallet : address(args.recipient);
   if (recipient.toLowerCase() !== wallet.toLowerCase())
     throw new ToolError("invalid_recipient", "Recipient must equal the signing wallet.");
-  if (args.minShares !== undefined && args.tolerance !== undefined)
-    throw new ToolError("invalid_request", "Provide minShares or tolerance, never both.");
+  if (args.minShares !== undefined && args.tolerancePct !== undefined)
+    throw new ToolError("invalid_request", "Provide minShares or tolerancePct, never both.");
   const usd = positive(args.usdtAmount, "usdtAmount");
   if (usd < 6) throw new ToolError("below_minimum", "Minimum order is 6 USDT.");
-  let tolerance = args.tolerance === undefined ? 1 : positive(args.tolerance, "tolerance");
+  let tolerance = args.tolerancePct === undefined ? 1 : positive(args.tolerancePct, "tolerancePct");
   if (tolerance < 0.1 || tolerance > 5)
     throw new ToolError("invalid_request", "Tolerance must be between 0.1% and 5%.");
   const requested = args.minShares === undefined ? undefined : floorShares(args.minShares);
@@ -53,7 +61,7 @@ export async function buildGuardedSwap(runtime: Runtime, input: unknown) {
   if (requested !== undefined && BigInt(plan.minShares) < requested)
     throw new ToolError(
       "floor_not_achievable",
-      "The fresh plan cannot meet the requested share floor within 0.1–5% tolerance. Review a fresh quote or change the amount.",
+      `The fresh plan uses a floor of ${formatUnits(BigInt(plan.minShares), 18)} shares; requested at least ${formatUnits(requested, 18)}. That floor is not achievable within 0.1–5% tolerance. Review a fresh quote or change the amount.`,
     );
   const state = freshness(runtime, new Date(plan.builtAt).toISOString(), QUOTE_FRESH_MS);
   if (state.stale || runtime.now() >= plan.expiresAt)

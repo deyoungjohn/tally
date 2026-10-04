@@ -190,6 +190,7 @@ describe("MCP fixture tools", () => {
     }));
     await expect(buildGuardedSwap(rt, { ...request, minShares: "0.025" })).rejects.toMatchObject({
       kind: "floor_not_achievable",
+      message: expect.stringContaining("0.000000000000000001 shares"),
     });
   });
   it("refuses a different recipient and invalid floor/tolerance before prepare", async () => {
@@ -197,9 +198,9 @@ describe("MCP fixture tools", () => {
     const prepare = vi.spyOn(rt.engine.trade, "prepare");
     for (const args of [
       { ...request, recipient: "0x2222222222222222222222222222222222222222" },
-      { ...request, minShares: "0.02", tolerance: 1 },
+      { ...request, minShares: "0.02", tolerancePct: 1 },
       { ...request, minShares: "0.0000000000000000001" },
-      { ...request, tolerance: 6 },
+      { ...request, tolerancePct: 6 },
       { ...request, issuer: "xstocks" },
       { ...request, usdtAmount: 5 },
     ]) {
