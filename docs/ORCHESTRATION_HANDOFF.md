@@ -40,7 +40,7 @@ Written 2026-10-04 by Claude (chief orchestrator) for **GPT-6 Astra**, who takes
 | WO | Module | Agent | Status | Next action |
 |---|---|---|---|---|
 | 00 | Foundation (modkit, worker, flags, health, ModuleBoundary) | B Codex #1 | **Merged** | none |
-| 01 | M3 follow-up (`onStage` events, landing lead only) | A Sonnet (backup D) | **Urgent. M3 base merged** via PR #6 (`45ab557`); follow-up pending | Fresh branch `mod/WO-01-m3-followup` from latest main. WO-02B cannot start until `onStage` merges. **Escalate to Claude** (money path). |
+| 01 | M3 follow-up (`onStage` events only; landing lead moved to WO-12) | D Antigravity (user decision 2026-10-04; also holds WO-06 in parallel) | **Urgent. M3 base merged** via PR #6 (`45ab557`); follow-up pending | Fresh branch `mod/WO-01-m3-followup` from latest main. WO-02B cannot start until `onStage` merges. **Escalate review to Claude** (money path). |
 | 02 | Receipts + Quality | C Codex #2 | **Slice A merged.** Slice B pending WO-01 | After WO-01 merges: dispatch slice B on the same branch name `mod/WO-02-receipts` (fresh from main; user decision 2026-10-04). Notes 2–3 in its REVIEW.md apply. |
 | 03 | Portfolio + Statement | D Antigravity | **Merged** (PR #7, `a732de4`; fixes 8–10 in `af9bac6`) | none. Collectors stay additive; WO-04 rebases over `collectors.ts`. |
 | 04 | Flow + Radar | B Codex #1 | **CHANGES** (review @ 905a56d: 4 must-fix, 3 should-fix, see `review/mod_WO-04-flow/REVIEW.md`) | Re-review after fixes. Ghost wiring into core NOT applied (money path; see review note 2). The agent will **propose a one-line ghost-rule wiring** into `packages/core/src/integrity.ts`: the orchestrator applies it (you may, after checking it only injects a port and changes no existing grade without a ghost signal). |
@@ -51,16 +51,16 @@ Written 2026-10-04 by Claude (chief orchestrator) for **GPT-6 Astra**, who takes
 | 09 | Pies | B | Wave 2, after WO-05 | |
 | 10 | Rewards → Stocks | D | Wave 2, if V-C gates pass | |
 | 11 | Evidence, fixtures, docs | F Cline | Support | Never money paths, contracts or engine. |
-| 12 | UI (every page) | A Sonnet (backup D) | After WO-01 | Sonnet hasn't been told about WO-12 yet: the user decides when. |
+| 12 | UI (every page) | A Sonnet (backup D) | Free to start; now also owns the landing lead (moved from WO-01 on 2026-10-04) | The user decides when to tell Sonnet. Landing: "Your stocks, in shares" + Portfolio / Radar / Guardian. |
 
-Blueprint milestones M0–M7 are covered: M0–M2 done (engine, ShareGuard, CLI); M3 base merged; WO-01 now covers only stage events and the landing lead; M4 Trap Shield = integrity grade + WO-04 ghost rule + WO-06 `/shield`; M5 agent layer = WO-05; M6 Telegram = WO-06; M7 polish/submission = WO-11/WO-12 + Fri–Sun calendar.
+Blueprint milestones M0–M7 are covered: M0–M2 done (engine, ShareGuard, CLI); M3 base merged; WO-01 now covers only stage events (the landing lead moved to WO-12); M4 Trap Shield = integrity grade + WO-04 ghost rule + WO-06 `/shield`; M5 agent layer = WO-05; M6 Telegram = WO-06; M7 polish/submission = WO-11/WO-12 + Fri–Sun calendar.
 
 ## 5. Calendar (UTC; Lagos = UTC+1)
 
 | When | Milestone |
 |---|---|
 | Mon 5 Oct | User runs V-B1/V-B2 in pre-market and regular hours. WO-03 merged. |
-| Tue 6 | WO-01 follow-up merged (urgent; earlier if ready); WO-04 merged; dispatch wave 2 (WO-02B, WO-05, WO-07). |
+| Tue 6 | WO-01 follow-up merged (urgent, stage events only; earlier if ready); WO-04 merged; dispatch wave 2 (WO-02B, WO-05, WO-07). |
 | Wed 7 | WO-06 merged; V-E decided. |
 | **Thu 8, 23:59** | **Cut line**: anything unmerged ships flag-off. |
 | Fri 9 | Integration day: flags on, e2e on EC2, live $6 receipt/switch/sell by the user. Claude's quota resets: **final review window**. |
@@ -170,5 +170,5 @@ Batch escalations: one message with the branch names and your own REVIEW.md draf
 1. WO-04: review when ready; apply the ghost-rule wiring line yourself if it's port-only.
 2. Tell D (Antigravity, took over WO-06 on 2026-10-04) to read WO-06 in full, task 9 included. Tell B that WO-05 follows WO-04.
 3. Monday: collect V-B1/V-B2 results from the user; decide WO-07 scope. Collect V-AW; decide WO-08 scope.
-4. Urgently hand WO-01 M3 follow-up to Sonnet (D if quota runs short), on a fresh branch from main. After its `onStage` merges: dispatch WO-02 slice B (same branch `mod/WO-02-receipts`); tell the user when to hand WO-12 to Sonnet.
+4. Check that agy (D) has WO-01 M3 follow-up (stage events only) on a fresh branch from main, in parallel with WO-06; the landing lead is now WO-12's. After its `onStage` merges: dispatch WO-02 slice B (same branch `mod/WO-02-receipts`); tell the user when to hand WO-12 to Sonnet (WO-12 is no longer blocked by WO-01 files).
 5. Keep §4 of this file updated after every merge (commit to main).

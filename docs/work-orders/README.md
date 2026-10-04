@@ -6,11 +6,11 @@ Roles: **day-to-day orchestrator** (Astra; Claude remains chief orchestrator for
 
 | Agent (tool · model) | Strength we use it for | Wave 1 (Sat 3 – Mon 5) | Wave 2 (Tue 6 – Thu 8) |
 |---|---|---|---|
-| **A: Sonnet** (Claude Code cloud session, Claude Pro) | Owns **all UI**: reads screenshots, follows `DESIGN.md`, built the current screens | **WO-01 M3 follow-up** (urgent: stage events + landing; M3 base merged; D backs up if quota runs short), then **WO-12** correction pass | **WO-12** screens (Portfolio, Radar, Guardian, Receipt/Quality, Pies) as view models merge |
+| **A: Sonnet** (Claude Code cloud session, Claude Pro) | Owns **all UI**: reads screenshots, follows `DESIGN.md`, built the current screens | **WO-12** correction pass and the landing lead (moved from WO-01 on 2026-10-04) | **WO-12** screens (Portfolio, Radar, Guardian, Receipt/Quality, Pies) as view models merge |
 | **B: Codex** (ChatGPT Plus #1) | Solid TypeScript, infra | **WO-00 Foundation** (merged), then **WO-04 Flow** | **WO-05 Agent layer**, then **WO-09 Pies** |
 | **C: Codex** (ChatGPT Plus #2) | Careful pure logic + tests, Foundry | **WO-02 Receipts + Quality** (pure part first) | **WO-07 Sell + Switch** (fork tests J/K), then **WO-08 Autopilot** |
-| **D: Antigravity** (Gemini, Pro) | Logic + view models; **backup UI agent** | **WO-03 Portfolio + Statement** (logic + view models) | **WO-10 Rewards** (if gates pass) / takes over WO-12 slices if Sonnet is out of quota |
-| **E: OpenCode** (strongest model you can connect) | Rules engine, bot | **WO-06 Guardian alerts** | Integration tests, e2e |
+| **D: Antigravity** (Gemini, Pro) | Logic + view models; **backup UI agent** | **WO-03 Portfolio + Statement** (merged), then **WO-01 M3 follow-up** (stage events, urgent) and **WO-06 Guardian** in parallel (user decision 2026-10-04) | **WO-10 Rewards** (if gates pass) / takes over WO-12 slices if Sonnet is out of quota |
+| **E: OpenCode** (strongest model you can connect) | Rules engine, bot | _free_ (WO-06 moved to D on 2026-10-04; candidate: V-C gate scripts) | Integration tests, e2e |
 | **F: Cline · Muse Spark (free)** | Low-risk support only | **WO-11 Evidence, fixtures, docs** | README, demo script, screenshots |
 
 **UI split:** module agents ship logic + a typed view model + a plain component in `apps/web/modules/<name>/`; Sonnet (WO-12) owns every page and visual component and builds them from those view models. No file has two owners. See `AGENTS.md`.
@@ -66,7 +66,7 @@ When done, open a PR with .github/pull_request_template.md filled in, with evide
 | WO | Title | Agent | Branch |
 |---|---|---|---|
 | 00 | Foundation: modkit, worker, flags, health, ModuleBoundary | B | `mod/WO-00-foundation` |
-| 01 | M3 follow-up (stage events + landing; base merged) | A (backup D) | `mod/WO-01-m3-followup` (fresh from main) |
+| 01 | M3 follow-up (stage events only; landing moved to WO-12; base merged) | D (reassigned from A, 2026-10-04) | `mod/WO-01-m3-followup` (fresh from main) |
 | 02 | Receipts + Execution quality report | C | `mod/WO-02-receipts` (slices A and B) |
 | 03 | Portfolio + Statement | D | `mod/WO-03-statement` |
 | 04 | Flow + Radar page | B | `mod/WO-04-flow` |

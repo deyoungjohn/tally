@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Agent | A (Sonnet / Claude Code cloud session), after or alongside WO-01 (M3). Backup: D (Antigravity) |
+| Agent | A (Sonnet / Claude Code cloud session), free to start (WO-01 no longer holds landing files). Backup: D (Antigravity, currently busy with WO-01 and WO-06) |
 | Branch | `mod/WO-12-ui` for the correction pass, then one slice per screen: `mod/WO-12-ui-portfolio`, `-radar`, `-guardian`, `-receipts`, `-pies` |
 | Read first | `DESIGN.md` (exactly), `AGENTS.md` (UI split), `apps/web/modules/README.md` (view-model contract, from WO-00), each module's `view-model.ts` |
 
@@ -11,7 +11,7 @@
 - `apps/web/app/**` except `apps/web/app/api/modules/**` (WO-00) and `apps/web/app/dev/**` (module previews)
 - `apps/web/components/**` except `apps/web/components/module-boundary.tsx` (WO-00)
 - `apps/web/app/globals.css`, design tokens, `apps/web/e2e/*.spec.ts` for the pages you build
-- WO-01 M3 follow-up owns its explicitly listed event and landing files until it merges; do not edit those concurrently. The M3 base is already on main.
+- Landing files (`apps/web/app/page.tsx`, `apps/web/components/home/**`, `apps/web/e2e/home.spec.ts`): moved here from WO-01 on 2026-10-04. WO-01 (D) still owns `apps/web/components/trade/use-trade-flow.ts`, `trade-stages*` and `e2e/trade.spec.ts` until it merges; do not edit those concurrently.
 
 ## Rules
 
@@ -23,7 +23,7 @@
 ## Tasks, in order
 
 1. **Correction pass** on what exists (landing, M3 screens): the user gives one numbered list with screenshots per pass; fix every item; reply per number with a before/after screenshot.
-2. **Landing**: lead with "Your stocks, in shares" and Portfolio / Radar / Guardian; quote comparison lives on ticker pages.
+2. **Landing** (moved from WO-01): lead with "Your stocks, in shares" and Portfolio / Radar / Guardian; quote comparison lives on ticker pages.
 3. **Portfolio** (from `PortfolioVM`, `StatementVM`, `ActivityVM`, row actions from `SellSheetVM` / `SwitchSheetVM`, `DefiCardVM`): holdings in shares, issuer breakdown, tabs Holdings · Activity · Statement, row actions, DeFi card.
 4. **Radar** (from `RadarVM`, `FlowPanelVM`): grade cards, filters, ticker detail with the flow panel.
 5. **Guardian** (from `AlertFeedVM`, `GuardianSettingsVM`, `AutopilotVM`): feed, rule settings, Telegram link, autopilot caps and decision log.

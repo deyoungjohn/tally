@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Agent | A (Sonnet / Claude Code cloud). Backup: D (Antigravity) if Sonnet's quota runs short; hand over the same branch, never work concurrently. |
+| Agent | D (Antigravity), reassigned from A on 2026-10-04 to save Sonnet's quota for UI. D also holds WO-06 in parallel (user decision): separate worktrees and branches. Backup: A. Hand over the same branch, never two agents on one WO. |
 | Branch | `mod/WO-01-m3-followup` — fresh branch from latest `origin/main`, not the merged M3 branch |
 | Priority | **Urgent, critical path.** Merge as soon as possible; target no later than Tue 6 Oct. WO-02 slice B cannot start until `onStage` is merged. |
 | Read first | `AGENTS.md`, `CLAUDE.md`, `MODULES.md` §1–§3, blueprint §7.6, `DESIGN.md`, WO-02 receipt types and slice B requirements |
@@ -11,31 +11,28 @@
 
 The M3 base from `claude/m3-web-trade-flow` is on main via PR #6 (merge `45ab557`). The ticker/trade UI, Privy sign-in, top-up, plan/approval/re-quote/simulation/sign/receipt flow and error copy are already implemented. Do not rebuild them. This records the merged implementation, not proof that every user-run live check passed.
 
-Only two tasks remain: typed stage events and the landing page lead. The document path is retained so existing references still resolve.
+One task remains: typed stage events. (The landing page lead moved to WO-12 on 2026-10-04.) The document path is retained so existing references still resolve.
 
 ## Owns
 
-Approved 2026-10-04 by the chief engineer, limited to these two tasks:
+Approved 2026-10-04 by the chief engineer, limited to the stage-event task:
 
 - `apps/web/components/trade/use-trade-flow.ts` — additive optional `onStage` integration only; preserve existing transaction behavior.
 - `apps/web/components/trade/trade-stages.ts`, `apps/web/components/trade/trade-stages.test.ts`, `apps/web/components/trade/use-trade-flow.test.ts` — new typed event contract, helpers and unit tests.
-- `apps/web/app/page.tsx`, `apps/web/components/home/parts.tsx`, `apps/web/components/home/hero-actions.tsx` — landing lead only; no changes to embedded buy behavior.
-- `apps/web/e2e/trade.spec.ts`, `apps/web/e2e/home.spec.ts` — event and landing regression evidence only.
+- `apps/web/e2e/trade.spec.ts` — event regression evidence only.
 
-These files are reserved for WO-01 until it merges; WO-12 resumes ownership afterward. No dependencies approved. If truthful receipt-stage data requires additional engine, DTO or API files, stop and propose the exact additive paths to the orchestrator before editing them.
+These files are reserved for WO-01 until it merges; WO-12 resumes ownership afterward. Landing files (`apps/web/app/page.tsx`, `apps/web/components/home/**`, `apps/web/e2e/home.spec.ts`) belong to WO-12 now. No dependencies approved. If truthful receipt-stage data requires additional engine, DTO or API files, stop and propose the exact additive paths to the orchestrator before editing them.
 
 ## Tasks
 
 1. **Typed `onStage(stage, payload)` events.** Expose intent, quote, simulation, signed and realized from the existing flow so WO-02 slice B can subscribe without editing the producer. Document the subscription entry point and payload contract in the PR. Preserve share/token amounts as bigint or lossless integer strings, correlate events to the same intent/transaction, and retain the observed conversion and provenance available from the plan. Emit simulation evidence only when actually available; missing evidence has a reason, never an invented output. Keep re-quotes and resumed receipts identifiable. An absent subscriber preserves current behavior; a subscriber failure warns and must not alter approval, confirmation or transaction execution. Receipt persistence and reconciliation stay in WO-02.
-2. **Landing page lead.** Lead with "Your stocks, in shares" and Portfolio / Radar / Guardian, following `DESIGN.md`. Quote comparison belongs on ticker pages, not in the hero. Preserve sign-in behavior and feature-flag gating; do not imply unavailable modules are live.
 
 ## Exit checks
 
 - [ ] Unit tests prove all five typed stages, their order and correlation, re-quote handling, resumed receipt handling, and honest missing simulation evidence.
 - [ ] No subscriber and a failing subscriber leave the existing buy behavior intact; failures warn, with tests.
 - [ ] WO-02 can consume the exported contract and subscription entry point without modifying WO-01 files; PR documents the handoff.
-- [ ] Landing screenshots at 375/768/1280 and reduced motion show the new lead and honest flag-off states.
-- [ ] `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm test`, `pnpm build`, `pnpm e2e` and `pnpm e2e:foundation` pass; full review pack includes existing landing, region-gate and trade regressions.
+- [ ] `pnpm typecheck`, `pnpm lint`, `pnpm format:check`, `pnpm test`, `pnpm build`, `pnpm e2e` and `pnpm e2e:foundation` pass; full review pack includes existing landing, region-gate and trade regressions (unchanged by this WO).
 - [ ] Only owned paths changed; no changes to ShareGuard, transaction construction, signing policy, gas, allowance, simulation gates or buy execution semantics.
 
 ## Out of scope
