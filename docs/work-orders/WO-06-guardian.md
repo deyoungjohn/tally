@@ -13,6 +13,8 @@
 - `apps/bot/**` (except `package.json` deps, which WO-00 adds)
 - `apps/worker/src/jobs/guardian.ts`
 - `apps/web/modules/guardian/**`, `apps/web/app/dev/guardian/**`
+- Approved 2026-10-04, **additive only**: workspace dependencies `@tally/engine` and `@tally/core` (`workspace:*`) in `apps/bot/package.json` and the matching `pnpm-lock.yaml` importer lines, for the read-only commands (task 9). No external packages.
+- Reassigned 2026-10-04 from agent E to agent D (Antigravity). Slices ship as separate PRs on the same branch name `mod/WO-06-guardian` (slice B starts fresh from main after slice A merges).
 
 ## Tasks
 
