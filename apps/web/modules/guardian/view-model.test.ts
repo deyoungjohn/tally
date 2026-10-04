@@ -1,4 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+vi.mock("@/components/module-boundary", () => ({ ModuleBoundary: () => null }));
+vi.mock("next/navigation", () => ({ notFound: vi.fn() }));
+import React from "react";
+vi.stubGlobal("React", React);
 import { openStore } from "@tally/modkit";
 import { createLinkCode, type Alert, type GuardianLinkData } from "@tally/mod-guardian";
 import { loadAlertFeed, loadGuardian, loadGuardianSettings } from "./view-model";
@@ -146,5 +150,44 @@ describe("Guardian View Models (apps/web/modules/guardian)", () => {
     expect(vm.state).toBe("ready");
     expect(vm.feed.walletAddress).toBe(wallet);
     expect(vm.settings.walletAddress).toBe(wallet);
+  });
+
+  it("dev preview in production mode ignores ?address= and never shows or issues link code", async () => {
+    const prevNodeEnv = process.env.NODE_ENV;
+    const prevDevPreviews = process.env.TALLY_DEV_PREVIEWS;
+    const prevTestWallet = process.env.TALLY_TEST_WALLET;
+
+    try {
+      (process.env as Record<string, string | undefined>).NODE_ENV = "production";
+      process.env.TALLY_DEV_PREVIEWS = "1";
+      process.env.TALLY_TEST_WALLET = "0xtestwallet";
+
+      const GuardianDevPreview = (await import("../../app/dev/guardian/page")).default;
+      const jsx = await GuardianDevPreview({
+        searchParams: Promise.resolve({ address: "0xvictim" }),
+      });
+
+      // Wallet address rendered on page must NOT be the victim address
+      expect(JSON.stringify(jsx)).not.toContain("0xvictim");
+      expect(JSON.stringify(jsx)).not.toContain("0xtestwallet");
+
+      // Verify that when walletAddress is undefined in production, loadGuardian never returns an active code
+      const store = openStore(":memory:");
+      createLinkCode(store, "0xvictim", 1000); // Existing code for victim
+
+      const vm = await loadGuardian({
+        walletAddress: undefined,
+        store,
+        issueNewLinkCode: true,
+      });
+
+      expect(vm.feed.walletAddress).toBeNull();
+      expect(vm.settings.telegram.activeLinkCode).toBeNull();
+      expect(vm.settings.telegram.linked).toBe(false);
+    } finally {
+      (process.env as Record<string, string | undefined>).NODE_ENV = prevNodeEnv;
+      process.env.TALLY_DEV_PREVIEWS = prevDevPreviews;
+      process.env.TALLY_TEST_WALLET = prevTestWallet;
+    }
   });
 });

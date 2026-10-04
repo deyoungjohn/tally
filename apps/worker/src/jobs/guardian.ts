@@ -3,147 +3,248 @@ import {
   buildTokenStateFromSnapshots,
   deduplicateAlerts,
   DEFAULT_GUARDIAN_SETTINGS,
+  deliverPendingAlerts,
   evaluateHoldingRules,
-  getLinkedChatForWallet,
-  isQuietHours,
-  nextQuietEnd,
+  MAX_STORED_ALERTS_PER_WALLET,
   type Alert,
   type FlowAggregateSubset,
   type FlowGhostSnapshotSubset,
   type GuardianSettings,
   type Issuer,
   type RadarSnapshotSubset,
+  type TelegramDeliverySender,
   type TokenState,
   type TokenStatusState,
   type UserHolding,
 } from "@tally/mod-guardian";
 import type { WorkerJob } from "../runner";
 
+interface RegistryItem {
+  underlyingTicker?: string;
+  tokenContractAddress?: string;
+  issuer?: Issuer | null;
+  decimals?: number;
+  symbol?: string;
+}
+
+interface PortfolioSnapshotData {
+  holdings?: Array<{
+    tokenContractAddress: string;
+    ticker: string;
+    issuer?: Issuer | null;
+    balanceTokens: bigint;
+    balanceShares?: bigint | null;
+    sharesUnavailableReason?: string;
+    isRecognized?: boolean;
+  }>;
+}
+
 /**
  * Worker job for WO-06 Guardian alerts:
  * Evaluates holdings of subscribed users once per minute from snapshots.
  * Writes generated alerts to the SnapshotStore under kind "alerts" (wallet-keyed),
  * ensuring prune protection and strict per-wallet isolation.
- * Dispatches pending alerts to linked Telegram chats if TELEGRAM_BOT_TOKEN is set.
+ * Dispatches pending alerts to linked Telegram chats using unified deliverPendingAlerts.
  */
 export const job: WorkerJob = {
   name: "guardian",
   intervalMs: 60_000, // 1 minute
   async run(ctx) {
+    // 1. Feature flag gate (Finding 11)
+    if (process.env.FEATURE_GUARDIAN !== "1") {
+      return;
+    }
+
     const now = ctx.now();
 
-    // 1. Discover target wallets
-    const activeWalletSnaps = ctx.store.history<{ address: string }>("wallet:active", "bsc", 0, 50);
+    // 2. Discover target wallets from wallet:active (Finding 4)
+    const activeWalletSnaps = ctx.store.history<{ address?: string }>(
+      "wallet:active",
+      "bsc",
+      0,
+      Number.MAX_SAFE_INTEGER,
+    );
     const discoveredAddresses = activeWalletSnaps
-      .map((s) => s.data?.address)
+      .map((s) => s.data?.address?.toLowerCase())
       .filter((addr): addr is string => typeof addr === "string" && addr.startsWith("0x"));
 
     const envWallet = process.env.TALLY_TEST_WALLET;
     const allowTestWallet = envWallet && process.env.NODE_ENV !== "production";
 
-    // Also look up any wallets with active link records
-    const linkedCodes = ctx.store.history<{ walletAddress: string }>(
-      "guardian-link-code",
-      "",
-      0,
-      50,
-    );
-    const linkedAddresses = linkedCodes
-      .map((s) => s.data?.walletAddress)
-      .filter((addr): addr is string => typeof addr === "string" && addr.startsWith("0x"));
-
-    const targetWallets = [
-      ...new Set([
+    const targetWallets = Array.from(
+      new Set([
         ...(allowTestWallet && envWallet ? [envWallet.toLowerCase()] : []),
-        ...discoveredAddresses.map((a) => a.toLowerCase()),
-        ...linkedAddresses.map((a) => a.toLowerCase()),
+        ...discoveredAddresses,
       ]),
-    ];
+    );
 
     if (targetWallets.length === 0) {
       ctx.health.report("guardian", { ok: true, now });
       return;
     }
 
-    // 2. Discover available tickers & registry
-    let knownTickers = ["NVDA", "AAPL", "TSLA", "QQQ", "SPY", "NFLX"];
-    const regSnap = ctx.store.latest<Array<{ underlyingTicker?: string }>>("registry", "bsc", {
+    // 3. Read registry & radar snapshots
+    const regSnap = ctx.store.latest<RegistryItem[]>("registry", "bsc", {
       maxAgeMs: 600_000,
       now,
     });
-    if (regSnap?.data && Array.isArray(regSnap.data)) {
-      const set = new Set<string>();
-      for (const r of regSnap.data) {
-        if (r.underlyingTicker) set.add(r.underlyingTicker.toUpperCase());
+    const registryItems: RegistryItem[] = Array.isArray(regSnap?.data) ? regSnap.data : [];
+    const registryByAddress = new Map<string, RegistryItem>();
+    for (const item of registryItems) {
+      if (item.tokenContractAddress) {
+        registryByAddress.set(item.tokenContractAddress.toLowerCase(), item);
       }
-      if (set.size > 0) knownTickers = Array.from(set);
     }
 
-    // Read radar snapshot for integrity grades and ghost checks
     const radarSnap = ctx.store.latest<{ rows?: RadarSnapshotSubset[] }>("radar", "bsc", {
       maxAgeMs: 600_000,
       now,
     });
     const radarRows: RadarSnapshotSubset[] = radarSnap?.data?.rows ?? [];
 
-    const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
+    // 4. Collect holdings for all target wallets (Finding 5: read snapshot holdings only, no floats)
+    const holdingsByWallet = new Map<string, UserHolding[]>();
+    const allUniqueTokenAddresses = new Set<string>();
 
     for (const wallet of targetWallets) {
-      // 3. Obtain user holdings
-      const holdings: UserHolding[] = [];
+      const portSnap =
+        ctx.store.latest<PortfolioSnapshotData>("portfolio", wallet, {
+          maxAgeMs: 86_400_000,
+          now,
+        }) ??
+        ctx.store.latest<PortfolioSnapshotData>("statement", wallet, {
+          maxAgeMs: 86_400_000,
+          now,
+        });
 
-      // Try reading latest statement or portfolio snapshot first
-      const stmtSnap = ctx.store.latest<{
-        lines?: Array<{
-          tokenContractAddress?: string;
-          amountTokens?: unknown;
-          ticker: string;
-          issuer?: string;
-          rawTokens?: string;
-          rawShares?: string;
-        }>;
-      }>("statement", wallet, { maxAgeMs: 600_000, now });
-      if (stmtSnap?.data?.lines && Array.isArray(stmtSnap.data.lines)) {
-        for (const line of stmtSnap.data.lines) {
-          if (line.tokenContractAddress && line.amountTokens) {
-            holdings.push({
-              walletAddress: wallet,
-              tokenAddress: line.tokenContractAddress.toLowerCase(),
-              ticker: line.ticker,
-              issuer: (line.issuer ?? "bstock").toLowerCase() as Issuer,
-              tokens: BigInt(line.rawTokens ?? "0"),
-              shares: BigInt(line.rawShares ?? "0"),
-            });
-          }
+      const rawHoldings = portSnap?.data?.holdings ?? [];
+      const walletHoldings: UserHolding[] = [];
+
+      for (const item of rawHoldings) {
+        if (!item.tokenContractAddress || item.balanceTokens <= 0n || item.isRecognized === false) {
+          continue;
+        }
+
+        const tokenAddr = item.tokenContractAddress.toLowerCase();
+        const regItem = registryByAddress.get(tokenAddr);
+        const issuer = item.issuer ?? regItem?.issuer ?? null;
+
+        if (!issuer) {
+          ctx.onWarn(`Skipping holding for ${item.ticker} (${tokenAddr}): unknown issuer`);
+          continue;
+        }
+
+        if (item.balanceShares == null) {
+          ctx.onWarn(
+            `Shares unavailable for ${item.ticker} (${tokenAddr}): ${item.sharesUnavailableReason ?? "multiplier unknown"}`,
+          );
+          continue; // Skip holding for share-based rules
+        }
+
+        walletHoldings.push({
+          walletAddress: wallet,
+          tokenAddress: tokenAddr,
+          ticker: item.ticker,
+          issuer,
+          tokens: item.balanceTokens,
+          shares: item.balanceShares,
+        });
+        allUniqueTokenAddresses.add(tokenAddr);
+      }
+
+      if (walletHoldings.length > 0) {
+        holdingsByWallet.set(wallet, walletHoldings);
+      }
+    }
+
+    // 5. Build token states once for all tokens across this run (Finding 3, Finding 6)
+    const prevStatesByToken = new Map<string, TokenState | null>();
+    const nextStatesByToken = new Map<string, TokenState>();
+    let warnedPauseThisRun = false;
+
+    for (const tokenAddr of allUniqueTokenAddresses) {
+      const prevStateSnap = ctx.store.latest<TokenState>("guardian-state", tokenAddr, {
+        maxAgeMs: 86_400_000,
+        now,
+      });
+      prevStatesByToken.set(tokenAddr, prevStateSnap?.data ?? null);
+
+      const statusSnap = ctx.store.latest<TokenStatusState>("status", tokenAddr, {
+        maxAgeMs: 120_000,
+        now,
+      });
+      const multSnap = ctx.store.latest<{ value?: string | bigint }>("multiplier", tokenAddr, {
+        maxAgeMs: 300_000,
+        now,
+      });
+      const ghostSnap = ctx.store.latest<FlowGhostSnapshotSubset>("flow-ghost", tokenAddr, {
+        maxAgeMs: 300_000,
+        now,
+      });
+      const flowSnap = ctx.store.latest<FlowAggregateSubset>("flow-aggregate", tokenAddr, {
+        maxAgeMs: 300_000,
+        now,
+      });
+      const priceSnap = ctx.store.latest<{ tokenPrice?: string | number }>("price", tokenAddr, {
+        maxAgeMs: 60_000,
+        now,
+      });
+
+      const radarRow = radarRows.find((r) => r.address && r.address.toLowerCase() === tokenAddr);
+      const regItem = registryByAddress.get(tokenAddr);
+
+      // Finding 6: bStock pause read is not yet active onchain; unknown stays null, warn once per run
+      let isPausedOnchain: boolean | null = null;
+      if (regItem?.issuer === "bstock") {
+        isPausedOnchain = null;
+        if (!warnedPauseThisRun) {
+          ctx.onWarn(
+            "bStock on-chain pause check is not active (no chain.isPaused port configured)",
+          );
+          warnedPauseThisRun = true;
         }
       }
 
-      // If no holdings in snapshot, query engine portfolio
-      if (holdings.length === 0) {
-        try {
-          const report = await ctx.engine.portfolio(wallet as `0x${string}`, knownTickers);
-          for (const group of report.groups) {
-            for (const part of group.parts) {
-              holdings.push({
-                walletAddress: wallet,
-                tokenAddress: part.address.toLowerCase(),
-                ticker: part.ticker,
-                issuer: part.issuer,
-                tokens: BigInt(Math.round(part.tokens * 1e18)),
-                shares: BigInt(Math.round(part.shares * 1e18)),
-              });
-            }
-          }
-        } catch (err) {
-          ctx.onWarn(`Failed to query portfolio for wallet ${wallet}: ${err}`);
+      const nextState = buildTokenStateFromSnapshots({
+        tokenAddress: tokenAddr,
+        ticker: regItem?.underlyingTicker ?? radarRow?.ticker ?? "UNKNOWN",
+        issuer: regItem?.issuer ?? "bstock",
+        observedAt: now,
+        rawStatus: statusSnap?.data,
+        rawMultiplier: multSnap?.data?.value ? BigInt(multSnap.data.value) : undefined,
+        rawRadar: radarRow,
+        rawFlowGhost: ghostSnap?.data,
+        rawFlowAggregate: flowSnap?.data,
+        isFlowGhostStale: ghostSnap?.stale ?? false,
+        sharePriceUsd: priceSnap?.data?.tokenPrice ? Number(priceSnap.data.tokenPrice) : undefined,
+        isPausedOnchain,
+        onWarn: ctx.onWarn,
+      });
+
+      nextStatesByToken.set(tokenAddr, nextState);
+    }
+
+    // 6. Evaluate holding rules per wallet against consistent run snapshot (Finding 3)
+    const deliveryErrors: string[] = [];
+    const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
+
+    const sender: TelegramDeliverySender = {
+      async sendMessage(chatId, text) {
+        if (!telegramToken) {
+          throw new Error("Missing TELEGRAM_BOT_TOKEN");
         }
-      }
+        const res = await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: chatId, text }),
+        });
+        if (!res.ok) {
+          throw new Error(`Telegram API responded with ${res.status}: ${await res.text()}`);
+        }
+      },
+    };
 
-      if (holdings.length === 0) {
-        continue;
-      }
-
-      // Read user Guardian settings
+    for (const [wallet, holdings] of holdingsByWallet.entries()) {
       const settingsSnap = ctx.store.latest<GuardianSettings>("guardian-settings", wallet, {
         maxAgeMs: 365 * 86_400_000,
         now,
@@ -157,79 +258,10 @@ export const job: WorkerJob = {
 
       for (const holding of holdings) {
         const tokenAddr = holding.tokenAddress.toLowerCase();
+        const prevState = prevStatesByToken.get(tokenAddr) ?? null;
+        const nextState = nextStatesByToken.get(tokenAddr);
+        if (!nextState) continue;
 
-        // Query token snapshot facts
-        const statusSnap = ctx.store.latest<TokenStatusState>("status", tokenAddr, {
-          maxAgeMs: 120_000,
-          now,
-        });
-        const multSnap = ctx.store.latest<{ value?: string | bigint }>("multiplier", tokenAddr, {
-          maxAgeMs: 300_000,
-          now,
-        });
-        const ghostSnap = ctx.store.latest<FlowGhostSnapshotSubset>("flow-ghost", tokenAddr, {
-          maxAgeMs: 300_000,
-          now,
-        });
-        const flowSnap = ctx.store.latest<FlowAggregateSubset>("flow-aggregate", tokenAddr, {
-          maxAgeMs: 300_000,
-          now,
-        });
-        const priceSnap = ctx.store.latest<{ tokenPrice?: string | number }>("price", tokenAddr, {
-          maxAgeMs: 60_000,
-          now,
-        });
-
-        // Find radar row
-        const radarRow = radarRows.find((r) => r.address && r.address.toLowerCase() === tokenAddr);
-
-        // Async bStock onchain pause resolution
-        let isPausedOnchain: boolean | null = null;
-        if (holding.issuer === "bstock") {
-          try {
-            const chainPort = ctx.engine.ports.chain as
-              { isPaused?: (addr: string) => Promise<boolean> } | undefined;
-            if (typeof chainPort?.isPaused === "function") {
-              isPausedOnchain = await chainPort.isPaused(tokenAddr);
-            } else {
-              const onchainSnap = ctx.store.latest<boolean>("onchain-pause", tokenAddr, {
-                maxAgeMs: 60_000,
-                now,
-              });
-              isPausedOnchain = onchainSnap?.data ?? false;
-            }
-          } catch (err) {
-            ctx.onWarn(`On-chain pause check failed for ${holding.ticker} (${tokenAddr}): ${err}`);
-            isPausedOnchain = null;
-          }
-        }
-
-        const nextState = buildTokenStateFromSnapshots({
-          tokenAddress: tokenAddr,
-          ticker: holding.ticker,
-          issuer: holding.issuer,
-          observedAt: now,
-          rawStatus: statusSnap?.data,
-          rawMultiplier: multSnap?.data?.value ? BigInt(multSnap.data.value) : undefined,
-          rawRadar: radarRow,
-          rawFlowGhost: ghostSnap?.data,
-          rawFlowAggregate: flowSnap?.data,
-          isFlowGhostStale: ghostSnap?.stale ?? false,
-          sharePriceUsd: priceSnap?.data?.tokenPrice
-            ? Number(priceSnap.data.tokenPrice)
-            : undefined,
-          isPausedOnchain,
-          onWarn: ctx.onWarn,
-        });
-
-        // Read previous state
-        const prevStateSnap = ctx.store.latest<TokenState>("guardian-state", tokenAddr, {
-          maxAgeMs: 86_400_000,
-          now,
-        });
-        const prevState = prevStateSnap?.data ?? null;
-
-        // Evaluate holding rules
         const evaluatedAlerts = evaluateHoldingRules(
           ALL_RULES,
           prevState,
@@ -241,18 +273,9 @@ export const job: WorkerJob = {
         );
 
         walletGeneratedAlerts.push(...evaluatedAlerts);
-
-        // Save current token state for next evaluation cycle
-        ctx.store.put({
-          kind: "guardian-state",
-          key: tokenAddr,
-          data: nextState,
-          source: "guardian",
-          observedAt: now,
-        });
       }
 
-      // 4. Deduplicate and record alerts
+      // Deduplicate new alerts against existing history
       const prevAlertsSnap = ctx.store.latest<Alert[]>("alerts", wallet, {
         maxAgeMs: 30 * 86_400_000,
         now,
@@ -265,50 +288,57 @@ export const job: WorkerJob = {
         settings.cooldownMs ?? 86_400_000,
       );
 
-      // Check quiet hours
-      const inQuiet = isQuietHours(now, settings.quietHours);
-      for (const alert of newAlerts) {
-        if (inQuiet) {
-          alert.deliverAt = nextQuietEnd(now, settings.quietHours);
-        }
+      // Combine and cap alert list (Finding 12)
+      let combinedAlerts = [...alertHistory, ...newAlerts];
+      if (combinedAlerts.length > MAX_STORED_ALERTS_PER_WALLET) {
+        combinedAlerts = combinedAlerts.slice(-MAX_STORED_ALERTS_PER_WALLET);
       }
 
-      if (newAlerts.length > 0) {
-        const updatedAlerts = [...alertHistory, ...newAlerts];
+      // Deliver undelivered alerts via unified delivery function (Finding 7)
+      if (combinedAlerts.length > 0) {
+        const deliveryResult = await deliverPendingAlerts(
+          sender,
+          combinedAlerts,
+          ctx.store,
+          now,
+          ctx.onWarn,
+        );
+
+        if (deliveryResult.errors.length > 0) {
+          deliveryErrors.push(...deliveryResult.errors);
+        }
+
+        // Persist updated alerts with delivery tracking (deliveredAt, attempts)
         ctx.store.put({
           kind: "alerts",
           key: wallet,
-          data: updatedAlerts,
+          data: deliveryResult.updatedAlerts,
           source: "guardian",
           observedAt: now,
         });
       }
-
-      // 5. Telegram delivery dispatch (if linked)
-      const linkedChat = getLinkedChatForWallet(ctx.store, wallet, now);
-      if (linkedChat && linkedChat.alertsEnabled && telegramToken) {
-        // Pending alerts ready to deliver
-        const pendingToDeliver = newAlerts.filter((a) => !a.deliverAt || now >= a.deliverAt);
-        for (const alert of pendingToDeliver) {
-          try {
-            const icon =
-              alert.severity === "critical" ? "🚨" : alert.severity === "warning" ? "⚠️" : "ℹ️";
-            const text = `${icon} *Guardian Alert: ${alert.title}*\n\n${alert.body}\n\n_Evidence: ${alert.evidence.snapshotKind} snapshot (${new Date(alert.evidence.observedAt).toISOString()})_`;
-            const res = await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ chat_id: linkedChat.chatId, text, parse_mode: "Markdown" }),
-            });
-            if (!res.ok) {
-              ctx.onWarn(`Telegram API responded with ${res.status}: ${await res.text()}`);
-            }
-          } catch (err) {
-            ctx.onWarn(`Telegram delivery failed for wallet ${wallet}: ${err}`);
-          }
-        }
-      }
     }
 
-    ctx.health.report("guardian", { ok: true, now });
+    // 7. Persist updated token states AFTER all wallets are evaluated (Finding 3)
+    for (const [tokenAddr, nextState] of nextStatesByToken.entries()) {
+      ctx.store.put({
+        kind: "guardian-state",
+        key: tokenAddr,
+        data: nextState,
+        source: "guardian",
+        observedAt: now,
+      });
+    }
+
+    // 8. Report health (Finding 7: report error in health if delivery failed)
+    if (deliveryErrors.length > 0) {
+      ctx.health.report("guardian", {
+        ok: false,
+        error: `Telegram delivery failed: ${deliveryErrors.slice(0, 3).join("; ")}`,
+        now,
+      });
+    } else {
+      ctx.health.report("guardian", { ok: true, now });
+    }
   },
 };

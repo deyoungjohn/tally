@@ -1,6 +1,5 @@
 import { Bot } from "grammy";
 import type { Engine } from "@tally/engine";
-import { isQuietHours, type Alert, type GuardianLinkData } from "@tally/mod-guardian";
 import type { ModuleHealth, SnapshotStore } from "@tally/modkit";
 import {
   handleAlerts,
@@ -40,10 +39,11 @@ export function createBot(token: string, deps: BotDependencies): Bot {
       store: deps.store,
       engine: deps.engine,
       chatId: ctx.chat.id,
+      chatType: ctx.chat.type,
       now,
       onWarn: deps.onWarn,
     });
-    await ctx.reply(text, { parse_mode: "Markdown" });
+    await ctx.reply(text);
   });
 
   bot.command("link", async (ctx) => {
@@ -51,10 +51,11 @@ export function createBot(token: string, deps: BotDependencies): Bot {
       store: deps.store,
       engine: deps.engine,
       chatId: ctx.chat.id,
+      chatType: ctx.chat.type,
       now,
       onWarn: deps.onWarn,
     });
-    await ctx.reply(text, { parse_mode: "Markdown" });
+    await ctx.reply(text);
   });
 
   bot.command("alerts", async (ctx) => {
@@ -62,10 +63,11 @@ export function createBot(token: string, deps: BotDependencies): Bot {
       store: deps.store,
       engine: deps.engine,
       chatId: ctx.chat.id,
+      chatType: ctx.chat.type,
       now,
       onWarn: deps.onWarn,
     });
-    await ctx.reply(text, { parse_mode: "Markdown" });
+    await ctx.reply(text);
   });
 
   bot.command("quiet", async (ctx) => {
@@ -73,10 +75,11 @@ export function createBot(token: string, deps: BotDependencies): Bot {
       store: deps.store,
       engine: deps.engine,
       chatId: ctx.chat.id,
+      chatType: ctx.chat.type,
       now,
       onWarn: deps.onWarn,
     });
-    await ctx.reply(text, { parse_mode: "Markdown" });
+    await ctx.reply(text);
   });
 
   bot.command("quote", async (ctx) => {
@@ -84,10 +87,11 @@ export function createBot(token: string, deps: BotDependencies): Bot {
       store: deps.store,
       engine: deps.engine,
       chatId: ctx.chat.id,
+      chatType: ctx.chat.type,
       now,
       onWarn: deps.onWarn,
     });
-    await ctx.reply(text, { parse_mode: "Markdown" });
+    await ctx.reply(text);
   });
 
   bot.command("shares", async (ctx) => {
@@ -96,10 +100,11 @@ export function createBot(token: string, deps: BotDependencies): Bot {
       engine: deps.engine,
       sharesOf: deps.sharesOf ?? (deps.engine as unknown as { sharesOf?: SharesOfPort }).sharesOf,
       chatId: ctx.chat.id,
+      chatType: ctx.chat.type,
       now,
       onWarn: deps.onWarn,
     });
-    await ctx.reply(text, { parse_mode: "Markdown" });
+    await ctx.reply(text);
   });
 
   bot.command("shield", async (ctx) => {
@@ -107,10 +112,11 @@ export function createBot(token: string, deps: BotDependencies): Bot {
       store: deps.store,
       engine: deps.engine,
       chatId: ctx.chat.id,
+      chatType: ctx.chat.type,
       now,
       onWarn: deps.onWarn,
     });
-    await ctx.reply(text, { parse_mode: "Markdown" });
+    await ctx.reply(text);
   });
 
   bot.command("help", async (ctx) => {
@@ -122,109 +128,22 @@ export function createBot(token: string, deps: BotDependencies): Bot {
       store: deps.store,
       engine: deps.engine,
       chatId: ctx.chat.id,
+      chatType: ctx.chat.type,
       now,
       onWarn: deps.onWarn,
     });
-    await ctx.reply(text, { parse_mode: "Markdown" });
+    await ctx.reply(text);
   });
 
   return bot;
 }
 
-export interface TelegramDeliverySender {
-  sendMessage(
-    chatId: number | string,
-    text: string,
-    other?: { parse_mode?: string },
-  ): Promise<unknown>;
-}
-
-export interface DeliverAlertsResult {
-  attempted: number;
-  delivered: number;
-  failed: number;
-  suppressedByQuiet: number;
-  errors: string[];
-}
-
-/**
- * Formats a plain-text Telegram alert message from an Alert object.
- */
-export function formatTelegramAlert(alert: Alert): string {
-  const icon = alert.severity === "critical" ? "🚨" : alert.severity === "warning" ? "⚠️" : "ℹ️";
-  const lines = [
-    `${icon} *Guardian Alert: ${alert.title}*`,
-    "",
-    alert.body,
-    "",
-    `_Evidence: ${alert.evidence.snapshotKind} snapshot (${new Date(alert.evidence.observedAt).toISOString()})_`,
-  ];
-  return lines.join("\n");
-}
-
-/**
- * Delivers pending alerts to linked Telegram chats.
- * Invariant: If delivery fails (e.g. Telegram down or network drop),
- * the error is reported via onWarn and health, but the alerts remain
- * stored in the snapshot store for the web feed and future delivery.
- */
-export async function deliverPendingAlerts(
-  sender: TelegramDeliverySender,
-  alerts: readonly Alert[],
-  store: SnapshotStore,
-  now = Date.now(),
-  onWarn = (_msg: string) => {},
-): Promise<DeliverAlertsResult> {
-  const result: DeliverAlertsResult = {
-    attempted: 0,
-    delivered: 0,
-    failed: 0,
-    suppressedByQuiet: 0,
-    errors: [],
-  };
-
-  for (const alert of alerts) {
-    const wallet = alert.walletAddress.toLowerCase();
-    const linkSnap = store.latest<GuardianLinkData>("guardian-link", wallet, {
-      maxAgeMs: 365 * 86_400_000,
-      now,
-    });
-
-    if (!linkSnap?.data || !linkSnap.data.alertsEnabled) {
-      continue; // Not linked or alerts disabled
-    }
-
-    const { chatId, quietHours } = linkSnap.data;
-
-    // Check quiet hours
-    if (isQuietHours(now, quietHours)) {
-      result.suppressedByQuiet++;
-      continue;
-    }
-
-    // If alert has a scheduled deliverAt from a previous quiet hours window,
-    // only deliver once that window has passed
-    if (alert.deliverAt && now < alert.deliverAt) {
-      result.suppressedByQuiet++;
-      continue;
-    }
-
-    result.attempted++;
-    const message = formatTelegramAlert(alert);
-
-    try {
-      await sender.sendMessage(chatId, message, { parse_mode: "Markdown" });
-      result.delivered++;
-    } catch (err) {
-      result.failed++;
-      const errMsg = err instanceof Error ? err.message : String(err);
-      result.errors.push(errMsg);
-      onWarn(`Failed to deliver Telegram alert to chat ${chatId}: ${errMsg}`);
-    }
-  }
-
-  return result;
-}
+export {
+  deliverPendingAlerts,
+  formatTelegramAlert,
+  type TelegramDeliverySender,
+  type DeliverAlertsResult,
+} from "@tally/mod-guardian";
 
 /**
  * Verifies whether the Telegram bot is configured and reports to health.

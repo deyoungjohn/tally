@@ -174,4 +174,43 @@ describe("Link Code Protocol (link.ts)", () => {
     expect(getLinkedWalletForChat(store, 123456, now + 5000)?.quietHours).toEqual(quiet);
     expect(getLinkedChatForWallet(store, "0xwallet1", now + 5000)?.quietHours).toEqual(quiet);
   });
+
+  it("revokes previous active code when generating a new code for the same wallet (Finding 12)", () => {
+    const store = new MemorySnapshotStore();
+    const now = 1_000_000;
+    const wallet = "0x2Bf7EdF53bc6BE6FF98F149387F3818cE28d2930";
+
+    const { code: code1 } = createLinkCode(store, wallet, now);
+    const snap1 = store.latest<GuardianLinkCodeData>("guardian-link-code", code1, {
+      maxAgeMs: 60_000,
+      now: now + 1000,
+    });
+    expect(snap1?.data?.status).toBe("active");
+
+    // Create second code
+    const { code: code2 } = createLinkCode(store, wallet, now + 2000);
+    const snap1After = store.latest<GuardianLinkCodeData>("guardian-link-code", code1, {
+      maxAgeMs: 60_000,
+      now: now + 3000,
+    });
+    expect(snap1After?.data?.status).toBe("consumed");
+
+    const snap2 = store.latest<GuardianLinkCodeData>("guardian-link-code", code2, {
+      maxAgeMs: 60_000,
+      now: now + 3000,
+    });
+    expect(snap2?.data?.status).toBe("active");
+  });
+
+  it("registers wallet into wallet:active snapshot upon successful link (Finding 4)", () => {
+    const store = new MemorySnapshotStore();
+    const now = 1_000_000;
+    const wallet = "0x2Bf7EdF53bc6BE6FF98F149387F3818cE28d2930";
+
+    const { code } = createLinkCode(store, wallet, now);
+    consumeLinkCode(store, code, 777111, now + 5000);
+
+    const history = store.history<{ address: string }>("wallet:active", "bsc", 0, 50);
+    expect(history.some((h) => h.data?.address === wallet.toLowerCase())).toBe(true);
+  });
 });

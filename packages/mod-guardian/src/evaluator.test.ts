@@ -359,4 +359,65 @@ describe("Price Threshold Settings Integration (finding 5)", () => {
     expect(alerts[0]!.title).toBe("NVDA fell below $120.00");
     expect(alerts[0]!.walletAddress).toBe(mockHolding.walletAddress.toLowerCase());
   });
+
+  // Finding 3: Two wallets holding same token both receive alerts against previous state
+  it("evaluates multiple wallets against the same previous state so second wallet never misses transition", () => {
+    const rule = new PriceThresholdRule();
+    const prev: TokenState = {
+      tokenAddress: "0xnvdaonaddress",
+      ticker: "NVDA",
+      issuer: "ondo",
+      status: null,
+      multiplier: 10n ** 18n,
+      grade: "A",
+      gradeReasons: [],
+      ghost: false,
+      sharePriceUsd: 130,
+      session: "regular",
+      observedAt: 1000,
+      isPausedOnchain: null,
+    };
+
+    const next: TokenState = {
+      ...prev,
+      sharePriceUsd: 110,
+      observedAt: 2000,
+    };
+
+    const holdingWallet1: UserHolding = {
+      walletAddress: "0x1111111111111111111111111111111111111111",
+      tokenAddress: "0xnvdaonaddress",
+      ticker: "NVDA",
+      issuer: "ondo",
+      tokens: 10n * 10n ** 18n,
+      shares: 10n * 10n ** 18n,
+    };
+
+    const holdingWallet2: UserHolding = {
+      walletAddress: "0x2222222222222222222222222222222222222222",
+      tokenAddress: "0xnvdaonaddress",
+      ticker: "NVDA",
+      issuer: "ondo",
+      tokens: 20n * 10n ** 18n,
+      shares: 20n * 10n ** 18n,
+    };
+
+    const ports = {
+      priceThresholds: {
+        "0xnvdaonaddress": { minPriceUsd: 120 },
+      },
+    };
+
+    // Both wallets are evaluated using the token's prev and next state
+    const alerts1 = evaluateHoldingRules([rule], prev, next, holdingWallet1, ports);
+    const alerts2 = evaluateHoldingRules([rule], prev, next, holdingWallet2, ports);
+
+    expect(alerts1).toHaveLength(1);
+    expect(alerts1[0]!.walletAddress).toBe(holdingWallet1.walletAddress.toLowerCase());
+    expect(alerts1[0]!.title).toContain("fell below $120.00");
+
+    expect(alerts2).toHaveLength(1);
+    expect(alerts2[0]!.walletAddress).toBe(holdingWallet2.walletAddress.toLowerCase());
+    expect(alerts2[0]!.title).toContain("fell below $120.00");
+  });
 });

@@ -43,6 +43,29 @@ export function createLinkCode(
   const expiresAt = now + LINK_CODE_TTL_MS;
   const normalizedWallet = walletAddress.toLowerCase();
 
+  // Revoke previous active link code for this wallet if one exists (Finding 12)
+  const prevActiveSnap = store.latest<GuardianLinkCodeData>(
+    "guardian-active-code",
+    normalizedWallet,
+    {
+      maxAgeMs: LINK_CODE_TTL_MS * 2,
+      now,
+    },
+  );
+  if (prevActiveSnap?.data && prevActiveSnap.data.status === "active") {
+    store.put({
+      kind: "guardian-link-code",
+      key: prevActiveSnap.data.code,
+      data: {
+        ...prevActiveSnap.data,
+        status: "consumed",
+        consumedAt: now,
+      },
+      source: "guardian-link",
+      observedAt: now,
+    });
+  }
+
   const record: GuardianLinkCodeData = {
     code,
     walletAddress: normalizedWallet,
@@ -213,6 +236,15 @@ export function consumeLinkCode(
     kind: "guardian-chat",
     key: chatKey,
     data: chatData,
+    source: "guardian-link",
+    observedAt: now,
+  });
+
+  // Write active wallet entry for background workers/jobs discovery (Finding 4)
+  store.put({
+    kind: "wallet:active",
+    key: "bsc",
+    data: { address: codeData.walletAddress },
     source: "guardian-link",
     observedAt: now,
   });

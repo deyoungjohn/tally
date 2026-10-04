@@ -1,12 +1,22 @@
 import { ModuleBoundary } from "@/components/module-boundary";
 import { loadGuardian } from "./view-model";
 
-export function GuardianPlain({ walletAddress }: { walletAddress?: string } = {}) {
+export function GuardianPlain({
+  walletAddress,
+  issueNewLinkCode = false,
+}: {
+  walletAddress?: string;
+  issueNewLinkCode?: boolean;
+} = {}) {
   return (
     <ModuleBoundary
       module="guardian"
       load={async () => {
-        const vm = await loadGuardian({ walletAddress });
+        const canIssueCode = process.env.NODE_ENV !== "production" && Boolean(issueNewLinkCode);
+        const vm = await loadGuardian({
+          walletAddress,
+          issueNewLinkCode: canIssueCode,
+        });
 
         if (vm.state === "error") {
           return (

@@ -294,6 +294,7 @@ export async function loadGuardian(opts?: {
   walletAddress?: string;
   store?: SnapshotStore;
   now?: number;
+  issueNewLinkCode?: boolean;
 }): Promise<GuardianViewModel> {
   const [feed, settings] = await Promise.all([loadAlertFeed(opts), loadGuardianSettings(opts)]);
 

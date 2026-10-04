@@ -20,9 +20,14 @@ export interface Alert {
   body: string;
   direction?: "min" | "max";
   deliverAt?: number;
+  deliveredAt?: number;
+  deliveryAttempts?: number;
+  lastDeliveryError?: string;
   evidence: AlertEvidence;
   createdAt: number;
 }
+
+export const MAX_STORED_ALERTS_PER_WALLET = 200;
 
 export interface GuardianLinkCodeData {
   code: string;

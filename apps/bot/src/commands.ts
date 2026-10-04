@@ -22,13 +22,67 @@ export interface SharesHolding {
   decimals?: number;
 }
 
-export type SharesOfPort = (address: string) => Promise<SharesHolding[]>;
+export interface SharesReportRow {
+  ticker: string;
+  symbol: string;
+  issuer: string;
+  tokenAddress?: string;
+  balance: bigint;
+  shares: bigint | null;
+  multiplier?: bigint | null;
+  reason?: string;
+  decimals?: number;
+}
+
+export interface SharesReport {
+  rows: SharesReportRow[];
+  groups?: Array<{
+    ticker: string;
+    shares: bigint | null;
+    rows: SharesReportRow[];
+  }>;
+}
+
+export type SharesOfPort = (address: string) => Promise<SharesReport | SharesHolding[] | unknown>;
+
+/** Redacts URLs and potential credentials from error strings (Finding 8) */
+export function redactSecrets(text: string): string {
+  return text.replace(/https?:\/\/[^\s"'<>]+/gi, "[redacted url]");
+}
+
+/** Adapts WO-05 SharesReport or raw SharesHolding[] into handler shape (Finding 9) */
+export function adaptSharesReport(data: unknown): SharesHolding[] {
+  if (Array.isArray(data)) {
+    return data as SharesHolding[];
+  }
+  if (
+    data &&
+    typeof data === "object" &&
+    "rows" in data &&
+    Array.isArray((data as { rows: unknown[] }).rows)
+  ) {
+    const report = data as SharesReport;
+    return report.rows.map((r) => ({
+      ticker: r.ticker,
+      symbol: r.symbol,
+      issuer: r.issuer,
+      tokenAddress: r.tokenAddress,
+      tokensRaw: r.balance,
+      sharesRaw: r.shares,
+      multiplierRaw: r.multiplier ?? null,
+      unavailableReason: r.reason,
+      decimals: r.decimals ?? 18,
+    }));
+  }
+  return [];
+}
 
 export interface BotContext {
   store: SnapshotStore;
   engine: Engine;
   now?: () => number;
   chatId: number | string;
+  chatType?: string;
   text?: string;
   onWarn?: (message: string) => void;
   /** Injected port for reading holdings in bigint 1e18 shares for arbitrary addresses (wires to WO-05 engine.sharesOf once merged) */
@@ -121,6 +175,10 @@ export async function handleStart(args: string, ctx: BotContext): Promise<string
 }
 
 export async function handleLink(args: string, ctx: BotContext): Promise<string> {
+  if (ctx.chatType && ctx.chatType !== "private") {
+    return "❌ Linking your wallet is only permitted in private direct messages with the bot.";
+  }
+
   const code = args.trim();
   if (!code) {
     return [
@@ -278,11 +336,12 @@ export async function handleQuote(args: string, ctx: BotContext): Promise<string
 
     return lines.join("\n").trim();
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes("Unknown ticker") || msg.includes("not found")) {
+    const rawMsg = err instanceof Error ? err.message : String(err);
+    if (rawMsg.includes("Unknown ticker") || rawMsg.includes("not found")) {
       return `❌ Unknown ticker "${ticker}" on BNB Chain.`;
     }
-    return `❌ Failed to quote ${ticker}: ${msg}`;
+    ctx.onWarn?.(`Quote error: ${redactSecrets(rawMsg)}`);
+    return "❌ Data is unavailable right now.";
   }
 }
 
@@ -329,89 +388,62 @@ export async function handleShares(
   const port =
     sharesOfPort ?? ctx.sharesOf ?? (ctx.engine as unknown as { sharesOf?: SharesOfPort }).sharesOf;
 
-  if (typeof port === "function") {
-    try {
-      const holdings = await port(address);
-      const lines: string[] = [`💼 *Portfolio Holdings in Shares*`, `Wallet: \`${address}\``, ""];
-
-      if (holdings.length === 0) {
-        lines.push("No tokenized stock holdings found for this wallet.");
-        return lines.join("\n");
-      }
-
-      // Group holdings by underlying ticker
-      const byTicker = new Map<string, SharesHolding[]>();
-      for (const h of holdings) {
-        const list = byTicker.get(h.ticker) ?? [];
-        list.push(h);
-        byTicker.set(h.ticker, list);
-      }
-
-      for (const [ticker, items] of byTicker.entries()) {
-        const knownShares = items.filter(
-          (it): it is SharesHolding & { sharesRaw: bigint } => it.sharesRaw !== null,
-        );
-        const totalSharesRaw = knownShares.reduce((acc, it) => acc + it.sharesRaw, 0n);
-        const hasUnknown = items.some((it) => it.sharesRaw === null);
-
-        const totalStr = hasUnknown
-          ? `${formatUnits(totalSharesRaw, 18, 4)}* (some issuers unavailable)`
-          : `${formatUnits(totalSharesRaw, 18, 4)} total shares`;
-
-        lines.push(`*${ticker}*: \`${totalStr}\``);
-
-        for (const it of items) {
-          const issuerStr = it.issuer.toUpperCase();
-          if (it.sharesRaw === null) {
-            lines.push(
-              `  • ${it.symbol} (${issuerStr}): shares unavailable (${it.unavailableReason ?? "multiplier unknown, never 1:1"})`,
-            );
-          } else {
-            const dec = it.decimals ?? 18;
-            lines.push(
-              `  • ${it.symbol} (${issuerStr}): \`${formatUnits(it.sharesRaw, 18, 4)}\` shares (\`${formatUnits(it.tokensRaw, dec, 4)}\` tokens)`,
-            );
-          }
-        }
-        lines.push("");
-      }
-
-      return lines.join("\n").trim();
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      return `❌ Failed to load shares: ${msg}`;
-    }
+  if (typeof port !== "function") {
+    return "Holdings are not available yet.";
   }
 
   try {
-    const tickers = await getKnownTickers(ctx);
-    const report = await ctx.engine.portfolio(address as `0x${string}`, tickers);
-    const lines: string[] = [`💼 *Portfolio Holdings in Shares*`, `Wallet: \`${address}\``, ""];
+    const rawResult = await port(address);
+    const holdings = adaptSharesReport(rawResult);
+    const lines: string[] = [`💼 Portfolio Holdings in Shares`, `Wallet: ${address}`, ""];
 
-    if (report.groups.length === 0) {
+    if (holdings.length === 0) {
       lines.push("No tokenized stock holdings found for this wallet.");
       return lines.join("\n");
     }
 
-    for (const group of report.groups) {
-      lines.push(`*${group.ticker}*: \`${group.shares.toFixed(4)}\` total shares`);
-      for (const part of group.parts) {
-        if (!part.multiplier) {
-          lines.push(`  • ${part.symbol}: shares unavailable (multiplier unknown, never 1:1)`);
-        } else {
+    // Group holdings by underlying ticker
+    const byTicker = new Map<string, SharesHolding[]>();
+    for (const h of holdings) {
+      const list = byTicker.get(h.ticker) ?? [];
+      list.push(h);
+      byTicker.set(h.ticker, list);
+    }
+
+    for (const [ticker, items] of byTicker.entries()) {
+      const knownShares = items.filter(
+        (it): it is SharesHolding & { sharesRaw: bigint } => it.sharesRaw !== null,
+      );
+      const totalSharesRaw = knownShares.reduce((acc, it) => acc + it.sharesRaw, 0n);
+      const hasUnknown = items.some((it) => it.sharesRaw === null);
+
+      const totalStr = hasUnknown
+        ? `${formatUnits(totalSharesRaw, 18, 4)}* (some issuers unavailable)`
+        : `${formatUnits(totalSharesRaw, 18, 4)} total shares`;
+
+      lines.push(`${ticker}: ${totalStr}`);
+
+      for (const it of items) {
+        const issuerStr = it.issuer.toUpperCase();
+        if (it.sharesRaw === null) {
           lines.push(
-            `  • ${part.symbol} (${part.issuer}): \`${part.shares.toFixed(4)}\` shares (${part.tokens.toFixed(4)} tokens @ ${part.multiplier.toFixed(2)}x)`,
+            `  • ${it.symbol} (${issuerStr}): shares unavailable (${it.unavailableReason ?? "multiplier unknown, never 1:1"})`,
+          );
+        } else {
+          const dec = it.decimals ?? 18;
+          lines.push(
+            `  • ${it.symbol} (${issuerStr}): ${formatUnits(it.sharesRaw, 18, 4)} shares (${formatUnits(it.tokensRaw, dec, 4)} tokens)`,
           );
         }
       }
       lines.push("");
     }
 
-    lines.push(`*Total Estimated Value:* \`$${report.totalValueUsd.toFixed(2)}\``);
     return lines.join("\n").trim();
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return `❌ Failed to load shares: ${msg}`;
+    const rawMsg = err instanceof Error ? err.message : String(err);
+    ctx.onWarn?.(`Shares error: ${redactSecrets(rawMsg)}`);
+    return "❌ Data is unavailable right now.";
   }
 }
 
@@ -442,14 +474,14 @@ export async function handleShield(args: string, ctx: BotContext): Promise<strin
         !r.executable,
     );
 
-    const lines: string[] = ["🛡️ *Tally Trap Shield - Flagged Tokens*", ""];
+    const lines: string[] = ["🛡️ Tally Trap Shield - Flagged Tokens", ""];
 
     if (flagged.length === 0) {
       lines.push("✅ No flagged tokens or traps detected on BNB Chain right now.");
     } else {
       for (const row of flagged) {
         const issuer = row.issuer.toUpperCase();
-        lines.push(`*${row.ticker}* (${row.symbol} · ${issuer}) - Grade ${row.grade}`);
+        lines.push(`${row.ticker} (${row.symbol} · ${issuer}) - Grade ${row.grade}`);
         if (row.reason) {
           lines.push(`  • Reason: ${row.reason}`);
         }
@@ -467,12 +499,13 @@ export async function handleShield(args: string, ctx: BotContext): Promise<strin
 
     if (isStale && ageMs > 0) {
       const mins = Math.round(ageMs / 60_000);
-      lines.push(`_(Note: Shield data observed ${mins}m ago)_`);
+      lines.push(`(Note: Shield data observed ${mins}m ago)`);
     }
 
     return lines.join("\n").trim();
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    return `❌ Failed to load Trap Shield: ${msg}`;
+    const rawMsg = err instanceof Error ? err.message : String(err);
+    ctx.onWarn?.(`Shield error: ${redactSecrets(rawMsg)}`);
+    return "❌ Data is unavailable right now.";
   }
 }

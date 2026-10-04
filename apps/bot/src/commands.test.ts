@@ -10,6 +10,7 @@ import {
 } from "@tally/modkit";
 import { deliverPendingAlerts, verifyTelegramConfig } from "./bot";
 import {
+  adaptSharesReport,
   handleAlerts,
   handleLink,
   handleQuiet,
@@ -20,6 +21,7 @@ import {
   resetCommandRateLimits,
   type SharesHolding,
   type SharesOfPort,
+  type SharesReport,
 } from "./commands";
 
 class MockHealth implements ModuleHealth {
@@ -73,7 +75,7 @@ describe("Telegram Bot Commands (apps/bot)", () => {
   });
 
   // Exit check 2: /shares <address> on burner wallet
-  it("handles /shares on burner wallet address", async () => {
+  it("replies that holdings are not available yet when sharesOf port is missing", async () => {
     const burner = "0xcb634955B8A7DF7B106f7AB47C9759B26206b777";
     const reply = await handleShares(burner, {
       store,
@@ -82,8 +84,32 @@ describe("Telegram Bot Commands (apps/bot)", () => {
       now: () => 1_000_000,
     });
 
+    expect(reply).toBe("Holdings are not available yet.");
+  });
+
+  it("handles /shares on burner wallet address with injected fake sharesOf port", async () => {
+    const burner = "0xcb634955B8A7DF7B106f7AB47C9759B26206b777";
+    const reply = await handleShares(burner, {
+      store,
+      engine,
+      chatId: 1002,
+      now: () => 1_000_000,
+      sharesOf: async (_addr) => [
+        {
+          ticker: "NVDA",
+          symbol: "NVDAon",
+          issuer: "ondo",
+          tokensRaw: 10n * 10n ** 18n,
+          sharesRaw: 10n * 10n ** 18n,
+          multiplierRaw: 1n * 10n ** 18n,
+          decimals: 18,
+        },
+      ],
+    });
+
     expect(reply).toContain("Portfolio Holdings in Shares");
     expect(reply).toContain(burner);
+    expect(reply).toContain("NVDA: 10 total shares");
   });
 
   // Orchestrator requirement: injected sharesOf(address) port with bigint holdings for arbitrary addresses
@@ -133,11 +159,42 @@ describe("Telegram Bot Commands (apps/bot)", () => {
 
     expect(reply).toContain("Portfolio Holdings in Shares");
     expect(reply).toContain(target);
-    expect(reply).toContain("*NVDA*: `105 total shares`");
-    expect(reply).toContain("NVDAon (ONDO): `100` shares (`10` tokens)");
-    expect(reply).toContain("bNVDA (BSTOCK): `5` shares (`5` tokens)");
+    expect(reply).toContain("NVDA: 105 total shares");
+    expect(reply).toContain("NVDAon (ONDO): 100 shares (10 tokens)");
+    expect(reply).toContain("bNVDA (BSTOCK): 5 shares (5 tokens)");
     expect(reply).toContain("AAPLon (ONDO): shares unavailable (multiplier unknown, never 1:1)");
-    expect(reply).not.toContain("`2` shares"); // never defaults to 1:1
+    expect(reply).not.toContain("2 shares"); // never defaults to 1:1
+  });
+
+  it("adapts SharesReport rows to SharesHolding[] cleanly", () => {
+    const report: SharesReport = {
+      rows: [
+        {
+          ticker: "NVDA",
+          symbol: "NVDAon",
+          issuer: "ondo",
+          balance: 5n * 10n ** 18n,
+          shares: 50n * 10n ** 18n,
+          multiplier: 10n * 10n ** 18n,
+          decimals: 18,
+        },
+        {
+          ticker: "AAPL",
+          symbol: "AAPLon",
+          issuer: "ondo",
+          balance: 2n * 10n ** 18n,
+          shares: null,
+          multiplier: null,
+          reason: "unknown multiplier",
+          decimals: 18,
+        },
+      ],
+    };
+    const holdings = adaptSharesReport(report);
+    expect(holdings).toHaveLength(2);
+    expect(holdings[0]?.sharesRaw).toBe(50n * 10n ** 18n);
+    expect(holdings[1]?.sharesRaw).toBeNull();
+    expect(holdings[1]?.unavailableReason).toBe("unknown multiplier");
   });
 
   // Exit check 3: /shield lists flagged tokens and shows staleness age
@@ -337,15 +394,15 @@ describe("Telegram Bot Commands (apps/bot)", () => {
     // Test delivery suppression during quiet hours (e.g. at 23:30 UTC)
     // 2026-10-04T23:30:00Z = 1791156600000
     const quietNow = new Date("2026-10-04T23:30:00Z").getTime();
-    const alert: Alert = {
+    const warningAlert: Alert = {
       id: `test:${wallet}:0xaddr:1`,
       walletAddress: wallet.toLowerCase(),
       rule: "ghost",
       ticker: "TSLA",
       issuer: "bstock",
-      severity: "critical",
-      title: "TSLA via bStock is a ghost token",
-      body: "There's no market to sell this token.",
+      severity: "warning",
+      title: "TSLA via bStock has low liquidity",
+      body: "Liquidity is thin.",
       evidence: { snapshotKind: "flow-ghost", snapshotKey: "0xaddr", observedAt: quietNow },
       createdAt: quietNow,
     };
@@ -357,9 +414,64 @@ describe("Telegram Bot Commands (apps/bot)", () => {
       },
     };
 
-    const deliv = await deliverPendingAlerts(mockSender, [alert], store, quietNow);
+    // Warning alert is suppressed during quiet hours
+    const deliv = await deliverPendingAlerts(mockSender, [warningAlert], store, quietNow);
     expect(deliv.suppressedByQuiet).toBe(1);
     expect(deliv.delivered).toBe(0);
     expect(sent).toHaveLength(0);
+
+    // Critical alerts bypass quiet hours (Finding 7 & 12)
+    const criticalAlert: Alert = {
+      ...warningAlert,
+      id: `test:${wallet}:0xaddr:2`,
+      severity: "critical",
+      title: "TSLA via bStock is a ghost token",
+      body: "There's no market to sell this token.",
+    };
+    const critDeliv = await deliverPendingAlerts(mockSender, [criticalAlert], store, quietNow);
+    expect(critDeliv.suppressedByQuiet).toBe(0);
+    expect(critDeliv.delivered).toBe(1);
+    expect(sent).toHaveLength(1);
+  });
+
+  // Finding 8: Never echo secrets or URLs in Telegram replies; redact in onWarn
+  it("never echoes raw error or URL with secret in Telegram and redacts in onWarn (Finding 8)", async () => {
+    const warnings: string[] = [];
+    const crashingEngine = {
+      quote: async () => {
+        throw new Error("RPC failure at https://api.nodereal.io/v1/SECRET_API_KEY_12345");
+      },
+      portfolio: async () => ({ holdings: [] }),
+    } as unknown as typeof engine;
+
+    const reply = await handleQuote("NVDA 25", {
+      store,
+      engine: crashingEngine,
+      chatId: 9999,
+      now: () => 1_000_000,
+      onWarn: (w) => warnings.push(w),
+    });
+
+    expect(reply).toBe("❌ Data is unavailable right now.");
+    expect(reply).not.toContain("SECRET_API_KEY");
+    expect(reply).not.toContain("nodereal");
+    expect(warnings.some((w) => w.includes("[redacted url]"))).toBe(true);
+    expect(warnings.some((w) => w.includes("SECRET_API_KEY"))).toBe(false);
+  });
+
+  // Finding 10: Linking allowed only in private direct messages
+  it("rejects wallet linking in non-private chats (Finding 10)", async () => {
+    const wallet = "0x2Bf7EdF53bc6BE6FF98F149387F3818cE28d2930";
+    const { code } = createLinkCode(store, wallet, 1_000_000);
+
+    const groupReply = await handleLink(code, {
+      store,
+      engine,
+      chatId: -100123456,
+      chatType: "group",
+      now: () => 1_005_000,
+    });
+
+    expect(groupReply).toContain("only permitted in private direct messages");
   });
 });
