@@ -7,7 +7,6 @@ import type { PortfolioReport } from "@tally/engine";
 import { Button, ButtonLink } from "@/components/motion/button";
 import { ComingSoon } from "@/components/trade/coming-soon";
 import { GradeBadge, TokenLogo } from "@/components/trade/badges";
-import { CopyAddress } from "@/components/wallet/copy-address";
 import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { useJson } from "@/lib/hooks/use-json";
 import { ISSUER_LABEL } from "@/lib/format";
@@ -222,8 +221,6 @@ export function PortfolioPage() {
               <p className="t-big mt-1" data-testid="total-value">
                 <LiveUsd value={data?.totalValueUsd} />
               </p>
-              <p className="t-meta mt-4">Wallet address</p>
-              <CopyAddress address={address} className="mt-1" />
             </div>
             <div className="panel p-5">
               <p className="t-meta">Other assets in this wallet</p>

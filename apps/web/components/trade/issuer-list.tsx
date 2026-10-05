@@ -168,13 +168,12 @@ export function IssuerList({
   quote,
   selected,
   onSelect,
-  loading,
   showTitle = true,
 }: {
   quote: QuoteDto | null;
   selected: string | undefined;
   onSelect: (symbol: string) => void;
-  loading: boolean;
+  loading?: boolean;
   showTitle?: boolean;
 }) {
   if (!quote)
@@ -194,13 +193,13 @@ export function IssuerList({
       <div className="mb-2 flex items-center justify-between">
         {showTitle ? <h2 className="t-h3 !text-[19px]">Compared by issuer</h2> : <span />}
         <span className="t-meta" aria-live="off">
-          {loading ? "Refreshing…" : "Live"}
+          Updates in real-time
         </span>
       </div>
       <div className="mb-3">
         <p className="t-meta">
           Ranked by shares you get, not by token price.{" "}
-          <LearnMore concept="premium" label="Read more" />
+          <LearnMore concept="premium" label="Learn more" />
         </p>
       </div>
       <LayoutGroup>

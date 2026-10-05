@@ -14,14 +14,15 @@ const BLOCKED: Record<string, string> = {
     "That's a Tally contract, not a wallet. Anything sent there is stuck.",
 };
 
-/**
- * Validates a recipient for the Send form. Every rule gives its own plain message so the person knows what to fix.
- * Mixed-case addresses must carry a correct checksum (a mistyped letter is caught); all-lowercase is accepted.
- */
 /** Zero-width and bidi-control characters that survive a copy-paste and make a lookalike address. */
 const HIDDEN = new RegExp("[\\u200b-\\u200f\\u2060\\ufeff\\u202a-\\u202e]");
 
-export function checkRecipient(raw: string, own?: string): AddressCheck {
+/**
+ * Validates a recipient for the Send form. Every rule gives its own plain message so the person knows what to fix.
+ * Sending to your own address is allowed on purpose: it is the first thing most people try, to see that sending works.
+ * Mixed-case addresses must carry a correct checksum (a mistyped letter is caught); all-lowercase is accepted.
+ */
+export function checkRecipient(raw: string): AddressCheck {
   const v = raw.trim();
   if (v === "") return { ok: false, problem: "Enter a wallet address." };
   if (/\s/.test(v) || HIDDEN.test(v))
@@ -42,6 +43,5 @@ export function checkRecipient(raw: string, own?: string): AddressCheck {
   const lower = v.toLowerCase();
   const blocked = BLOCKED[lower];
   if (blocked) return { ok: false, problem: blocked };
-  if (own && lower === own.toLowerCase()) return { ok: false, problem: "That's your own address." };
   return { ok: true, address: v as `0x${string}` };
 }

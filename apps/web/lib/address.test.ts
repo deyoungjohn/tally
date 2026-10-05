@@ -39,7 +39,7 @@ describe("checkRecipient", () => {
     expect(checkRecipient(bad).ok).toBe(false);
   });
 
-  it("rejects the zero, burn, USDT, ShareGuard and own addresses", () => {
+  it("rejects the zero, burn, USDT and ShareGuard addresses, but allows sending to yourself", () => {
     for (const a of [
       "0x0000000000000000000000000000000000000000",
       "0x000000000000000000000000000000000000dEaD",
@@ -47,6 +47,6 @@ describe("checkRecipient", () => {
       "0x28F6F19bffbF25E36452c78d12090F0bC922970a",
     ])
       expect(checkRecipient(a).ok).toBe(false);
-    expect(checkRecipient(GOOD, GOOD.toUpperCase().replace("0X", "0x")).ok).toBe(false);
+    expect(checkRecipient(GOOD).ok).toBe(true);
   });
 });

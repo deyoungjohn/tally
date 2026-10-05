@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowDown, Lock } from "lucide-react";
+import { ArrowDown } from "lucide-react";
 import { AnimatedNumber } from "@/components/motion/animated-number";
 import { Button } from "@/components/motion/button";
 import { Segmented } from "@/components/motion/segmented";
@@ -11,7 +11,6 @@ import { TokenLogo } from "./badges";
 import { LivePct, LiveUsd } from "@/components/motion/live";
 import { LearnMore } from "@/components/learn-more";
 import { Tip } from "@/components/ui/tooltip";
-import { ReturningUser } from "@/components/wallet/returning-user";
 
 export type Unit = "usd" | "shares";
 export const TOLERANCES = [0.5, 1, 2] as const;
@@ -47,16 +46,12 @@ export function TradeCard(p: TradeCardProps) {
     p.buyable && p.row?.executable && p.spendUsd !== null && p.spendUsd >= MIN_USD && !p.busy;
 
   let label: string;
-  let icon = false;
   if (!p.buyable) label = "Quotes only for now";
   else if (p.phaseLabel) label = p.phaseLabel;
   else if (p.busy) label = "Working…";
   else if (!p.row?.executable) label = "Not available";
   else if (tooSmall) label = `Minimum is $${MIN_USD}`;
-  else if (!p.authenticated) {
-    label = "Sign in to buy";
-    icon = true;
-  } else label = `Buy ${fmtUsd(p.spendUsd)} of ${p.ticker}`;
+  else label = `Buy ${fmtUsd(p.spendUsd)} of ${p.ticker}`; // same words before and after sign-in; sign-in happens when it is pressed
 
   return (
     <section className="glass p-4 min-[561px]:p-6" aria-label="Trade card" data-testid="trade-card">
@@ -172,7 +167,33 @@ export function TradeCard(p: TradeCardProps) {
         </div>
       </div>
 
-      <dl className="mt-3" data-testid="details">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <span className="t-meta" id="tol-label">
+          <Tip text="How much worse than the quote you accept before the trade is cancelled.">
+            Slippage
+          </Tip>
+        </span>
+        <Segmented
+          label="Slippage"
+          value={String(p.tolerance)}
+          onChange={(v) => p.onTolerance(Number(v))}
+          options={TOLERANCES.map((t) => ({ value: String(t), label: `${t}%` }))}
+        />
+      </div>
+
+      <div className="mt-3">
+        <Button
+          big
+          disabled={!canBuy || (!p.authenticated ? !p.walletReady : false)}
+          onClick={p.onBuy}
+          className="trade-cta"
+          data-testid="buy-button"
+        >
+          <ActionLabel text={label} />
+        </Button>
+      </div>
+
+      <dl className="mt-4" data-testid="details">
         <div className="detail-row">
           <dt>Price per share</dt>
           <dd>
@@ -196,7 +217,7 @@ export function TradeCard(p: TradeCardProps) {
         <div className="detail-row">
           <dt>
             <Tip text="The fewest shares you can receive. If the trade would give you less, it is cancelled on-chain.">
-              <span className="border-b border-dotted border-fg3">Min amount to receive</span>
+              Min amount to receive
             </Tip>
           </dt>
           <dd data-testid="min-received">
@@ -205,36 +226,10 @@ export function TradeCard(p: TradeCardProps) {
         </div>
       </dl>
 
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-        <span className="t-meta" id="tol-label">
-          <Tip text="How much worse than the quote you accept before the trade is cancelled.">
-            <span className="border-b border-dotted border-fg3">Slippage</span>
-          </Tip>
-        </span>
-        <Segmented
-          label="Slippage"
-          value={String(p.tolerance)}
-          onChange={(v) => p.onTolerance(Number(v))}
-          options={TOLERANCES.map((t) => ({ value: String(t), label: `${t}%` }))}
-        />
-      </div>
-
-      <div className="mt-5">
-        <Button
-          big
-          disabled={!canBuy || (!p.authenticated ? !p.walletReady : false)}
-          onClick={p.onBuy}
-          data-testid="buy-button"
-        >
-          {icon ? <Lock size={18} aria-hidden /> : null}
-          <ActionLabel text={label} />
-        </Button>
-        <ReturningUser className="mt-3 text-center" />
-        <p className="t-meta mt-3 text-center">
-          If you&apos;d get fewer shares than the minimum above, the trade doesn&apos;t happen. Not
-          investment advice. <LearnMore concept="guarantee" />
-        </p>
-      </div>
+      <p className="t-meta mt-3 text-center">
+        If you&apos;d get fewer shares than the minimum above, the trade doesn&apos;t happen. Not
+        investment advice. <LearnMore concept="guarantee" />
+      </p>
     </section>
   );
 }

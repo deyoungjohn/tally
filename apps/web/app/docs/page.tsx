@@ -57,7 +57,7 @@ export default function Docs() {
           <ul className="m-0 grid list-none gap-1 p-0">
             {NAV.map(([id, label]) => (
               <li key={id}>
-                <a href={`#${id}`} className="nav-link block">
+                <a href={`#${id}`} className="nav-link block hover:bg-white/[0.06]">
                   {label}
                 </a>
               </li>
@@ -109,7 +109,7 @@ export default function Docs() {
           <section id="concepts">
             <h2>The reasoning behind each number</h2>
             <p className="mt-3">
-              The short explanations on the site (the “Read more” links) end here. The full
+              The short explanations on the site (the “Learn more” links) end here. The full
               write-ups, with references, are being written.
             </p>
             <div className="mt-4 grid gap-4">

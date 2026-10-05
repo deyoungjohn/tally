@@ -388,7 +388,7 @@ export function ReviewSheet({
               </dd>
             </div>
             <div className="detail-row">
-              <dt>Bought from</dt>
+              <dt>Issuer</dt>
               <dd>
                 {plan.symbol} ({ISSUER_LABEL[plan.issuer]})
               </dd>
@@ -420,7 +420,39 @@ export function ReviewSheet({
 
 /* ------------------------------------------------------------------- receipt */
 
-export function ReceiptCard({
+/** The receipt is a modal: blurred backdrop, spring in and out, an X, and a click outside closes it. */
+export function ReceiptModal({
+  open,
+  receipt,
+  plan,
+  ticker,
+  symbol,
+  onDismiss,
+}: {
+  open: boolean;
+  receipt: ReceiptDto | null;
+  plan?: PlanDto;
+  ticker: string;
+  symbol: string;
+  onDismiss: () => void;
+}) {
+  // Keep the last receipt while the modal animates out, so it fades with its content instead of emptying first.
+  const last = useRef<{
+    receipt: ReceiptDto;
+    plan?: PlanDto;
+    ticker: string;
+    symbol: string;
+  } | null>(null);
+  if (open && receipt?.fill) last.current = { receipt, plan, ticker, symbol };
+  const shown = last.current;
+  return (
+    <Modal open={open} onOpenChange={(o) => !o && onDismiss()} title="Shares delivered" showClose>
+      {shown ? <ReceiptBody {...shown} onDismiss={onDismiss} /> : null}
+    </Modal>
+  );
+}
+
+function ReceiptBody({
   receipt,
   plan,
   ticker,
@@ -436,16 +468,8 @@ export function ReceiptCard({
   const f = receipt.fill!;
   const shares = fromWei(f.shares);
   return (
-    <section className="gcard" aria-labelledby="receipt-title" data-testid="receipt">
-      <div className="flex items-center gap-3">
-        <span className="grid h-7 w-7 place-items-center rounded-full bg-up/20 text-up" aria-hidden>
-          <Check size={16} />
-        </span>
-        <h2 id="receipt-title" className="text-lg font-semibold">
-          Shares delivered
-        </h2>
-      </div>
-      <p className="t-big mt-4" data-testid="receipt-shares">
+    <div data-testid="receipt">
+      <p className="t-big mt-3" data-testid="receipt-shares">
         {fmtShares(shares)} <span className="text-[23px] text-fg2">{ticker} shares</span>
       </p>
       <dl className="mt-4">
@@ -497,6 +521,6 @@ export function ReceiptCard({
           Done
         </Button>
       </div>
-    </section>
+    </div>
   );
 }

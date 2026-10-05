@@ -1,5 +1,5 @@
 "use client";
-// "Info text, then Read more, then a short modal, then the full write-up in How it works" (Round 3).
+// "Info text, then Learn more, then a short modal, then the full write-up in How it works" (Round 3).
 
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 /** A small inline link-style button. Put it at the end of a sentence of info text. */
 export function LearnMore({
   concept,
-  label = "Read more",
+  label = "Learn more",
   className,
 }: {
   concept: ConceptId;
@@ -53,7 +53,7 @@ export function LearnMore({
   );
 }
 
-/** One sentence of info text ending in Read more. */
+/** One sentence of info text ending in Learn more. */
 export function InfoText({
   children,
   concept,

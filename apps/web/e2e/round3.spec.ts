@@ -42,11 +42,11 @@ test.describe("round 3", () => {
     await expect(card).not.toContainText("Price can move up to");
   });
 
-  test("Read more opens a blurred, translucent modal that ends in a link to How it works", async ({
+  test("Learn more opens a blurred, translucent modal that ends in a link to How it works", async ({
     page,
   }) => {
     await page.goto("/trade/NVDA");
-    await page.getByTestId("trade-card").getByRole("button", { name: "Read more" }).click();
+    await page.getByTestId("trade-card").getByRole("button", { name: "Learn more" }).click();
     const dialog = page.getByRole("dialog");
     await expect(dialog).toContainText("How the minimum is guaranteed");
     const blur = await page
@@ -86,7 +86,7 @@ test.describe("round 3", () => {
     const options = list.getByRole("option");
     await page.waitForTimeout(700); // the panel unfolds and its items stagger in
     await options.nth(1).hover();
-    const pill = list.locator('[aria-hidden="true"].bg-muted');
+    const pill = list.locator('span[aria-hidden="true"]').first();
     await expect(pill).toHaveCSS("opacity", "1");
     const y1 = (await pill.boundingBox())!.y;
     await options.nth(3).hover();
@@ -107,23 +107,24 @@ test.describe("round 3", () => {
       ["1111111111111111111111111111111111111111", "starts with 0x"],
       ["0x" + "z".repeat(40), "a-f"],
       ["0x0000000000000000000000000000000000000000", "zero address"],
-      [USER, "your own address"],
     ];
     for (const [v, msg] of cases) {
       await to.fill(v);
       await expect(dialog.getByRole("alert")).toContainText(msg);
       await expect(dialog.getByTestId("send-review")).toBeDisabled();
     }
+    // Your own address is fine: it is how most people check that sending works.
+    await to.fill(USER);
+    await expect(dialog.getByRole("alert")).toHaveCount(0);
+    await expect(dialog.getByTestId("send-review")).toBeEnabled();
   });
 
-  test("Portfolio shows the whole address with a Copy button", async ({ page, context }) => {
-    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  test("Portfolio no longer repeats the wallet address", async ({ page }) => {
     await mockWallet(page);
     await page.goto("/portfolio");
-    await expect(page.getByTestId("full-address")).toHaveText(USER, { timeout: 20_000 });
-    await page.getByTestId("copy-address").click();
-    await expect(page.getByTestId("copy-address")).toContainText("Copied");
-    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(USER);
+    await expect(page.getByTestId("total-value")).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByTestId("copy-address")).toHaveCount(0);
+    await expect(page.getByTestId("full-address")).toHaveCount(0);
   });
 
   test("the account menu morphs open from the button without moving the nav or the page", async ({
@@ -160,5 +161,148 @@ test.describe("round 3", () => {
     await expect(page.getByTestId("ref-price")).toContainText("$", { timeout: 15_000 });
     const sr = await page.getByTestId("ref-price").locator(".sr-only").textContent();
     expect(sr).toMatch(/^\$?[\d,]+\.\d\d$/);
+  });
+
+  test("every Learn more link is caption sized", async ({ page }) => {
+    await page.goto("/trade/NVDA");
+    await expect(page.getByTestId("you-get")).toContainText("0.0", { timeout: 15_000 });
+    const sizes = await page
+      .locator(".learn-more")
+      .evaluateAll((els) => els.map((el) => getComputedStyle(el).fontSize));
+    expect(sizes.length).toBeGreaterThan(1); // the card and the issuer list
+    for (const s of sizes) expect(s).toBe("13.5px");
+    await expect(page.getByText("Read more")).toHaveCount(0);
+  });
+
+  test("Radar lists Liquid, then Low Liquidity, then Not Tradable, and has a morphing search", async ({
+    page,
+  }) => {
+    await page.goto("/radar");
+    await expect(page.getByTestId("radar-NVDAon")).toBeVisible({ timeout: 20_000 });
+    const ranks = await page.locator('li[data-testid^="radar-"]').evaluateAll((els) =>
+      els.map((el) => {
+        const t = el.textContent ?? "";
+        return t.includes("Not Tradable") && !el.querySelector(".badge-up")
+          ? 2
+          : t.includes("Low Liquidity")
+            ? 1
+            : t.includes("Not Tradable")
+              ? 2
+              : 0;
+      }),
+    );
+    expect(ranks).toEqual([...ranks].sort((a, b) => a - b));
+    await page.getByRole("radio", { name: "Not Tradable" }).click();
+    const only = await page.locator('li[data-testid^="radar-"]').count();
+    expect(only).toBeGreaterThan(0);
+    await page.getByRole("radio", { name: "All" }).click();
+
+    await page.getByTestId("radar-search").click();
+    const dialog = page.getByRole("dialog", { name: "Search" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole("option").first()).toBeVisible();
+    await expect(dialog).toContainText("Suggestions");
+    const box = (await dialog.boundingBox())!;
+    expect(box.width).toBeLessThanOrEqual(380);
+    await dialog.getByTestId("radar-search-input").fill("AAPL");
+    await expect(dialog).toContainText("Results");
+    await dialog.getByRole("option").first().click();
+    await expect(dialog).toHaveCount(0);
+    await expect(page.getByTestId("radar-NVDAon")).toHaveCount(0);
+    await expect(page.locator('li[data-testid^="radar-AAPL"]').first()).toBeVisible();
+  });
+
+  test("the search surface keeps its cap on a phone", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 800 });
+    await page.goto("/radar");
+    await page.getByTestId("radar-search").click();
+    const box = (await page.getByRole("dialog", { name: "Search" }).boundingBox())!;
+    expect(box.width).toBeLessThanOrEqual(375 - 24 + 1);
+    expect(box.x).toBeGreaterThanOrEqual(11);
+  });
+
+  test("the nav highlight rests on the current page and glides to the hovered tab", async ({
+    page,
+  }) => {
+    await page.goto("/trade/NVDA");
+    const nav = page.getByRole("navigation", { name: "Primary" });
+    const pill = nav.locator("span[aria-hidden]").first();
+    await expect(pill).toHaveCSS("opacity", "1");
+    const x0 = (await pill.boundingBox())!.x;
+    const last = nav.getByRole("link").last();
+    await last.hover();
+    await page.waitForTimeout(700);
+    const lastBox = (await last.boundingBox())!;
+    const x1 = (await pill.boundingBox())!;
+    expect(x1.x).toBeGreaterThan(x0 + 50);
+    expect(Math.abs(x1.x - lastBox.x)).toBeLessThan(2);
+    // The pill never starts from the top of the page: sample it moving back.
+    await nav.getByRole("link").first().hover();
+    for (let i = 0; i < 6; i++) {
+      const b = (await pill.boundingBox())!;
+      expect(b.y).toBeGreaterThan(10);
+      expect(b.y).toBeLessThan(80);
+      await page.waitForTimeout(40);
+    }
+  });
+
+  test("on a phone the menu highlights the current page", async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 800 });
+    await page.goto("/radar");
+    await page.getByRole("button", { name: "Open menu" }).click();
+    const sheet = page.getByRole("dialog", { name: "Menu" });
+    const current = sheet.locator('a[aria-current="page"]');
+    await expect(current).toHaveText("Radar");
+    await page.waitForTimeout(700);
+    const pill = sheet.locator("ul span[aria-hidden]").first();
+    await expect(pill).toHaveCSS("opacity", "1");
+    const a = (await current.boundingBox())!;
+    const b = (await pill.boundingBox())!;
+    expect(Math.abs(a.y - b.y)).toBeLessThan(3);
+    expect(Math.abs(a.height - b.height)).toBeLessThan(3);
+  });
+
+  test("Home: the route line sits outside the box, above the button, with no 'via' or percentage", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const line = page.getByTestId("home-route");
+    await expect(line).toBeVisible({ timeout: 15_000 });
+    await expect(line).not.toContainText("via");
+    await expect(line).not.toContainText("vs US");
+    await expect(line).not.toContainText("%");
+    await expect(page.getByTestId("home-get")).not.toContainText("per share");
+    const l = (await line.boundingBox())!;
+    const b = (await page.getByTestId("home-action").boundingBox())!;
+    expect(l.y).toBeLessThan(b.y);
+    expect(b.y - (l.y + l.height)).toBeLessThan(40);
+  });
+
+  test("Live comparison says Updates in real-time", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByTestId("home-comparison")).toContainText("Updates in real-time", {
+      timeout: 15_000,
+    });
+    await expect(page.getByTestId("home-comparison")).not.toContainText("Refreshing");
+  });
+
+  test("Send lists every tokenized stock the wallet holds and sends one", async ({ page }) => {
+    await mockWallet(page);
+    await page.goto("/");
+    await page.getByTestId("account-button").click();
+    await page.getByTestId("menu-send").click();
+    const dialog = page.getByRole("dialog", { name: "Send from your wallet" });
+    await dialog.getByRole("radio", { name: "Tokenized stocks" }).click();
+    const list = dialog.getByTestId("send-token-list");
+    await expect(list.getByRole("radio", { name: /NVDAon/ })).toBeVisible({ timeout: 20_000 });
+    await expect(list.getByRole("radio", { name: /NVDAB/ })).toBeVisible();
+    await list.getByRole("radio", { name: /NVDAon/ }).click();
+    await dialog.getByRole("button", { name: "Max" }).click();
+    await expect(dialog.getByTestId("send-amount")).toHaveValue("0.025660879");
+    await dialog.getByTestId("send-to").fill("0x2Bf7EdF53bc6BE6FF98F149387F3818cE28d2930");
+    await dialog.getByTestId("send-review").click();
+    await expect(dialog).toContainText("NVDAon");
+    await dialog.getByTestId("send-confirm").click();
+    await expect(dialog.getByTestId("send-done")).toBeVisible({ timeout: 10_000 });
   });
 });

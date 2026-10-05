@@ -27,6 +27,10 @@ async function buyThrough(page: Page) {
     timeout: 20_000,
   });
   await expect(page.getByTestId("min-shares")).toContainText("NVDA shares");
+  await expect(page.getByRole("dialog", { name: "Review your buy" })).toContainText("Issuer");
+  await expect(page.getByRole("dialog", { name: "Review your buy" })).not.toContainText(
+    "Bought from",
+  );
   await page.getByTestId("confirm-buy").click();
   await expect(page.getByTestId("receipt")).toBeVisible({ timeout: 20_000 });
 }
@@ -57,7 +61,7 @@ for (const width of WIDTHS) {
       await quoteLoaded(page);
       await buyThrough(page);
       const receipt = page.getByTestId("receipt");
-      await expect(receipt).toContainText("Shares delivered");
+      await expect(page.getByRole("dialog", { name: "Shares delivered" })).toBeVisible();
       await expect(page.getByTestId("receipt-shares")).toContainText("0.025705");
       await expect(receipt.getByRole("link", { name: /BscScan/ })).toHaveAttribute(
         "href",
@@ -70,14 +74,14 @@ for (const width of WIDTHS) {
 
 test.describe("sign-in and the region declaration", () => {
   test.use({ viewport: { width: 375, height: 800 } });
-  test("signed out: 'Sign in to buy', the box must be ticked, then the buy continues", async ({
+  test("signed out: the button already says what it will do, the box must be ticked, then the buy continues", async ({
     page,
   }) => {
     await mockWallet(page, false);
     await page.goto("/trade/NVDA");
     await quoteLoaded(page);
     const buy = page.getByTestId("buy-button");
-    await expect(buy).toContainText("Sign in to buy");
+    await expect(buy).toContainText("Buy $6.00 of NVDA");
     await buy.click();
     const dialog = page.getByRole("dialog", { name: "Create your account" });
     await expect(dialog).toBeVisible();
@@ -258,14 +262,16 @@ test.describe("layout order", () => {
     expect(card).toBeLessThan(rows);
   });
 
-  test("desktop: the issuer comparison is on the left of the trade card", async ({ page }) => {
+  test("desktop: the trade card is on the left and the issuer comparison on the right", async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await mockWallet(page);
     await page.goto("/trade/NVDA");
     await quoteLoaded(page);
     const row = (await page.getByTestId("row-NVDAon").boundingBox())!;
     const card = (await page.getByTestId("trade-card").boundingBox())!;
-    expect(row.x + row.width).toBeLessThanOrEqual(card.x + 1);
+    expect(card.x + card.width).toBeLessThanOrEqual(row.x + 1);
   });
 
   test("the stock dropdown switches the stock on the trade page", async ({ page }) => {
@@ -322,3 +328,75 @@ for (const [w, h] of [
     for (const y of ys) expect(Math.abs(y - before)).toBeLessThan(1.5);
   });
 }
+
+test.describe("receipt modal and trade card order", () => {
+  test.use({ viewport: { width: 1280, height: 900 } });
+
+  test("the receipt is a modal: X and a click outside both close it", async ({ page }) => {
+    await mockWallet(page);
+    await page.goto("/trade/NVDA");
+    await quoteLoaded(page);
+    await buyThrough(page);
+    const dialog = page.getByRole("dialog", { name: "Shares delivered" });
+    await expect(dialog).toBeVisible();
+    const blur = await page
+      .locator(".overlay-backdrop")
+      .last()
+      .evaluate((el) => getComputedStyle(el).backdropFilter);
+    expect(blur).toContain("blur");
+    await dialog.getByTestId("modal-close").click();
+    await expect(dialog).toBeHidden();
+
+    await page.getByTestId("buy-button").click();
+    await expect(page.getByRole("dialog", { name: "Review your buy" })).toBeVisible({
+      timeout: 20_000,
+    });
+    await page.getByTestId("confirm-buy").click();
+    await expect(dialog).toBeVisible({ timeout: 20_000 });
+    await page.mouse.click(8, 450); // outside the panel
+    await expect(dialog).toBeHidden();
+  });
+
+  test("the button and slippage sit above the details, and the button names the action before sign-in", async ({
+    page,
+  }) => {
+    await mockWallet(page, false);
+    await page.goto("/trade/NVDA");
+    await quoteLoaded(page);
+    const y = async (loc: ReturnType<Page["getByTestId"]>) => (await loc.boundingBox())!.y;
+    const slip = (await page.getByRole("radiogroup", { name: "Slippage" }).boundingBox())!.y;
+    const buy = await y(page.getByTestId("buy-button"));
+    const details = await y(page.getByTestId("details"));
+    expect(slip).toBeLessThan(buy);
+    expect(buy).toBeLessThan(details);
+    await expect(page.getByTestId("buy-button")).toContainText("Buy $6.00 of NVDA");
+    const w = await page.getByTestId("buy-button").evaluate((el) => ({
+      weight: getComputedStyle(el).fontWeight,
+      size: getComputedStyle(el).fontSize,
+    }));
+    expect(Number(w.weight)).toBeGreaterThanOrEqual(700);
+    expect(parseFloat(w.size)).toBeGreaterThanOrEqual(18);
+    await expect(page.getByTestId("trade-card").getByTestId("returning-user")).toHaveCount(0);
+  });
+
+  test("the white pills stay under their choices while the progress island appears", async ({
+    page,
+  }) => {
+    await mockWallet(page);
+    await page.goto("/trade/NVDA");
+    await quoteLoaded(page);
+    await page.waitForTimeout(500);
+    await page.getByTestId("buy-button").click();
+    await expect(page.getByTestId("progress-island")).toBeVisible({ timeout: 10_000 });
+    for (let i = 0; i < 8; i++) {
+      for (const name of ["Amount unit", "Slippage"]) {
+        const group = page.getByRole("radiogroup", { name });
+        const pill = (await group.locator("span[aria-hidden]").first().boundingBox())!;
+        const radio = (await group.getByRole("radio", { checked: true }).boundingBox())!;
+        expect(Math.abs(pill.x - radio.x)).toBeLessThan(2);
+        expect(Math.abs(pill.y - radio.y)).toBeLessThan(2);
+      }
+      await page.waitForTimeout(80);
+    }
+  });
+});

@@ -1,11 +1,13 @@
 "use client";
 
-import { AlertTriangle, ArrowRight, Search } from "lucide-react";
+import { AlertTriangle, ArrowRight, Building2, Search } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { RadarReport, RadarRow } from "@tally/engine";
 import { ButtonLink } from "@/components/motion/button";
+import { MorphingSearch, type MorphingSearchItem } from "@/components/motion/morphing-search";
 import { Segmented } from "@/components/motion/segmented";
+import { nameOf } from "@/lib/tickers";
 import { FlagBadge, GradeBadge, LiquidityBadge, TokenLogo } from "@/components/trade/badges";
 import { useJson } from "@/lib/hooks/use-json";
 import { ISSUER_LABEL, fmtUsd } from "@/lib/format";
@@ -16,6 +18,8 @@ import { LearnMore } from "@/components/learn-more";
 export const useRadar = () => useJson<RadarReport>("/api/radar");
 
 const flagged = (r: RadarRow) => r.grade !== "A" && r.grade !== "B";
+/** 0 Liquid, 1 Low Liquidity, 2 Not Tradable. */
+export const liquidityRank = (r: RadarRow) => (r.flags.includes("ghost") ? 2 : flagged(r) ? 1 : 0);
 
 const STAT_TIP: Record<string, string> = {
   "Tokens checked": "Every tokenized stock Tally reads, across all issuers.",
@@ -41,7 +45,7 @@ export function RadarStats({ rows }: { rows: RadarRow[] }) {
         <div key={k} className="panel p-4">
           <dt className="t-meta">
             <Tip text={STAT_TIP[k]} className="items-center">
-              <span className="border-b border-dotted border-fg3">{k}</span>
+              {k}
             </Tip>
           </dt>
           <dd className="t-big m-0 mt-1 !text-[clamp(29px,4vw,41px)]">{v}</dd>
@@ -99,6 +103,35 @@ export function RadarRowCard({ r }: { r: RadarRow }) {
   );
 }
 
+/** Suggestions: every ticker Tally covers (with who issues it), then the issuers. Tickers Tally can buy come first. */
+function radarSuggestions(rows: RadarRow[]): MorphingSearchItem[] {
+  const byTicker = new Map<string, RadarRow[]>();
+  for (const r of rows) byTicker.set(r.ticker, [...(byTicker.get(r.ticker) ?? []), r]);
+  const tickers = [...byTicker.entries()]
+    .sort(([a], [b]) => Number(isBuyable(b)) - Number(isBuyable(a)) || a.localeCompare(b))
+    .map(([ticker, list]): MorphingSearchItem => {
+      const issuers = [...new Set(list.map((r) => ISSUER_LABEL[r.issuer]))].join(", ");
+      return {
+        id: `t-${ticker}`,
+        title: `${ticker} · ${nameOf(ticker)}`,
+        description: issuers,
+        keywords: list.map((r) => r.symbol),
+        icon: Search,
+        value: ticker,
+      };
+    });
+  const issuers = (["ondo", "bstock", "xstocks"] as const)
+    .filter((i) => rows.some((r) => r.issuer === i))
+    .map((i): MorphingSearchItem => ({
+      id: `i-${i}`,
+      title: ISSUER_LABEL[i]!,
+      description: "All tokens from this issuer",
+      icon: Building2,
+      value: i,
+    }));
+  return [...tickers, ...issuers];
+}
+
 type Filter = "all" | "flagged" | "ghost" | "unit";
 
 /** The full Radar page body. */
@@ -106,6 +139,7 @@ export function RadarPage() {
   const { data, error, loading } = useRadar();
   const [filter, setFilter] = useState<Filter>("all");
   const [q, setQ] = useState("");
+  const suggestions = useMemo(() => radarSuggestions(data?.rows ?? []), [data]);
   const rows = useMemo(() => {
     const all = data?.rows ?? [];
     const f =
@@ -120,9 +154,12 @@ export function RadarPage() {
     const filtered = needle
       ? f.filter((r) => `${r.ticker} ${r.symbol} ${r.issuer}`.toLowerCase().includes(needle))
       : f;
+    // Liquid first, then Low Liquidity, then Not Tradable, whatever the active filter; best grade first inside each group.
     return [...filtered].sort(
       (a, b) =>
-        "FDCBA".indexOf(a.grade) - "FDCBA".indexOf(b.grade) || a.ticker.localeCompare(b.ticker),
+        liquidityRank(a) - liquidityRank(b) ||
+        "ABCDF".indexOf(a.grade) - "ABCDF".indexOf(b.grade) ||
+        a.ticker.localeCompare(b.ticker),
     );
   }, [data, filter, q]);
 
@@ -156,20 +193,13 @@ export function RadarPage() {
             { value: "unit", label: "Unit trap" },
           ]}
         />
-        <label className="relative block w-full min-[561px]:w-[280px]">
-          <span className="sr-only">Search tokens</span>
-          <Search
-            size={16}
-            aria-hidden
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-fg3"
-          />
-          <input
-            className="input !pl-10"
-            placeholder="Search a stock or issuer"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-        </label>
+        <MorphingSearch
+          items={suggestions}
+          value={q}
+          onValueChange={setQ}
+          placeholder="Search a stock or issuer"
+          className="w-full min-[561px]:w-[300px]"
+        />
       </div>
 
       {error && !data ? (

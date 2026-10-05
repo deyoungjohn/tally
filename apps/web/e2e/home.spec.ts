@@ -72,11 +72,11 @@ test.describe("home behaviour", () => {
     await expect(page.getByTestId("home-get")).toContainText("AAPL shares", { timeout: 15_000 });
   });
 
-  test("Get Started opens the full trade page with the amount", async ({ page }) => {
+  test("the Home card button opens the full trade page with the amount", async ({ page }) => {
     await page.goto("/");
     await page
       .getByTestId("home-card")
-      .getByRole("link", { name: /Get Started/ })
+      .getByRole("link", { name: /Buy NVDA/ })
       .click();
     await expect(page).toHaveURL(/\/trade\/NVDA\?usd=6/);
     await expect(page.getByTestId("trade-card")).toBeVisible();
@@ -234,15 +234,19 @@ test.describe("signed-in changes", () => {
     ).toBeVisible();
   });
 
-  test("the Home trade button says Get Started, then follows the transaction once signed in", async ({
+  test("the Home trade button says Buy {ticker}, follows the dropdown, then follows the transaction once signed in", async ({
     page,
   }) => {
     await page.goto("/");
-    await expect(page.getByTestId("home-action")).toContainText("Get Started");
+    await expect(page.getByTestId("home-action")).toContainText("Buy NVDA");
+    await expect(page.getByTestId("home-card").getByTestId("returning-user")).toHaveCount(0);
+    await page.getByTestId("home-card").getByTestId("stock-picker").click();
+    await page.getByRole("option", { name: /^AAPL / }).click();
+    await expect(page.getByTestId("home-action")).toContainText("Buy AAPL");
     await mockWallet(page);
     await page.goto("/");
     const action = page.getByTestId("home-action");
-    await expect(action).toContainText("Buy $6.00 of NVDA", { timeout: 15_000 });
+    await expect(action).toContainText("Buy NVDA", { timeout: 15_000 });
     await action.click();
     // Approval (first buy on a fresh server) and the swap both show their own words; the review sheet opens before the swap.
     const review = page.getByRole("dialog", { name: "Review your buy" });
@@ -293,13 +297,15 @@ test.describe("signed-in changes", () => {
     await expect(group.getByRole("radio", { name: "Price per token" })).toBeChecked();
     await group.getByRole("radio", { name: "Price per share" }).click();
     await expect(page.getByText("$68.08")).toBeVisible();
-    // The pill is the silver gradient span inside the checked radio.
-    const bg = await group
-      .getByRole("radio", { checked: true })
-      .locator("span")
-      .first()
-      .evaluate((el) => getComputedStyle(el).backgroundImage);
+    // The pill is one silver gradient element behind the group, sitting exactly under the checked radio.
+    await page.waitForTimeout(600);
+    const pill = group.locator("span[aria-hidden]").first();
+    const bg = await pill.evaluate((el) => getComputedStyle(el).backgroundImage);
     expect(bg).toContain("linear-gradient");
+    const p = (await pill.boundingBox())!;
+    const r = (await group.getByRole("radio", { checked: true }).boundingBox())!;
+    expect(Math.abs(p.x - r.x)).toBeLessThan(2);
+    expect(Math.abs(p.width - r.width)).toBeLessThan(2);
   });
 
   test("Portfolio uses the new labels", async ({ page }) => {

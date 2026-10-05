@@ -1,6 +1,6 @@
 "use client";
-// beui.dev/components/motion/select. Restyled at the use sites with Tally's glass tokens. Tally addition: one highlight pill
-// glides from the previous hovered or focused item to the current one (like the beUI menus) instead of each item lighting up on its own.
+// beui.dev/components/motion/select. Restyled at the use sites with Tally's glass tokens. Tally addition: the items sit in a
+// <Glide> (components/motion/glide.tsx), so one highlight pill glides from item to item the way beUI's File Tree does.
 
 import { Check, ChevronDown } from "lucide-react";
 import { motion, type Transition, useReducedMotion, type Variants } from "motion/react";
@@ -16,6 +16,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { Glide } from "@/components/motion/glide";
 import { EASE_OUT } from "@/lib/ease";
 import { cn } from "@/lib/utils";
 
@@ -50,9 +51,6 @@ interface SelectContextValue {
   disabled: boolean;
   placement: Placement;
   setPlacement: (p: Placement) => void;
-  /** The item under the pointer or keyboard focus: its box inside the list, or null. */
-  hover: { top: number; height: number } | null;
-  setHover: (h: { top: number; height: number } | null) => void;
 }
 
 const SelectContext = createContext<SelectContextValue | null>(null);
@@ -104,7 +102,6 @@ export function Select({
   const [internal, setInternal] = useState(defaultValue);
   const [labels, setLabels] = useState<Map<string, string>>(new Map());
   const [placement, setPlacement] = useState<Placement>("bottom");
-  const [hover, setHover] = useState<{ top: number; height: number } | null>(null);
 
   const controlled = value !== undefined;
   const current = controlled ? value : internal;
@@ -170,8 +167,6 @@ export function Select({
       disabled,
       placement,
       setPlacement,
-      hover,
-      setHover,
     }),
     [
       current,
@@ -185,7 +180,6 @@ export function Select({
       baseId,
       disabled,
       placement,
-      hover,
     ],
   );
 
@@ -388,43 +382,11 @@ export function SelectContent({ className, children }: SelectContentProps) {
         variants={ctx.reduce ? undefined : LIST_VARIANTS}
         initial={false}
         animate={open ? "show" : "hidden"}
-        className="relative p-1"
-        onPointerLeave={() => ctx.setHover(null)}
+        className="p-1"
       >
-        <Highlight />
-        {children}
+        <Glide pillClassName="!rounded-lg bg-muted">{children}</Glide>
       </motion.div>
     </motion.div>
-  );
-}
-
-function Highlight() {
-  const ctx = useSelectContext("Highlight");
-  const shown = useRef(false);
-  const h = ctx.hover;
-  // The first hover after the pill was hidden snaps to the item and fades in; later hovers glide.
-  const snap = !shown.current;
-  shown.current = h !== null;
-  return (
-    <motion.div
-      aria-hidden
-      initial={false}
-      animate={{ y: h?.top ?? 0, height: h?.height ?? 0, opacity: h ? 1 : 0 }}
-      transition={
-        ctx.reduce
-          ? { duration: 0 }
-          : {
-              y: snap
-                ? { duration: 0 }
-                : { type: "spring", stiffness: 520, damping: 40, mass: 0.6 },
-              height: snap
-                ? { duration: 0 }
-                : { type: "spring", stiffness: 520, damping: 40, mass: 0.6 },
-              opacity: { duration: 0.15 },
-            }
-      }
-      className="pointer-events-none absolute left-1 right-1 top-0 rounded-lg bg-muted"
-    />
   );
 }
 
@@ -439,11 +401,6 @@ export function SelectItem({ value, disabled = false, className, children }: Sel
   const ctx = useSelectContext("SelectItem");
   const selected = ctx.value === value;
   const label = typeof children === "string" ? children : value;
-  const liRef = useRef<HTMLLIElement>(null);
-  const glideTo = () => {
-    const li = liRef.current;
-    if (li && !disabled) ctx.setHover({ top: li.offsetTop, height: li.offsetHeight });
-  };
 
   useLayoutEffect(() => {
     ctx.register(value, label);
@@ -451,15 +408,10 @@ export function SelectItem({ value, disabled = false, className, children }: Sel
   }, [ctx.register, ctx.unregister, value, label]);
 
   return (
-    <motion.li
-      ref={liRef}
-      className="relative"
-      variants={ctx.reduce ? undefined : ITEM_VARIANTS}
-      onPointerEnter={glideTo}
-      onFocus={glideTo}
-    >
+    <motion.li variants={ctx.reduce ? undefined : ITEM_VARIANTS}>
       <button
         type="button"
+        data-glide
         role="option"
         aria-selected={selected}
         disabled={disabled}

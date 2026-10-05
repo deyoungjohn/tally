@@ -7,7 +7,6 @@ import { AnimatedNumber } from "@/components/motion/animated-number";
 import { Button, ButtonLink } from "@/components/motion/button";
 import { Segmented } from "@/components/motion/segmented";
 import { ActionLabel, TradeFlowLayer, flowActionLabel } from "@/components/trade/flow-host";
-import { ReceiptCard } from "@/components/trade/flow-sheets";
 import { useTradeFlow, type FlowParams } from "@/components/trade/use-trade-flow";
 import { IssuerList } from "@/components/trade/issuer-list";
 import { ComingSoon } from "@/components/trade/coming-soon";
@@ -21,8 +20,7 @@ import { useJson } from "@/lib/hooks/use-json";
 import { useLiveQuote } from "@/lib/hooks/use-live-quote";
 import { BUYABLE_TICKERS, isBuyable } from "@/lib/tickers";
 import type { PortfolioReport } from "@tally/engine";
-import { LivePct, LiveUsd } from "@/components/motion/live";
-import { ReturningUser } from "@/components/wallet/returning-user";
+import { LiveUsd } from "@/components/motion/live";
 
 /* ----------------------------------------------------------------- hero card */
 
@@ -39,7 +37,7 @@ export function HomeTradeCard() {
   const tooSmall = text !== "" && usd < 6;
   const href = `/trade/${ticker}?usd=${usd >= 6 ? usd : 6}`;
   const busy = phase.name !== "idle" && phase.name !== "error" && phase.name !== "done";
-  const idleLabel = `Buy ${fmtUsd(usd >= 6 ? usd : 6)} of ${ticker}`;
+  const idleLabel = `Buy ${ticker}`; // follows the stock dropdown; a sell mode will say "Sell {ticker}" the same way
   const canBuy =
     !!row?.executable &&
     usd >= 6 &&
@@ -99,24 +97,21 @@ export function HomeTradeCard() {
             </>
           )}
         </p>
-        {row ? (
-          <p className="mt-2 text-[14.5px] text-fg2">
-            via {ISSUER_LABEL[row.issuer]} · <LiveUsd value={row.usdPerShare} /> per share ·{" "}
-            <span className={row.premium! < 0 ? "pos" : "neg"}>
-              {row.premium! < 0 ? "▼ " : "▲ "}
-              <LivePct value={row.premium} /> vs US
-            </span>
-            {row.feeUsd === undefined ? "" : ` · fee ≈ ${fmtUsd(row.feeUsd, 3)}`}
-          </p>
-        ) : null}
       </div>
-      <div className="mt-4">
+      {row ? (
+        <p className="mt-3 text-center text-[14.5px] text-fg2" data-testid="home-route">
+          {ISSUER_LABEL[row.issuer]} · <LiveUsd value={row.usdPerShare} /> per share
+          {row.feeUsd === undefined ? "" : ` · fee ≈ ${fmtUsd(row.feeUsd, 3)}`}
+        </p>
+      ) : null}
+      <div className="mt-3">
         {wallet.authenticated ? (
           // Signed in: the button is the transaction. It says what is happening (price, approve, confirm, buying, done).
           <Button
             big
             disabled={busy || (phase.name === "idle" && !canBuy)}
             onClick={buy}
+            className="trade-cta"
             data-testid="home-action"
           >
             <ActionLabel text={flowActionLabel(phase, idleLabel)} />
@@ -126,24 +121,13 @@ export function HomeTradeCard() {
             href={href}
             big
             aria-disabled={tooSmall || !isBuyable(ticker)}
+            className="trade-cta"
             data-testid="home-action"
           >
-            <ActionLabel text="Get Started" /> <ArrowRight size={16} aria-hidden />
+            <ActionLabel text={idleLabel} /> <ArrowRight size={16} aria-hidden />
           </ButtonLink>
         )}
-        <ReturningUser className="mt-3 text-center" />
       </div>
-      {phase.name === "done" ? (
-        <div className="mt-3">
-          <ReceiptCard
-            receipt={phase.receipt}
-            plan={phase.plan}
-            ticker={ticker}
-            symbol={flow.params.current?.symbol ?? ticker}
-            onDismiss={flow.cancel}
-          />
-        </div>
-      ) : null}
       {phase.name === "error" ? (
         <p role="alert" className="mt-3 text-[14.5px] text-red" data-testid="home-error">
           {phase.message}

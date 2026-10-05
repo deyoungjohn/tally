@@ -34,7 +34,14 @@ import {
 } from "./trade";
 import { feedSignerFromEnv, liveTradeChain } from "./trade-chain";
 import { fixtureTradeChain } from "./trade-fixture";
-import { portfolioFor, radarFor, type PortfolioReport, type RadarReport } from "./views";
+import {
+  holdingsFor,
+  portfolioFor,
+  radarFor,
+  type HoldingsReport,
+  type PortfolioReport,
+  type RadarReport,
+} from "./views";
 import type { Hex } from "viem";
 import { chainPort, clientFromEnv, onchainMultiplierReader } from "@tally/chain";
 import {
@@ -77,6 +84,8 @@ export interface Engine {
   radar(tickers: readonly string[]): Promise<RadarReport>;
   /** A wallet's holdings in shares across issuers. Read-only: any address works. */
   portfolio(address: Address, tickers: readonly string[]): Promise<PortfolioReport>;
+  /** Every tokenized stock token a wallet holds, any ticker and issuer (the Send list). Read-only: any address works. */
+  holdings(address: Address): Promise<HoldingsReport>;
   /** What `/api/health` reports: Binance auth and the region detector, RPC height, the guard and the Ondo feed's age (blueprint §14). */
   health(): Promise<HealthReport>;
   /** Raw ports, for tests. */
@@ -188,6 +197,7 @@ function build(o: BuildOptions): Engine {
     health,
     radar,
     portfolio: (address, tickers) => portfolioFor(ports, o.tradeChain, address, tickers, now),
+    holdings: (address) => holdingsFor(ports, o.tradeChain, address, now),
     trade: {
       guard: o.guard,
       prepare: (req) => prepareTrade(tradeDeps, req),

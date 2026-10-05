@@ -8,7 +8,7 @@ import { MODULE_NAMES, type ModuleName } from "@tally/config";
 import { BottomSheet } from "@/components/motion/bottom-sheet";
 import { Button, ButtonLink } from "@/components/motion/button";
 import { MorphItem, MorphMenu } from "@/components/motion/morph-menu";
-import { SharedLayoutBg } from "@/components/motion/shared-layout-bg";
+import { Glide } from "@/components/motion/glide";
 import { SendModal } from "@/components/wallet/send-modal";
 import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { cn } from "@/lib/utils";
@@ -298,6 +298,8 @@ export function SiteHeader() {
       });
     return () => controller.abort();
   }, []);
+  const isActive = (href: string) =>
+    pathname === href || (!href.includes("#") && pathname.startsWith(href));
   const links = [...NAV_LINKS, ...MODULE_LINKS.filter((link) => enabled[link.flag])];
   const expanded = links.length > NAV_LINKS.length;
 
@@ -323,22 +325,19 @@ export function SiteHeader() {
           aria-label="Primary"
           className={expanded ? "hidden min-[1200px]:block" : "hidden min-[761px]:block"}
         >
-          <SharedLayoutBg className="items-center gap-1">
+          <Glide className="flex items-center gap-1">
             {links.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
                 className="nav-link"
-                aria-current={
-                  pathname === l.href || (!l.href.includes("#") && pathname.startsWith(l.href))
-                    ? "page"
-                    : undefined
-                }
+                data-glide
+                aria-current={isActive(l.href) ? "page" : undefined}
               >
                 {l.label}
               </Link>
             ))}
-          </SharedLayoutBg>
+          </Glide>
         </nav>
         <div className="flex items-center gap-2">
           <span className="hidden min-[561px]:block">
@@ -358,19 +357,21 @@ export function SiteHeader() {
         </div>
       </div>
       <BottomSheet open={open} onOpenChange={setOpen} snapPoints={["auto"]} title="Menu">
-        <ul className="mt-2 grid gap-2">
+        <Glide as="ul" className="mt-2 grid gap-2" pillClassName="!rounded-[18px] bg-white/[0.12]">
           {links.map((l) => (
             <li key={l.href}>
               <Link
                 href={l.href}
                 onClick={() => setOpen(false)}
+                data-glide
+                aria-current={isActive(l.href) ? "page" : undefined}
                 className="panel flex min-h-14 items-center px-4 text-[18px] font-semibold text-fg no-underline"
               >
                 {l.label}
               </Link>
             </li>
           ))}
-        </ul>
+        </Glide>
         <div className="mt-4">
           <AccountButton big onNavigate={() => setOpen(false)} onSend={() => setSending(true)} />
         </div>

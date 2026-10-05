@@ -363,14 +363,10 @@ body {
     color 0.15s,
     background 0.15s;
 }
-.nav-link:hover {
-  color: var(--fg);
-  background: rgba(255, 255, 255, 0.06);
-}
+/* The highlight itself is the gliding pill from components/motion/glide.tsx; links only change their text colour. */
+.nav-link:hover,
 .nav-link[aria-current="page"] {
   color: var(--fg);
-  background: rgba(255, 255, 255, 0.09);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 /* ---------- Chips and badges (DESIGN.md §2.7) ---------- */
@@ -849,7 +845,7 @@ body {
     0 22px 50px -22px rgba(0, 0, 0, 0.9);
 }
 
-/* Tooltips on tags and "Read more" links (Round 3). */
+/* Tooltips on tags and "Learn more" links (Round 3). */
 .tip {
   position: fixed;
   z-index: 90;
@@ -875,6 +871,9 @@ body {
   border: 0;
   color: var(--blue);
   font: inherit;
+  /* Caption size wherever it appears (the same as .t-meta), whatever text it ends. */
+  font-size: 13.5px;
+  line-height: 1.4;
   font-weight: 600;
   text-decoration: underline;
   text-decoration-color: color-mix(in srgb, var(--blue) 45%, transparent);
@@ -889,4 +888,21 @@ body {
   outline: 2px solid var(--blue);
   outline-offset: 3px;
   border-radius: 4px;
+}
+
+/* The Buy button inside a trade block: heavier and a size up from other buttons. */
+.btn.trade-cta {
+  font-size: 18px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+/* Opaque-ish glass for the search field and its surface (they morph into each other, so they must match). */
+.glass-solid {
+  background: rgba(30, 32, 37, 0.9);
+  border: 1px solid var(--edge);
+  backdrop-filter: blur(20px) saturate(150%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 18px 50px -20px rgba(0, 0, 0, 0.8);
 }

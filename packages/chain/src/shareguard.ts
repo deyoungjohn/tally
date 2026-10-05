@@ -224,13 +224,22 @@ export async function readGuard(
     readonly [bigint, bigint, bigint],
     bigint,
   ];
-  const settle = async <T>(p: Promise<T>): Promise<{ v?: T; err?: string }> =>
-    p.then(
-      (v) => ({ v }),
-      (e: unknown) => ({ err: e instanceof Error ? e.message.split("\n")[0] : String(e) }),
-    );
+  // A revert is an answer (a stale Ondo feed, a failed pause check) and is reported as it is. Anything else (a timeout, a rate
+  // limit or a 403 from the RPC) is a failure to ask, so ask again a couple of times before giving up: one flaky RPC call used to
+  // surface as "The share count for this token can't be read right now".
+  const settle = async <T>(call: () => Promise<T>): Promise<{ v?: T; err?: string }> => {
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return { v: await call() };
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        if (attempt >= 2 || /revert/i.test(msg)) return { err: msg.split("\n")[0] };
+        await new Promise((r) => setTimeout(r, 250 * (attempt + 1)));
+      }
+    }
+  };
   const [spt, tp] = await Promise.all([
-    settle(
+    settle(() =>
       client.readContract({
         address: guard,
         abi: SHAREGUARD_ABI,
@@ -238,7 +247,7 @@ export async function readGuard(
         args: [stock],
       }),
     ),
-    settle(
+    settle(() =>
       client.readContract({
         address: guard,
         abi: SHAREGUARD_ABI,
