@@ -21,6 +21,8 @@
     "@modelcontextprotocol/sdk": "^1.32.0",
     "@tally/core": "workspace:*",
     "@tally/config": "workspace:*",
-    "@tally/engine": "workspace:*"
+    "@tally/engine": "workspace:*",
+    "@tally/modkit": "workspace:*",
+    "@tally/mod-receipts": "workspace:*"
   }
 }

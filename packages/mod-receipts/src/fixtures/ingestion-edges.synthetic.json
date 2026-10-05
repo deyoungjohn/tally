@@ -1,0 +1,9 @@
+{
+  "synthetic": true,
+  "derivedFrom": "F11_NVDAB transaction/receipt vector",
+  "wrongDestination": "0x1111111111111111111111111111111111111111",
+  "wrongSender": "0x2222222222222222222222222222222222222222",
+  "approvalSelector": "0x095ea7b3",
+  "pendingHash": "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "missingHash": "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+}
