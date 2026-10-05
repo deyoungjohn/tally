@@ -399,14 +399,22 @@ export async function handleShares(
     const holdings = adaptSharesReport(rawResult);
     const lines: string[] = [`💼 Portfolio Holdings in Shares`, `Wallet: ${address}`, ""];
 
-    if (holdings.length === 0) {
-      lines.push("No tokenized stock holdings found for this wallet.");
+    // Re-review 3 Finding 3: Show only rows with a balance or a reason; when nothing is held, print scanned tickers
+    const activeHoldings = holdings.filter(
+      (it) =>
+        it.tokensRaw > 0n ||
+        (it.sharesRaw !== null && it.sharesRaw > 0n) ||
+        Boolean(it.unavailableReason),
+    );
+
+    if (activeHoldings.length === 0) {
+      lines.push("No holdings found in the scanned tickers: NVDA, AAPL, TSLA, QQQ, SPY, NFLX");
       return lines.join("\n");
     }
 
     // Group holdings by underlying ticker
     const byTicker = new Map<string, SharesHolding[]>();
-    for (const h of holdings) {
+    for (const h of activeHoldings) {
       const list = byTicker.get(h.ticker) ?? [];
       list.push(h);
       byTicker.set(h.ticker, list);

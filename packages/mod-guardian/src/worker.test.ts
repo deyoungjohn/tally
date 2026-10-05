@@ -815,4 +815,353 @@ describe("Guardian Worker (worker.ts)", () => {
     const state = store.latest<TokenState>("guardian-state", nvdaAddr, { maxAgeMs: 60_000 });
     expect(state?.data?.ticker).toBe("NVDA");
   });
+
+  // Re-review 3 Finding 1: Multiplier rounding tolerance and determinism
+  it("balance change with same true multiplier raises no alert due to 100 ppm tolerance (Finding 1)", async () => {
+    const store = openStore(":memory:");
+    let currentTime = 1_000_000;
+
+    const ctx: GuardianJobContext = {
+      store,
+      health: store.health,
+      now: () => currentTime,
+      onWarn: () => {},
+      isProduction: false,
+    };
+
+    store.put({
+      kind: "wallet:active",
+      key: "bsc",
+      data: { address: wallet },
+      source: "test",
+      observedAt: currentTime,
+    });
+
+    // Run 1: baseline holding with multiplier = 1e18
+    store.put({
+      kind: "portfolio",
+      key: wallet,
+      data: {
+        holdings: [
+          {
+            tokenContractAddress: nvdaAddr,
+            ticker: "NVDA",
+            issuer: "ondo",
+            balanceTokens: 100n * 10n ** 18n,
+            balanceShares: 100n * 10n ** 18n, // 1e18
+            isRecognized: true,
+          },
+        ],
+      },
+      source: "statement",
+      observedAt: currentTime,
+    });
+
+    store.put({
+      kind: "radar",
+      key: nvdaAddr,
+      data: {
+        ticker: "NVDA",
+        address: nvdaAddr,
+        issuer: "ondo",
+        grade: "B",
+        reasons: [],
+        ghost: false,
+      } as RadarSnapshotSubset,
+      source: "radar",
+      observedAt: currentTime,
+    });
+
+    await runGuardianEvaluation(ctx);
+
+    // Run 2: wallet buys more tokens, balance changes, small rounding discrepancy of 50 ppm
+    currentTime += 60_000;
+    store.put({
+      kind: "portfolio",
+      key: wallet,
+      data: {
+        holdings: [
+          {
+            tokenContractAddress: nvdaAddr,
+            ticker: "NVDA",
+            issuer: "ondo",
+            balanceTokens: 150n * 10n ** 18n,
+            // 50 ppm diff from 1e18 (diff = 50 * 10^12)
+            balanceShares: 150n * 10n ** 18n + 7_500_000_000_000_000n,
+            isRecognized: true,
+          },
+        ],
+      },
+      source: "statement",
+      observedAt: currentTime,
+    });
+
+    const run2 = await runGuardianEvaluation(ctx);
+    // Tolerance carries forward previous multiplier; no false share-count alert
+    expect(run2.generatedAlerts).toBe(0);
+
+    const alerts = store.latest<Alert[]>("alerts", wallet, { maxAgeMs: 60_000 })?.data ?? [];
+    expect(alerts).toHaveLength(0);
+  });
+
+  it("+0.58% (+5800 ppm) multiplier change raises exactly one alert (Finding 1)", async () => {
+    const store = openStore(":memory:");
+    let currentTime = 1_000_000;
+
+    const ctx: GuardianJobContext = {
+      store,
+      health: store.health,
+      now: () => currentTime,
+      onWarn: () => {},
+      isProduction: false,
+    };
+
+    store.put({
+      kind: "wallet:active",
+      key: "bsc",
+      data: { address: wallet },
+      source: "test",
+      observedAt: currentTime,
+    });
+
+    // Run 1: baseline with multiplier = 1e18
+    store.put({
+      kind: "portfolio",
+      key: wallet,
+      data: {
+        holdings: [
+          {
+            tokenContractAddress: nvdaAddr,
+            ticker: "NVDA",
+            issuer: "ondo",
+            balanceTokens: 100n * 10n ** 18n,
+            balanceShares: 100n * 10n ** 18n,
+            isRecognized: true,
+          },
+        ],
+      },
+      source: "statement",
+      observedAt: currentTime,
+    });
+
+    store.put({
+      kind: "radar",
+      key: nvdaAddr,
+      data: {
+        ticker: "NVDA",
+        address: nvdaAddr,
+        issuer: "ondo",
+        grade: "B",
+        reasons: [],
+        ghost: false,
+      } as RadarSnapshotSubset,
+      source: "radar",
+      observedAt: currentTime,
+    });
+
+    await runGuardianEvaluation(ctx);
+
+    // Run 2: +0.58% (+5800 ppm) increase in multiplier (e.g. dividend reinvested)
+    currentTime += 60_000;
+    store.put({
+      kind: "portfolio",
+      key: wallet,
+      data: {
+        holdings: [
+          {
+            tokenContractAddress: nvdaAddr,
+            ticker: "NVDA",
+            issuer: "ondo",
+            balanceTokens: 100n * 10n ** 18n,
+            balanceShares: 100_580_000_000_000_000_000n, // +0.58%
+            isRecognized: true,
+          },
+        ],
+      },
+      source: "statement",
+      observedAt: currentTime,
+    });
+
+    const run2 = await runGuardianEvaluation(ctx);
+    expect(run2.generatedAlerts).toBe(1);
+
+    const alerts = store.latest<Alert[]>("alerts", wallet, { maxAgeMs: 60_000 })?.data ?? [];
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]!.rule).toBe("share-count");
+    expect(alerts[0]!.body).toContain("dividend reinvested");
+  });
+
+  it("two wallets with different balances give the same state multiplier (Finding 1)", async () => {
+    const store = openStore(":memory:");
+    const currentTime = 1_000_000;
+    const walletB = "0x9876543210987654321098765432109876543210";
+
+    const ctx: GuardianJobContext = {
+      store,
+      health: store.health,
+      now: () => currentTime,
+      onWarn: () => {},
+      isProduction: false,
+    };
+
+    store.put({
+      kind: "wallet:active",
+      key: "bsc",
+      data: { address: wallet },
+      source: "test",
+      observedAt: currentTime,
+    });
+    store.put({
+      kind: "wallet:active",
+      key: "bsc",
+      data: { address: walletB },
+      source: "test",
+      observedAt: currentTime,
+    });
+
+    // Wallet A has small balance with slight integer rounding
+    store.put({
+      kind: "portfolio",
+      key: wallet,
+      data: {
+        holdings: [
+          {
+            tokenContractAddress: nvdaAddr,
+            ticker: "NVDA",
+            issuer: "ondo",
+            balanceTokens: 10n * 10n ** 18n + 3n,
+            balanceShares: 10n * 10n ** 18n,
+            isRecognized: true,
+          },
+        ],
+      },
+      source: "statement",
+      observedAt: currentTime,
+    });
+
+    // Wallet B has large balance with exact 1:1 ratio
+    store.put({
+      kind: "portfolio",
+      key: walletB,
+      data: {
+        holdings: [
+          {
+            tokenContractAddress: nvdaAddr,
+            ticker: "NVDA",
+            issuer: "ondo",
+            balanceTokens: 10_000n * 10n ** 18n,
+            balanceShares: 10_000n * 10n ** 18n,
+            isRecognized: true,
+          },
+        ],
+      },
+      source: "statement",
+      observedAt: currentTime,
+    });
+
+    store.put({
+      kind: "radar",
+      key: nvdaAddr,
+      data: {
+        ticker: "NVDA",
+        address: nvdaAddr,
+        issuer: "ondo",
+        grade: "B",
+        reasons: [],
+        ghost: false,
+      } as RadarSnapshotSubset,
+      source: "radar",
+      observedAt: currentTime,
+    });
+
+    await runGuardianEvaluation(ctx);
+
+    const state = store.latest<TokenState>("guardian-state", nvdaAddr, { maxAgeMs: 60_000 });
+    // Deterministically selected candidate from Wallet B (largest token balance)
+    expect(state?.data?.multiplier).toBe(10n ** 18n);
+  });
+
+  // Re-review 3 Finding 4: Missing inputs warnings
+  it("warns when registry/bsc snapshot is missing or stale (Finding 4)", async () => {
+    const store = openStore(":memory:");
+    let currentTime = 1_000_000;
+    const warnings: string[] = [];
+
+    const ctx: GuardianJobContext = {
+      store,
+      health: store.health,
+      now: () => currentTime,
+      onWarn: (msg) => warnings.push(msg),
+      isProduction: false,
+    };
+
+    store.put({
+      kind: "wallet:active",
+      key: "bsc",
+      data: { address: wallet },
+      source: "test",
+      observedAt: currentTime,
+    });
+
+    // Run 1: registry/bsc is missing
+    await runGuardianEvaluation(ctx);
+    expect(warnings).toContain("Registry snapshot missing: registry/bsc");
+
+    // Run 2: registry/bsc is stale (>600s)
+    warnings.length = 0;
+    store.put({
+      kind: "registry",
+      key: "bsc",
+      data: [],
+      source: "registry",
+      observedAt: currentTime,
+    });
+
+    currentTime += 700_000; // 700s > 600s maxAgeMs
+    await runGuardianEvaluation(ctx);
+    expect(warnings.some((w) => w.startsWith("Registry snapshot is stale: registry/bsc"))).toBe(
+      true,
+    );
+  });
+
+  it("warns when linked chats exist but TELEGRAM_BOT_TOKEN / ctx.sender is not configured (Finding 4)", async () => {
+    const store = openStore(":memory:");
+    const currentTime = 1_000_000;
+    const warnings: string[] = [];
+
+    const ctx: GuardianJobContext = {
+      store,
+      health: store.health,
+      now: () => currentTime,
+      onWarn: (msg) => warnings.push(msg),
+      sender: undefined, // No sender configured
+      isProduction: false,
+    };
+
+    store.put({
+      kind: "wallet:active",
+      key: "bsc",
+      data: { address: wallet },
+      source: "test",
+      observedAt: currentTime,
+    });
+
+    store.put({
+      kind: "guardian-link",
+      key: wallet,
+      data: {
+        walletAddress: wallet,
+        chatId: 123456789,
+        linkedAt: currentTime,
+        alertsEnabled: true,
+      },
+      source: "guardian-link",
+      observedAt: currentTime,
+    });
+
+    await runGuardianEvaluation(ctx);
+    expect(warnings).toContain(
+      "Linked Telegram chats exist, but TELEGRAM_BOT_TOKEN is not configured; alerts are stored, not delivered",
+    );
+  });
 });

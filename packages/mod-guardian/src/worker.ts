@@ -7,6 +7,7 @@ import {
   type TelegramDeliverySender,
 } from "./delivery";
 import { buildTokenStateFromSnapshots, evaluateHoldingRules } from "./evaluator";
+import { getLinkedChatForWallet } from "./link";
 import { ALL_RULES } from "./rules";
 import {
   DEFAULT_GUARDIAN_SETTINGS,
@@ -137,12 +138,29 @@ export async function runGuardianEvaluation(ctx: GuardianJobContext): Promise<Gu
     };
   }
 
+  // Warn once per run when linked chats exist but TELEGRAM_BOT_TOKEN / ctx.sender is not configured
+  if (!ctx.sender) {
+    let hasLinkedChat = false;
+    for (const wallet of targetWallets) {
+      const link = getLinkedChatForWallet(ctx.store, wallet, now);
+      if (link && link.chatId) {
+        hasLinkedChat = true;
+        break;
+      }
+    }
+    if (hasLinkedChat) {
+      ctx.onWarn(
+        "Linked Telegram chats exist, but TELEGRAM_BOT_TOKEN is not configured; alerts are stored, not delivered",
+      );
+    }
+  }
+
   // 2. Collect holdings for all target wallets (Finding 5: snapshot holdings, bigint math)
   const holdingsByWallet = new Map<string, UserHolding[]>();
   const allUniqueTokenAddresses = new Set<string>();
   const issuerByToken = new Map<string, Issuer>();
   const tickerByToken = new Map<string, string>();
-  const multiplierByToken = new Map<string, bigint>();
+  const largestHoldingByToken = new Map<string, { tokens: bigint; shares: bigint }>();
 
   for (const wallet of targetWallets) {
     const portSnap =
@@ -197,9 +215,14 @@ export async function runGuardianEvaluation(ctx: GuardianJobContext): Promise<Gu
         continue; // Skip holding for share-based rules
       }
 
-      // Re-review 2 Finding 1: Multiplier derived from holding: mulDiv(balanceShares, 1e18, balanceTokens)
-      const derivedMultiplier = mulDiv(item.balanceShares, E18, item.balanceTokens);
-      multiplierByToken.set(tokenAddr, derivedMultiplier);
+      // Track holding with largest token balance for candidate multiplier calculation (Finding 1)
+      const existingLargest = largestHoldingByToken.get(tokenAddr);
+      if (!existingLargest || item.balanceTokens > existingLargest.tokens) {
+        largestHoldingByToken.set(tokenAddr, {
+          tokens: item.balanceTokens,
+          shares: item.balanceShares,
+        });
+      }
 
       // Re-review 2 Finding 6: Store holding.ticker to use on TokenState
       tickerByToken.set(tokenAddr, item.ticker);
@@ -235,6 +258,13 @@ export async function runGuardianEvaluation(ctx: GuardianJobContext): Promise<Gu
     maxAgeMs: 600_000,
     now,
   });
+
+  if (!regSnap || !regSnap.data) {
+    ctx.onWarn("Registry snapshot missing: registry/bsc");
+  } else if (regSnap.stale) {
+    ctx.onWarn(`Registry snapshot is stale: registry/bsc (${regSnap.ageMs}ms old)`);
+  }
+
   const registryItems = Array.isArray(regSnap?.data) ? regSnap.data : [];
   const registryByAddress = new Map<
     string,
@@ -260,7 +290,30 @@ export async function runGuardianEvaluation(ctx: GuardianJobContext): Promise<Gu
       maxAgeMs: 30 * 86_400_000, // 30 days
       now,
     });
+    const prevMultiplier = prevStateSnap?.data?.multiplier ?? null;
     prevStatesByToken.set(tokenAddr, prevStateSnap?.data ?? null);
+
+    // Finding 1: Compute candidate multiplier from largest balance holding.
+    // Carry forward prevMultiplier if candidate is within 100 ppm to avoid rounding alerts on buys.
+    const largest = largestHoldingByToken.get(tokenAddr);
+    let derivedMultiplier: bigint | null = null;
+    if (largest && largest.tokens > 0n) {
+      const candidateMultiplier = mulDiv(largest.shares, E18, largest.tokens);
+      if (prevMultiplier != null && prevMultiplier > 0n) {
+        const diff =
+          candidateMultiplier > prevMultiplier
+            ? candidateMultiplier - prevMultiplier
+            : prevMultiplier - candidateMultiplier;
+        const ppm = (diff * 1_000_000n) / prevMultiplier;
+        if (ppm < 100n) {
+          derivedMultiplier = prevMultiplier;
+        } else {
+          derivedMultiplier = candidateMultiplier;
+        }
+      } else {
+        derivedMultiplier = candidateMultiplier;
+      }
+    }
 
     // Finding 1: Read radar/<lowercase token address> per token with maxAgeMs: 2h
     const radarSnap = ctx.store.latest<RadarSnapshotSubset>("radar", tokenAddr, {
@@ -277,9 +330,6 @@ export async function runGuardianEvaluation(ctx: GuardianJobContext): Promise<Gu
     // Re-review 2 Finding 1: Status mapped from registry/bsc statusInfo
     const regItem = registryByAddress.get(tokenAddr);
     const mappedStatus = statusFromInfo(regItem?.statusInfo);
-
-    // Re-review 2 Finding 1: Multiplier derived from holding
-    const derivedMultiplier = multiplierByToken.get(tokenAddr) ?? null;
 
     const ghostSnap = ctx.store.latest<FlowGhostSnapshotSubset>("flow-ghost", tokenAddr, {
       maxAgeMs: 300_000,

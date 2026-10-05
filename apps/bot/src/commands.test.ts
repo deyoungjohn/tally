@@ -77,6 +77,23 @@ describe("Telegram Bot Commands (apps/bot)", () => {
   // Exit check 2: /shares <address> on burner wallet
   it("replies that holdings are not available yet when sharesOf port is missing", async () => {
     const burner = "0xcb634955B8A7DF7B106f7AB47C9759B26206b777";
+    const engineWithoutSharesOf = {
+      ...engine,
+      sharesOf: undefined,
+    } as unknown as import("@tally/engine").Engine;
+    const reply = await handleShares(burner, {
+      store,
+      engine: engineWithoutSharesOf,
+      chatId: 1002,
+      now: () => 1_000_000,
+    });
+
+    expect(reply).toBe("Holdings are not available yet.");
+  });
+
+  // Re-review 3 Finding 2: engine's own sharesOf is used when no port is injected
+  it("uses engine's own sharesOf when no explicit port is injected", async () => {
+    const burner = "0xcb634955B8A7DF7B106f7AB47C9759B26206b777";
     const reply = await handleShares(burner, {
       store,
       engine,
@@ -84,7 +101,33 @@ describe("Telegram Bot Commands (apps/bot)", () => {
       now: () => 1_000_000,
     });
 
-    expect(reply).toBe("Holdings are not available yet.");
+    expect(reply).toContain("Portfolio Holdings in Shares");
+    expect(reply).toContain(burner);
+    expect(reply).toContain("NVDA");
+  });
+
+  // Re-review 3 Finding 3: empty wallet prints scanned tickers notice
+  it("prints scanned tickers notice when wallet has no holdings", async () => {
+    const emptyWallet = "0x0000000000000000000000000000000000000001";
+    const reply = await handleShares(emptyWallet, {
+      store,
+      engine,
+      chatId: 1002,
+      now: () => 1_000_000,
+      sharesOf: async () => [
+        {
+          ticker: "NVDA",
+          symbol: "NVDAon",
+          issuer: "ondo",
+          tokensRaw: 0n,
+          sharesRaw: 0n,
+        },
+      ],
+    });
+
+    expect(reply).toContain(
+      "No holdings found in the scanned tickers: NVDA, AAPL, TSLA, QQQ, SPY, NFLX",
+    );
   });
 
   it("handles /shares on burner wallet address with injected fake sharesOf port", async () => {
