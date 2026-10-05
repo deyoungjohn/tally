@@ -1,5 +1,5 @@
 import { createFixtureEngine, createLiveEngine } from "@tally/engine";
-import { openStore, type ModuleHealth } from "@tally/modkit";
+import { openStore } from "@tally/modkit";
 import { createBot, verifyTelegramConfig } from "./bot";
 
 export async function main(): Promise<void> {
@@ -12,21 +12,7 @@ export async function main(): Promise<void> {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const store = openStore();
 
-  const health: ModuleHealth = {
-    get: () => ({ module: "guardian", ok: true, lastRunAt: Date.now() }),
-    all: () => [],
-    report: (module, res) => {
-      store.put({
-        kind: "health",
-        key: module,
-        data: res,
-        source: "bot",
-        observedAt: Date.now(),
-      });
-    },
-  };
-
-  const config = verifyTelegramConfig(process.env, health);
+  const config = verifyTelegramConfig(process.env, store.health);
   if (!config.ok || !token) {
     console.error(
       `Telegram bot startup failed: ${config.error ?? "Missing TELEGRAM_BOT_TOKEN environment variable"}`,
@@ -42,7 +28,7 @@ export async function main(): Promise<void> {
   const bot = createBot(token, {
     store,
     engine,
-    health,
+    health: store.health,
     onWarn: (msg) => console.warn(`[guardian-bot] ${msg}`),
   });
 

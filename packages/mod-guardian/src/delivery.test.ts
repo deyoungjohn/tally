@@ -18,6 +18,17 @@ describe("Alert Delivery Pipeline (delivery.ts)", () => {
     expect(redacted).toContain("[redacted url]");
   });
 
+  it("redacts telegram bot tokens in error messages and paths", () => {
+    const raw = "Failed request with token bot123456:ABC-DEF_xyz789";
+    const redacted = redactSecrets(raw);
+    expect(redacted).not.toContain("123456:ABC-DEF_xyz789");
+    expect(redacted).toBe("Failed request with token [redacted token]");
+
+    const rawUrl =
+      "Failed request to https://api.telegram.org/bot123456:ABC-DEF_xyz789/sendMessage";
+    expect(redactSecrets(rawUrl)).not.toContain("123456:ABC-DEF_xyz789");
+  });
+
   it("formats plain text alert message with facts and evidence", () => {
     const alert: Alert = {
       id: "paused:0xwallet:0xnvdab:1000",

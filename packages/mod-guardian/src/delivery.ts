@@ -22,9 +22,11 @@ export interface DeliverAlertsResult {
   updatedAlerts: Alert[];
 }
 
-/** Redacts URLs and potential credentials from error strings (Finding 8) */
+/** Redacts URLs and potential credentials from error strings (Finding 8 & Finding 6) */
 export function redactSecrets(text: string): string {
-  return text.replace(/https?:\/\/[^\s"'<>]+/gi, "[redacted url]");
+  return text
+    .replace(/https?:\/\/[^\s"'<>]+/gi, "[redacted url]")
+    .replace(/bot\d+:[A-Za-z0-9_-]+/gi, "[redacted token]");
 }
 
 /**
