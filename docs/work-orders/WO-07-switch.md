@@ -1,4 +1,7 @@
-# WO-07 Sell + Switch issuer
+# WO-07 Sell (Switch cut 2026-10-05)
+
+> **Scope change 2026-10-05:** gate V-B1 failed (`40368`, Ondo tokens only pair with stablecoins), so one-route Switch cannot exist. Switch, fork tests J and K, `switch-call.ts` and the switch route are **cancelled**. This work order is Sell only; the switch sheet shows "unavailable" with that reason. Receipts for sells follow as a separate additive change.
+
 
 | | |
 |---|---|

@@ -173,7 +173,7 @@ Fails safely: a leg that fails leaves the pie "partially rebalanced" with the ex
 
 | Gate | Module | Who / how | Pass if |
 |---|---|---|---|
-| V-B1, V-B2 | Sell, Switch | user, `research/module_viability.py` on PC or EC2, pre-market **and** regular hours (Mon) | direct stock→stock and stock→USDT quotes return `SWAP`, cost < 0.5% at $7 |
+| V-B1, V-B2 | Sell, Switch | user, `research/module_viability.py` on PC or EC2, pre-market **and** regular hours (Mon) | direct stock→stock and stock→USDT quotes return `SWAP`, cost < 0.5% at $7. **Result 2026-10-05 (pre-market, PC 09:09 UTC and EC2 10:08 UTC): V-B1 FAIL (`40368`: Ondo can only pair with stablecoins, so Switch is cut); V-B2 PASS on the EC2** (`research/results/module_viability_20261005T090942Z.json`, `…T100837Z.json`). Regular-hours re-run of V-B2 still wanted. |
 | V-B3 | Switch | WO-07 fork tests J, K | floor holds; too-high floor reverts atomically |
 | V-B4 | Sell, Switch | user, one live $6 each | both reconcile |
 | V-AW | Autopilot | user + orchestrator, `baw --help`, `baw` policy docs | spend caps or session policy exist on BSC |
@@ -198,3 +198,5 @@ The report is written by the user (AI-written reports are rejected). These are e
 - `transactions-by-address` returns `Parameter error` for every combination tried (`X_tx_by_address`).
 - The leaderboard and address tracker reveal required parameters one per call (`timeFrame` → `sortBy`).
 - Public BSC RPC (`bsc-dataseed`) refuses `eth_getLogs` at any range, 5 blocks included (`F_logs.providers.public_dataseed`).
+- `aggregator/quote` between two stock tokens (bStock ↔ Ondo) returns `40368 "Ondo asset on chain 56 can only pair with allowed stablecoin(s); got: <token address>"` on every pair tried (`research/results/module_viability_20261005T090942Z.json`, `…T100837Z.json`, key `switch`); sells to USDT quote and build normally.
+- The viability script run on the PC returned `40001 "Parameter [userWalletAddress] error"` for every sell build because it was started with `--guard 6` (a wrong argument); the EC2 run, with the ShareGuard address, built all four.
