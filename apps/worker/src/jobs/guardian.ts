@@ -39,6 +39,7 @@ export const job: WorkerJob = {
       now: ctx.now,
       onWarn: ctx.onWarn,
       sender,
+      pauseState: (tokenAddress) => ctx.engine.pauseState(tokenAddress as `0x${string}`),
       testWallet: process.env.TALLY_TEST_WALLET,
       isProduction: process.env.NODE_ENV === "production",
     });
