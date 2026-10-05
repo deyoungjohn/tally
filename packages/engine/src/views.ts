@@ -98,6 +98,87 @@ export interface PortfolioReport {
   failed: { ticker: string; message: string }[];
 }
 
+export interface WalletToken {
+  ticker: string;
+  symbol: string;
+  issuer: "ondo" | "bstock" | "xstocks";
+  /** Registry address (never user input): the only addresses the Send form can transfer. */
+  address: Address;
+  decimals: number;
+  /** Raw balance as a decimal string (bigint does not survive JSON). */
+  balanceRaw: string;
+}
+
+export interface HoldingsReport {
+  address: Address;
+  asOf: string;
+  /** Every tokenized stock in the registry that the wallet holds (balance above zero), whichever issuer or ticker. */
+  tokens: WalletToken[];
+  failed: { symbol: string; message: string }[];
+}
+
+/** Balances for a list of tokens; a chunk that fails is split until the single failing token is found, which is reported, not hidden. */
+async function balancesBisect(
+  chain: TradeChain,
+  owner: Address,
+  tokens: Address[],
+  out: Map<string, bigint>,
+  failed: Map<string, string>,
+): Promise<void> {
+  if (tokens.length === 0) return;
+  try {
+    const res = await chain.erc20Balances(owner, tokens);
+    tokens.forEach((t, i) => out.set(t, res[i] ?? 0n));
+  } catch (e) {
+    if (tokens.length === 1) {
+      failed.set(tokens[0]!, e instanceof Error ? e.message.slice(0, 160) : String(e));
+      return;
+    }
+    const mid = Math.ceil(tokens.length / 2);
+    await balancesBisect(chain, owner, tokens.slice(0, mid), out, failed);
+    await balancesBisect(chain, owner, tokens.slice(mid), out, failed);
+  }
+}
+
+/** Every registry token the wallet holds, for the Send form. Needs a registry that can list all tokens. */
+export async function holdingsFor(
+  ports: EnginePorts,
+  chain: TradeChain,
+  address: Address,
+  now: () => number,
+): Promise<HoldingsReport> {
+  if (!ports.registry.all) throw new Error("This registry cannot list every token.");
+  const all = await ports.registry.all();
+  const out = new Map<string, bigint>();
+  const failed = new Map<string, string>();
+  const CHUNK = 100;
+  for (let i = 0; i < all.length; i += CHUNK)
+    await balancesBisect(
+      chain,
+      address,
+      all.slice(i, i + CHUNK).map((t) => t.address),
+      out,
+      failed,
+    );
+  return {
+    address,
+    asOf: new Date(now()).toISOString(),
+    tokens: all
+      .filter((t) => (out.get(t.address) ?? 0n) > 0n)
+      .map((t) => ({
+        ticker: t.ticker,
+        symbol: t.symbol,
+        issuer: t.issuer,
+        address: t.address,
+        decimals: t.decimals,
+        balanceRaw: String(out.get(t.address)),
+      })),
+    failed: all
+      .filter((t) => failed.has(t.address))
+      .map((t) => ({ symbol: t.symbol, message: failed.get(t.address)! })),
+  };
+}
+
 /** Portfolio in shares (blueprint §11): balanceOf for every registry token of the given tickers × its resolved multiplier. */
 export async function portfolioFor(
   ports: EnginePorts,

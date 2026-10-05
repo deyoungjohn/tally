@@ -93,7 +93,18 @@ function MockBridge({ spec, onChange }: { spec: MockSpec; onChange: (w: TallyWal
         await new Promise((r) => setTimeout(r, 250));
         if (spec.reject)
           throw Object.assign(new Error("User rejected the request"), { code: 4001 });
-        return tx.to.toLowerCase() === USDT_BSC.toLowerCase() ? MOCK_APPROVE : MOCK_SWAP;
+        // Test hook only: what the app asked the wallet to sign, so a test can check it is exactly the plan's transaction.
+        const w = window as unknown as { __tallySentTxs?: unknown[] };
+        (w.__tallySentTxs ??= []).push({
+          to: tx.to,
+          data: tx.data,
+          gas: tx.gas === undefined ? null : tx.gas.toString(),
+          value: tx.value === undefined ? "0" : tx.value.toString(),
+        });
+        const isApprove = tx.data.toLowerCase().startsWith("0x095ea7b3");
+        return tx.to.toLowerCase() === USDT_BSC.toLowerCase() || isApprove
+          ? MOCK_APPROVE
+          : MOCK_SWAP;
       },
     }),
     [signedIn, spec],

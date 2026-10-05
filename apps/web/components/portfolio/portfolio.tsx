@@ -7,14 +7,29 @@ import type { PortfolioReport } from "@tally/engine";
 import { Button, ButtonLink } from "@/components/motion/button";
 import { ComingSoon } from "@/components/trade/coming-soon";
 import { GradeBadge, TokenLogo } from "@/components/trade/badges";
+import { SellSheet } from "@/components/trade/sell-sheet";
+import { useSellFlow } from "@/components/trade/use-sell-flow";
+import { useModuleFlags } from "@/lib/hooks/use-flags";
 import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { useJson } from "@/lib/hooks/use-json";
-import { ISSUER_LABEL, fmtShares, fmtUsd } from "@/lib/format";
+import { ISSUER_LABEL } from "@/lib/format";
 import { nameOf } from "@/lib/tickers";
+import { LiveNumber, LiveShares, LiveUsd } from "@/components/motion/live";
+import { LearnMore } from "@/components/learn-more";
 
 type Group = PortfolioReport["groups"][number];
+type Part = Group["parts"][number];
 
-export function HoldingGroup({ g, example }: { g: Group; example?: boolean }) {
+export function HoldingGroup({
+  g,
+  example,
+  onSell,
+}: {
+  g: Group;
+  example?: boolean;
+  /** Present only when selling is switched on and this is the signed-in wallet's own portfolio. xStocks tokens get no Sell action. */
+  onSell?: (p: Part) => void;
+}) {
   return (
     <li className="panel list-none p-5" data-testid={`group-${g.ticker}`}>
       <div className="flex items-center gap-3">
@@ -24,31 +39,56 @@ export function HoldingGroup({ g, example }: { g: Group; example?: boolean }) {
           <p className="t-meta mono">{g.ticker}</p>
         </div>
         <div className="text-right">
-          <p className="num text-[22px] font-bold tracking-tight">{fmtShares(g.shares)}</p>
-          <p className="t-meta">shares{g.valueUsd === null ? "" : ` · ≈ ${fmtUsd(g.valueUsd)}`}</p>
+          <LiveShares
+            value={g.shares}
+            className="num flex justify-end text-[23px] font-bold tracking-tight"
+          />
+          <p className="t-meta flex items-center justify-end gap-1">
+            shares
+            {g.valueUsd === null ? null : (
+              <>
+                {" · ≈ "}
+                <LiveUsd value={g.valueUsd} />
+              </>
+            )}
+          </p>
         </div>
       </div>
       <ul className="m-0 mt-4 grid list-none gap-2 p-0">
         {g.parts.map((p) => (
           <li
             key={p.address}
-            className="flex items-center justify-between gap-3 rounded-[14px] bg-white/[0.03] px-3 py-2 text-[13.5px]"
+            className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-[14px] bg-white/[0.03] px-3 py-2 text-[14.5px]"
           >
             <span className="flex items-center gap-2">
-              <GradeBadge grade={p.grade} className="!h-6 !w-6 !text-[11px]" />
-              {ISSUER_LABEL[p.issuer]} <span className="mono text-[12px] text-fg3">{p.symbol}</span>
+              <GradeBadge grade={p.grade} className="!h-6 !w-6 !text-[12px]" />
+              {ISSUER_LABEL[p.issuer]} <span className="mono text-[13px] text-fg3">{p.symbol}</span>
             </span>
             <span className="num text-fg2">
-              {p.tokens.toFixed(6)} tokens × {Number(p.multiplier.toFixed(6))} ={" "}
-              <b className="text-fg">{fmtShares(p.shares)}</b>
+              <LiveNumber value={p.tokens} decimals={6} /> tokens ×{" "}
+              {Number(p.multiplier.toFixed(6))} ={" "}
+              <b className="text-fg">
+                <LiveShares value={p.shares} />
+              </b>
             </span>
+            {onSell && p.issuer !== "xstocks" ? (
+              <Button
+                variant="glassy"
+                className="!h-9 !px-4 text-[14.5px]"
+                onClick={() => onSell(p)}
+                aria-label={`Sell ${p.symbol}`}
+                data-testid={`sell-${p.symbol}`}
+              >
+                Sell
+              </Button>
+            ) : null}
           </li>
         ))}
       </ul>
       {example ? null : (
         <Link
           href={`/trade/${g.ticker}`}
-          className="mt-3 inline-flex min-h-[44px] items-center gap-1 text-[13px] text-blue"
+          className="mt-3 inline-flex min-h-[44px] items-center gap-1 text-[14px] text-blue"
         >
           Buy more {g.ticker} <ArrowRight size={13} aria-hidden />
         </Link>
@@ -102,9 +142,22 @@ export function PortfolioPage() {
     if (a && ADDR.test(a)) setViewing(a);
   }, []);
   const address = viewing ?? (wallet.authenticated ? wallet.address : undefined) ?? null;
-  const { data, error, loading } = useJson<PortfolioReport>(
+  const { data, error, loading, reload } = useJson<PortfolioReport>(
     address ? `/api/portfolio?address=${address}` : null,
+    { refreshMs: 10_000 },
   );
+
+  // Selling: behind FEATURE_SELL (read through /api/modules/health), and only on the signed-in wallet's own holdings.
+  const flags = useModuleFlags();
+  const sell = useSellFlow();
+  const own =
+    wallet.authenticated &&
+    !!wallet.address &&
+    address?.toLowerCase() === wallet.address.toLowerCase();
+  const canSell = flags.sell === true && own;
+  useEffect(() => {
+    if (sell.phase.name === "confirmed") reload();
+  }, [sell.phase.name, reload]);
 
   return (
     <main id="main" className="wrap pb-24 pt-10 min-[561px]:pt-14">
@@ -112,7 +165,7 @@ export function PortfolioPage() {
       <h1 className="t-h2 mt-3 max-w-[22ch]">Your tokenized shares, counted in shares.</h1>
       <p className="t-lead mt-3 max-w-[62ch]">
         Holdings from different issuers add up in share units, so 1.2 shares from Ondo and 0.5 from
-        bStock read as 1.7 shares, not two confusing token balances.
+        bStock read as 1.7 shares, not two confusing token balances. <LearnMore concept="shares" />
       </p>
 
       {!address ? (
@@ -187,7 +240,21 @@ export function PortfolioPage() {
             ) : (
               <ul className="m-0 grid list-none gap-3 p-0">
                 {data.groups.map((g) => (
-                  <HoldingGroup key={g.ticker} g={g} />
+                  <HoldingGroup
+                    key={g.ticker}
+                    g={g}
+                    onSell={
+                      canSell
+                        ? (p) =>
+                            void sell.open({
+                              ticker: p.ticker,
+                              issuer: p.issuer as "ondo" | "bstock",
+                              symbol: p.symbol,
+                              probeShares: p.shares,
+                            })
+                        : undefined
+                    }
+                  />
                 ))}
               </ul>
             )}
@@ -202,10 +269,7 @@ export function PortfolioPage() {
             <div className="glass p-5">
               <p className="t-meta">Total value of tokenized stock holdings</p>
               <p className="t-big mt-1" data-testid="total-value">
-                {data ? fmtUsd(data.totalValueUsd) : "–"}
-              </p>
-              <p className="t-meta mt-1 mono">
-                {address.slice(0, 6)}…{address.slice(-4)}
+                <LiveUsd value={data?.totalValueUsd} />
               </p>
             </div>
             <div className="panel p-5">
@@ -213,20 +277,23 @@ export function PortfolioPage() {
               <dl className="mt-2">
                 <div className="detail-row">
                   <dt>USDT</dt>
-                  <dd>{data ? fmtUsd(data.wallet.usdt) : "–"}</dd>
+                  <dd>
+                    <LiveUsd value={data?.wallet.usdt} />
+                  </dd>
                 </div>
                 <div className="detail-row">
                   <dt>BNB (for network fees)</dt>
-                  <dd>{data ? data.wallet.bnb.toFixed(5) : "–"}</dd>
+                  <dd>
+                    <LiveNumber value={data?.wallet.bnb} decimals={5} />
+                  </dd>
                 </div>
               </dl>
             </div>
-            <ComingSoon
-              items={["Dividends received as shares", "Sell to USDT or BNB", "Price alerts"]}
-            />
+            <ComingSoon items={["Dividends received as shares", "Sell to USDT", "Price alerts"]} />
           </aside>
         </div>
       )}
+      {flags.sell === true ? <SellSheet flow={sell} /> : null}
     </main>
   );
 }

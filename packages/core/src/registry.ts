@@ -61,6 +61,11 @@ export class Registry {
     return this.byAddress.get(address.toLowerCase());
   }
 
+  /** Every token of every ticker (the send list: any tokenized stock a wallet holds can be sent out). */
+  all(): RegistryToken[] {
+    return [...this.byAddress.values()];
+  }
+
   tickers(): string[] {
     return [...this.byTicker.keys()].sort();
   }

@@ -7,7 +7,6 @@ import { AnimatedNumber } from "@/components/motion/animated-number";
 import { Button, ButtonLink } from "@/components/motion/button";
 import { Segmented } from "@/components/motion/segmented";
 import { ActionLabel, TradeFlowLayer, flowActionLabel } from "@/components/trade/flow-host";
-import { ReceiptCard } from "@/components/trade/flow-sheets";
 import { useTradeFlow, type FlowParams } from "@/components/trade/use-trade-flow";
 import { IssuerList } from "@/components/trade/issuer-list";
 import { ComingSoon } from "@/components/trade/coming-soon";
@@ -16,11 +15,12 @@ import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { HoldingGroup, EXAMPLE_GROUP } from "@/components/portfolio/portfolio";
 import { RadarRowCard, RadarStats, useRadar } from "@/components/radar/radar";
 import type { QuoteDto } from "@/lib/dto";
-import { ISSUER_LABEL, fmtPct, fmtShares, fmtUsd } from "@/lib/format";
+import { ISSUER_LABEL, fmtShares, fmtUsd } from "@/lib/format";
 import { useJson } from "@/lib/hooks/use-json";
 import { useLiveQuote } from "@/lib/hooks/use-live-quote";
 import { BUYABLE_TICKERS, isBuyable } from "@/lib/tickers";
 import type { PortfolioReport } from "@tally/engine";
+import { LiveUsd } from "@/components/motion/live";
 
 /* ----------------------------------------------------------------- hero card */
 
@@ -37,7 +37,7 @@ export function HomeTradeCard() {
   const tooSmall = text !== "" && usd < 6;
   const href = `/trade/${ticker}?usd=${usd >= 6 ? usd : 6}`;
   const busy = phase.name !== "idle" && phase.name !== "error" && phase.name !== "done";
-  const idleLabel = `Buy ${fmtUsd(usd >= 6 ? usd : 6)} of ${ticker}`;
+  const idleLabel = `Buy ${ticker}`; // follows the stock dropdown; a sell mode will say "Sell {ticker}" the same way
   const canBuy =
     !!row?.executable &&
     usd >= 6 &&
@@ -62,7 +62,7 @@ export function HomeTradeCard() {
           You pay
         </label>
         <div className="mt-2 flex items-center gap-1">
-          <span className="text-[clamp(36px,5vw,56px)] font-bold leading-none text-fg3">$</span>
+          <span className="text-[clamp(37px,5vw,57px)] font-bold leading-none text-fg3">$</span>
           <input
             id="home-amount"
             className="amount-input"
@@ -76,13 +76,13 @@ export function HomeTradeCard() {
             }}
           />
         </div>
-        <p className="mt-2 min-h-[20px] text-[13px] text-red" role={tooSmall ? "alert" : undefined}>
+        <p className="mt-2 min-h-[20px] text-[14px] text-red" role={tooSmall ? "alert" : undefined}>
           {tooSmall ? "Minimum is $6." : ""}
         </p>
       </div>
       <div className="field mt-2" data-testid="home-get">
         <p className="t-meta">You get, at the best price right now</p>
-        <p className="t-big mt-2 !text-[clamp(30px,3.6vw,46px)]">
+        <p className="t-big mt-2 !text-[clamp(31px,3.6vw,47px)]">
           {row?.shares === undefined ? (
             <span className="text-fg-disabled">–</span>
           ) : (
@@ -93,28 +93,25 @@ export function HomeTradeCard() {
                 startOnView={false}
                 duration={0.5}
               />{" "}
-              <span className="text-[20px] text-fg2">{ticker} shares</span>
+              <span className="text-[21px] text-fg2">{ticker} shares</span>
             </>
           )}
         </p>
-        {row ? (
-          <p className="mt-2 text-[13.5px] text-fg2">
-            via {ISSUER_LABEL[row.issuer]} · {fmtUsd(row.usdPerShare)} per share ·{" "}
-            <span className={row.premium! < 0 ? "pos" : "neg"}>
-              {row.premium! < 0 ? "▼ " : "▲ "}
-              {fmtPct(row.premium)} vs US
-            </span>
-            {row.feeUsd === undefined ? "" : ` · fee ≈ ${fmtUsd(row.feeUsd, 3)}`}
-          </p>
-        ) : null}
       </div>
-      <div className="mt-4">
+      {row ? (
+        <p className="mt-3 text-center text-[14.5px] text-fg2" data-testid="home-route">
+          {ISSUER_LABEL[row.issuer]} · <LiveUsd value={row.usdPerShare} /> per share
+          {row.feeUsd === undefined ? "" : ` · fee ≈ ${fmtUsd(row.feeUsd, 3)}`}
+        </p>
+      ) : null}
+      <div className="mt-3">
         {wallet.authenticated ? (
           // Signed in: the button is the transaction. It says what is happening (price, approve, confirm, buying, done).
           <Button
             big
             disabled={busy || (phase.name === "idle" && !canBuy)}
             onClick={buy}
+            className="trade-cta"
             data-testid="home-action"
           >
             <ActionLabel text={flowActionLabel(phase, idleLabel)} />
@@ -124,25 +121,15 @@ export function HomeTradeCard() {
             href={href}
             big
             aria-disabled={tooSmall || !isBuyable(ticker)}
+            className="trade-cta"
             data-testid="home-action"
           >
-            <ActionLabel text="Get Started" /> <ArrowRight size={16} aria-hidden />
+            <ActionLabel text={idleLabel} /> <ArrowRight size={16} aria-hidden />
           </ButtonLink>
         )}
       </div>
-      {phase.name === "done" ? (
-        <div className="mt-3">
-          <ReceiptCard
-            receipt={phase.receipt}
-            plan={phase.plan}
-            ticker={ticker}
-            symbol={flow.params.current?.symbol ?? ticker}
-            onDismiss={flow.cancel}
-          />
-        </div>
-      ) : null}
       {phase.name === "error" ? (
-        <p role="alert" className="mt-3 text-[13.5px] text-red" data-testid="home-error">
+        <p role="alert" className="mt-3 text-[14.5px] text-red" data-testid="home-error">
           {phase.message}
         </p>
       ) : null}
@@ -225,7 +212,7 @@ export function TickerStrip() {
           >
             <span className="font-semibold">{t.ticker}</span>
             <span className="num text-fg2">
-              {prices[t.ticker] ? fmtUsd(prices[t.ticker]) : "…"}
+              {prices[t.ticker] ? <LiveUsd value={prices[t.ticker]} /> : "…"}
             </span>
           </Link>
         </li>
@@ -241,7 +228,7 @@ export function HomeComparison() {
   return (
     <div data-testid="home-comparison">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="t-h3 !text-[18px]">Live comparison</h3>
+        <h3 className="t-h3 !text-[19px]">Live comparison</h3>
         <StockPicker value={ticker} onChange={setTicker} className="!w-[min(100%,230px)]" />
       </div>
       <IssuerList
@@ -252,7 +239,7 @@ export function HomeComparison() {
         showTitle={false}
       />
       {q.error && !q.data ? (
-        <p role="alert" className="mt-3 text-[14px] text-amber">
+        <p role="alert" className="mt-3 text-[15px] text-amber">
           {q.error.message}
         </p>
       ) : null}
@@ -265,7 +252,9 @@ export function HomeComparison() {
 export function HomePortfolioPreview() {
   const wallet = useTallyWallet();
   const address = wallet.authenticated ? wallet.address : undefined;
-  const { data } = useJson<PortfolioReport>(address ? `/api/portfolio?address=${address}` : null);
+  const { data } = useJson<PortfolioReport>(address ? `/api/portfolio?address=${address}` : null, {
+    refreshMs: 15_000,
+  });
   if (address && data && data.groups.length > 0)
     return (
       <div>

@@ -1,0 +1,469 @@
+"use client";
+// The sell flow (a separate hook; the buy hook is untouched). It plans through /api/trade/sell, approves the exact amount when
+// asked, re-plans before signing, signs exactly the plan's transaction and watches it through /api/trade/tx-status.
+// Sells emit no buy-shaped stage events and never touch the receipts route (sell receipts are not reconciled yet).
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { Hex } from "viem";
+import type { SellPlan } from "@tally/engine";
+import { useTallyWallet } from "@/components/wallet/wallet-context";
+import { fetchSellPlan } from "../../lib/trade-plan/sell";
+import { explainSellError, planGotWorse, type SellFailure } from "../../lib/sell/view";
+
+export interface SellTarget {
+  ticker: string;
+  issuer: "ondo" | "bstock";
+  symbol: string;
+  /** The holding's shares as the Portfolio shows them. Used only for the opening check, never signed. */
+  probeShares: number;
+}
+
+export type SellPhase =
+  | { name: "idle" }
+  | { name: "loading" }
+  | { name: "refused"; failure: SellFailure }
+  | {
+      name: "form";
+      plan: SellPlan | null;
+      refreshing: boolean;
+      failure?: SellFailure;
+      notice?: string;
+    }
+  | { name: "approve"; plan: SellPlan; step: "sign" | "mining" }
+  | { name: "signing"; plan: SellPlan }
+  | { name: "mining"; hash: string; slow: boolean }
+  | {
+      name: "confirmed";
+      hash: string;
+      blockNumber: number | null;
+      gasUsed: number | null;
+      bscscan: string;
+    }
+  | { name: "failed"; failure: SellFailure; hash?: string; bscscan?: string };
+
+export interface SellInputs {
+  /** What the person typed, in shares. Ignored while `all` is set. */
+  text: string;
+  /** "Sell all": the plan is requested with the raw token balance the plan itself reported. */
+  all: boolean;
+  tolerancePct: number;
+}
+
+export const SELL_TOLERANCES = [0.5, 1, 2] as const;
+const PENDING_KEY = "tally.pendingSell";
+const APPROVE_GAS = 80_000n;
+const POLL_MS = 3_000;
+const TIMEOUT_MS = 180_000;
+const SLOW_MS = 45_000;
+const DEBOUNCE_MS = 450;
+const SHARES_RE = /^\d*\.?\d{0,8}$/;
+
+interface Pending {
+  hash: string;
+  ticker: string;
+  symbol: string;
+  at: number;
+}
+const readPending = (): Pending | null => {
+  try {
+    const p = JSON.parse(localStorage.getItem(PENDING_KEY) ?? "null") as Pending | null;
+    return p && Date.now() - p.at < 30 * 60_000 ? p : null;
+  } catch {
+    return null;
+  }
+};
+const writePending = (p: Pending | null) => {
+  try {
+    if (p) localStorage.setItem(PENDING_KEY, JSON.stringify(p));
+    else localStorage.removeItem(PENDING_KEY);
+  } catch {
+    /* storage blocked: the flow still works, it just can't resume after a reload */
+  }
+};
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+export interface TxStatus {
+  status: "pending" | "success" | "reverted";
+  hash: string;
+  blockNumber?: number;
+  gasUsed?: number;
+  bscscan: string;
+}
+
+/** The share amount the form can request, or null when the text is not a positive amount. */
+export function parseShares(text: string): number | null {
+  if (!SHARES_RE.test(text) || text === "" || text === ".") return null;
+  const n = Number(text);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+export function useSellFlow() {
+  const wallet = useTallyWallet();
+  const walletRef = useRef(wallet);
+  walletRef.current = wallet;
+
+  const [phase, setPhaseState] = useState<SellPhase>({ name: "idle" });
+  const setPhase = useCallback((next: SellPhase | ((cur: SellPhase) => SellPhase)) => {
+    setPhaseState((cur) => {
+      const v = typeof next === "function" ? next(cur) : next;
+      phaseRef.current = v;
+      return v;
+    });
+  }, []);
+  const [target, setTarget] = useState<SellTarget | null>(null);
+  const [inputs, setInputsState] = useState<SellInputs>({ text: "", all: false, tolerancePct: 1 });
+  /** Counts input changes, so a plan is requested for what the person changed and not whenever the phase returns to the form. */
+  const [version, setVersion] = useState(0);
+  const phaseRef = useRef<SellPhase>({ name: "idle" });
+  const runId = useRef(0);
+  const targetRef = useRef<SellTarget | null>(null);
+  const inputsRef = useRef(inputs);
+  inputsRef.current = inputs;
+  /** The raw token balance, exactly as the last plan reported it. Never rebuilt from a displayed number. */
+  const rawBalance = useRef<string | null>(null);
+  const lastPlan = useRef<SellPlan | null>(null);
+
+  const requestFor = useCallback((t: SellTarget, i: SellInputs) => {
+    const base = { ticker: t.ticker, issuer: t.issuer, tolerancePct: i.tolerancePct };
+    if (i.all) return rawBalance.current ? { ...base, tokens: rawBalance.current } : null;
+    const shares = parseShares(i.text);
+    return shares === null ? null : { ...base, shares };
+  }, []);
+
+  const plan = useCallback(
+    async (t: SellTarget, i: SellInputs): Promise<SellPlan | null> => {
+      const w = walletRef.current;
+      if (!w.address) return null;
+      const req = requestFor(t, i);
+      if (!req) return null;
+      const p = await fetchSellPlan({ ...req, user: w.address });
+      rawBalance.current = p.balances.tokens;
+      lastPlan.current = p;
+      return p;
+    },
+    [requestFor],
+  );
+
+  const failAs = useCallback((e: unknown, id: number, keepForm = true) => {
+    if (id !== runId.current) return;
+    const failure = explainSellError(e);
+    if (failure.kind === "refused" || failure.kind === "region")
+      return setPhase({ name: "refused", failure });
+    if (keepForm) setPhase({ name: "form", plan: lastPlan.current, refreshing: false, failure });
+    else setPhase({ name: "failed", failure });
+  }, []);
+
+  /** Watches a transaction until it is mined (or the wait runs out). */
+  const waitForTx = useCallback(
+    async (hash: string, id: number, onSlow?: () => void): Promise<TxStatus> => {
+      const t0 = Date.now();
+      let slowSent = false;
+      for (;;) {
+        if (id !== runId.current)
+          throw Object.assign(new Error("cancelled"), { kind: "cancelled" });
+        try {
+          const res = await fetch(`/api/trade/tx-status?hash=${hash}`, { cache: "no-store" });
+          if (res.ok) {
+            const s = (await res.json()) as TxStatus;
+            if (s.status !== "pending") return s;
+          }
+        } catch {
+          /* transient: keep polling, the hash is already saved */
+        }
+        const waited = Date.now() - t0;
+        if (!slowSent && waited > SLOW_MS) {
+          slowSent = true;
+          onSlow?.();
+        }
+        if (waited > TIMEOUT_MS) throw Object.assign(new Error("timeout"), { kind: "timeout" });
+        await sleep(POLL_MS);
+      }
+    },
+    [],
+  );
+
+  const watch = useCallback(
+    async (hash: string, id: number) => {
+      setPhase({ name: "mining", hash, slow: false });
+      try {
+        const s = await waitForTx(hash, id, () =>
+          setPhase((p) => (p.name === "mining" ? { ...p, slow: true } : p)),
+        );
+        if (id !== runId.current) return;
+        writePending(null);
+        if (s.status === "success")
+          setPhase({
+            name: "confirmed",
+            hash,
+            blockNumber: s.blockNumber ?? null,
+            gasUsed: s.gasUsed ?? null,
+            bscscan: s.bscscan,
+          });
+        else
+          setPhase({
+            name: "failed",
+            hash,
+            bscscan: s.bscscan,
+            failure: {
+              kind: "failed",
+              message:
+                "The sale didn't go through, so your tokens stayed put. Only the network fee was spent.",
+            },
+          });
+      } catch (e) {
+        if ((e as { kind?: string }).kind === "cancelled") return;
+        setPhase({
+          name: "mining",
+          hash,
+          slow: true,
+        });
+      }
+    },
+    [waitForTx],
+  );
+
+  /** Opens the sheet: one plan to learn whether the token can be sold at all, and its raw balance. */
+  const open = useCallback(async (t: SellTarget) => {
+    const id = ++runId.current;
+    targetRef.current = t;
+    setTarget(t);
+    rawBalance.current = null;
+    lastPlan.current = null;
+    setInputsState({ text: "", all: false, tolerancePct: 1 });
+    setVersion(0);
+    setPhase({ name: "loading" });
+    const w = walletRef.current;
+    if (!w.authenticated || !w.address) {
+      setPhase({
+        name: "failed",
+        failure: { kind: "failed", message: "Sign in to sell." },
+      });
+      return;
+    }
+    try {
+      const probe = Math.floor(t.probeShares * 1e8) / 1e8;
+      const p = await fetchSellPlan({
+        ticker: t.ticker,
+        issuer: t.issuer,
+        shares: probe > 0 ? probe : undefined,
+        tokens: probe > 0 ? undefined : "1",
+        tolerancePct: 1,
+        user: w.address,
+      });
+      if (id !== runId.current) return;
+      rawBalance.current = p.balances.tokens;
+      setPhase({ name: "form", plan: null, refreshing: false });
+    } catch (e) {
+      if (id !== runId.current) return;
+      const failure = explainSellError(e);
+      // The opening check can fail for reasons about the amount (below the minimum, a tiny shortfall): those are not refusals.
+      if (
+        failure.kind === "refused" ||
+        failure.kind === "region" ||
+        failure.kind === "unavailable" ||
+        failure.kind === "busy"
+      )
+        setPhase({ name: "refused", failure });
+      else setPhase({ name: "form", plan: null, refreshing: false });
+    }
+  }, []);
+
+  const setInputs = useCallback((patch: Partial<SellInputs>) => {
+    setInputsState((cur) => ({ ...cur, ...patch }));
+    setVersion((v) => v + 1);
+  }, []);
+
+  const sellAll = useCallback(() => setInputs({ all: true, text: "" }), [setInputs]);
+
+  // Re-plan (debounced) whenever the person changes the amount or the tolerance while the form is showing.
+  useEffect(() => {
+    if (version === 0 || phaseRef.current.name !== "form" || !targetRef.current) return;
+    const t = targetRef.current;
+    const req = requestFor(t, inputsRef.current);
+    if (!req) {
+      setPhase((p) => (p.name === "form" ? { name: "form", plan: null, refreshing: false } : p));
+      return;
+    }
+    const id = ++runId.current;
+    setPhase((p) => (p.name === "form" ? { name: "form", plan: p.plan, refreshing: true } : p));
+    const timer = setTimeout(
+      () => {
+        plan(t, inputsRef.current)
+          .then((p) => {
+            if (id !== runId.current || !p) return;
+            setPhase({ name: "form", plan: p, refreshing: false });
+          })
+          .catch((e) => failAs(e, id));
+      },
+      inputsRef.current.all ? 0 : DEBOUNCE_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [version, requestFor, plan, failAs, setPhase]);
+
+  /** A new quote for the same inputs (the old one expired, or the person asked). */
+  const refresh = useCallback(async () => {
+    const t = targetRef.current;
+    if (!t) return;
+    const id = ++runId.current;
+    setPhase((p) =>
+      p.name === "form" ? { ...p, refreshing: true, failure: undefined, notice: undefined } : p,
+    );
+    try {
+      const p = await plan(t, inputsRef.current);
+      if (id !== runId.current) return;
+      setPhase({ name: "form", plan: p, refreshing: false });
+    } catch (e) {
+      failAs(e, id);
+    }
+  }, [plan, failAs]);
+
+  /** Sends the plan's approval for the exact amount, waits for it to mine, then asks for a new plan. */
+  const approve = useCallback(async () => {
+    if (phase.name !== "form" || !phase.plan || phase.plan.status !== "needs_approval") return;
+    const seen = phase.plan;
+    const t = targetRef.current;
+    const w = walletRef.current;
+    if (!t || !w.address || !seen.approve) return;
+    // Exactly what is being sold, never an unlimited allowance.
+    if (seen.approve.amount !== seen.tokensIn) {
+      setPhase({
+        name: "form",
+        plan: seen,
+        refreshing: false,
+        failure: {
+          kind: "failed",
+          message: "The approval didn't match the amount, so nothing was sent.",
+        },
+      });
+      return;
+    }
+    const id = ++runId.current;
+    try {
+      setPhase({ name: "approve", plan: seen, step: "sign" });
+      const hash = await w.sendTx({
+        to: seen.approve.to,
+        data: seen.approve.data as Hex,
+        gas: APPROVE_GAS,
+      });
+      if (id !== runId.current) return;
+      setPhase({ name: "approve", plan: seen, step: "mining" });
+      const s = await waitForTx(hash, id);
+      if (s.status !== "success") {
+        setPhase({
+          name: "form",
+          plan: seen,
+          refreshing: false,
+          failure: { kind: "failed", message: "The approval didn't go through. Nothing was sold." },
+        });
+        return;
+      }
+      const next = await plan(t, inputsRef.current);
+      if (id !== runId.current) return;
+      setPhase({ name: "form", plan: next, refreshing: false });
+    } catch (e) {
+      if (id !== runId.current || (e as { kind?: string }).kind === "cancelled") return;
+      if ((e as { kind?: string }).kind === "timeout") {
+        setPhase({
+          name: "form",
+          plan: seen,
+          refreshing: false,
+          failure: {
+            kind: "unavailable",
+            message: "Still waiting for the approval to confirm. Try again in a minute.",
+          },
+        });
+        return;
+      }
+      failAs(e, id);
+    }
+  }, [phase, plan, waitForTx, failAs]);
+
+  /** Confirm: a fresh plan first (plans last 15 s); a worse floor or a different amount asks again; only the fresh plan is signed. */
+  const confirm = useCallback(async () => {
+    if (phase.name !== "form" || !phase.plan || phase.plan.status !== "ready") return;
+    const seen = phase.plan;
+    const t = targetRef.current;
+    const w = walletRef.current;
+    if (!t || !w.address) return;
+    const id = ++runId.current;
+    setPhase({ name: "form", plan: seen, refreshing: true });
+    let fresh: SellPlan | null = null;
+    try {
+      fresh = await plan(t, inputsRef.current);
+      if (id !== runId.current) return;
+      if (!fresh) return;
+      if (fresh.status !== "ready" || !fresh.tx) {
+        setPhase({
+          name: "form",
+          plan: fresh,
+          refreshing: false,
+          notice: "The quote changed. Review the new numbers.",
+        });
+        return;
+      }
+      if (planGotWorse(seen, fresh)) {
+        setPhase({
+          name: "form",
+          plan: fresh,
+          refreshing: false,
+          notice: "The quote changed. Review the new numbers.",
+        });
+        return;
+      }
+      if (fresh.tx.chainId !== 56 || fresh.tx.value !== "0x0") {
+        setPhase({
+          name: "form",
+          plan: fresh,
+          refreshing: false,
+          failure: {
+            kind: "failed",
+            message: "The transaction didn't match what was expected, so nothing was sent.",
+          },
+        });
+        return;
+      }
+      setPhase({ name: "signing", plan: fresh });
+      // Exactly the plan's transaction: its target, its calldata, zero value and its own gas limit. The wallet reads its real chain and switches to BSC first.
+      const hash = await w.sendTx({
+        to: fresh.tx.to,
+        data: fresh.tx.data as Hex,
+        gas: BigInt(fresh.tx.gasLimit),
+      });
+      writePending({ hash, ticker: t.ticker, symbol: t.symbol, at: Date.now() }); // before polling: never lose the hash
+      await watch(hash, id);
+    } catch (e) {
+      if (id !== runId.current || (e as { kind?: string }).kind === "cancelled") return;
+      const shown = fresh ?? seen;
+      if ((e as { code?: number }).code === 4001) {
+        setPhase({
+          name: "form",
+          plan: shown,
+          refreshing: false,
+          failure: { kind: "rejected", message: "You cancelled in your wallet. Nothing was sold." },
+        });
+        return;
+      }
+      failAs(e, id);
+    }
+  }, [phase, plan, watch, failAs]);
+
+  const close = useCallback(() => {
+    runId.current++;
+    targetRef.current = null;
+    rawBalance.current = null;
+    lastPlan.current = null;
+    setTarget(null);
+    setPhase({ name: "idle" });
+  }, []);
+
+  // A sell that was sent before a reload keeps being watched.
+  useEffect(() => {
+    const pending = readPending();
+    if (!pending) return;
+    const id = ++runId.current;
+    setTarget({ ticker: pending.ticker, issuer: "bstock", symbol: pending.symbol, probeShares: 0 });
+    void watch(pending.hash, id);
+  }, [watch]);
+
+  return { phase, target, inputs, setInputs, sellAll, open, refresh, approve, confirm, close };
+}

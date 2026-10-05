@@ -2,7 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { SPRING_SWAP } from "@/lib/ease";
-import { ProgressIsland, ReviewSheet, SignInSheet, TopUpSheet } from "./flow-sheets";
+import { ProgressIsland, ReceiptModal, ReviewSheet, SignInSheet, TopUpSheet } from "./flow-sheets";
 import type { FlowPhase, useTradeFlow } from "./use-trade-flow";
 
 /** What the main action button says, from the state of the transaction. "Sell" and "Migrate" will slot in here when they exist. */
@@ -70,6 +70,14 @@ export function TradeFlowLayer({ flow }: { flow: ReturnType<typeof useTradeFlow>
         notice={phase.name === "review" ? phase.notice : undefined}
         onConfirm={() => void flow.confirm()}
         onClose={flow.cancel}
+      />
+      <ReceiptModal
+        open={phase.name === "done"}
+        receipt={phase.name === "done" ? phase.receipt : null}
+        plan={phase.name === "done" ? phase.plan : undefined}
+        ticker={params?.ticker ?? ""}
+        symbol={params?.symbol ?? params?.ticker ?? ""}
+        onDismiss={flow.cancel}
       />
     </>
   );

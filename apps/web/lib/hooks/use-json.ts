@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import type { ApiError } from "@/lib/dto";
 
 /** Fetch JSON once (and again on `reload`). `url` null means "don't fetch yet". Keeps the last good data while reloading. */
-export function useJson<T>(url: string | null) {
+export function useJson<T>(url: string | null, opts: { refreshMs?: number } = {}) {
+  const { refreshMs } = opts;
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -33,6 +34,20 @@ export function useJson<T>(url: string | null) {
       });
     return () => ctl.abort();
   }, [url, n]);
+
+  // Live readings: refetch on an interval while the tab is visible, and once more when it becomes visible again.
+  useEffect(() => {
+    if (!url || !refreshMs) return;
+    const tick = () => {
+      if (document.visibilityState === "visible") setN((x) => x + 1);
+    };
+    const id = window.setInterval(tick, refreshMs);
+    document.addEventListener("visibilitychange", tick);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", tick);
+    };
+  }, [url, refreshMs]);
 
   return { data, error, loading, reload: useCallback(() => setN((x) => x + 1), []) };
 }

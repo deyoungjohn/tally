@@ -150,7 +150,7 @@ export function FAQTabsCard({
                   aria-expanded={open}
                   className="flex min-h-[56px] w-full items-start justify-between gap-4 p-4 text-left"
                 >
-                  <span className="text-[15px] font-semibold leading-5 text-fg">
+                  <span className="text-[16px] font-semibold leading-5 text-fg">
                     {faq.question}
                   </span>
                   <motion.span
@@ -171,7 +171,7 @@ export function FAQTabsCard({
                       transition={{ duration: reduce ? 0.1 : 0.3, ease: [0.4, 0, 0.2, 1] }}
                       className="overflow-hidden"
                     >
-                      <p className="px-4 pb-[19px] text-[14.5px] leading-6 text-fg2">
+                      <p className="px-4 pb-[19px] text-[15.5px] leading-6 text-fg2">
                         {faq.answer}
                       </p>
                     </motion.div>

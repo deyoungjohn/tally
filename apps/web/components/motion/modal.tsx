@@ -3,6 +3,7 @@
 // centered on every screen size, never stuck to an edge. Scroll lock is `overflow: hidden` only (no `position: fixed` body),
 // so releasing it never shifts the page and no shared-layout pill (the $/Shares and tolerance toggles) gets projected from a stale position.
 
+import { X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -17,12 +18,22 @@ export interface ModalProps {
   description?: string;
   children?: ReactNode;
   className?: string;
+  /** An X in the corner (click outside and Esc always close it). */
+  showClose?: boolean;
 }
 
 const FOCUSABLE =
   'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea,[tabindex]:not([tabindex="-1"])';
 
-export function Modal({ open, onOpenChange, title, description, children, className }: ModalProps) {
+export function Modal({
+  open,
+  onOpenChange,
+  title,
+  description,
+  children,
+  className,
+  showClose,
+}: ModalProps) {
   const [mounted, setMounted] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
@@ -110,6 +121,17 @@ export function Modal({ open, onOpenChange, title, description, children, classN
                   className,
                 )}
               >
+                {showClose ? (
+                  <button
+                    type="button"
+                    aria-label="Close"
+                    onClick={() => changeRef.current(false)}
+                    className="absolute right-3 top-3 z-20 grid h-9 w-9 place-items-center rounded-full bg-white/[0.08] text-fg2 transition-colors hover:bg-white/[0.14] hover:text-fg"
+                    data-testid="modal-close"
+                  >
+                    <X size={16} aria-hidden />
+                  </button>
+                ) : null}
                 <div className="px-5 pb-1 pt-5 min-[561px]:px-6 min-[561px]:pt-6">
                   <h2 id={`${uid}-t`} className="t-h3">
                     {title}

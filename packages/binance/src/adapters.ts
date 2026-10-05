@@ -140,6 +140,7 @@ export class BinanceData {
   readonly ports: Pick<EnginePorts, "registry" | "facts" | "quotes"> = {
     registry: {
       tokensFor: async (ticker) => (await this.loadRegistry()).registry.tokensFor(ticker),
+      all: async () => (await this.loadRegistry()).registry.all(),
     },
     facts: {
       multipliers: (token) => this.multCache.get(token.address, () => this.readMultipliers(token)),

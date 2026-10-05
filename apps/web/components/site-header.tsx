@@ -1,13 +1,14 @@
 "use client";
 
-import { Check, ChevronDown, Copy, KeyRound, LogOut, Menu, Send } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, Copy, KeyRound, LogOut, Menu, Send } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { MODULE_NAMES, type ModuleName } from "@tally/config";
 import { BottomSheet } from "@/components/motion/bottom-sheet";
 import { Button, ButtonLink } from "@/components/motion/button";
-import { SharedLayoutBg } from "@/components/motion/shared-layout-bg";
+import { MorphItem, MorphMenu } from "@/components/motion/morph-menu";
+import { Glide } from "@/components/motion/glide";
 import { SendModal } from "@/components/wallet/send-modal";
 import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { cn } from "@/lib/utils";
@@ -34,7 +35,7 @@ export function Logo() {
       aria-label="Tally home"
     >
       <span aria-hidden className="sphere block h-7 w-7" />
-      <span className="text-[17px] font-bold tracking-[-0.03em]">Tally</span>
+      <span className="text-[18px] font-bold tracking-[-0.03em]">Tally</span>
     </Link>
   );
 }
@@ -55,9 +56,11 @@ function AccountButton({
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const box = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
 
+  // Mobile ("big", inside the bottom sheet) keeps the inline dropdown; desktop uses the morphing panel.
   useEffect(() => {
-    if (!open) return;
+    if (!open || !big) return;
     const away = (e: MouseEvent) => {
       if (!box.current?.contains(e.target as Node)) setOpen(false);
     };
@@ -68,7 +71,7 @@ function AccountButton({
       document.removeEventListener("mousedown", away);
       document.removeEventListener("keydown", esc);
     };
-  }, [open]);
+  }, [open, big]);
 
   if (!wallet.authenticated || !wallet.address) {
     return (
@@ -78,6 +81,110 @@ function AccountButton({
     );
   }
   const address = wallet.address;
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard blocked */
+    }
+  };
+  const ROW =
+    "flex min-h-[44px] w-full items-center gap-2 rounded-[14px] px-3 text-left text-[15px] text-fg no-underline hover:bg-white/[0.07] focus-visible:bg-white/[0.07]";
+  if (!big) {
+    const rows = wallet.embedded ? 5 : 4;
+    return (
+      <div className="relative">
+        <Button
+          ref={trigger}
+          variant="glassy"
+          className="!h-10"
+          aria-haspopup="menu"
+          aria-expanded={open}
+          onClick={() => setOpen((o) => !o)}
+          data-testid="account-button"
+          style={{ visibility: open ? "hidden" : undefined }}
+        >
+          <span className="dot-live" aria-hidden />
+          <span className="mono text-[15px]">{shortAddress(address)}</span>
+          <ChevronDown size={14} aria-hidden />
+        </Button>
+        <MorphMenu
+          open={open}
+          onClose={() => setOpen(false)}
+          anchor={trigger}
+          label="Account"
+          rows={rows}
+          header={
+            <>
+              <span className="flex items-center gap-2">
+                <span className="dot-live" aria-hidden />
+                <span className="mono text-[15px]">{shortAddress(address)}</span>
+              </span>
+              <ChevronUp size={14} aria-hidden />
+            </>
+          }
+        >
+          <MorphItem>
+            <button role="menuitem" type="button" className={ROW} onClick={() => void copy()}>
+              {copied ? <Check size={15} aria-hidden /> : <Copy size={15} aria-hidden />}
+              {copied ? "Copied" : "Copy address"}
+            </button>
+          </MorphItem>
+          <MorphItem>
+            <button
+              role="menuitem"
+              type="button"
+              className={ROW}
+              onClick={() => {
+                setOpen(false);
+                onNavigate?.();
+                onSend();
+              }}
+              data-testid="menu-send"
+            >
+              <Send size={15} aria-hidden /> Send
+            </button>
+          </MorphItem>
+          {wallet.embedded ? (
+            <MorphItem>
+              <button
+                role="menuitem"
+                type="button"
+                className={ROW}
+                onClick={() => {
+                  setOpen(false);
+                  wallet.exportWallet();
+                }}
+                data-testid="menu-export"
+              >
+                <KeyRound size={15} aria-hidden /> Export wallet
+              </button>
+            </MorphItem>
+          ) : null}
+          <MorphItem>
+            <Link role="menuitem" href="/portfolio" className={ROW} onClick={() => setOpen(false)}>
+              Portfolio
+            </Link>
+          </MorphItem>
+          <MorphItem>
+            <button
+              role="menuitem"
+              type="button"
+              className={ROW}
+              onClick={() => {
+                setOpen(false);
+                wallet.logout();
+              }}
+            >
+              <LogOut size={15} aria-hidden /> Sign out
+            </button>
+          </MorphItem>
+        </MorphMenu>
+      </div>
+    );
+  }
   return (
     <div ref={box} className={cn("relative", big && "w-full")}>
       <Button
@@ -90,7 +197,7 @@ function AccountButton({
         data-testid="account-button"
       >
         <span className="dot-live" aria-hidden />
-        <span className="mono text-[13px]">{shortAddress(address)}</span>
+        <span className="mono text-[14px]">{shortAddress(address)}</span>
         <ChevronDown size={14} aria-hidden />
       </Button>
       {open ? (
@@ -191,6 +298,8 @@ export function SiteHeader() {
       });
     return () => controller.abort();
   }, []);
+  const isActive = (href: string) =>
+    pathname === href || (!href.includes("#") && pathname.startsWith(href));
   const links = [...NAV_LINKS, ...MODULE_LINKS.filter((link) => enabled[link.flag])];
   const expanded = links.length > NAV_LINKS.length;
 
@@ -216,22 +325,19 @@ export function SiteHeader() {
           aria-label="Primary"
           className={expanded ? "hidden min-[1200px]:block" : "hidden min-[761px]:block"}
         >
-          <SharedLayoutBg className="items-center gap-1">
+          <Glide className="flex items-center gap-1">
             {links.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
                 className="nav-link"
-                aria-current={
-                  pathname === l.href || (!l.href.includes("#") && pathname.startsWith(l.href))
-                    ? "page"
-                    : undefined
-                }
+                data-glide
+                aria-current={isActive(l.href) ? "page" : undefined}
               >
                 {l.label}
               </Link>
             ))}
-          </SharedLayoutBg>
+          </Glide>
         </nav>
         <div className="flex items-center gap-2">
           <span className="hidden min-[561px]:block">
@@ -251,19 +357,21 @@ export function SiteHeader() {
         </div>
       </div>
       <BottomSheet open={open} onOpenChange={setOpen} snapPoints={["auto"]} title="Menu">
-        <ul className="mt-2 grid gap-2">
+        <Glide as="ul" className="mt-2 grid gap-2" pillClassName="!rounded-[18px] bg-white/[0.12]">
           {links.map((l) => (
             <li key={l.href}>
               <Link
                 href={l.href}
                 onClick={() => setOpen(false)}
-                className="panel flex min-h-14 items-center px-4 text-[17px] font-semibold text-fg no-underline"
+                data-glide
+                aria-current={isActive(l.href) ? "page" : undefined}
+                className="panel flex min-h-14 items-center px-4 text-[18px] font-semibold text-fg no-underline"
               >
                 {l.label}
               </Link>
             </li>
           ))}
-        </ul>
+        </Glide>
         <div className="mt-4">
           <AccountButton big onNavigate={() => setOpen(false)} onSend={() => setSending(true)} />
         </div>

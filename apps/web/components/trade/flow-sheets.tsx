@@ -85,7 +85,7 @@ export function ProgressIsland({ phase }: { phase: FlowPhase }) {
                   className="w-[min(320px,calc(100vw-56px))] flex-col items-stretch gap-3 !px-6 !py-4"
                 >
                   <span
-                    className="text-center text-[14px] font-semibold"
+                    className="text-center text-[15px] font-semibold"
                     aria-label={`Step ${shown.step} of 4: ${shown.label}`}
                   >
                     {shown.label}
@@ -148,7 +148,7 @@ export function SignInSheet({ open, onClose }: { open: boolean; onClose: () => v
         Sign in with your email or Google. We make you a wallet in a few seconds. No crypto
         experience needed.
       </p>
-      <label className="panel mt-5 flex cursor-pointer items-start gap-3 p-4 text-[14px] leading-snug">
+      <label className="panel mt-5 flex cursor-pointer items-start gap-3 p-4 text-[15px] leading-snug">
         <input
           type="checkbox"
           checked={agree}
@@ -282,7 +282,7 @@ export function TopUpSheet({
             {address ? <Qr text={address} /> : null}
             <div className="min-w-0 flex-1">
               <p className="t-meta">Your wallet address</p>
-              <p className="mono truncate-mid mt-1 text-[13px]" data-testid="deposit-address">
+              <p className="mono truncate-mid mt-1 text-[14px]" data-testid="deposit-address">
                 {address}
               </p>
               <div className="mt-3">
@@ -292,7 +292,7 @@ export function TopUpSheet({
           </div>
           <div
             role="alert"
-            className="flex gap-3 rounded-[18px] border border-[rgba(242,193,78,.3)] bg-[rgba(242,193,78,.08)] p-4 text-[14px]"
+            className="flex gap-3 rounded-[18px] border border-[rgba(242,193,78,.3)] bg-[rgba(242,193,78,.08)] p-4 text-[15px]"
           >
             <AlertTriangle size={18} className="mt-0.5 flex-none text-amber" aria-hidden />
             <p>
@@ -348,7 +348,7 @@ export function ReviewSheet({
           {notice ? (
             <p
               role="status"
-              className="rounded-[14px] bg-[rgba(242,193,78,.1)] px-4 py-3 text-[14px] text-amber"
+              className="rounded-[14px] bg-[rgba(242,193,78,.1)] px-4 py-3 text-[15px] text-amber"
             >
               {notice}
             </p>
@@ -356,9 +356,9 @@ export function ReviewSheet({
           <div className="field">
             <p className="t-meta">You&apos;ll get at least</p>
             <p className="t-big mt-1" data-testid="min-shares">
-              {fmtShares(min)} <span className="text-[22px] text-fg2">{plan.ticker} shares</span>
+              {fmtShares(min)} <span className="text-[23px] text-fg2">{plan.ticker} shares</span>
             </p>
-            <p className="mt-2 text-[14px] text-fg2">
+            <p className="mt-2 text-[15px] text-fg2">
               …or nothing happens. Tally checks this in shares, on-chain, before it keeps the trade.
             </p>
           </div>
@@ -388,13 +388,13 @@ export function ReviewSheet({
               </dd>
             </div>
             <div className="detail-row">
-              <dt>Bought from</dt>
+              <dt>Issuer</dt>
               <dd>
                 {plan.symbol} ({ISSUER_LABEL[plan.issuer]})
               </dd>
             </div>
             <div className="detail-row">
-              <dt>Tolerance</dt>
+              <dt>Slippage</dt>
               <dd>{plan.tolerancePct}%</dd>
             </div>
           </dl>
@@ -420,7 +420,39 @@ export function ReviewSheet({
 
 /* ------------------------------------------------------------------- receipt */
 
-export function ReceiptCard({
+/** The receipt is a modal: blurred backdrop, spring in and out, an X, and a click outside closes it. */
+export function ReceiptModal({
+  open,
+  receipt,
+  plan,
+  ticker,
+  symbol,
+  onDismiss,
+}: {
+  open: boolean;
+  receipt: ReceiptDto | null;
+  plan?: PlanDto;
+  ticker: string;
+  symbol: string;
+  onDismiss: () => void;
+}) {
+  // Keep the last receipt while the modal animates out, so it fades with its content instead of emptying first.
+  const last = useRef<{
+    receipt: ReceiptDto;
+    plan?: PlanDto;
+    ticker: string;
+    symbol: string;
+  } | null>(null);
+  if (open && receipt?.fill) last.current = { receipt, plan, ticker, symbol };
+  const shown = last.current;
+  return (
+    <Modal open={open} onOpenChange={(o) => !o && onDismiss()} title="Shares delivered" showClose>
+      {shown ? <ReceiptBody {...shown} onDismiss={onDismiss} /> : null}
+    </Modal>
+  );
+}
+
+function ReceiptBody({
   receipt,
   plan,
   ticker,
@@ -436,17 +468,9 @@ export function ReceiptCard({
   const f = receipt.fill!;
   const shares = fromWei(f.shares);
   return (
-    <section className="gcard" aria-labelledby="receipt-title" data-testid="receipt">
-      <div className="flex items-center gap-3">
-        <span className="grid h-7 w-7 place-items-center rounded-full bg-up/20 text-up" aria-hidden>
-          <Check size={16} />
-        </span>
-        <h2 id="receipt-title" className="text-lg font-semibold">
-          Shares delivered
-        </h2>
-      </div>
-      <p className="t-big mt-4" data-testid="receipt-shares">
-        {fmtShares(shares)} <span className="text-[22px] text-fg2">{ticker} shares</span>
+    <div data-testid="receipt">
+      <p className="t-big mt-3" data-testid="receipt-shares">
+        {fmtShares(shares)} <span className="text-[23px] text-fg2">{ticker} shares</span>
       </p>
       <dl className="mt-4">
         <div className="detail-row">
@@ -491,12 +515,12 @@ export function ReceiptCard({
           aria-label="View transaction on BscScan (opens in a new tab)"
         >
           <ExternalLink size={16} aria-hidden /> BscScan{" "}
-          <span className="mono text-[12px] text-fg2">{shortHash(receipt.txHash)}</span>
+          <span className="mono text-[13px] text-fg2">{shortHash(receipt.txHash)}</span>
         </a>
         <Button variant="ghost" onClick={onDismiss}>
           Done
         </Button>
       </div>
-    </section>
+    </div>
   );
 }

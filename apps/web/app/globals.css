@@ -61,6 +61,15 @@
   --radius: 22px;
 }
 
+@theme {
+  --text-xs: 0.8125rem;
+  --text-sm: 0.9375rem;
+  --text-base: 1.0625rem;
+  --text-lg: 1.1875rem;
+  --text-xl: 1.3125rem;
+  --text-2xl: 1.5625rem;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -102,8 +111,9 @@ body {
   background: var(--g0);
   color: var(--fg);
   font-family: var(--font-sans);
+  font-weight: 500;
   font-feature-settings: "cv11";
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
@@ -126,44 +136,44 @@ body {
 
 /* ---------- Typography (DESIGN.md §2.2) ---------- */
 .t-display {
-  font-size: clamp(40px, 6vw, 76px);
+  font-size: clamp(41px, 6vw, 77px);
   font-weight: 800;
   letter-spacing: -0.05em;
   line-height: 0.96;
 }
 .t-h2 {
-  font-size: clamp(28px, 4vw, 42px);
+  font-size: clamp(29px, 4vw, 43px);
   font-weight: 750;
   letter-spacing: -0.035em;
   line-height: 1.1;
 }
 .t-h3 {
-  font-size: 21px;
+  font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1.15;
 }
 .t-big {
-  font-size: clamp(36px, 5vw, 56px);
+  font-size: clamp(37px, 5vw, 57px);
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 .t-lead {
-  font-size: 18px;
+  font-size: 19px;
   line-height: 1.6;
   color: var(--fg2);
 }
 .t-kicker {
-  font-size: 12.5px;
+  font-size: 13.5px;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--silver-1);
 }
 .t-meta {
-  font-size: 12.5px;
+  font-size: 13.5px;
   font-weight: 500;
   line-height: 1.4;
   color: var(--fg3);
@@ -222,7 +232,6 @@ body {
   border: 1px solid var(--edge);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.028));
   backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.14),
     inset 0 -1px 0 rgba(0, 0, 0, 0.25),
@@ -239,7 +248,6 @@ body {
     rgba(255, 255, 255, 0.08)
   );
   backdrop-filter: blur(26px) saturate(160%);
-  -webkit-backdrop-filter: blur(26px) saturate(160%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.35),
     inset 0 -1px 0 rgba(0, 0, 0, 0.2),
@@ -257,7 +265,6 @@ body {
 .overlay-backdrop {
   background: rgba(5, 6, 7, 0.72);
   backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .glass,
@@ -276,7 +283,7 @@ body {
   padding: 0 20px;
   border-radius: 999px;
   font-weight: 600;
-  font-size: 14.5px;
+  font-size: 15.5px;
   letter-spacing: -0.1px;
   white-space: nowrap;
   text-decoration: none;
@@ -318,7 +325,6 @@ body {
   border: 1px solid var(--edge);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
 }
 .btn-glassy:hover {
   background: rgba(255, 255, 255, 0.12);
@@ -351,20 +357,16 @@ body {
   border-radius: 999px;
   color: var(--fg2);
   font-weight: 500;
-  font-size: 14.5px;
+  font-size: 15.5px;
   text-decoration: none;
   transition:
     color 0.15s,
     background 0.15s;
 }
-.nav-link:hover {
-  color: var(--fg);
-  background: rgba(255, 255, 255, 0.06);
-}
+/* The highlight itself is the gliding pill from components/motion/glide.tsx; links only change their text colour. */
+.nav-link:hover,
 .nav-link[aria-current="page"] {
   color: var(--fg);
-  background: rgba(255, 255, 255, 0.09);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 /* ---------- Chips and badges (DESIGN.md §2.7) ---------- */
@@ -375,7 +377,7 @@ body {
   min-height: 34px;
   padding: 0 15px 0 12px;
   border-radius: 999px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--fg2);
 }
@@ -388,7 +390,7 @@ body {
   align-items: center;
   padding: 3px 10px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--amber);
   background: rgba(242, 193, 78, 0.12);
@@ -589,7 +591,7 @@ body {
   box-shadow: none !important;
   color: var(--fg);
   font: inherit;
-  font-size: clamp(36px, 5vw, 56px);
+  font-size: clamp(37px, 5vw, 57px);
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1;
@@ -618,7 +620,7 @@ body {
   border-radius: 50%;
   background: radial-gradient(circle at 32% 28%, #fff 0%, #c9ced5 45%, #5d636c 100%);
   color: var(--silver-ink);
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 800;
   letter-spacing: -0.04em;
 }
@@ -628,7 +630,7 @@ body {
   gap: 16px;
   padding: 11px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  font-size: 14px;
+  font-size: 15px;
 }
 .detail-row:last-child {
   border-bottom: 0;
@@ -665,7 +667,7 @@ body {
   min-height: 24px;
   padding: 2px 10px;
   border-radius: 12px;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   background: rgba(255, 255, 255, 0.07);
   color: var(--fg2);
@@ -692,7 +694,7 @@ body {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   border: 1.5px solid currentColor;
   flex: none;
@@ -712,7 +714,7 @@ body {
   min-height: 22px;
   padding: 0 9px;
   border-radius: 999px;
-  font-size: 11.5px;
+  font-size: 12.5px;
   font-weight: 700;
   color: var(--silver-ink);
   background: var(--silver);
@@ -780,7 +782,6 @@ body {
 .site-bar {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
   backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
   transition:
     background 0.25s var(--ease),
     backdrop-filter 0.25s var(--ease),
@@ -789,7 +790,6 @@ body {
 .site-bar-scrolled {
   background: linear-gradient(180deg, rgba(34, 36, 41, 0.78), rgba(22, 23, 27, 0.7));
   backdrop-filter: blur(30px) saturate(160%);
-  -webkit-backdrop-filter: blur(30px) saturate(160%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.14),
     inset 0 -1px 0 rgba(0, 0, 0, 0.25),
@@ -808,7 +808,6 @@ body {
   border: 1px solid var(--edge);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
   font-weight: 600;
 }
 .select-trigger:hover {
@@ -819,14 +818,13 @@ body {
   background: linear-gradient(180deg, rgba(44, 46, 53, 0.86), rgba(27, 28, 33, 0.82));
   border: 1px solid var(--edge);
   backdrop-filter: blur(26px) saturate(160%);
-  -webkit-backdrop-filter: blur(26px) saturate(160%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.14),
     0 24px 60px -24px rgba(0, 0, 0, 0.9);
 }
 .select-panel [role="option"] {
   min-height: 44px;
-  font-size: 14.5px;
+  font-size: 15.5px;
 }
 .select-panel [role="option"][aria-selected="true"] {
   background: rgba(255, 255, 255, 0.12);
@@ -841,9 +839,70 @@ body {
   background: linear-gradient(180deg, rgba(48, 50, 57, 0.72), rgba(28, 29, 34, 0.66)) !important;
   border: 1px solid rgba(255, 255, 255, 0.18);
   backdrop-filter: blur(28px) saturate(170%);
-  -webkit-backdrop-filter: blur(28px) saturate(170%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.28),
     inset 0 -1px 0 rgba(0, 0, 0, 0.2),
     0 22px 50px -22px rgba(0, 0, 0, 0.9);
+}
+
+/* Tooltips on tags and "Learn more" links (Round 3). */
+.tip {
+  position: fixed;
+  z-index: 90;
+  max-width: min(260px, calc(100vw - 16px));
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(24, 26, 30, 0.88);
+  backdrop-filter: blur(14px) saturate(140%);
+  color: var(--fg);
+  font-size: 14.5px;
+  line-height: 1.45;
+  font-weight: 500;
+  text-align: left;
+  pointer-events: none;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+}
+.learn-more {
+  display: inline;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: 0;
+  color: var(--blue);
+  font: inherit;
+  /* Caption size wherever it appears (the same as .t-meta), whatever text it ends. */
+  font-size: 13.5px;
+  line-height: 1.4;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--blue) 45%, transparent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: text-decoration-color 0.2s;
+}
+.learn-more:hover {
+  text-decoration-color: var(--blue);
+}
+.learn-more:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* The Buy button inside a trade block: heavier and a size up from other buttons. */
+.btn.trade-cta {
+  font-size: 18px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+/* Opaque-ish glass for the search field and its surface (they morph into each other, so they must match). */
+.glass-solid {
+  background: rgba(30, 32, 37, 0.9);
+  border: 1px solid var(--edge);
+  backdrop-filter: blur(20px) saturate(150%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 18px 50px -20px rgba(0, 0, 0, 0.8);
 }

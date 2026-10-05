@@ -2,9 +2,8 @@
 // Adapted from beUI `tabs` (pill variant): a spring `layoutId` indicator gliding between options. Re-skinned with Tally tokens.
 // Semantics are a radio group (one choice, arrow keys move it) because it switches a value, not a panel.
 
-import { motion, MotionConfig, useReducedMotion } from "motion/react";
-import { useId, useRef, type KeyboardEvent } from "react";
-import { SPRING_LAYOUT } from "@/lib/ease";
+import { useRef, type KeyboardEvent } from "react";
+import { Glide } from "@/components/motion/glide";
 import { cn } from "@/lib/utils";
 
 export interface SegmentedOption<T extends string> {
@@ -25,8 +24,6 @@ export function Segmented<T extends string>({
   label: string;
   className?: string;
 }) {
-  const layoutId = useId();
-  const reduce = useReducedMotion();
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const onKey = (e: KeyboardEvent, i: number) => {
@@ -44,50 +41,41 @@ export function Segmented<T extends string>({
   };
 
   return (
-    <MotionConfig transition={reduce ? { duration: 0 } : SPRING_LAYOUT}>
-      {/* layoutRoot: the pill is measured relative to this group, so scroll locks, page shifts and dialogs opening or closing
-          elsewhere are never replayed as movement (the pill used to drop in from above when a dialog closed). */}
-      <motion.div
-        layoutRoot
-        role="radiogroup"
-        aria-label={label}
-        className={cn(
-          "inline-flex items-center gap-1 rounded-full border border-[var(--edge)] bg-white/[0.05] p-1",
-          className,
-        )}
-      >
-        {options.map((o, i) => {
-          const active = o.value === value;
-          return (
-            <button
-              key={o.value}
-              ref={(el) => {
-                refs.current[i] = el;
-              }}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              tabIndex={active ? 0 : -1}
-              onClick={() => onChange(o.value)}
-              onKeyDown={(e) => onKey(e, i)}
-              className={cn(
-                "relative min-h-[36px] min-w-[44px] rounded-full px-4 text-[14px] font-semibold transition-colors",
-                active ? "text-[var(--silver-ink)]" : "text-fg2 hover:text-fg",
-              )}
-            >
-              {active ? (
-                <motion.span
-                  layoutId={layoutId}
-                  aria-hidden
-                  className="absolute inset-0 rounded-full"
-                  style={{ background: "var(--silver)" }}
-                />
-              ) : null}
-              <span className="relative">{o.label}</span>
-            </button>
-          );
-        })}
-      </motion.div>
-    </MotionConfig>
+    // The pill is one element measured against this group (see glide.tsx), not a layoutId shared with the rest of the page,
+    // so nothing elsewhere (the progress island mounting, dialogs closing, scroll) can displace it.
+    <Glide
+      role="radiogroup"
+      aria-label={label}
+      hover={false}
+      pillStyle={{ background: "var(--silver)" }}
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full border border-[var(--edge)] bg-white/[0.05] p-1",
+        className,
+      )}
+    >
+      {options.map((o, i) => {
+        const active = o.value === value;
+        return (
+          <button
+            key={o.value}
+            ref={(el) => {
+              refs.current[i] = el;
+            }}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            tabIndex={active ? 0 : -1}
+            onClick={() => onChange(o.value)}
+            onKeyDown={(e) => onKey(e, i)}
+            className={cn(
+              "relative min-h-[36px] min-w-[44px] rounded-full px-4 text-[15px] font-semibold transition-colors",
+              active ? "text-[var(--silver-ink)]" : "text-fg2 hover:text-fg",
+            )}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </Glide>
   );
 }

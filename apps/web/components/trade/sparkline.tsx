@@ -8,7 +8,7 @@ export function Sparkline({ points }: { points: number[] }) {
   if (points.length < 2) {
     return (
       <div
-        className="flex h-[72px] items-center text-[13px] text-fg3"
+        className="flex h-[72px] items-center text-[14px] text-fg3"
         role="img"
         aria-label="Price line starts after two readings"
       >

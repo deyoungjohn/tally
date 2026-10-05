@@ -43,7 +43,14 @@ export function errorResponse(e: unknown): NextResponse {
     case "upstream":
       return fail(502, "upstream", "We couldn't reach the price source. Try again.");
   }
-  if (isTradeError(e)) return fail(409, e.kind, e.message);
+  if (isTradeError(e)) {
+    // The person sees the plain message; the log keeps the underlying reason (an RPC error, a revert) so a repeat can be diagnosed.
+    const detail = (e as { detail?: string }).detail;
+    console.warn(
+      `trade error ${e.kind}: ${e.message}${detail ? ` | ${detail.slice(0, 300)}` : ""}`,
+    );
+    return fail(409, e.kind, e.message);
+  }
   console.error("unhandled:", e instanceof Error ? e.message.slice(0, 200) : e);
   return fail(500, "internal", "Something went wrong on our side. Nothing was spent.");
 }
@@ -64,7 +71,7 @@ const TRADE_KINDS = new Set([
   "simulation_reverted",
   "expired",
 ]);
-function isTradeError(e: unknown): e is { kind: string; message: string } {
+function isTradeError(e: unknown): e is { kind: string; message: string; detail?: string } {
   return e instanceof Error && TRADE_KINDS.has((e as Kinded).kind ?? "");
 }
 

@@ -27,7 +27,11 @@ import {
 
 /** I/O is injected, so this package stays pure. @tally/binance and @tally/chain implement the ports. */
 export interface EnginePorts {
-  registry: { tokensFor(ticker: string): Promise<RegistryToken[]> };
+  registry: {
+    tokensFor(ticker: string): Promise<RegistryToken[]>;
+    /** Optional: every registry token, for wallet-wide balance reads (the send list). */
+    all?(): Promise<RegistryToken[]>;
+  };
   facts: {
     multipliers(token: RegistryToken): Promise<MultiplierReadings>;
     market(token: RegistryToken): Promise<TokenMarketFacts>;

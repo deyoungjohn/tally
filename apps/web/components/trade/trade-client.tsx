@@ -12,7 +12,6 @@ import { ComingSoon } from "./coming-soon";
 import { StockPicker } from "./stock-picker";
 import { SessionBadge } from "./badges";
 import { TradeFlowLayer, flowActionLabel } from "./flow-host";
-import { ReceiptCard } from "./flow-sheets";
 import { IssuerList } from "./issuer-list";
 import { Sparkline } from "./sparkline";
 import { MIN_USD, TradeCard, type Unit } from "./trade-card";
@@ -52,7 +51,6 @@ function TradeInner({
   );
   const [tolerance, setTolerance] = useState(1);
   const [picked, setPicked] = useState<string | undefined>();
-  const [dismissed, setDismissed] = useState(false);
   const flow = useTradeFlow();
   const { phase } = flow;
 
@@ -113,11 +111,9 @@ function TradeInner({
       usd: spendUsd,
       tolerancePct: tolerance,
     };
-    setDismissed(false);
     flow.start(p);
   };
 
-  const params = flow.params.current;
   const best = q?.rows.find((r) => r.isBest);
 
   const changeTicker = (t: string) => {
@@ -137,15 +133,15 @@ function TradeInner({
   return (
     <main id="main" className="wrap pb-24 pt-8 min-[561px]:pt-12">
       <TradeFlowLayer flow={flow} />
-      <div className="flex flex-col gap-4 min-[981px]:grid min-[981px]:grid-cols-[minmax(0,1fr)_minmax(0,480px)] min-[981px]:items-start min-[981px]:gap-8">
-        {/* Left on desktop: the stock, its price, then the issuers compared. On a phone the trade card comes second. */}
-        <div className="contents min-[981px]:grid min-[981px]:min-w-0 min-[981px]:grid-cols-1 min-[981px]:gap-4">
+      <div className="flex flex-col gap-4 min-[981px]:grid min-[981px]:grid-cols-[minmax(0,480px)_minmax(0,1fr)] min-[981px]:items-start min-[981px]:gap-8">
+        {/* Right on desktop: the stock, its price, then the issuers compared (the trade card is on the left). On a phone the trade card comes second. */}
+        <div className="contents min-[981px]:col-start-2 min-[981px]:row-start-1 min-[981px]:grid min-[981px]:min-w-0 min-[981px]:grid-cols-1 min-[981px]:gap-4">
           <div className="order-1 min-w-0">
             <div className="flex flex-wrap items-center gap-3">
               <StockPicker value={ticker} onChange={changeTicker} />
               {q ? <SessionBadge session={q.session} /> : null}
             </div>
-            <h1 className="t-h2 mt-4 !text-[clamp(30px,5vw,44px)]">{name}</h1>
+            <h1 className="t-h2 mt-4 !text-[clamp(31px,5vw,45px)]">{name}</h1>
             <p className="t-meta mono">{ticker} · tokenized, not the underlying share</p>
           </div>
 
@@ -185,14 +181,14 @@ function TradeInner({
             <p className="flex items-center gap-2 font-semibold">
               <ShieldCheck size={18} aria-hidden /> Guaranteed in shares, on-chain
             </p>
-            <p className="mt-1 text-[14px] text-fg2">
+            <p className="mt-1 text-[15px] text-fg2">
               Tally checks how many <b className="text-fg">shares</b> your tokens represent and
               cancels the whole trade if you&apos;d get fewer than your minimum. Your USDT stays
               put. These are tokenized shares issued by Ondo and bStocks, not the underlying stock.
             </p>
           </div>
           {!buyable ? (
-            <p role="status" className="order-5 text-[14px] text-amber">
+            <p role="status" className="order-5 text-[15px] text-amber">
               {ticker} can be compared here, but buying it isn&apos;t switched on yet.
             </p>
           ) : null}
@@ -203,20 +199,8 @@ function TradeInner({
           </p>
         </div>
 
-        <div className="contents min-[981px]:sticky min-[981px]:top-24 min-[981px]:grid min-[981px]:min-w-0 min-[981px]:grid-cols-1 min-[981px]:gap-4">
+        <div className="contents min-[981px]:col-start-1 min-[981px]:row-start-1 min-[981px]:sticky min-[981px]:top-24 min-[981px]:grid min-[981px]:min-w-0 min-[981px]:grid-cols-1 min-[981px]:gap-4">
           <div className="order-3 grid min-w-0 grid-cols-1 gap-4">
-            {phase.name === "done" && !dismissed ? (
-              <ReceiptCard
-                receipt={phase.receipt}
-                plan={phase.plan}
-                ticker={ticker}
-                symbol={params?.symbol ?? row?.symbol ?? ticker}
-                onDismiss={() => {
-                  setDismissed(true);
-                  flow.cancel();
-                }}
-              />
-            ) : null}
             {phase.name === "error" ? (
               <div
                 role="alert"
@@ -228,7 +212,7 @@ function TradeInner({
                   <p className="font-semibold">{phase.message}</p>
                   {phase.txHash ? (
                     <a
-                      className="mono mt-1 inline-block text-[12.5px] text-blue"
+                      className="mono mt-1 inline-block text-[13.5px] text-blue"
                       href={`https://bscscan.com/tx/${phase.txHash}`}
                       target="_blank"
                       rel="noreferrer"
@@ -270,7 +254,7 @@ function TradeInner({
               onBuy={onBuy}
             />
             {quote.error && !q ? (
-              <p role="alert" className="text-[14px] text-amber" data-testid="quote-error">
+              <p role="alert" className="text-[15px] text-amber" data-testid="quote-error">
                 {quote.error.message}
               </p>
             ) : null}

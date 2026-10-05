@@ -1,5 +1,6 @@
 "use client";
-// beui.dev/components/motion/select (unchanged). Restyled at the use sites with Tally's glass tokens.
+// beui.dev/components/motion/select. Restyled at the use sites with Tally's glass tokens. Tally addition: the items sit in a
+// <Glide> (components/motion/glide.tsx), so one highlight pill glides from item to item the way beUI's File Tree does.
 
 import { Check, ChevronDown } from "lucide-react";
 import { motion, type Transition, useReducedMotion, type Variants } from "motion/react";
@@ -15,6 +16,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { Glide } from "@/components/motion/glide";
 import { EASE_OUT } from "@/lib/ease";
 import { cn } from "@/lib/utils";
 
@@ -382,7 +384,7 @@ export function SelectContent({ className, children }: SelectContentProps) {
         animate={open ? "show" : "hidden"}
         className="p-1"
       >
-        {children}
+        <Glide pillClassName="!rounded-lg bg-muted">{children}</Glide>
       </motion.div>
     </motion.div>
   );
@@ -409,15 +411,14 @@ export function SelectItem({ value, disabled = false, className, children }: Sel
     <motion.li variants={ctx.reduce ? undefined : ITEM_VARIANTS}>
       <button
         type="button"
+        data-glide
         role="option"
         aria-selected={selected}
         disabled={disabled}
         onClick={() => ctx.select(value)}
         className={cn(
           "flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm outline-none transition-colors",
-          selected
-            ? "bg-muted text-foreground"
-            : "text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:bg-muted",
+          selected ? "text-foreground" : "text-muted-foreground hover:text-foreground",
           "disabled:pointer-events-none disabled:opacity-50",
           className,
         )}

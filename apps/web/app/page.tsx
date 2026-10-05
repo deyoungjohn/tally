@@ -11,6 +11,7 @@ import { HeroActions } from "@/components/home/hero-actions";
 import { ButtonLink } from "@/components/motion/button";
 import { Reveal } from "@/components/reveal";
 import { HomeFaq } from "@/components/home/faq";
+import { LearnMore } from "@/components/learn-more";
 
 /** One screen per feature on a 16" desktop: Trade, Portfolio, Radar, then the FAQ. */
 const SCREEN =
@@ -56,7 +57,7 @@ export default function Home() {
                 ["≈ $0.02", "network fee"],
               ].map(([k, v]) => (
                 <div key={v} className="panel p-4">
-                  <dt className="num text-[22px] font-bold tracking-tight">{k}</dt>
+                  <dt className="num text-[23px] font-bold tracking-tight">{k}</dt>
                   <dd className="t-meta m-0 mt-1">{v}</dd>
                 </div>
               ))}
@@ -91,7 +92,8 @@ export default function Home() {
               <p className="t-lead mt-3 max-w-[50ch]">
                 The same ticker is not the same amount of stock. Issuers define a token differently,
                 so raw prices mislead. Tally converts everything into shares first, then ranks the
-                issuers by what you actually pay, network fee included.
+                issuers by what you actually pay, network fee included.{" "}
+                <LearnMore concept="shares" />
               </p>
               <ul className="m-0 mt-6 grid list-none gap-3 p-0">
                 {[
@@ -110,7 +112,7 @@ export default function Home() {
                 ].map(([h, b]) => (
                   <li key={h} className="panel p-4">
                     <p className="font-semibold">{h}</p>
-                    <p className="mt-1 text-[14px] text-fg2">{b}</p>
+                    <p className="mt-1 text-[15px] text-fg2">{b}</p>
                   </li>
                 ))}
               </ul>
@@ -144,7 +146,8 @@ export default function Home() {
               </h2>
               <p className="t-lead mt-3 max-w-[50ch]">
                 Tokens from different issuers add up in share units, so you never have to do the
-                maths yourself. Read straight from the chain: nothing to import, nothing stored.
+                maths yourself. Read straight from the chain: nothing to import, nothing stored.{" "}
+                <LearnMore concept="portfolio" />
               </p>
               <ul className="m-0 mt-6 grid list-none gap-3 p-0">
                 {[
@@ -157,7 +160,7 @@ export default function Home() {
                 ].map(([h, b]) => (
                   <li key={h} className="panel p-4">
                     <p className="font-semibold">{h}</p>
-                    <p className="mt-1 text-[14px] text-fg2">{b}</p>
+                    <p className="mt-1 text-[15px] text-fg2">{b}</p>
                   </li>
                 ))}
               </ul>
@@ -185,13 +188,16 @@ export default function Home() {
                 We catch the tokens that would mislead you.
               </h2>
               <p className="t-lead mt-3 max-w-[50ch]">
-                Ghost markets nobody trades, tokens that are ten shares each, data that disagrees
-                with itself, paused assets. Radar grades every token A to F and says why, in plain
-                words.
+                Markets nobody trades, tokens that are ten shares each, data that disagrees with
+                itself, paused assets. Radar grades every token A to F and says why, in plain words.{" "}
+                <LearnMore concept="radar" />
               </p>
               <ul className="m-0 mt-6 grid list-none gap-3 p-0">
                 {[
-                  ["Ghost markets", "Under $1,000 traded in a day means stale prices."],
+                  [
+                    "Not Tradable",
+                    "Under $1,000 traded in a day means stale prices, so Tally won't let you buy.",
+                  ],
                   [
                     "Unit traps",
                     "One token can be ten shares, which makes naive comparisons wrong by 899%.",
@@ -208,7 +214,7 @@ export default function Home() {
                       ) : null}
                       {h}
                     </p>
-                    <p className="mt-1 text-[14px] text-fg2">{b}</p>
+                    <p className="mt-1 text-[15px] text-fg2">{b}</p>
                   </li>
                 ))}
               </ul>
