@@ -153,6 +153,14 @@ JSON
 
 Record the real hash/BscScan link, issuer, requested/actual floor, gas limit, preview facts and the returned `Guarded` shares, amount, USD per share and premium in the PR. Check `to` = deployed guard, caller/recipient/stock match, status success, `fill.shares ≥ plan.minShares`, and actual USDT input = 6 USDT. No `Guarded` event means unverified; pending means wait; reverted means report the failure and gas. The WO-05 live exit stays **pending** until that evidence is supplied; prior M2 buys do not prove the MCP/baw path.
 
+### Recorded M5 live buy (2026-10-05)
+
+The user's latest NVDA/bStock buy succeeded: [transaction 0x48349a8d…164992](https://bscscan.com/tx/0x48349a8d439ddd35282bb0453235a40d969a65d0653bef07d6d8baa578164992), block 125779676, `fixtures: false`. The existing engine parsed its `Guarded` fill; a missing event would be **UNVERIFIED**.
+
+- Shares received **0.025440080327023308 ≥ 0.025187709153298747** plan floor; exact spend **6 USDT**. The saved ready plan and receipt have matching stock and recipient.
+- `--gasLimit` passed: **yes**, preview/plan limit **761065**; gas used **484177**, reported gas cost **$0.031121608988555163**. Fill price **235.84831191065848 USDT/share**, reference **235.820075**, premium fraction **0.00011973921498609208**.
+- User evidence is saved in `/tmp/live-buy.pHDaGq`, including `plan-2.json`, `preview-2-1791163416.json`, `execute-swap.json` and `receipt.json`. No baw warning appeared in the supplied terminal excerpt. Preserve these temporary files for review; the PR records the comparison and full hash.
+
 ## Verification
 
 ```bash
