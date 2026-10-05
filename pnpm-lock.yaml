@@ -330,6 +330,12 @@ importers:
       '@tally/engine':
         specifier: workspace:*
         version: link:../engine
+      '@tally/modkit':
+        specifier: workspace:*
+        version: link:../modkit
+      '@tally/mod-receipts':
+        specifier: workspace:*
+        version: link:../mod-receipts
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
