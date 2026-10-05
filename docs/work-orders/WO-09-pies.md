@@ -29,3 +29,8 @@
 ## Out of scope
 
 Pooled vaults, automatic scheduled rebalancing.
+
+## Slice A (2026-10-05): logic, templates and view models only; flag-off
+
+Ships first, on `mod/WO-09-pies` from fresh `main`. No execution, no worker job, no routes, no styling (task 4 and the worker job are slice B, after the Sell UI). **Executable templates use only the five assets ShareGuard supports: NVDA, AAPL, TSLA, QQQ, SPY** (`BUYABLE_TICKERS` in `apps/web/lib/tickers.ts`; the pure package receives the set as an input). Templates: `tech-trio` (NVDA 4000, AAPL 3500, TSLA 2500 bps), `index-core` (QQQ 6000, SPY 4000), `growth-five` (NVDA 3000, AAPL 2500, TSLA 1500, QQQ 2000, SPY 1000), plus `mag7-preview` (AAPL, MSFT, AMZN, GOOGL, META, NVDA, TSLA) marked `executable: false` with its unavailable tickers listed. No Berkshire 13F template (the data would have to be invented; roadmap). Weights are example allocations, labelled "example allocation, not advice".
+
