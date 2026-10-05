@@ -115,23 +115,81 @@ export function createSellIntent(
   };
 }
 
+export interface PostSellReceiptHintParams {
+  intent: SellIntent;
+  txHash: `0x${string}`;
+  plan?: SellPlan | null;
+  attempt?: number;
+  isResumed?: boolean;
+  fetchFn?: typeof fetch;
+}
+
+/**
+ * Fire-and-forget: posts a sell receipt hint to /api/receipts.
+ * Condition 7: Never blocks or fails the sell, runs only after the transaction hash exists,
+ * and is a no-op when FEATURE_RECEIPTS is off (route answers 404).
+ */
+export function postSellReceiptHint(params: PostSellReceiptHintParams): void {
+  try {
+    const fetchImpl = params.fetchFn ?? fetch;
+    const quote = params.plan
+      ? {
+          stock: params.plan.stock,
+          issuer: params.plan.issuer,
+          tokensIn: params.plan.tokensIn,
+          minUsdtOut: params.plan.minUsdtOut,
+          quotedUsdtOut: params.plan.quotedUsdtOut,
+          hops: params.plan.hops,
+          routeText: params.plan.routeText,
+          builtAt: params.plan.builtAt,
+          expiresAt: params.plan.expiresAt,
+        }
+      : null;
+
+    const body = {
+      version: 1,
+      kind: "sell",
+      txHash: params.txHash,
+      intentId: params.intent.id,
+      attempt: params.attempt ?? 1,
+      user: params.intent.user,
+      ticker: params.intent.ticker,
+      isResumed: params.isResumed ?? false,
+      quote,
+      simulation: null,
+    };
+
+    fetchImpl("/api/receipts", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    }).catch(() => {
+      // Fire-and-forget: never block or fail the sell
+    });
+  } catch {
+    // Fire-and-forget
+  }
+}
+
 /**
  * Emits stage events for the Sell pipeline to notify subscribers (Receipts recorder, hooks).
- */
-/**
- * Sell stage events: currently a no-op because receipts only accept ShareGuard buy hints.
- * Emitting buy-shaped events would cause /api/receipts to refuse them (422) since field definitions differ.
- * Sells will emit stages once receipts support direct router sell verification.
+ * Dispatches fire-and-forget receipt hint when transaction hash is present.
  */
 export function emitSellStage(
-  _intent: SellIntent,
+  intent: SellIntent,
   _stage: "intent" | "quote" | "simulation" | "signed" | "realized",
-  _data: {
+  data: {
     plan?: SellPlan;
     txHash?: string;
     status?: "success" | "reverted" | "pending";
     listener?: TradeStageListener;
   },
 ): void {
-  // Deliberately no-op to prevent premature 422 receipt rejection
+  if (data.txHash && /^0x[\da-f]{64}$/i.test(data.txHash)) {
+    postSellReceiptHint({
+      intent,
+      txHash: data.txHash as `0x${string}`,
+      plan: data.plan,
+    });
+  }
 }

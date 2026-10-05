@@ -1,4 +1,5 @@
-import { SHAREGUARD_DEPLOYED, USDT_BSC } from "@tally/config";
+import { LIQUIDMESH_ROUTER, SHAREGUARD_DEPLOYED, USDT_BSC } from "@tally/config";
+import type { Address } from "@tally/core";
 import type { SnapshotStore } from "@tally/modkit";
 import {
   HINT_KIND,
@@ -7,6 +8,7 @@ import {
   parseReceiptHint,
   receiptHintKey,
   verifySignedCall,
+  verifySignedSellCall,
   type StoredHint,
   type StoredReceipt,
 } from "@tally/mod-receipts";
@@ -103,7 +105,28 @@ export function createReceiptPost(deps: Dependencies) {
         const tx = await engine.transactions.getTransaction(hint.txHash);
         if (tx) {
           try {
-            verifySignedCall(tx, hint, SHAREGUARD_DEPLOYED, USDT_BSC);
+            if (hint.kind === "sell") {
+              const tokens = await engine.ports.registry.tokensFor(hint.ticker);
+              const stockAddr = tokens[0]?.address ?? hint.quote?.stock;
+              let approveTarget: Address = LIQUIDMESH_ROUTER;
+              if (stockAddr) {
+                const guard = await (
+                  engine as unknown as {
+                    trade?: {
+                      chain?: {
+                        readGuard?: (s: Address, r: Address) => Promise<{ approveTarget: Address }>;
+                      };
+                    };
+                  }
+                ).trade?.chain
+                  ?.readGuard?.(stockAddr, LIQUIDMESH_ROUTER)
+                  .catch(() => null);
+                if (guard?.approveTarget) approveTarget = guard.approveTarget;
+              }
+              verifySignedSellCall(tx, hint, tokens, approveTarget, LIQUIDMESH_ROUTER);
+            } else {
+              verifySignedCall(tx, hint, SHAREGUARD_DEPLOYED, USDT_BSC);
+            }
           } catch {
             return response(422, "Transaction does not match a supported signed intent");
           }

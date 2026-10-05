@@ -70,56 +70,27 @@ export async function loadSellSheet(params?: {
   const issuer = params?.issuer ?? "bstock";
   const isMax = Boolean(params?.max);
   const rawTokens = params?.tokens ?? (isMax ? params?.rawBalance : undefined);
-  const shares = params?.shares ?? 0;
-
-  if (!params?.ticker || (!rawTokens && shares <= 0)) {
-    return {
-      state: "empty",
-      ticker,
-      issuer,
-      symbol: issuer === "bstock" ? `${ticker}B` : `${ticker}on`,
-      stock: "",
-      tokensIn: "0",
-      sharesIn: "0",
-      quotedUsdtOut: "0",
-      minUsdtFloor: "0",
-      usdPerShare: 0,
-      referencePrice: null,
-      costPct: null,
-      feeEstimateUsd: null,
-      integrityGrade: null,
-      availabilityReason: "Enter a share amount to sell or choose max.",
-      isMax: false,
-      stale: false,
-      ageMs: null,
-      source: null,
-      error: null,
-    };
-  }
-
-  // When selling max, use the raw token balance directly without floating-point conversion
-  const tokensIn = rawTokens ?? "25654736000000000";
 
   return {
-    state: "ready",
+    state: "empty",
     ticker,
     issuer,
     symbol: issuer === "bstock" ? `${ticker}B` : `${ticker}on`,
-    stock: "0x02fca66c1d1afb4e2a7884261eb00f63598a7436",
-    tokensIn,
-    sharesIn: "25674701000000000",
-    quotedUsdtOut: "6000000000000000000",
-    minUsdtFloor: "5940000000000000000",
-    usdPerShare: 233.8,
-    referencePrice: 233.9,
-    costPct: 0.1,
-    feeEstimateUsd: 0.03,
-    integrityGrade: "A",
-    availabilityReason: null,
+    stock: "",
+    tokensIn: rawTokens ?? "0",
+    sharesIn: "0",
+    quotedUsdtOut: "0",
+    minUsdtFloor: "0",
+    usdPerShare: 0,
+    referencePrice: null,
+    costPct: null,
+    feeEstimateUsd: null,
+    integrityGrade: null,
+    availabilityReason: "A sell plan needs a live quote; open a sell from the Portfolio.",
     isMax,
     stale: false,
-    ageMs: 0,
-    source: "Binance Web3 Aggregator + BSC RPC",
+    ageMs: null,
+    source: null,
     error: null,
   };
 }
@@ -137,53 +108,27 @@ export async function loadSwitchSheet(params?: {
   const fromSymbol = fromIssuer === "ondo" ? `${ticker}on` : `${ticker}B`;
   const toSymbol = toIssuer === "ondo" ? `${ticker}on` : `${ticker}B`;
 
-  if (!params?.ticker || (params.shares ?? 0) <= 0) {
-    return {
-      state: "empty",
-      ticker,
-      fromIssuer,
-      toIssuer,
-      fromSymbol,
-      toSymbol,
-      sharesIn: "0",
-      sharesOut: "0",
-      costPct: null,
-      feeEstimateUsd: null,
-      fromGrade: null,
-      toGrade: null,
-      destinationFloorShares: "0",
-      availabilityReason: "Select issuers and share amount to switch.",
-      directRoute: false,
-      twoStepRequired: false,
-      stale: false,
-      ageMs: null,
-      source: null,
-      error: null,
-    };
-  }
-
-  // Before gate V-B1 confirmation, default to two-step sell then buy recommendation
   return {
-    state: "two_step",
+    state: "empty",
     ticker,
     fromIssuer,
     toIssuer,
     fromSymbol,
     toSymbol,
-    sharesIn: "26137000000000000",
-    sharesOut: "26110000000000000",
-    costPct: 0.1,
-    feeEstimateUsd: 0.04,
-    fromGrade: "A",
-    toGrade: "A",
-    destinationFloorShares: "25849000000000000",
+    sharesIn: "0",
+    sharesOut: "0",
+    costPct: null,
+    feeEstimateUsd: null,
+    fromGrade: null,
+    toGrade: null,
+    destinationFloorShares: "0",
     availabilityReason:
       "Single-route switch is unavailable: upstream Binance DEX aggregator forbids stock-to-stock pairing on BNB Chain (code 40368: Ondo asset on chain 56 can only pair with allowed stablecoins). Use Sell then Buy as two separate steps.",
     directRoute: false,
-    twoStepRequired: true,
+    twoStepRequired: false,
     stale: false,
-    ageMs: 0,
-    source: "ShareGuard + Binance DEX",
+    ageMs: null,
+    source: null,
     error: null,
   };
 }

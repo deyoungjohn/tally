@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Address } from "@tally/core";
 import type { SellPlan } from "@tally/engine";
-import { createSellIntent, emitSellStage, fetchSellPlan } from "./sell";
+import { createSellIntent, emitSellStage, fetchSellPlan, postSellReceiptHint } from "./sell";
+
+type Hex = `0x${string}`;
 
 const USER = "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7" as Address;
 const NVDAB = "0x02fca66c1d1afb4e2a7884261eb00f63598a7436" as Address;
@@ -105,5 +107,88 @@ describe("sell trade-plan client helper", () => {
     emitSellStage(intent, "quote", { listener });
     emitSellStage(intent, "signed", { txHash: "0x123", listener });
     expect(listener).not.toHaveBeenCalled();
+  });
+
+  it("postSellReceiptHint posts sell hint to /api/receipts with correct shape", async () => {
+    const intent = createSellIntent(
+      "NVDA",
+      "bstock",
+      NVDAB,
+      USER,
+      25654736000000000n,
+      5940000000000000000n,
+    );
+
+    const mockPlan = {
+      ticker: "NVDA",
+      issuer: "bstock" as const,
+      symbol: "NVDAB",
+      stock: NVDAB,
+      user: USER,
+      quotedUsdtOut: "6000000000000000000",
+      minUsdtOut: "5940000000000000000",
+      tokensIn: "25654736000000000",
+      routeText: "NVDAB → USDT",
+      hops: 1,
+      builtAt: 1000,
+      expiresAt: 16000,
+    } as unknown as SellPlan;
+
+    const mockFetch = vi.fn().mockResolvedValue({ ok: true, status: 202 });
+    const txHash = "0x" + "a".repeat(64);
+
+    postSellReceiptHint({
+      intent,
+      txHash: txHash as Hex,
+      plan: mockPlan,
+      fetchFn: mockFetch as unknown as typeof fetch,
+    });
+
+    expect(mockFetch).toHaveBeenCalledWith("/api/receipts", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        version: 1,
+        kind: "sell",
+        txHash,
+        intentId: intent.id,
+        attempt: 1,
+        user: USER,
+        ticker: "NVDA",
+        isResumed: false,
+        quote: {
+          stock: NVDAB,
+          issuer: "bstock",
+          tokensIn: "25654736000000000",
+          minUsdtOut: "5940000000000000000",
+          quotedUsdtOut: "6000000000000000000",
+          hops: 1,
+          routeText: "NVDAB → USDT",
+          builtAt: 1000,
+          expiresAt: 16000,
+        },
+        simulation: null,
+      }),
+    });
+  });
+
+  it("postSellReceiptHint is fire-and-forget and does not throw on network failure", () => {
+    const intent = createSellIntent(
+      "NVDA",
+      "bstock",
+      NVDAB,
+      USER,
+      25654736000000000n,
+      5940000000000000000n,
+    );
+
+    const rejectingFetch = vi.fn().mockRejectedValue(new Error("Network offline"));
+    expect(() => {
+      postSellReceiptHint({
+        intent,
+        txHash: ("0x" + "b".repeat(64)) as Hex,
+        fetchFn: rejectingFetch as unknown as typeof fetch,
+      });
+    }).not.toThrow();
   });
 });

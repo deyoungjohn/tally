@@ -13,15 +13,19 @@ describe("switch module view models", () => {
     });
   });
 
-  it("empty sell sheet prompts for share amount", async () => {
+  it("empty sell sheet returns honest empty state without invented numbers", async () => {
     const vm = await loadSellSheet();
     expect(vm.state).toBe("empty");
-    expect(vm.availabilityReason).toBe("Enter a share amount to sell or choose max.");
+    expect(vm.availabilityReason).toBe(
+      "A sell plan needs a live quote; open a sell from the Portfolio.",
+    );
     expect(vm.sharesIn).toBe("0");
+    expect(vm.quotedUsdtOut).toBe("0");
     expect(vm.minUsdtFloor).toBe("0");
+    expect(vm.source).toBeNull();
   });
 
-  it("ready sell sheet provides floor, quoted USDT, fee and integrity grade", async () => {
+  it("sell sheet with params preserves honest empty state", async () => {
     const vm = await loadSellSheet({
       ticker: "NVDA",
       issuer: "bstock",
@@ -29,18 +33,17 @@ describe("switch module view models", () => {
       user: "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
     });
 
-    expect(vm.state).toBe("ready");
+    expect(vm.state).toBe("empty");
     expect(vm.ticker).toBe("NVDA");
     expect(vm.issuer).toBe("bstock");
     expect(vm.symbol).toBe("NVDAB");
-    expect(BigInt(vm.minUsdtFloor)).toBeGreaterThan(0n);
-    expect(BigInt(vm.quotedUsdtOut)).toBeGreaterThan(BigInt(vm.minUsdtFloor));
-    expect(vm.integrityGrade).toBe("A");
-    expect(vm.usdPerShare).toBeGreaterThan(0);
+    expect(vm.minUsdtFloor).toBe("0");
+    expect(vm.quotedUsdtOut).toBe("0");
+    expect(vm.source).toBeNull();
     expect(vm.error).toBeNull();
   });
 
-  it("max sell sheet uses raw token balance without floating-point conversion", async () => {
+  it("max sell sheet retains raw token balance in honest empty state", async () => {
     const vm = await loadSellSheet({
       ticker: "NVDA",
       issuer: "bstock",
@@ -49,14 +52,19 @@ describe("switch module view models", () => {
       user: "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
     });
 
-    expect(vm.state).toBe("ready");
+    expect(vm.state).toBe("empty");
     expect(vm.isMax).toBe(true);
     expect(vm.tokensIn).toBe("49999999999999999");
+    expect(vm.source).toBeNull();
   });
 
-  it("switch sheet returns two_step or empty without claiming false atomicity", async () => {
+  it("switch sheet returns honest empty state explaining upstream pair limitation without claiming false atomicity", async () => {
     const emptyVm = await loadSwitchSheet();
     expect(emptyVm.state).toBe("empty");
+    expect(emptyVm.availabilityReason).toContain("code 40368");
+    expect(emptyVm.sharesIn).toBe("0");
+    expect(emptyVm.sharesOut).toBe("0");
+    expect(emptyVm.source).toBeNull();
 
     const vm = await loadSwitchSheet({
       ticker: "NVDA",
@@ -66,10 +74,11 @@ describe("switch module view models", () => {
       user: "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
     });
 
-    expect(vm.state).toBe("two_step");
-    expect(vm.twoStepRequired).toBe(true);
+    expect(vm.state).toBe("empty");
+    expect(vm.twoStepRequired).toBe(false);
     expect(vm.directRoute).toBe(false);
     expect(vm.availabilityReason).toContain("code 40368");
-    expect(vm.destinationFloorShares).toBeTruthy();
+    expect(vm.destinationFloorShares).toBe("0");
+    expect(vm.source).toBeNull();
   });
 });

@@ -1,7 +1,7 @@
 import type { Address, RegistryToken } from "@tally/core";
 import { decodeGuarded, decodeTransfer, GUARDED_TOPIC, TRANSFER_TOPIC } from "./decode";
 import { reconcile } from "./reconcile";
-import type { ReceiptHint } from "./hints";
+import type { AnyReceiptHint, ReceiptHint } from "./hints";
 import type { ChainLog, Hex, Receipt, Reconciliation } from "./types";
 
 // ShareGuard v1 ABI signatures: contracts/src/ShareGuard.sol. Exact selectors, no dependency or I/O.
@@ -40,16 +40,16 @@ export type SignedCall =
     };
 export interface StoredReceipt {
   lastCheckedAt?: number;
-  kind: "swap" | "approval";
+  kind: "swap" | "approval" | "sell" | "stock_approval";
   transaction: TransactionEvidence;
   chainReceipt: MinedEvidence | null;
   receipt: Receipt | null;
   result: Reconciliation | null;
-  hint: ReceiptHint;
+  hint: AnyReceiptHint;
   baselineTrust: "client-hint" | "recorded";
   pendingReason?: string;
   verifiedAt: number;
-  verifiedFill: { tokens: bigint; shares: bigint } | null;
+  verifiedFill: { tokens: bigint; shares: bigint | null } | null;
 }
 export const equalAddress = (a: string | null, b: string | null) =>
   a !== null && b !== null && a.toLowerCase() === b.toLowerCase();
@@ -312,3 +312,5 @@ export function promoteReceipt(
     verifiedFill: verifiedFill(tx, mined, call),
   };
 }
+
+export * from "./verification-sell";

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { isBuyable, TICKER_RE } from "../../../../lib/tickers";
 import { getEngine } from "../../../../lib/server/engine";
 import { errorResponse, fail, json, rateLimited, tooMany } from "../../../../lib/server/http";
+import { flags } from "@tally/config";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,7 @@ const body = z
  * signed directly by the user's wallet. Always re-quotes. Call again when `expiresAt` passes or after approval mines.
  */
 export async function POST(req: NextRequest) {
+  if (!flags().sell) return fail(404, "not_found", "Sell is disabled.");
   if (rateLimited(req, "sell", 30)) return tooMany();
   try {
     const b = body.parse(await req.json());

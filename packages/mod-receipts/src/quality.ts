@@ -131,11 +131,13 @@ export function qualityReport(
   receipts: readonly Receipt[],
   referencePrices: readonly ReferencePrice[],
 ): QualityReport {
-  const entries = receipts.map((receipt) => ({ receipt, result: reconcile(receipt) }));
-  const issuers = [...new Set(receipts.map((receipt) => receipt.intent.issuer))].sort();
-  const lengths = [...new Set(receipts.map((receipt) => receipt.quote?.route.length ?? null))].sort(
-    (a, b) => (a ?? Infinity) - (b ?? Infinity),
-  );
+  // Sells stay out of the /quality buy distributions (Condition: no effect on buys)
+  const buyReceipts = receipts.filter((receipt) => receipt.intent.kind === "buy");
+  const entries = buyReceipts.map((receipt) => ({ receipt, result: reconcile(receipt) }));
+  const issuers = [...new Set(buyReceipts.map((receipt) => receipt.intent.issuer))].sort();
+  const lengths = [
+    ...new Set(buyReceipts.map((receipt) => receipt.quote?.route.length ?? null)),
+  ].sort((a, b) => (a ?? Infinity) - (b ?? Infinity));
   return {
     ...summarize(entries, referencePrices),
     byIssuer: issuers.map((issuer) => ({
