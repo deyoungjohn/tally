@@ -18,6 +18,7 @@
   - Engine exposure: a new file `packages/engine/src/transactions-fixture.ts` (fixture reader backed by the newest `spike/results/receipt_vectors_*.json`, read-only) and one accessor line in `packages/engine/src/engine.ts` (`engine.transactions`). Expect a trivial rebase conflict with WO-05/WO-06 on that file.
   - modkit (`packages/modkit/src/index.ts`, + test): new `SnapshotStore` methods only: `listLatest(kind, { maxAgeMs, now?, limit? })` (latest row per key, `limit` ≤ 1000, default 200) and `expire({ kind, olderThanMs })` which deletes rows of a kind older than the cutoff and **throws for any kind in `EVIDENCE_SNAPSHOT_KINDS`**. No existing signature changes (`SnapshotStore` has no other implementer).
   - Dependencies: `@tally/modkit` and `@tally/mod-receipts` as `workspace:*` in `packages/mcp/package.json` plus the matching `pnpm-lock.yaml` importer lines, for `get-receipt.ts` only.
+- Approved 2026-10-05, **additive only** (correction to the item above: the worker runner wraps `SnapshotStore` in an object literal, so the new methods must be forwarded there): in `apps/worker/src/runner.ts` forward `listLatest` (bound like `latest`/`history`) and `expire` (guarded by `assertActive()` like `put` and `prune`), plus one test in `apps/worker/src/runner.test.ts` showing a timed-out run cannot call `expire`. No other change to the runner.
 - Approved 2026-10-03: `spike/record_receipt_vectors.py`, `spike/results/receipt_vectors_*.json` (new files only; read-only recorder of F6/F11 on-chain receipts)
 
 ## Tasks
