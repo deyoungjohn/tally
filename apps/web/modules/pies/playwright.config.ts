@@ -1,4 +1,5 @@
 import { defineConfig } from "@playwright/test";
+import { join } from "node:path";
 
 export default defineConfig({
   testDir: ".",
@@ -13,6 +14,7 @@ export default defineConfig({
       : {},
   },
   webServer: {
+    cwd: join(__dirname, "../.."),
     command:
       "FEATURE_PIES=1 TALLY_DEV_PREVIEWS=1 TALLY_ALLOW_MISSING_GEO=1 TALLY_FIXTURES=1 TALLY_DATA_DIR=/tmp/tally-wo09-preview PORT=3109 HOSTNAME=127.0.0.1 node .next/standalone/apps/web/server.js",
     url: "http://127.0.0.1:3109/dev/pies",

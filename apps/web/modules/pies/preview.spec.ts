@@ -11,7 +11,9 @@ for (const width of [375, 768, 1280]) {
     await expect(page.getByText("partially rebalanced", { exact: true })).toBeVisible();
     await expect(page.getByText(/Stale snapshot: 600000 ms/)).toBeVisible();
     await expect(page.getByText(/preview-sell-receipt/)).toBeVisible();
-    await expect(page.getByText(/pending$/)).toBeVisible();
+    await expect(
+      page.getByText("tech-trio:buy:TSLA:preview-tsla: pending", { exact: true }),
+    ).toBeVisible();
     await page.screenshot({ path: `test-results/pies-${width}.png`, fullPage: true });
   });
 }
