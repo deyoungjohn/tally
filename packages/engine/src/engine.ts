@@ -43,7 +43,10 @@ import {
   onchainMultiplierReader,
   flowChainFromEnv,
   type FlowChain,
+  transactionsFromEnv,
+  type Transactions,
 } from "@tally/chain";
+import { fixtureTransactions } from "./transactions-fixture";
 import { fixtureFlowChain } from "./flow-fixture";
 import { workerRequestPace, type WorkerRequestPaceOptions } from "./worker-request-pace";
 import {
@@ -89,6 +92,7 @@ export interface Engine {
   >;
   /** Read-only flow evidence; independent from the existing trade chain. */
   chain: FlowChain;
+  transactions: Transactions;
   quote(input: QuoteInput): Promise<ConsolidatedQuote>;
   /** Every token of a ticker with its facts, bounds and the full integrity check log, and no quote (`tally facts`). */
   facts(ticker: string): Promise<TokenInspection[]>;
@@ -124,6 +128,7 @@ interface BuildOptions {
   tradeChain: TradeChain;
   signer?: FeedSigner;
   flowChain: FlowChain;
+  transactions: Transactions;
   workerPacing?: boolean;
 }
 
@@ -221,6 +226,7 @@ function build(o: BuildOptions): Engine {
     paceWorkerRequests: pace?.configure,
     collectors: new BinanceCollectors(client),
     chain: o.flowChain,
+    transactions: o.transactions,
     ports,
     health,
     radar,
@@ -261,6 +267,7 @@ export function createLiveEngine(
     tradeChain: liveTradeChain(rpc, guard),
     signer: feedSignerFromEnv(env),
     flowChain: flowChainFromEnv(env, onWarn),
+    transactions: transactionsFromEnv(env, onWarn),
     workerPacing: true,
   });
 }
@@ -309,6 +316,7 @@ export function createFixtureEngine(
     tradeChain: o.tradeChain ?? fixtureTradeChain(),
     signer: o.signer,
     flowChain: fixtureFlowChain(),
+    transactions: fixtureTransactions(),
   });
 }
 
