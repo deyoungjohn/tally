@@ -4,12 +4,18 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "typecheck": "tsc -p ."
+    "start": "tsx src/main.ts",
+    "typecheck": "tsc -p .",
+    "test": "vitest run"
   },
   "devDependencies": {
-    "typescript": "^5.6.0"
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
   },
   "dependencies": {
+    "@tally/core": "workspace:*",
+    "@tally/engine": "workspace:*",
     "@tally/mod-receipts": "workspace:*",
     "@tally/mod-statement": "workspace:*",
     "@tally/mod-flow": "workspace:*",

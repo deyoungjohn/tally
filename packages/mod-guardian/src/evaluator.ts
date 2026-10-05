@@ -29,7 +29,6 @@ export interface SnapshotStateInputs {
   rawFlowAggregate?: unknown;
   isFlowGhostStale?: boolean;
   isPausedOnchain?: boolean | null;
-  isPausedPort?: (tokenAddress: string) => boolean | null | undefined;
   sharePriceUsd?: number | null;
   onWarn?: (message: string) => void;
 }
@@ -125,22 +124,7 @@ export function buildTokenStateFromSnapshots(inputs: SnapshotStateInputs): Token
 
   // 5. bStock / Onchain pause check
   let isPausedOnchain: boolean | null = null;
-  if (inputs.isPausedPort) {
-    try {
-      const res = inputs.isPausedPort(inputs.tokenAddress);
-      if (typeof res === "boolean") {
-        isPausedOnchain = res;
-      } else {
-        onWarn(
-          `Pause port for ${inputs.ticker} (${inputs.tokenAddress}) returned non-boolean or null`,
-        );
-      }
-    } catch (err) {
-      onWarn(
-        `Pause port threw for ${inputs.ticker} (${inputs.tokenAddress}): ${errorMessage(err)}`,
-      );
-    }
-  } else if (inputs.isPausedOnchain !== undefined) {
+  if (inputs.isPausedOnchain !== undefined) {
     isPausedOnchain = inputs.isPausedOnchain;
   } else if (inputs.issuer === "bstock") {
     onWarn(`Pause check unavailable for bStock token ${inputs.ticker} (${inputs.tokenAddress})`);

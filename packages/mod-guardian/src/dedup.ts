@@ -43,9 +43,11 @@ export function deduplicationKey(alert: Alert): string {
   const wallet = alert.walletAddress.toLowerCase();
   const tokenKey = alert.evidence.snapshotKey.toLowerCase();
 
-  // Finding 7: min and max breaches have independent deduplication keys
+  // Finding 7 / Nit 3: min and max breaches have independent deduplication keys via direction
   if (alert.rule === "price-threshold") {
-    const direction = alert.id.includes(":min:") ? "min" : alert.id.includes(":max:") ? "max" : "";
+    const direction =
+      alert.direction ??
+      (alert.id.includes(":min:") ? "min" : alert.id.includes(":max:") ? "max" : "");
     return `${wallet}:${alert.rule}:${direction}:${tokenKey}`;
   }
 

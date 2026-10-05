@@ -1,2 +1,3 @@
-// @tally/bot: Telegram read-only bot, built in M6 (blueprint §13)
-export {};
+// @tally/bot: Telegram read-only bot for Tally Guardian (blueprint §13, WO-06)
+export * from "./commands";
+export * from "./bot";

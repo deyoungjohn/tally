@@ -18,8 +18,41 @@ export interface Alert {
   severity: AlertSeverity;
   title: string;
   body: string;
+  direction?: "min" | "max";
+  deliverAt?: number;
+  deliveredAt?: number;
+  deliveryAttempts?: number;
+  lastDeliveryError?: string;
   evidence: AlertEvidence;
   createdAt: number;
+}
+
+export const MAX_STORED_ALERTS_PER_WALLET = 200;
+
+export interface GuardianLinkCodeData {
+  code: string;
+  walletAddress: string;
+  issuedAt: number;
+  expiresAt: number;
+  status: "active" | "consumed";
+  consumedAt?: number;
+  chatId?: number | string;
+}
+
+export interface GuardianLinkData {
+  walletAddress: string;
+  chatId: number | string;
+  linkedAt: number;
+  alertsEnabled: boolean;
+  quietHours?: QuietHours;
+}
+
+export interface GuardianChatData {
+  chatId: number | string;
+  walletAddress: string;
+  linkedAt: number;
+  alertsEnabled: boolean;
+  quietHours?: QuietHours;
 }
 
 export interface UserHolding {

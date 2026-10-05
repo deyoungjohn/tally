@@ -59,7 +59,7 @@ export class ShareCountRule implements Rule {
       const ratio = matchSimpleRatio(nextM, prevM);
       const action = corporateActionKind(next.status?.reasonMsg);
       if (action) {
-        const actionText = action.replace("_", " ");
+        const actionText = action === "stock_split" ? "reverse split" : action.replace("_", " ");
         explanation = ratio ? `${formatRatio(ratio.label)} ${actionText}` : actionText;
       } else if (ratio) {
         explanation = `reason unknown (the ratio is about ${formatRatio(ratio.label)}, but there is no corporate-action status)`;

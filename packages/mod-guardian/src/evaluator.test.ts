@@ -128,48 +128,44 @@ describe("buildTokenStateFromSnapshots (type guards, finding 1, 2, 8)", () => {
     expect(state.grade).toBe("C");
   });
 
-  // Finding 2 test: pause port calling and warning
-  it("calls pause port once and records boolean in isPausedOnchain", () => {
+  // Nit 2 test: pause state is passed directly as isPausedOnchain: boolean | null
+  it("records boolean in isPausedOnchain when passed", () => {
     const state = buildTokenStateFromSnapshots({
       tokenAddress: "0xnvdab",
       ticker: "NVDA",
       issuer: "bstock",
       observedAt: 1000,
-      isPausedPort: (addr) => addr === "0xnvdab",
+      isPausedOnchain: true,
     });
 
     expect(state.isPausedOnchain).toBe(true);
   });
 
-  it("warns and sets isPausedOnchain to null when pause port throws or returns non-boolean", () => {
+  it("warns and sets isPausedOnchain to null when pause check is missing for bStock", () => {
     const warnings: string[] = [];
     const onWarn = (msg: string) => warnings.push(msg);
 
-    const stateThrow = buildTokenStateFromSnapshots({
+    const stateMissing = buildTokenStateFromSnapshots({
       tokenAddress: "0xnvdab",
       ticker: "NVDA",
       issuer: "bstock",
       observedAt: 1000,
-      isPausedPort: () => {
-        throw new Error("RPC error during pause manager check");
-      },
       onWarn,
     });
 
-    expect(stateThrow.isPausedOnchain).toBeNull();
-    expect(warnings.some((w) => w.includes("RPC error during pause manager check"))).toBe(true);
+    expect(stateMissing.isPausedOnchain).toBeNull();
+    expect(warnings.some((w) => w.includes("Pause check unavailable for bStock"))).toBe(true);
 
-    const stateNull = buildTokenStateFromSnapshots({
+    const stateExplicitNull = buildTokenStateFromSnapshots({
       tokenAddress: "0xnvdab",
       ticker: "NVDA",
       issuer: "bstock",
       observedAt: 1000,
-      isPausedPort: () => null as unknown as boolean,
+      isPausedOnchain: null,
       onWarn,
     });
 
-    expect(stateNull.isPausedOnchain).toBeNull();
-    expect(warnings.some((w) => w.includes("non-boolean or null"))).toBe(true);
+    expect(stateExplicitNull.isPausedOnchain).toBeNull();
   });
 
   // Finding 8 test: reads lastRealTradeAgeMs from flow-aggregate
@@ -362,5 +358,66 @@ describe("Price Threshold Settings Integration (finding 5)", () => {
     expect(alerts).toHaveLength(1);
     expect(alerts[0]!.title).toBe("NVDA fell below $120.00");
     expect(alerts[0]!.walletAddress).toBe(mockHolding.walletAddress.toLowerCase());
+  });
+
+  // Finding 3: Two wallets holding same token both receive alerts against previous state
+  it("evaluates multiple wallets against the same previous state so second wallet never misses transition", () => {
+    const rule = new PriceThresholdRule();
+    const prev: TokenState = {
+      tokenAddress: "0xnvdaonaddress",
+      ticker: "NVDA",
+      issuer: "ondo",
+      status: null,
+      multiplier: 10n ** 18n,
+      grade: "A",
+      gradeReasons: [],
+      ghost: false,
+      sharePriceUsd: 130,
+      session: "regular",
+      observedAt: 1000,
+      isPausedOnchain: null,
+    };
+
+    const next: TokenState = {
+      ...prev,
+      sharePriceUsd: 110,
+      observedAt: 2000,
+    };
+
+    const holdingWallet1: UserHolding = {
+      walletAddress: "0x1111111111111111111111111111111111111111",
+      tokenAddress: "0xnvdaonaddress",
+      ticker: "NVDA",
+      issuer: "ondo",
+      tokens: 10n * 10n ** 18n,
+      shares: 10n * 10n ** 18n,
+    };
+
+    const holdingWallet2: UserHolding = {
+      walletAddress: "0x2222222222222222222222222222222222222222",
+      tokenAddress: "0xnvdaonaddress",
+      ticker: "NVDA",
+      issuer: "ondo",
+      tokens: 20n * 10n ** 18n,
+      shares: 20n * 10n ** 18n,
+    };
+
+    const ports = {
+      priceThresholds: {
+        "0xnvdaonaddress": { minPriceUsd: 120 },
+      },
+    };
+
+    // Both wallets are evaluated using the token's prev and next state
+    const alerts1 = evaluateHoldingRules([rule], prev, next, holdingWallet1, ports);
+    const alerts2 = evaluateHoldingRules([rule], prev, next, holdingWallet2, ports);
+
+    expect(alerts1).toHaveLength(1);
+    expect(alerts1[0]!.walletAddress).toBe(holdingWallet1.walletAddress.toLowerCase());
+    expect(alerts1[0]!.title).toContain("fell below $120.00");
+
+    expect(alerts2).toHaveLength(1);
+    expect(alerts2[0]!.walletAddress).toBe(holdingWallet2.walletAddress.toLowerCase());
+    expect(alerts2[0]!.title).toContain("fell below $120.00");
   });
 });
