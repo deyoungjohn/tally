@@ -17,7 +17,7 @@ export interface PauseStateResult {
  * - { paused: false, reason: null, observedAt } when token is active
  * - { paused: null, reason: "token not configured in ShareGuard", observedAt } when asset is not enabled in ShareGuard
  * - { paused: null, reason: "pause check reverted", observedAt } when isTokenPaused check reverted on-chain
- * - { paused: null, reason: string, observedAt } when readGuard itself fails/reverts
+ * - { paused: null, reason: "guard read failed; details withheld", observedAt } when readGuard itself fails/reverts
  */
 export async function pauseState(
   chain: Pick<TradeChain, "readGuard">,
@@ -46,10 +46,10 @@ export async function pauseState(
       reason: null,
       observedAt,
     };
-  } catch (err) {
+  } catch {
     return {
       paused: null,
-      reason: err instanceof Error ? err.message : String(err),
+      reason: "guard read failed; details withheld",
       observedAt,
     };
   }

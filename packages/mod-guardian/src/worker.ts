@@ -3,6 +3,7 @@ import type { ModuleHealth, SnapshotStore } from "@tally/modkit";
 import { deduplicateAlerts } from "./dedup";
 import {
   deliverPendingAlerts,
+  redactSecrets,
   type DeliverAlertsResult,
   type TelegramDeliverySender,
 } from "./delivery";
@@ -369,9 +370,8 @@ export async function runGuardianEvaluation(ctx: GuardianJobContext): Promise<Gu
           const pauseRes = await ctx.pauseState(tokenAddr);
           isPausedOnchain = pauseRes.paused;
         } catch (err) {
-          ctx.onWarn(
-            `pauseState failed for ${tokenAddr}: ${err instanceof Error ? err.message : String(err)}`,
-          );
+          const rawMsg = err instanceof Error ? err.message : String(err);
+          ctx.onWarn(`pauseState failed for ${tokenAddr}: ${redactSecrets(rawMsg)}`);
           isPausedOnchain = null;
         }
       } else {

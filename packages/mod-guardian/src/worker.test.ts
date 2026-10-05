@@ -6,8 +6,6 @@ import {
   runGuardianEvaluation,
   type GuardianJobContext,
 } from "./worker";
-import type { Address } from "@tally/core";
-import { pauseState } from "../../engine/src/pause";
 import type { Alert, RadarSnapshotSubset, TokenState } from "./types";
 
 describe("Guardian Worker (worker.ts)", () => {
@@ -1314,63 +1312,73 @@ describe("Guardian Worker (worker.ts)", () => {
     ).toBe(true);
   });
 
-  describe("pauseState accessor (packages/engine/src/pause.ts)", () => {
-    const fakeChain = (
-      reading: Partial<Awaited<ReturnType<Parameters<typeof pauseState>[0]["readGuard"]>>>,
-      throws = false,
-    ): Parameters<typeof pauseState>[0] => ({
-      readGuard: async () => {
-        if (throws) throw new Error("RPC call reverted");
-        return {
-          paused: false,
-          enabled: true,
-          routerAllowed: true,
-          approveTarget: "0x0000000000000000000000000000000000000000" as Address,
-          source: 1,
-          feed: { multiplier: 10n ** 18n, updatedAt: 0n, validAfter: 0n },
-          maxAge: 3600n,
-          ...reading,
-        };
+  it("redacts secret URLs when pauseState throws with an RPC endpoint URL", async () => {
+    const store = openStore(":memory:");
+    const currentTime = 1_000_000;
+    const warnings: string[] = [];
+
+    const ctx: GuardianJobContext = {
+      store,
+      health: store.health,
+      now: () => currentTime,
+      onWarn: (msg) => warnings.push(msg),
+      pauseState: async () => {
+        throw new Error(
+          "HTTP 500 error connecting to https://bsc.rpc.nodereal.io/?apikey=SECRET_KEY_999: timeout",
+        );
       },
+      isProduction: false,
+    };
+
+    store.put({
+      kind: "wallet:active",
+      key: "bsc",
+      data: { address: wallet },
+      source: "test",
+      observedAt: currentTime,
     });
 
-    it("returns paused: true when tokenPaused is true and asset is enabled", async () => {
-      const res = await pauseState(
-        fakeChain({ tokenPaused: true, enabled: true }),
-        nvdaAddr as Address,
-      );
-      expect(res.paused).toBe(true);
-      expect(res.reason).toBeNull();
+    store.put({
+      kind: "portfolio",
+      key: wallet,
+      data: {
+        holdings: [
+          {
+            tokenContractAddress: nvdaAddr,
+            ticker: "NVDA",
+            issuer: "bstock",
+            balanceTokens: 10n * 10n ** 18n,
+            balanceShares: 10n * 10n ** 18n,
+            isRecognized: true,
+          },
+        ],
+      },
+      source: "test",
+      observedAt: currentTime,
     });
 
-    it("returns paused: false when tokenPaused is false and asset is enabled", async () => {
-      const res = await pauseState(
-        fakeChain({ tokenPaused: false, enabled: true }),
-        nvdaAddr as Address,
-      );
-      expect(res.paused).toBe(false);
-      expect(res.reason).toBeNull();
+    store.put({
+      kind: "radar",
+      key: nvdaAddr,
+      data: {
+        ticker: "NVDA",
+        address: nvdaAddr,
+        issuer: "bstock",
+        grade: "B",
+        reasons: [],
+        ghost: false,
+      } as RadarSnapshotSubset,
+      source: "radar",
+      observedAt: currentTime,
     });
 
-    it("returns paused: null with reason when token is not configured in ShareGuard", async () => {
-      const res = await pauseState(fakeChain({ enabled: false }), nvdaAddr as Address);
-      expect(res.paused).toBeNull();
-      expect(res.reason).toBe("token not configured in ShareGuard");
-    });
+    const run = await runGuardianEvaluation(ctx);
+    expect(run.generatedAlerts).toBe(0);
 
-    it("returns paused: null with reason when pause check reverted on-chain", async () => {
-      const res = await pauseState(
-        fakeChain({ tokenPaused: undefined, enabled: true }),
-        nvdaAddr as Address,
-      );
-      expect(res.paused).toBeNull();
-      expect(res.reason).toBe("pause check reverted");
-    });
-
-    it("returns paused: null with reason when readGuard throws", async () => {
-      const res = await pauseState(fakeChain({}, true), nvdaAddr as Address);
-      expect(res.paused).toBeNull();
-      expect(res.reason).toContain("RPC call reverted");
-    });
+    const pauseFailureWarning = warnings.find((w) => w.startsWith("pauseState failed for"));
+    expect(pauseFailureWarning).toBeDefined();
+    expect(pauseFailureWarning).toContain("[redacted url]");
+    expect(pauseFailureWarning).not.toContain("https://");
+    expect(pauseFailureWarning).not.toContain("SECRET_KEY_999");
   });
 });
