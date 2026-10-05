@@ -53,6 +53,8 @@ Written 2026-10-04 by Claude (chief orchestrator) for **GPT-6 Astra**, who takes
 | 11 | Evidence, fixtures, docs | F Cline | Support | Never money paths, contracts or engine. |
 | 12 | UI (every page) | A Sonnet (backup D) | Free to start; now also owns the landing lead (moved from WO-01 on 2026-10-04) | The user decides when to tell Sonnet. Landing: "Your stocks, in shares" + Portfolio / Radar / Guardian. |
 
+**Wave 2 plan (2026-10-05, orchestrator):** dispatch now: WO-12 (UI, moved up: longest job, its view models exist), WO-11 (support), WO-07 sell path first (switch waits for gate V-B1). Hold: WO-09 until WO-07's sell path merges; WO-08 until WO-07 and gate V-AW; WO-10 until gates V-C1–V-C3 are run. Gates V-B1/V-B2: run pre-market (08:00–13:30 UTC) and again in regular hours (after 13:30 UTC). WO-06 follow-up: `engine.pauseState` accessor plus worker wiring (bStock pause alerts); WO-12's Guardian page must call `loadGuardianSettings` with the session-verified address.
+
 Blueprint milestones M0–M7 are covered: M0–M2 done (engine, ShareGuard, CLI); M3 base merged; WO-01 now covers only stage events (the landing lead moved to WO-12); M4 Trap Shield = integrity grade + WO-04 ghost rule + WO-06 `/shield`; M5 agent layer = WO-05; M6 Telegram = WO-06; M7 polish/submission = WO-11/WO-12 + Fri–Sun calendar.
 
 ## 5. Calendar (UTC; Lagos = UTC+1)
