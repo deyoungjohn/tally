@@ -3,9 +3,7 @@ import { GuardianPlain } from "../../../modules/guardian/plain";
 
 export const dynamic = "force-dynamic";
 
-export default async function GuardianDevPreview(_props?: {
-  searchParams?: Promise<{ address?: string }>;
-}) {
+export default async function GuardianDevPreview() {
   if (process.env.NODE_ENV === "production" && process.env.TALLY_DEV_PREVIEWS !== "1") {
     notFound();
   }
