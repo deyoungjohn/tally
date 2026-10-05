@@ -57,3 +57,8 @@ Approved files: new `packages/mod-receipts/src/verification-sell.ts` (+ test); a
 7. `postSellReceiptHint` is fire-and-forget: it never blocks or fails the sell, runs only after the transaction hash exists (approval and sale), and is a no-op when `FEATURE_RECEIPTS` is off (the route answers 404). The UI agent calls it from its sell hook in a small follow-up; do not edit UI files.
 8. Extra tests: no stock Transfer from the sender, USDT netting, multiplier unavailable (`shares: null`), a buy hint still accepted, and a sell hint to a non-allow-listed destination refused.
 
+### Required small follow-ups from the UI review (2026-10-05), in the same PR as the receipts extension
+
+1. `loadSellSheet` in `apps/web/modules/switch/view-model.ts` returns invented numbers (a fixed stock address, balance 25654736…, quoted 6 USDT, minimum 5.94, grade A, always `ready`). That breaks "no fabricated data". Replace the invented values with the honest empty state ("A sell plan needs a live quote; open a sell from the Portfolio"), keep the exported types, and delete the fixed values from `/dev/switch`. The UI agent renders from the real `SellPlan` through its own mapper, so no data path depends on this stub.
+2. `apps/web/app/api/trade/sell/route.ts` must answer 404 when `FEATURE_SELL` is off (`moduleFlags().sell`), like other module endpoints, with a test.
+
