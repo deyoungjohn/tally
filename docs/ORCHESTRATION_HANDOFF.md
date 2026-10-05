@@ -46,12 +46,14 @@ Written 2026-10-04 by Claude (chief orchestrator) for **GPT-6 Astra**, who takes
 | 04 | Flow + Radar | B Codex #1 | **Merged** (PR #8, `0032642`). Follow-up (worker pace `TALLY_WORKER_RPS`, clean shutdown) at 866c2bd: **APPROVE after one small fix** (onWarn default, review addendum) | User squash-merges the follow-up after the fix. Then flag-on gate is met on the code side; optional EC2 re-run. Ghost wiring into core still NOT applied. |
 | 05 | Agent layer: MCP, Wallet Skill, upstream PR | B Codex #1 | **Merged** (PR #12, `2d62b25`); live $6 buy `0x48349a8d…164992` | user opens the upstream PR from `docs/upstream/`. |
 | 06 | Guardian alerts + read-only bot commands | D Antigravity | **Slice B merged.** `engine.pauseState` follow-up: **APPROVE** @ 6c85a76 | user squash-merges. |
-| 07 | Sell (Switch cut) | C Codex #2 | Sell merged (PR #17). Receipts-for-sells PR @ 7003fc7: **CHANGES (small)** (approval target never read: add `engine.trade.guardRouter`; 3 should-fix) | Agent 07 fixes; then merge; then Sonnet follow-up (`postSellReceiptHint`); enable `FEATURE_RECEIPTS` once WO-12 mounts the recorder. |
+| 07 | Sell (Switch cut) | C Codex #2 | Sell merged (PR #17); sell UI merged (PR #18). Receipts-for-sells PR @ 187cb44: all review findings fixed (guardRouter accessor, strict logs, stock attribution); **APPROVE once a fresh FULL pack at this tip is green** | User runs the pack, squash-merges; then Sonnet's `postSellReceiptHint` follow-up; then `FEATURE_RECEIPTS=1` once the recorder is mounted. Next for 07: ShareGuard asset expansion tooling (after the UI). |
 | 08 | Guardian autopilot | C | Wave 2 | Blocked on V-AW. No longer owns `skills/share-true-trading/**` (moved to WO-05). **Escalate to Claude.** |
 | 09 | Pies | B | Wave 2, after WO-05 | |
 | 10 | Rewards → Stocks | D | Wave 2, if V-C gates pass | |
 | 11 | Evidence, fixtures, docs | F Cline | **APPROVE** @ 7ccd3cc (INDEX and api-observations verified: 36 paths, 149/149 snippet lines) | user squash-merges; nit: reword "byte-for-byte"; later: demo script and README (Thu 8). |
 | 12 | UI (every page) | A Sonnet (backup D) | Free to start; now also owns the landing lead (moved from WO-01 on 2026-10-04) | The user decides when to tell Sonnet. Landing: "Your stocks, in shares" + Portfolio / Radar / Guardian. |
+
+**Ideas queued by the chief engineer (2026-10-05; no plan yet, not scheduled):** customised shareable trade cards that replace the receipt after a trade (buy or sell); recurring buys and sells based on user rules. **ShareGuard asset expansion** is planned in `contracts/README.md` ("Expanding the asset list"), starting after the UI is complete.
 
 **Decisions 2026-10-05 (evening):** BNB payments and BNB-denominated sells are roadmap (see README); the portfolio's coming-soon card must say "Sell to USDT" only; WO-08 not started (reshape or cut after gate V-AW); WO-09 slice A only (logic and view model, flag-off, no UI promised). Order of work after WO-07: sell UI (WO-12), receipts for sells (Agent 07), guided two-step Move (after the UI), demo and README (WO-11, Thu 8).
 
