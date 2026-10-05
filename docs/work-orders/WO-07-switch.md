@@ -62,3 +62,7 @@ Approved files: new `packages/mod-receipts/src/verification-sell.ts` (+ test); a
 1. `loadSellSheet` in `apps/web/modules/switch/view-model.ts` returns invented numbers (a fixed stock address, balance 25654736…, quoted 6 USDT, minimum 5.94, grade A, always `ready`). That breaks "no fabricated data". Replace the invented values with the honest empty state ("A sell plan needs a live quote; open a sell from the Portfolio"), keep the exported types, and delete the fixed values from `/dev/switch`. The UI agent renders from the real `SellPlan` through its own mapper, so no data path depends on this stub.
 2. `apps/web/app/api/trade/sell/route.ts` must answer 404 when `FEATURE_SELL` is off (`moduleFlags().sell`), like other module endpoints, with a test.
 
+### Approved 2026-10-05, additive only: guard router accessor for receipts
+
+New file `packages/engine/src/guard-router.ts` (+ test) and one accessor line in `packages/engine/src/engine.ts`: `engine.trade.guardRouter(stock: Address): Promise<{ routerAllowed: boolean; approveTarget: Address }>`, built on `tradeChain.readGuard(stock, LIQUIDMESH_ROUTER)`. Used by the receipts route and worker for the stock-approval spender check; a failed read leaves the hint pending, never a fallback.
+
