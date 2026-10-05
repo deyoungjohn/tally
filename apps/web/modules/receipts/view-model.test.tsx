@@ -7,6 +7,7 @@ import {
   HINT_KIND,
   HINT_TTL_MS,
   RECEIPTS_KIND,
+  receiptHintKey,
   RECEIPT_MAX_AGE_MS,
   promoteReceipt,
   verifySignedCall,
@@ -74,7 +75,7 @@ it("pending-only and stale hints retain the hash, count pending and contribute n
   const h = recordedHint();
   store.put({
     kind: HINT_KIND,
-    key: h.txHash,
+    key: receiptHintKey(h),
     observedAt: 1000,
     source: "untrusted-browser-hint",
     data: {
@@ -213,4 +214,47 @@ it("flag off does no store I/O and plain content renders nothing; store errors w
     error: "Snapshot store unavailable",
   });
   expect(warn.mock.calls.flat().join()).not.toContain("secret");
+});
+
+it("candidate hints keep transaction hashes, deduplicate pending counts and respect the wallet filter", async () => {
+  const hint = recordedHint();
+  const other = {
+    ...hint,
+    intentId: "synthetic-other",
+    user: "0x1111111111111111111111111111111111111111" as const,
+  };
+  for (const candidate of [hint, other])
+    store.put({
+      kind: HINT_KIND,
+      key: receiptHintKey(candidate),
+      observedAt: 1000,
+      source: "untrusted-browser-hint",
+      data: {
+        hint: candidate,
+        receivedAt: 1000,
+        expiresAt: 1000 + HINT_TTL_MS,
+        state: candidate === hint ? "verified" : "pending",
+        reason: "Synthetic pending candidate",
+      } satisfies StoredHint,
+    });
+  const options = { store, now: 2000, enabled: true };
+  expect(await loadReceipt(hint.txHash, options)).toMatchObject({
+    txHash: hint.txHash,
+    intentId: hint.intentId,
+  });
+  expect(await loadReceipts(options)).toMatchObject({
+    pendingCount: 1,
+    items: [{ txHash: hint.txHash }],
+  });
+  expect(await loadQuality(options)).toMatchObject({
+    pendingCount: 1,
+    unverifiedPendingCount: 1,
+    report: { n: 0 },
+  });
+  expect((await loadReceipts({ ...options, wallet: hint.user })).items[0]?.intentId).toBe(
+    hint.intentId,
+  );
+  await seed();
+  expect(await loadQuality(options)).toMatchObject({ pendingCount: 0, unverifiedPendingCount: 0 });
+  expect((await loadReceipts(options)).items).toHaveLength(1);
 });

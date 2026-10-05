@@ -3,6 +3,7 @@ import {
   HINT_TTL_MS,
   RECEIPTS_KIND,
   RECEIPT_MAX_AGE_MS,
+  receiptHintKey,
   verifySignedCall,
   promoteReceipt,
   verifyMinedTransaction,
@@ -30,34 +31,44 @@ export const job: WorkerJob = {
     const targets = new Map(
       evidence
         .filter((s) => !s.data.chainReceipt || (s.data.kind === "swap" && !s.data.receipt))
-        .map((s) => [s.key, s.data.hint]),
+        .map((s) => [receiptHintKey(s.data.hint), s.data.hint]),
     );
     const hints = ctx.store.listLatest<StoredHint>(HINT_KIND, options);
-    const hintByHash = new Map(hints.map((s) => [s.key, s]));
+    const hintByKey = new Map(hints.map((s) => [s.key, s]));
     for (const s of hints) {
+      const bound = byHash.get(s.data.hint.txHash);
       if (
         s.data.expiresAt <= now ||
         s.data.state === "rejected" ||
-        (byHash.get(s.key)?.data.chainReceipt &&
-          (byHash.get(s.key)?.data.kind === "approval" || byHash.get(s.key)?.data.receipt))
+        (bound?.data.hint.intentId === s.data.hint.intentId &&
+          bound.data.chainReceipt &&
+          (bound.data.kind === "approval" || bound.data.receipt))
       )
         continue;
-      targets.set(s.key, s.data.hint);
+      // Preserve the original hint for already protected evidence; retain other candidates too.
+      if (!targets.has(s.key)) targets.set(s.key, s.data.hint);
     }
     let failures = 0;
     const active = () => {
       if (ctx.signal?.aborted) throw new Error("Receipts run cancelled");
     };
     // Poll oldest verification first; a bounded run cannot let new arrivals starve pending evidence.
-    const checkedAt = (hash: string) =>
-      byHash.get(hash)?.data.lastCheckedAt ?? hintByHash.get(hash)?.data.lastCheckedAt ?? 0;
+    const checkedAt = (key: string) => {
+      const hint = targets.get(key)!;
+      const bound = byHash.get(hint.txHash);
+      return bound?.data.hint.intentId === hint.intentId
+        ? (bound.data.lastCheckedAt ?? 0)
+        : (hintByKey.get(key)?.data.lastCheckedAt ?? 0);
+    };
     const ordered = [...targets].sort(([a], [b]) => checkedAt(a) - checkedAt(b));
-    for (const [hash, hint] of ordered.slice(0, 50)) {
+    for (const [key, hint] of ordered.slice(0, 50)) {
       active();
-      const previous = byHash.get(hash),
-        previousHint = hintByHash.get(hash);
+      const hash = hint.txHash;
+      const previous = ctx.store.latest<StoredReceipt>(RECEIPTS_KIND, hash, options),
+        previousHint = hintByKey.get(key);
       // A failed read still advances polling order without renewing evidence age or hint expiry.
-      if (previous) ctx.store.put({ ...previous, data: { ...previous.data, lastCheckedAt: now } });
+      if (previous?.data.hint.intentId === hint.intentId)
+        ctx.store.put({ ...previous, data: { ...previous.data, lastCheckedAt: now } });
       if (previousHint)
         ctx.store.put({ ...previousHint, data: { ...previousHint.data, lastCheckedAt: now } });
       try {
@@ -72,7 +83,7 @@ export const job: WorkerJob = {
           call = verifySignedCall(tx, hint);
         } catch {
           ctx.onWarn(`Receipt ${hash}: transaction rejected by signed-call verification`);
-          const previous = ctx.store.latest<StoredHint>(HINT_KIND, hash, options);
+          const previous = ctx.store.latest<StoredHint>(HINT_KIND, key, options);
           if (previous)
             ctx.store.put({
               ...previous,
@@ -84,7 +95,23 @@ export const job: WorkerJob = {
             });
           continue;
         }
-        if (!byHash.has(hash)) {
+        // Re-read the binding: an earlier candidate in this same batch may have been promoted.
+        const bound = ctx.store.latest<StoredReceipt>(RECEIPTS_KIND, hash, options);
+        if (bound && bound.data.hint.intentId !== hint.intentId) {
+          ctx.onWarn(`Receipt ${hash}: evidence already bound to another intent`);
+          const candidate = ctx.store.latest<StoredHint>(HINT_KIND, key, options);
+          if (candidate)
+            ctx.store.put({
+              ...candidate,
+              data: {
+                ...candidate.data,
+                state: "rejected",
+                reason: "Transaction already bound to another intent",
+              },
+            });
+          continue;
+        }
+        if (!bound) {
           // The signed transaction is already real evidence even if receipt/metadata RPC fails next.
           const data: StoredReceipt = {
             lastCheckedAt: now,

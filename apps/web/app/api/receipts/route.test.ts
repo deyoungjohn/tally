@@ -5,6 +5,7 @@ import {
   HINT_KIND,
   HINT_TTL_MS,
   RECEIPTS_KIND,
+  receiptHintKey,
   type StoredHint,
   type StoredReceipt,
 } from "@tally/mod-receipts";
@@ -97,7 +98,7 @@ it("F11 hint is idempotent, then worker promotes full chain evidence with no ori
   const send = post();
   expect((await send(request())).status).toBe(202);
   expect((await send(request())).status).toBe(200);
-  expect(store.history(HINT_KIND, hint.txHash, 0)).toHaveLength(1);
+  expect(store.history(HINT_KIND, receiptHintKey(hint), 0)).toHaveLength(1);
   expect(store.latest(RECEIPTS_KIND, hint.txHash, { maxAgeMs: 0 })).toBeNull();
   await run();
   const actual = store.latest<StoredReceipt>(RECEIPTS_KIND, hint.txHash, { maxAgeMs: 0 })!.data;
@@ -154,7 +155,7 @@ it("known pending transaction is protected evidence and survives hint expiry", a
     store.latest<StoredReceipt>(RECEIPTS_KIND, hint.txHash, { maxAgeMs: 0 })!.data.result?.status,
   ).toBe("PENDING");
   await run(1000 + HINT_TTL_MS + 1);
-  expect(store.latest(HINT_KIND, hint.txHash, { maxAgeMs: 0 })).toBeNull();
+  expect(store.latest(HINT_KIND, receiptHintKey(hint), { maxAgeMs: 0 })).toBeNull();
   expect((await loadReceipt(hint.txHash, { store, now: 1000 + HINT_TTL_MS + 1 })).status).toBe(
     "PENDING",
   );
@@ -203,9 +204,9 @@ it("worker rejects a previously unknown transaction when it resolves to a foreig
     },
   };
   await run();
-  expect(store.latest<StoredHint>(HINT_KIND, hint.txHash, { maxAgeMs: 0 })!.data.state).toBe(
-    "rejected",
-  );
+  expect(
+    store.latest<StoredHint>(HINT_KIND, receiptHintKey(hint), { maxAgeMs: 0 })!.data.state,
+  ).toBe("rejected");
   expect(store.listLatest(RECEIPTS_KIND, { maxAgeMs: 0 })).toEqual([]);
 });
 it("limits each hash and each IP independently", async () => {
@@ -220,14 +221,23 @@ it("limits each hash and each IP independently", async () => {
     await perIp(request({ ...hint, txHash: `0x${i.toString(16).padStart(64, "0")}` }));
   expect((await perIp(request({ ...hint, txHash: edges.missingHash }))).status).toBe(429);
 });
-it("concurrent same-hash requests cannot overwrite an intent binding", async () => {
+it("concurrent hints with distinct intents coexist until chain evidence binds the hash", async () => {
   const send = post();
   const responses = await Promise.all([
     send(request()),
     send(request({ ...hint, intentId: "second" })),
   ]);
-  expect(responses.map((r) => r.status).sort()).toEqual([202, 409]);
-  expect(store.history(HINT_KIND, hint.txHash, 0)).toHaveLength(1);
+  expect(responses.map((r) => r.status)).toEqual([202, 202]);
+  expect(store.listLatest(HINT_KIND, { maxAgeMs: 0 })).toHaveLength(2);
+  await run();
+  const bound = store.latest<StoredReceipt>(RECEIPTS_KIND, hint.txHash, { maxAgeMs: 0 })!.data;
+  const otherId = bound.hint.intentId === hint.intentId ? "second" : hint.intentId;
+  expect((await send(request({ ...hint, intentId: otherId }))).status).toBe(409);
+  expect(
+    store.latest<StoredHint>(HINT_KIND, receiptHintKey({ ...hint, intentId: otherId }), {
+      maxAgeMs: 0,
+    })!.data.state,
+  ).toBe("rejected");
 });
 it("a verified transaction remains protected PENDING when receipt RPC is down, even after hint expiry", async () => {
   const original = engine.transactions;
@@ -244,7 +254,7 @@ it("a verified transaction remains protected PENDING when receipt RPC is down, e
   await expect(run()).rejects.toThrow("pending hashes retained");
   const options = { store, enabled: true, now: 1000 + HINT_TTL_MS + 1 };
   await expect(run(options.now)).rejects.toThrow("pending hashes retained");
-  expect(store.latest(HINT_KIND, hint.txHash, { maxAgeMs: 0 })).toBeNull();
+  expect(store.latest(HINT_KIND, receiptHintKey(hint), { maxAgeMs: 0 })).toBeNull();
   expect(await loadReceipt(hint.txHash, options)).toMatchObject({
     status: "PENDING",
     txHash: hint.txHash,
@@ -328,7 +338,7 @@ it("synthetic unknown hints rotate through the bounded poll batch without renewi
       `0x${(BigInt(edges.missingHash) + BigInt(i)).toString(16).padStart(64, "0")}` as `0x${string}`;
     store.put({
       kind: HINT_KIND,
-      key: hash,
+      key: receiptHintKey({ ...hint, txHash: hash }),
       source: "synthetic-browser-hint",
       observedAt: 1000 + i,
       data: {
@@ -349,4 +359,92 @@ it("synthetic unknown hints rotate through the bounded poll batch without renewi
   const latest = store.listLatest<StoredHint>(HINT_KIND, { maxAgeMs: 0, now: 3000, limit: 1000 });
   expect(latest.every((s) => s.data.expiresAt === s.observedAt + HINT_TTL_MS)).toBe(true);
   expect(latest.every((s) => s.ageMs >= 1950)).toBe(true);
+});
+
+it.each(["attacker-first", "sender-first"])(
+  "same-hash pending hints: worker rejects the false sender and promotes the real sender (%s)",
+  async (order) => {
+    const original = engine.transactions;
+    engine = { ...engine, transactions: { ...original, getTransaction: async () => null } };
+    const attacker = {
+      ...hint,
+      intentId: "synthetic-attacker",
+      user: edges.wrongSender as `0x${string}`,
+    };
+    const send = post();
+    for (const candidate of order === "attacker-first" ? [attacker, hint] : [hint, attacker])
+      expect((await send(request(candidate))).status).toBe(202);
+    expect(store.listLatest(HINT_KIND, { maxAgeMs: 0 })).toHaveLength(2);
+    expect(await loadQuality({ store, now: 1000 })).toMatchObject({
+      pendingCount: 1,
+      report: { n: 0 },
+    });
+    engine = { ...engine, transactions: original };
+    await run();
+    expect(
+      store.latest<StoredHint>(HINT_KIND, receiptHintKey(attacker), { maxAgeMs: 0 })!.data,
+    ).toMatchObject({
+      state: "rejected",
+      reason: "Transaction does not match supported signed intent",
+    });
+    expect(
+      store.latest<StoredReceipt>(RECEIPTS_KIND, hint.txHash, { maxAgeMs: 0 })!.data,
+    ).toMatchObject({
+      hint: { intentId: hint.intentId, user: hint.user },
+      transaction: { sender: hint.user },
+      result: { status: "RECONCILED" },
+    });
+    expect(await loadQuality({ store, now: 1000 })).toMatchObject({ pendingCount: 0 });
+    expect((await send(request({ ...hint, intentId: "another-intent" }))).status).toBe(409);
+  },
+);
+it("an unverified sender claim for the same intent cannot refuse a later chain-verified sender", async () => {
+  const original = engine.transactions;
+  engine = { ...engine, transactions: { ...original, getTransaction: async () => null } };
+  const send = post();
+  expect((await send(request({ ...hint, user: edges.wrongSender }))).status).toBe(202);
+  engine = { ...engine, transactions: original };
+  expect((await send(request())).status).toBe(202);
+  await run();
+  expect(
+    store.latest<StoredReceipt>(RECEIPTS_KIND, hint.txHash, { maxAgeMs: 0 })!.data.hint.user,
+  ).toBe(hint.user);
+});
+it("the queue cap counts distinct hints even when they share a transaction hash", async () => {
+  for (let i = 0; i < 1000; i++) {
+    const candidate = { ...hint, intentId: `synthetic-${i}` };
+    store.put({
+      kind: HINT_KIND,
+      key: receiptHintKey(candidate),
+      source: "synthetic-browser-hint",
+      observedAt: 1000,
+      data: {
+        hint: candidate,
+        receivedAt: 1000,
+        expiresAt: 1000 + HINT_TTL_MS,
+        state: "pending",
+        reason: "Synthetic queue capacity",
+      } satisfies StoredHint,
+    });
+  }
+  expect((await post()(request({ ...hint, txHash: edges.missingHash }))).status).toBe(503);
+  expect(store.listLatest(HINT_KIND, { maxAgeMs: 0, limit: 1000 })).toHaveLength(1000);
+});
+it("evidence promoted during an ingestion read still refuses a different intent", async () => {
+  await post()(request());
+  const original = engine.transactions;
+  const read = vi.fn(async (hash: string) => {
+    await run();
+    return original.getTransaction(hash);
+  });
+  const send = post({
+    engine: async () => ({ ...engine, transactions: { ...original, getTransaction: read } }),
+  });
+  expect((await send(request({ ...hint, intentId: "racing-intent" }))).status).toBe(409);
+  expect(read).toHaveBeenCalledOnce();
+  expect(
+    store.latest(HINT_KIND, receiptHintKey({ ...hint, intentId: "racing-intent" }), {
+      maxAgeMs: 0,
+    }),
+  ).toBeNull();
 });

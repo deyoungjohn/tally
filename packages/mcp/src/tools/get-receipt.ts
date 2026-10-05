@@ -4,6 +4,7 @@ import {
   HINT_KIND,
   RECEIPTS_KIND,
   RECEIPT_MAX_AGE_MS,
+  selectReceiptHints,
   type StoredHint,
   type StoredReceipt,
 } from "@tally/mod-receipts";
@@ -58,8 +59,11 @@ export async function register(
             stale: receipt.stale,
             evidence: receipt.data,
           };
-        const hint = store.latest<StoredHint>(HINT_KIND, hash, opts);
-        if (hint && hint.data.expiresAt > now && hint.data.state !== "rejected")
+        const hint = selectReceiptHints(
+          store.listLatest<StoredHint>(HINT_KIND, { ...opts, limit: 1000 }),
+          now,
+        ).find((s) => s.data.hint.txHash === hash);
+        if (hint)
           return {
             state: "pending",
             status: "PENDING",

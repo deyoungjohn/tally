@@ -36,6 +36,21 @@ export interface StoredHint {
   state: "pending" | "verified" | "rejected";
   reason: string;
 }
+/** Unverified intents may coexist; only protected evidence binds a transaction hash. */
+export const receiptHintKey = (hint: ReceiptHint): string => `${hint.txHash}:${hint.intentId}`;
+
+/** Input is newest first. Readers show one active candidate per transaction, never evidence. */
+export function selectReceiptHints<T extends { data: StoredHint }>(hints: T[], now: number): T[] {
+  const selected = new Map<string, T>();
+  for (const candidate of hints) {
+    const { hint, expiresAt, state } = candidate.data;
+    if (expiresAt <= now || state === "rejected") continue;
+    const previous = selected.get(hint.txHash);
+    if (!previous || (previous.data.state === "pending" && state === "verified"))
+      selected.set(hint.txHash, candidate);
+  }
+  return [...selected.values()];
+}
 const object = (v: unknown): v is Record<string, unknown> =>
   v !== null && typeof v === "object" && !Array.isArray(v);
 const exact = (v: Record<string, unknown>, keys: string[]) =>

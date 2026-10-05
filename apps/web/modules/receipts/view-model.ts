@@ -5,6 +5,7 @@ import {
   RECEIPTS_KIND,
   RECEIPT_MAX_AGE_MS,
   receiptShares,
+  selectReceiptHints,
   type StoredHint,
   type StoredReceipt,
   type ReceiptStatus,
@@ -209,7 +210,7 @@ export function receiptVM(snapshot: Latest<StoredReceipt>): ReceiptVM {
 }
 export function hintVM(snapshot: Latest<StoredHint>): ReceiptVM {
   return {
-    ...empty(snapshot.key, "pending", snapshot.data.reason),
+    ...empty(snapshot.data.hint.txHash, "pending", snapshot.data.reason),
     status: "PENDING",
     intentId: snapshot.data.hint.intentId,
     ticker: snapshot.data.hint.ticker,
@@ -237,10 +238,11 @@ export async function loadReceipt(
       now,
     });
     if (snapshot) return receiptVM(snapshot);
-    const hint = store.latest<StoredHint>(HINT_KIND, key, { maxAgeMs: RECEIPT_MAX_AGE_MS, now });
-    return hint && hint.data.expiresAt > now && hint.data.state !== "rejected"
-      ? hintVM(hint)
-      : empty(key);
+    const hint = selectReceiptHints(
+      store.listLatest<StoredHint>(HINT_KIND, { maxAgeMs: RECEIPT_MAX_AGE_MS, now, limit: 1000 }),
+      now,
+    ).find((s) => s.data.hint.txHash === key);
+    return hint ? hintVM(hint) : empty(key);
   } catch {
     (options.onWarn ?? console.warn)("Receipt snapshot unavailable; details withheld");
     return empty(hash, "error", "Snapshot store unavailable");
@@ -273,9 +275,11 @@ export async function loadReceipts(
     const receipts = store.listLatest<StoredReceipt>(RECEIPTS_KIND, opts),
       hints = store.listLatest<StoredHint>(HINT_KIND, opts);
     const items = new Map(receipts.map((s) => [s.key, receiptVM(s)]));
-    for (const h of hints)
-      if (!items.has(h.key) && h.data.expiresAt > now && h.data.state !== "rejected")
-        items.set(h.key, hintVM(h));
+    const walletHints = options.wallet
+      ? hints.filter((h) => h.data.hint.user.toLowerCase() === options.wallet!.toLowerCase())
+      : hints;
+    for (const h of selectReceiptHints(walletHints, now))
+      if (!items.has(h.data.hint.txHash)) items.set(h.data.hint.txHash, hintVM(h));
     const list = [...items.values()].filter(
       (r) => !options.wallet || r.user?.toLowerCase() === options.wallet.toLowerCase(),
     );

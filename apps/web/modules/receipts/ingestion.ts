@@ -5,6 +5,7 @@ import {
   HINT_TTL_MS,
   RECEIPTS_KIND,
   parseReceiptHint,
+  receiptHintKey,
   verifySignedCall,
   type StoredHint,
   type StoredReceipt,
@@ -86,17 +87,15 @@ export function createReceiptPost(deps: Dependencies) {
       const store = deps.store();
       store.expire({ kind: HINT_KIND, olderThanMs: now - HINT_TTL_MS });
       const options = { maxAgeMs: HINT_TTL_MS, now };
+      const key = receiptHintKey(hint);
       const evidence = store.latest<StoredReceipt>(RECEIPTS_KIND, hint.txHash, options);
-      const previous = store.latest<StoredHint>(HINT_KIND, hint.txHash, options);
+      const previous = store.latest<StoredHint>(HINT_KIND, key, options);
       if (evidence)
         return evidence.data.hint.intentId === hint.intentId
           ? response(200, "Receipt already verified")
           : response(409, "Transaction already bound to another intent");
-      if (previous && previous.data.expiresAt > now)
-        return previous.data.hint.intentId === hint.intentId &&
-          previous.data.hint.user === hint.user
-          ? response(200, previous.data.reason)
-          : response(409, "Transaction already bound to another intent");
+      if (previous && previous.data.expiresAt > now && previous.data.hint.user === hint.user)
+        return response(200, previous.data.reason);
       let reason = "Transaction not yet available; awaiting chain verification";
       let state: StoredHint["state"] = "pending";
       try {
@@ -119,17 +118,20 @@ export function createReceiptPost(deps: Dependencies) {
         );
         reason = "Chain read unavailable; awaiting verification";
       }
-      // Recheck after awaits so concurrent writers cannot overwrite a bound intent in this process.
-      const bound = store.latest<StoredHint>(HINT_KIND, hint.txHash, options);
-      if (bound && bound.data.expiresAt > now)
-        return bound.data.hint.intentId === hint.intentId && bound.data.hint.user === hint.user
-          ? response(200, bound.data.reason)
+      // A worker may have promoted evidence during the chain reads; hints never bind the hash.
+      const promoted = store.latest<StoredReceipt>(RECEIPTS_KIND, hint.txHash, options);
+      if (promoted)
+        return promoted.data.hint.intentId === hint.intentId
+          ? response(200, "Receipt already verified")
           : response(409, "Transaction already bound to another intent");
-      if (store.listLatest(HINT_KIND, { ...options, limit: 1000 }).length >= 1000)
+      const bound = store.latest<StoredHint>(HINT_KIND, key, options);
+      if (bound && bound.data.expiresAt > now && bound.data.hint.user === hint.user)
+        return response(200, bound.data.reason);
+      if (!bound && store.listLatest(HINT_KIND, { ...options, limit: 1000 }).length >= 1000)
         return response(503, "Receipt hint queue full");
       store.put({
         kind: HINT_KIND,
-        key: hint.txHash,
+        key,
         source: "untrusted-browser-hint",
         observedAt: now,
         data: {

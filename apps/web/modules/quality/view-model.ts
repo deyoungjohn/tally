@@ -4,6 +4,7 @@ import {
   RECEIPTS_KIND,
   RECEIPT_MAX_AGE_MS,
   storedQualityReport,
+  selectReceiptHints,
   type StoredHint,
   type StoredReceipt,
   type StoredQualityReport,
@@ -53,8 +54,8 @@ export async function loadQuality(options: QualityLoadOptions = {}): Promise<Qua
     const snapshots = store.listLatest<StoredReceipt>(RECEIPTS_KIND, opts),
       hints = store.listLatest<StoredHint>(HINT_KIND, opts);
     const hashes = new Set(snapshots.map((s) => s.key));
-    const pendingHints = hints.filter(
-      (s) => !hashes.has(s.key) && s.data.expiresAt > now && s.data.state !== "rejected",
+    const pendingHints = selectReceiptHints(hints, now).filter(
+      (s) => !hashes.has(s.data.hint.txHash),
     );
     const result = storedQualityReport(snapshots.map((s) => s.data));
     const samples = [...snapshots, ...pendingHints];
