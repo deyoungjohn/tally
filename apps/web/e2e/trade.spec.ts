@@ -319,3 +319,68 @@ for (const [w, h] of [
     for (const y of ys) expect(Math.abs(y - before)).toBeLessThan(1.5);
   });
 }
+
+test.describe("trade stages event regression (WO-01)", () => {
+  test.use({ viewport: { width: 1280, height: 900 } });
+
+  test("subscribes to onStage events during full buy flow and captures all 5 stages in order", async ({
+    page,
+  }) => {
+    await mockWallet(page);
+    await page.goto("/trade/NVDA");
+    await quoteLoaded(page);
+
+    await page.evaluate(() => {
+      (
+        window as unknown as {
+          __recordedEvents: Array<{ stage: string; attempt: number; intentId: string }>;
+        }
+      ).__recordedEvents = [];
+      const sub = (
+        window as unknown as {
+          __tallySubscribeTradeStage?: (
+            listener: (stage: string, payload: { attempt: number; intentId: string }) => void,
+          ) => () => void;
+        }
+      ).__tallySubscribeTradeStage;
+      if (!sub) {
+        throw new Error("__tallySubscribeTradeStage hook is missing on window");
+      }
+      sub((stage, payload) => {
+        (
+          window as unknown as {
+            __recordedEvents: Array<{ stage: string; attempt: number; intentId: string }>;
+          }
+        ).__recordedEvents.push({
+          stage,
+          attempt: payload.attempt,
+          intentId: payload.intentId,
+        });
+      });
+    });
+
+    await buyThrough(page);
+
+    const events = await page.evaluate(() => {
+      return (
+        window as unknown as {
+          __recordedEvents: Array<{ stage: string; attempt: number; intentId: string }>;
+        }
+      ).__recordedEvents;
+    });
+
+    const stageNames = events.map((e) => e.stage);
+    expect(stageNames).toContain("intent");
+    expect(stageNames).toContain("quote");
+    expect(stageNames).toContain("simulation");
+    expect(stageNames).toContain("signed");
+    expect(stageNames).toContain("realized");
+
+    expect(events.length).toBeGreaterThanOrEqual(5);
+    const intentId = events[0]!.intentId;
+    expect(intentId).toBeTruthy();
+    for (const ev of events) {
+      expect(ev.intentId).toBe(intentId);
+    }
+  });
+});
