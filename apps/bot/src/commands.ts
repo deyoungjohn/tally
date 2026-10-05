@@ -177,7 +177,7 @@ export async function handleStart(args: string, ctx: BotContext): Promise<string
 }
 
 export async function handleLink(args: string, ctx: BotContext): Promise<string> {
-  if (ctx.chatType && ctx.chatType !== "private") {
+  if (ctx.chatType !== "private") {
     return "❌ Linking your wallet is only permitted in private direct messages with the bot.";
   }
 

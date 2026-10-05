@@ -1,4 +1,4 @@
-import { runGuardianEvaluation } from "@tally/mod-guardian";
+import { runGuardianEvaluation, type TelegramDeliverySender } from "@tally/mod-guardian";
 import type { WorkerJob } from "../runner";
 
 /**
@@ -17,12 +17,28 @@ export const job: WorkerJob = {
       return;
     }
 
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    const sender: TelegramDeliverySender | undefined = token
+      ? {
+          async sendMessage(chatId, text) {
+            const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ chat_id: chatId, text }),
+            });
+            if (!res.ok) {
+              throw new Error(`Telegram API responded with ${res.status}: ${await res.text()}`);
+            }
+          },
+        }
+      : undefined;
+
     await runGuardianEvaluation({
       store: ctx.store,
       health: ctx.health,
       now: ctx.now,
       onWarn: ctx.onWarn,
-      telegramToken: process.env.TELEGRAM_BOT_TOKEN,
+      sender,
       testWallet: process.env.TALLY_TEST_WALLET,
       isProduction: process.env.NODE_ENV === "production",
     });

@@ -8,7 +8,7 @@ import {
   type ModuleHealth,
   type SnapshotStore,
 } from "@tally/modkit";
-import { deliverPendingAlerts, verifyTelegramConfig } from "./bot";
+import { createBot, deliverPendingAlerts, verifyTelegramConfig } from "./bot";
 import {
   adaptSharesReport,
   handleAlerts,
@@ -241,7 +241,7 @@ describe("Telegram Bot Commands (apps/bot)", () => {
 
     // Link chat
     const { code } = createLinkCode(store, wallet, now);
-    handleLink(code, { store, engine, chatId, now: () => now + 1000 });
+    await handleLink(code, { store, engine, chatId, chatType: "private", now: () => now + 1000 });
 
     const alert: Alert = {
       id: `paused:${wallet}:0xnvdab:1000`,
@@ -359,6 +359,7 @@ describe("Telegram Bot Commands (apps/bot)", () => {
       store,
       engine,
       chatId,
+      chatType: "private",
       now: () => now + 5000,
     });
     expect(linkReply).toContain("Telegram linked to wallet");
@@ -473,5 +474,39 @@ describe("Telegram Bot Commands (apps/bot)", () => {
     });
 
     expect(groupReply).toContain("only permitted in private direct messages");
+
+    // Re-review 2 Finding 4: Fails closed when chatType is undefined
+    const missingTypeReply = await handleLink(code, {
+      store,
+      engine,
+      chatId: 100123456,
+      now: () => 1_005_000,
+    });
+    expect(missingTypeReply).toContain("only permitted in private direct messages");
+  });
+
+  // Re-review 2 Finding 5: bot.catch logs redacted message
+  it("bot.catch logs redacted error on unexpected handler failure", async () => {
+    const warnings: string[] = [];
+    const bot = createBot("123456:ABC-DEF_xyz789", {
+      store,
+      engine,
+      onWarn: (msg) => warnings.push(msg),
+    });
+
+    // Invoke bot's error handler directly with an error containing secret url
+    const fakeError = {
+      error: new Error(
+        "Unexpected failure at https://api.telegram.org/bot123456:ABC-DEF_xyz789/sendMessage",
+      ),
+      ctx: {} as unknown as import("grammy").Context,
+    };
+    // @ts-expect-error test internal error handler
+    bot.errorHandler(fakeError);
+
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toContain("Telegram bot handler error:");
+    expect(warnings[0]).not.toContain("123456:ABC-DEF_xyz789");
+    expect(warnings[0]).toContain("[redacted url]");
   });
 });

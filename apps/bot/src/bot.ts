@@ -10,6 +10,7 @@ import {
   handleShares,
   handleShield,
   handleStart,
+  redactSecrets,
   type SharesOfPort,
 } from "./commands";
 
@@ -33,6 +34,12 @@ export function createBot(token: string, deps: BotDependencies): Bot {
 
   const bot = new Bot(token);
   const now = deps.now ?? Date.now;
+
+  // Re-review 2 Finding 5: Log redacted error and continue so errors do not crash long polling
+  bot.catch((err) => {
+    const rawMsg = err.error instanceof Error ? err.error.message : String(err.error);
+    deps.onWarn?.(`Telegram bot handler error: ${redactSecrets(rawMsg)}`);
+  });
 
   bot.command("start", async (ctx) => {
     const text = await handleStart(ctx.match ?? "", {

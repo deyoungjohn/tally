@@ -11,6 +11,7 @@ import type { Alert, RadarSnapshotSubset, TokenState } from "./types";
 describe("Guardian Worker (worker.ts)", () => {
   const wallet = "0x2bf7edf53bc6be6ff98f149387f3818ce28d2930";
   const nvdaAddr = "0x8317e13203f19e4875630325d7ef11739c90b6ec";
+  const vicrAddr = "0xa59469d91563caeeddd2ffc731f41215e7b691ef";
 
   it("pure diff checks haveAlertsChanged and hasTokenStateChanged correctly detect changes", () => {
     const alert1: Alert = {
@@ -439,5 +440,379 @@ describe("Guardian Worker (worker.ts)", () => {
     expect(warnings.some((w) => w.includes("unknown issuer"))).toBe(true);
     // Token state not built
     expect(store.latest("guardian-state", nvdaAddr, { maxAgeMs: 60_000 })).toBeNull();
+  });
+
+  // Re-review 2 Finding 1: Ondo pause alert from registry/bsc snapshot
+  it("produces an Ondo pause alert when registry/bsc status transitions to MARKET_PAUSED (Re-review 2 Finding 1)", async () => {
+    const store = openStore(":memory:");
+    let currentTime = 1_000_000;
+
+    const ctx: GuardianJobContext = {
+      store,
+      health: store.health,
+      now: () => currentTime,
+      onWarn: () => {},
+      isProduction: false,
+    };
+
+    store.put({
+      kind: "wallet:active",
+      key: "bsc",
+      data: { address: wallet },
+      source: "test",
+      observedAt: currentTime,
+    });
+
+    // Portfolio with VICR holding
+    store.put({
+      kind: "portfolio",
+      key: wallet,
+      data: {
+        holdings: [
+          {
+            tokenContractAddress: vicrAddr,
+            ticker: "VICR",
+            issuer: "ondo",
+            balanceTokens: 10n * 10n ** 18n,
+            balanceShares: 10n * 10n ** 18n,
+            isRecognized: true,
+          },
+        ],
+      },
+      source: "statement",
+      observedAt: currentTime,
+    });
+
+    // Radar snapshot
+    store.put({
+      kind: "radar",
+      key: vicrAddr,
+      data: {
+        ticker: "VICR",
+        address: vicrAddr,
+        issuer: "ondo",
+        grade: "A",
+        reasons: [],
+        ghost: false,
+      } as RadarSnapshotSubset,
+      source: "radar",
+      observedAt: currentTime,
+    });
+
+    // Initial registry/bsc snapshot with TRADING status
+    store.put({
+      kind: "registry",
+      key: "bsc",
+      data: [
+        {
+          tokenContractAddress: vicrAddr,
+          platformId: "ondo",
+          underlyingTicker: "VICR",
+          statusInfo: {
+            openState: true,
+            marketStatus: "regular",
+            reasonCode: "TRADING",
+            reasonMsg: null,
+          },
+        },
+      ],
+      source: "binance:rwa/tokens",
+      observedAt: currentTime,
+    });
+
+    // Run 1: sets baseline state (open)
+    const run1 = await runGuardianEvaluation(ctx);
+    expect(run1.generatedAlerts).toBe(0);
+
+    // Run 2: registry/bsc updates to MARKET_PAUSED
+    currentTime += 60_000;
+    store.put({
+      kind: "registry",
+      key: "bsc",
+      data: [
+        {
+          tokenContractAddress: vicrAddr,
+          platformId: "ondo",
+          underlyingTicker: "VICR",
+          statusInfo: {
+            openState: false,
+            marketStatus: "offhours",
+            reasonCode: "MARKET_PAUSED",
+            reasonMsg: "Paused for session transition",
+          },
+        },
+      ],
+      source: "binance:rwa/tokens",
+      observedAt: currentTime,
+    });
+
+    const run2 = await runGuardianEvaluation(ctx);
+    expect(run2.generatedAlerts).toBe(1);
+
+    const alerts = store.latest<Alert[]>("alerts", wallet, { maxAgeMs: 60_000 })?.data ?? [];
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]!.rule).toBe("paused");
+    expect(alerts[0]!.ticker).toBe("VICR");
+    expect(alerts[0]!.issuer).toBe("ondo");
+    expect(alerts[0]!.title).toContain("VICR via Ondo is paused");
+    expect(alerts[0]!.body).toContain("session transition");
+  });
+
+  // Re-review 2 Finding 1: Multiplier change alert derived from portfolio balanceShares & balanceTokens
+  it("produces share-count change alert from multiplier derived from portfolio snapshot (Re-review 2 Finding 1)", async () => {
+    const store = openStore(":memory:");
+    let currentTime = 1_000_000;
+
+    const ctx: GuardianJobContext = {
+      store,
+      health: store.health,
+      now: () => currentTime,
+      onWarn: () => {},
+      isProduction: false,
+    };
+
+    store.put({
+      kind: "wallet:active",
+      key: "bsc",
+      data: { address: wallet },
+      source: "test",
+      observedAt: currentTime,
+    });
+
+    // Portfolio with NVDA holding initially at 1:1 ratio (multiplier = 1e18)
+    store.put({
+      kind: "portfolio",
+      key: wallet,
+      data: {
+        holdings: [
+          {
+            tokenContractAddress: nvdaAddr,
+            ticker: "NVDA",
+            issuer: "ondo",
+            balanceTokens: 100n * 10n ** 18n,
+            balanceShares: 100n * 10n ** 18n, // multiplier = 1e18
+            isRecognized: true,
+          },
+        ],
+      },
+      source: "statement",
+      observedAt: currentTime,
+    });
+
+    store.put({
+      kind: "radar",
+      key: nvdaAddr,
+      data: {
+        ticker: "NVDA",
+        address: nvdaAddr,
+        issuer: "ondo",
+        grade: "B",
+        reasons: [],
+        ghost: false,
+      } as RadarSnapshotSubset,
+      source: "radar",
+      observedAt: currentTime,
+    });
+
+    // Run 1: sets baseline with multiplier = 1e18
+    await runGuardianEvaluation(ctx);
+
+    // Run 2: portfolio reflects a 2:1 stock split (balanceShares doubles to 200)
+    currentTime += 60_000;
+    store.put({
+      kind: "portfolio",
+      key: wallet,
+      data: {
+        holdings: [
+          {
+            tokenContractAddress: nvdaAddr,
+            ticker: "NVDA",
+            issuer: "ondo",
+            balanceTokens: 100n * 10n ** 18n,
+            balanceShares: 200n * 10n ** 18n, // multiplier = 2e18 (doubled)
+            isRecognized: true,
+          },
+        ],
+      },
+      source: "statement",
+      observedAt: currentTime,
+    });
+
+    const run2 = await runGuardianEvaluation(ctx);
+    expect(run2.generatedAlerts).toBe(1);
+
+    const alerts = store.latest<Alert[]>("alerts", wallet, { maxAgeMs: 60_000 })?.data ?? [];
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]!.rule).toBe("share-count");
+    expect(alerts[0]!.ticker).toBe("NVDA");
+    expect(alerts[0]!.title).toContain("NVDA via Ondo share multiplier changed");
+    expect(alerts[0]!.body).toContain("2:1");
+  });
+
+  // Re-review 2 Finding 2: Persistent conditions do not re-alert after 25 hours
+  it("persistent conditions like ghost token do not re-alert after 25 hours (Re-review 2 Finding 2)", async () => {
+    const store = openStore(":memory:");
+    let currentTime = 1_000_000;
+
+    const ctx: GuardianJobContext = {
+      store,
+      health: store.health,
+      now: () => currentTime,
+      onWarn: () => {},
+      isProduction: false,
+    };
+
+    store.put({
+      kind: "wallet:active",
+      key: "bsc",
+      data: { address: wallet },
+      source: "test",
+      observedAt: currentTime,
+    });
+
+    store.put({
+      kind: "portfolio",
+      key: wallet,
+      data: {
+        holdings: [
+          {
+            tokenContractAddress: nvdaAddr,
+            ticker: "NVDA",
+            issuer: "ondo",
+            balanceTokens: 10n * 10n ** 18n,
+            balanceShares: 10n * 10n ** 18n,
+            isRecognized: true,
+          },
+        ],
+      },
+      source: "statement",
+      observedAt: currentTime,
+    });
+
+    // Run 1: baseline, ghost is false
+    store.put({
+      kind: "radar",
+      key: nvdaAddr,
+      data: {
+        ticker: "NVDA",
+        address: nvdaAddr,
+        issuer: "ondo",
+        grade: "B",
+        reasons: [],
+        ghost: false,
+      } as RadarSnapshotSubset,
+      source: "radar",
+      observedAt: currentTime,
+    });
+
+    await runGuardianEvaluation(ctx);
+
+    // Run 2: token becomes ghost at hour 1
+    currentTime += 60_000;
+    store.put({
+      kind: "radar",
+      key: nvdaAddr,
+      data: {
+        ticker: "NVDA",
+        address: nvdaAddr,
+        issuer: "ondo",
+        grade: "B",
+        reasons: [],
+        ghost: true,
+      } as RadarSnapshotSubset,
+      source: "radar",
+      observedAt: currentTime,
+    });
+
+    const run2 = await runGuardianEvaluation(ctx);
+    expect(run2.generatedAlerts).toBe(1);
+    expect(store.history("alerts", wallet, 0, Number.MAX_SAFE_INTEGER)).toHaveLength(1);
+
+    // Advance 25 hours into the future (past standard 24h cooldown)
+    // No new guardian-state row was written during these 25 hours because state was unchanged
+    currentTime += 25 * 3600 * 1000;
+
+    store.put({
+      kind: "radar",
+      key: nvdaAddr,
+      data: {
+        ticker: "NVDA",
+        address: nvdaAddr,
+        issuer: "ondo",
+        grade: "B",
+        reasons: [],
+        ghost: true,
+      } as RadarSnapshotSubset,
+      source: "radar",
+      observedAt: currentTime,
+    });
+
+    const run3 = await runGuardianEvaluation(ctx);
+    // MUST NOT re-alert because state is still ghost (isGhost && !wasGhost is false)
+    expect(run3.generatedAlerts).toBe(0);
+    expect(store.history("alerts", wallet, 0, Number.MAX_SAFE_INTEGER)).toHaveLength(1);
+  });
+
+  // Re-review 2 Finding 6: Uses holding.ticker on TokenState instead of radar ticker
+  it("uses holding.ticker on TokenState instead of radar.ticker (Re-review 2 Finding 6)", async () => {
+    const store = openStore(":memory:");
+    const currentTime = 1_000_000;
+
+    const ctx: GuardianJobContext = {
+      store,
+      health: store.health,
+      now: () => currentTime,
+      onWarn: () => {},
+      isProduction: false,
+    };
+
+    store.put({
+      kind: "wallet:active",
+      key: "bsc",
+      data: { address: wallet },
+      source: "test",
+      observedAt: currentTime,
+    });
+
+    // Holding has ticker "NVDA"
+    store.put({
+      kind: "portfolio",
+      key: wallet,
+      data: {
+        holdings: [
+          {
+            tokenContractAddress: nvdaAddr,
+            ticker: "NVDA",
+            issuer: "ondo",
+            balanceTokens: 10n * 10n ** 18n,
+            balanceShares: 10n * 10n ** 18n,
+            isRecognized: true,
+          },
+        ],
+      },
+      source: "test",
+      observedAt: currentTime,
+    });
+
+    // Radar snapshot has a different or fallback ticker
+    store.put({
+      kind: "radar",
+      key: nvdaAddr,
+      data: {
+        ticker: "RADAR_NVDA",
+        address: nvdaAddr,
+        issuer: "ondo",
+        grade: "B",
+        reasons: [],
+        ghost: false,
+      } as RadarSnapshotSubset,
+      source: "radar",
+      observedAt: currentTime,
+    });
+
+    await runGuardianEvaluation(ctx);
+
+    const state = store.latest<TokenState>("guardian-state", nvdaAddr, { maxAgeMs: 60_000 });
+    expect(state?.data?.ticker).toBe("NVDA");
   });
 });

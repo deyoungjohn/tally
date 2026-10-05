@@ -1,6 +1,11 @@
+import { E18, mulDiv, statusFromInfo, type RawStatusInfo } from "@tally/core";
 import type { ModuleHealth, SnapshotStore } from "@tally/modkit";
 import { deduplicateAlerts } from "./dedup";
-import { deliverPendingAlerts, type TelegramDeliverySender } from "./delivery";
+import {
+  deliverPendingAlerts,
+  type DeliverAlertsResult,
+  type TelegramDeliverySender,
+} from "./delivery";
 import { buildTokenStateFromSnapshots, evaluateHoldingRules } from "./evaluator";
 import { ALL_RULES } from "./rules";
 import {
@@ -13,7 +18,6 @@ import {
   type Issuer,
   type RadarSnapshotSubset,
   type TokenState,
-  type TokenStatusState,
   type UserHolding,
 } from "./types";
 
@@ -34,7 +38,7 @@ export interface GuardianJobContext {
   health: ModuleHealth;
   now: () => number;
   onWarn: (msg: string) => void;
-  telegramToken?: string;
+  sender?: TelegramDeliverySender;
   testWallet?: string;
   isProduction?: boolean;
 }
@@ -95,6 +99,7 @@ export function hasTokenStateChanged(prev: TokenState | null, next: TokenState):
 
 /**
  * Core evaluation run for the Guardian worker job.
+ * Kept pure without direct network I/O; delivery sender is injected via GuardianJobContext.
  */
 export async function runGuardianEvaluation(ctx: GuardianJobContext): Promise<GuardianRunResult> {
   const now = ctx.now();
@@ -136,6 +141,8 @@ export async function runGuardianEvaluation(ctx: GuardianJobContext): Promise<Gu
   const holdingsByWallet = new Map<string, UserHolding[]>();
   const allUniqueTokenAddresses = new Set<string>();
   const issuerByToken = new Map<string, Issuer>();
+  const tickerByToken = new Map<string, string>();
+  const multiplierByToken = new Map<string, bigint>();
 
   for (const wallet of targetWallets) {
     const portSnap =
@@ -190,6 +197,13 @@ export async function runGuardianEvaluation(ctx: GuardianJobContext): Promise<Gu
         continue; // Skip holding for share-based rules
       }
 
+      // Re-review 2 Finding 1: Multiplier derived from holding: mulDiv(balanceShares, 1e18, balanceTokens)
+      const derivedMultiplier = mulDiv(item.balanceShares, E18, item.balanceTokens);
+      multiplierByToken.set(tokenAddr, derivedMultiplier);
+
+      // Re-review 2 Finding 6: Store holding.ticker to use on TokenState
+      tickerByToken.set(tokenAddr, item.ticker);
+
       walletHoldings.push({
         walletAddress: wallet,
         tokenAddress: tokenAddr,
@@ -207,14 +221,43 @@ export async function runGuardianEvaluation(ctx: GuardianJobContext): Promise<Gu
     }
   }
 
-  // 3. Build token states once for all tokens across this run (Finding 1, Finding 2, Finding 3, Finding 4)
+  // 3. Build token states once for all tokens across this run
+  // Re-review 2 Finding 1: Read registry/bsc snapshot and map statusInfo with statusFromInfo
+  const regSnap = ctx.store.latest<
+    Array<{
+      tokenContractAddress?: string;
+      platformId?: string;
+      statusInfo?: RawStatusInfo | null;
+      underlyingTicker?: string;
+      tokenSymbol?: string;
+    }>
+  >("registry", "bsc", {
+    maxAgeMs: 600_000,
+    now,
+  });
+  const registryItems = Array.isArray(regSnap?.data) ? regSnap.data : [];
+  const registryByAddress = new Map<
+    string,
+    {
+      statusInfo?: RawStatusInfo | null;
+      platformId?: string;
+      underlyingTicker?: string;
+    }
+  >();
+  for (const item of registryItems) {
+    if (item.tokenContractAddress) {
+      registryByAddress.set(item.tokenContractAddress.toLowerCase(), item);
+    }
+  }
+
   const prevStatesByToken = new Map<string, TokenState | null>();
   const nextStatesByToken = new Map<string, TokenState>();
   let warnedPauseThisRun = false;
 
   for (const tokenAddr of allUniqueTokenAddresses) {
+    // Re-review 2 Finding 2: Read guardian-state with maxAgeMs of 30 days (unchanged row means unchanged state)
     const prevStateSnap = ctx.store.latest<TokenState>("guardian-state", tokenAddr, {
-      maxAgeMs: 86_400_000,
+      maxAgeMs: 30 * 86_400_000, // 30 days
       now,
     });
     prevStatesByToken.set(tokenAddr, prevStateSnap?.data ?? null);
@@ -231,14 +274,13 @@ export async function runGuardianEvaluation(ctx: GuardianJobContext): Promise<Gu
       ctx.onWarn(`Radar snapshot is stale for token ${tokenAddr} (${radarSnap.ageMs}ms old)`);
     }
 
-    const statusSnap = ctx.store.latest<TokenStatusState>("status", tokenAddr, {
-      maxAgeMs: 120_000,
-      now,
-    });
-    const multSnap = ctx.store.latest<{ value?: string | bigint }>("multiplier", tokenAddr, {
-      maxAgeMs: 300_000,
-      now,
-    });
+    // Re-review 2 Finding 1: Status mapped from registry/bsc statusInfo
+    const regItem = registryByAddress.get(tokenAddr);
+    const mappedStatus = statusFromInfo(regItem?.statusInfo);
+
+    // Re-review 2 Finding 1: Multiplier derived from holding
+    const derivedMultiplier = multiplierByToken.get(tokenAddr) ?? null;
+
     const ghostSnap = ctx.store.latest<FlowGhostSnapshotSubset>("flow-ghost", tokenAddr, {
       maxAgeMs: 300_000,
       now,
@@ -276,15 +318,16 @@ export async function runGuardianEvaluation(ctx: GuardianJobContext): Promise<Gu
       }
     }
 
-    const ticker = radarSnap?.data?.ticker ?? "UNKNOWN";
+    // Re-review 2 Finding 6: Use holding.ticker as state ticker
+    const ticker = tickerByToken.get(tokenAddr) ?? radarSnap?.data?.ticker ?? "UNKNOWN";
 
     const nextState = buildTokenStateFromSnapshots({
       tokenAddress: tokenAddr,
       ticker,
       issuer: tokenIssuer,
       observedAt: now,
-      rawStatus: statusSnap?.data,
-      rawMultiplier: multSnap?.data?.value ? BigInt(multSnap.data.value) : undefined,
+      rawStatus: mappedStatus,
+      rawMultiplier: derivedMultiplier,
       rawRadar: radarSnap?.data,
       rawFlowGhost: ghostSnap?.data,
       rawFlowAggregate: flowSnap?.data,
@@ -299,23 +342,7 @@ export async function runGuardianEvaluation(ctx: GuardianJobContext): Promise<Gu
 
   // 4. Evaluate holding rules per wallet against consistent run snapshot (Finding 3)
   const deliveryErrors: string[] = [];
-  const telegramToken = ctx.telegramToken;
-
-  const sender: TelegramDeliverySender = {
-    async sendMessage(chatId, text) {
-      if (!telegramToken) {
-        throw new Error("Missing TELEGRAM_BOT_TOKEN");
-      }
-      const res = await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: chatId, text }),
-      });
-      if (!res.ok) {
-        throw new Error(`Telegram API responded with ${res.status}: ${await res.text()}`);
-      }
-    },
-  };
+  const sender = ctx.sender;
 
   for (const [wallet, holdings] of holdingsByWallet.entries()) {
     const settingsSnap = ctx.store.latest<GuardianSettings>("guardian-settings", wallet, {
@@ -371,18 +398,28 @@ export async function runGuardianEvaluation(ctx: GuardianJobContext): Promise<Gu
 
     // Deliver undelivered alerts via unified delivery function (Finding 7)
     if (combinedAlerts.length > 0) {
-      const deliveryResult = await deliverPendingAlerts(
-        sender,
-        combinedAlerts,
-        ctx.store,
-        now,
-        ctx.onWarn,
-      );
-
-      deliveredAlertsCount += deliveryResult.delivered;
-
-      if (deliveryResult.errors.length > 0) {
-        deliveryErrors.push(...deliveryResult.errors);
+      let deliveryResult: DeliverAlertsResult;
+      if (sender) {
+        deliveryResult = await deliverPendingAlerts(
+          sender,
+          combinedAlerts,
+          ctx.store,
+          now,
+          ctx.onWarn,
+        );
+        deliveredAlertsCount += deliveryResult.delivered;
+        if (deliveryResult.errors.length > 0) {
+          deliveryErrors.push(...deliveryResult.errors);
+        }
+      } else {
+        deliveryResult = {
+          attempted: 0,
+          delivered: 0,
+          failed: 0,
+          suppressedByQuiet: 0,
+          errors: [],
+          updatedAlerts: combinedAlerts,
+        };
       }
 
       // Finding 3: Write ONLY when content changed (new alerts or delivery status change)
