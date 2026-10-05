@@ -40,3 +40,8 @@
 ## Out of scope
 
 ShareGuard v1.1 (separate proposal if V-B1 fails), autopilot.
+
+## Receipts extension for sells: how to propose it (2026-10-05)
+
+Write the proposal in your tab and wait for the orchestrator's answer; an approval is recorded in **Owns** above. A proposal must list: (1) the new files, (2) every existing file you must touch additively (expected: `packages/mod-receipts/src/hints.ts` parser, `verification.ts` call branch or a new `verification-sell.ts`, `apps/web/modules/receipts/ingestion.ts`, `apps/worker/src/jobs/receipts.ts`, the receipts view model), (3) the tests. Rules it must satisfy: a sell is recognised only when the transaction goes to `LIQUIDMESH_ROUTER`, `value` is 0, the sender equals the hint's user and the stock is in the trusted registry; the stock approval is accepted only to ShareGuard's configured `approveTarget` with a non-zero, non-unlimited amount; realized figures (stock tokens sent, USDT received by the user, gas, status) come only from chain logs, never from the browser; the browser's floor is shown as client-reported; no change to buy verification behaviour; sells stay out of the `/quality` buy distributions.
+
