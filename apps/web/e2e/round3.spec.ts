@@ -85,14 +85,26 @@ test.describe("round 3", () => {
     const list = page.locator('[role="listbox"][aria-hidden="false"]');
     const options = list.getByRole("option");
     await page.waitForTimeout(700); // the panel unfolds and its items stagger in
-    await options.nth(1).hover();
     const pill = list.locator('span[aria-hidden="true"]').first();
+    // Wherever the panel opens (up or down), the one pill must come to rest exactly on the hovered option.
+    const onto = async (i: number) => {
+      await options.nth(i).hover();
+      await expect
+        .poll(
+          async () => {
+            const p = await pill.boundingBox();
+            const o = await options.nth(i).boundingBox();
+            return p && o ? Math.abs(p.y - o.y) : 999;
+          },
+          { timeout: 5000 },
+        )
+        .toBeLessThan(3);
+      return (await pill.boundingBox())!.y;
+    };
     await expect(pill).toHaveCSS("opacity", "1");
-    const y1 = (await pill.boundingBox())!.y;
-    await options.nth(3).hover();
-    await page.waitForTimeout(450);
-    const y2 = (await pill.boundingBox())!.y;
-    expect(y2).toBeGreaterThan(y1 + 20);
+    const y1 = await onto(1);
+    const y2 = await onto(3);
+    expect(Math.abs(y2 - y1)).toBeGreaterThan(20);
   });
 
   test("Send rejects bad addresses with a reason", async ({ page }) => {
