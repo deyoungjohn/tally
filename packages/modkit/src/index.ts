@@ -21,6 +21,12 @@ export interface Latest<T> extends Snapshot<T> {
 export interface SnapshotStore {
   put<T>(snapshot: Snapshot<T>): void;
   latest<T>(kind: string, key: string, opts: { maxAgeMs: number; now?: number }): Latest<T> | null;
+  listLatest<T>(
+    kind: string,
+    opts: { maxAgeMs: number; now?: number; limit?: number },
+  ): Latest<T>[];
+  /** Deletes expired hints, including their last row; never deletes evidence. */
+  expire(opts: { kind: string; olderThanMs: number }): number;
   /** Oldest first, inclusive of sinceMs. */
   history<T>(kind: string, key: string, sinceMs: number, limit?: number): Snapshot<T>[];
   /** Cutoff is an absolute timestamp. Latest observations and evidence are protected by default. */
@@ -198,6 +204,38 @@ export function openStore(
       const snapshot = decode<Snapshot<T>>(String(row.payload));
       const ageMs = Math.max(0, (opts.now ?? Date.now()) - snapshot.observedAt);
       return { ...snapshot, ageMs, stale: ageMs > opts.maxAgeMs };
+    },
+    listLatest<T>(kind: string, opts: { maxAgeMs: number; now?: number; limit?: number }) {
+      const limit = opts.limit ?? 200;
+      if (!Number.isInteger(limit) || limit < 0 || limit > 1000)
+        throw new RangeError("limit must be an integer from 0 to 1000");
+      if (!Number.isFinite(opts.maxAgeMs) || opts.maxAgeMs < 0)
+        throw new RangeError("maxAgeMs must be nonnegative and finite");
+      const now = opts.now ?? Date.now();
+      if (!Number.isFinite(now)) throw new RangeError("now must be finite");
+      return db
+        .prepare(
+          `SELECT payload FROM (
+        SELECT payload, observed_at, id, ROW_NUMBER() OVER (
+          PARTITION BY key ORDER BY observed_at DESC,id DESC
+        ) AS position FROM snapshots WHERE kind=?
+      ) WHERE position=1 ORDER BY observed_at DESC,id DESC LIMIT ?`,
+        )
+        .all(kind, limit)
+        .map((row) => {
+          const snapshot = decode<Snapshot<T>>(String(row.payload));
+          const ageMs = Math.max(0, now - snapshot.observedAt);
+          return { ...snapshot, ageMs, stale: ageMs > opts.maxAgeMs };
+        });
+    },
+    expire({ kind, olderThanMs }) {
+      if ((EVIDENCE_SNAPSHOT_KINDS as readonly string[]).includes(kind))
+        throw new Error("Cannot expire protected evidence");
+      if (!Number.isFinite(olderThanMs)) throw new RangeError("olderThanMs must be finite");
+      return Number(
+        db.prepare("DELETE FROM snapshots WHERE kind=? AND observed_at<?").run(kind, olderThanMs)
+          .changes,
+      );
     },
     history<T>(kind: string, key: string, sinceMs: number, limit = 1000) {
       if (!Number.isInteger(limit) || limit < 0)
