@@ -25,7 +25,7 @@ export type SignedSellCall =
     }
   | {
       kind: "sell";
-      stock: Address;
+      stock: Address | null;
       router: Address;
       minUsdtOut: bigint | null;
       quotedUsdtOut: bigint | null;
@@ -35,6 +35,7 @@ export type SignedSellCall =
 export interface VerifiedSellFillResult {
   tokensSpent: bigint;
   usdtReceived: bigint;
+  stockAddress?: Address;
 }
 
 export interface SellMultiplierEvidence {
@@ -108,12 +109,15 @@ export function verifySignedSellCall(
     throw new Error("Transaction destination is not the allow-listed LiquidMesh router");
   }
 
-  // Stock must be in trusted registry for ticker
-  const stockToken = hint.quote
-    ? trustedTokens.find((t) => equalAddress(t.address, hint.quote!.stock))
-    : trustedTokens[0];
-  if (!stockToken) {
-    throw new Error("Stock is not in trusted registry for ticker");
+  // Stock check: if quote hint exists, must match trusted registry for ticker.
+  // Without a quote hint, stock attribution is resolved from logs at fill time (Finding 3).
+  let stockAddress: Address | null = null;
+  if (hint.quote) {
+    const stockToken = trustedTokens.find((t) => equalAddress(t.address, hint.quote!.stock));
+    if (!stockToken) {
+      throw new Error("Stock is not in trusted registry for ticker");
+    }
+    stockAddress = stockToken.address;
   }
 
   const minUsdtOut =
@@ -131,7 +135,7 @@ export function verifySignedSellCall(
 
   return {
     kind: "sell",
-    stock: stockToken.address,
+    stock: stockAddress,
     router,
     minUsdtOut,
     quotedUsdtOut,
@@ -149,25 +153,66 @@ export function verifiedSellFill(
   tx: TransactionEvidence,
   mined: MinedEvidence | null,
   call: SignedSellCall,
+  trustedTokens: RegistryToken[] = [],
   usdt: Address = DEFAULT_USDT_BSC,
 ): VerifiedSellFillResult | null {
   if (!mined || mined.status === "reverted" || call.kind !== "sell") return null;
 
+  // Strict log verification (Finding 2): reject if removed, block mismatch, txHash mismatch, or duplicate index
+  const indices = new Set<number>();
+  for (const log of mined.logs) {
+    if (
+      log.removed ||
+      log.blockNumber !== mined.blockNumber ||
+      !equalAddress(log.transactionHash, tx.hash) ||
+      !Number.isSafeInteger(log.logIndex) ||
+      log.logIndex < 0 ||
+      indices.has(log.logIndex)
+    ) {
+      return null;
+    }
+    indices.add(log.logIndex);
+  }
+
+  // Stock attribution (Finding 3):
+  // If call.stock is present, use it.
+  // With no quote hint, pick the trusted token that has a Transfer out of the sender in the logs;
+  // if none or more than one, UNRECONCILED (return null).
+  let stockAddr = call.stock;
+  if (!stockAddr) {
+    const transferredTokens = new Set<string>();
+    for (const log of mined.logs) {
+      if (log.topics[0]?.toLowerCase() === TRANSFER_TOPIC) {
+        const transfer = decodeTransfer(log);
+        if (
+          transfer.ok &&
+          equalAddress(transfer.value.from, tx.sender) &&
+          transfer.value.value > 0n
+        ) {
+          const match = trustedTokens.find((t) => equalAddress(t.address, log.address));
+          if (match) {
+            transferredTokens.add(match.address.toLowerCase());
+          }
+        }
+      }
+    }
+    if (transferredTokens.size !== 1) {
+      return null;
+    }
+    stockAddr = [...transferredTokens][0] as Address;
+  }
+
   let stockSpent = 0n;
   let usdtReceived = 0n;
-  const indices = new Set<number>();
 
   for (const log of mined.logs) {
-    if (log.removed || indices.has(log.logIndex)) continue;
-    indices.add(log.logIndex);
-
     if (log.topics[0]?.toLowerCase() === TRANSFER_TOPIC) {
       const transfer = decodeTransfer(log);
       if (!transfer.ok) continue;
       const t = transfer.value;
 
       // Stock sold: sum of stock Transfers from the sender
-      if (equalAddress(log.address, call.stock)) {
+      if (equalAddress(log.address, stockAddr)) {
         if (equalAddress(t.from, tx.sender)) {
           stockSpent += t.value;
         }
@@ -188,6 +233,7 @@ export function verifiedSellFill(
   return {
     tokensSpent: stockSpent,
     usdtReceived,
+    stockAddress: stockAddr,
   };
 }
 
@@ -250,8 +296,24 @@ export function reconcileSell(
     };
   }
 
-  const stockSold = fill?.tokensSpent ?? 0n;
-  const usdtReceived = fill?.usdtReceived ?? 0n;
+  if (!fill) {
+    notes.push(
+      "Transaction logs could not be verified or stock transfer could not be uniquely attributed",
+    );
+    return {
+      status: "UNRECONCILED",
+      diffVsQuoteBps: null,
+      diffVsSimBps: null,
+      tokensReceived: null,
+      tokensSpent: null,
+      sharesReceived: null,
+      guarded: null,
+      notes,
+    };
+  }
+
+  const stockSold = fill.tokensSpent;
+  const usdtReceived = fill.usdtReceived;
 
   // Condition 3: If no stock Transfer from the sender exists, receipt is UNRECONCILED
   if (stockSold <= 0n) {
@@ -332,6 +394,7 @@ export function promoteSellReceipt(
   token: RegistryToken | null,
   multiplier: SellMultiplierEvidence | null,
   now: number,
+  trustedTokens: RegistryToken[] = [],
 ): StoredReceipt {
   if (hint.kind !== "sell") {
     throw new Error("Transaction is not a sell intent");
@@ -352,11 +415,29 @@ export function promoteSellReceipt(
     };
   }
 
-  if (!token || !equalAddress(token.address, call.stock) || token.ticker !== hint.ticker) {
+  const fill = verifiedSellFill(
+    tx,
+    mined,
+    call,
+    trustedTokens.length > 0 ? trustedTokens : token ? [token] : [],
+  );
+
+  const effectiveStock = call.stock ?? fill?.stockAddress ?? token?.address ?? null;
+  const effectiveToken =
+    token ??
+    (fill?.stockAddress
+      ? (trustedTokens.find((t) => equalAddress(t.address, fill.stockAddress ?? null)) ?? null)
+      : null);
+
+  if (
+    !effectiveToken ||
+    !effectiveStock ||
+    !equalAddress(effectiveToken.address, effectiveStock) ||
+    effectiveToken.ticker !== hint.ticker
+  ) {
     throw new Error("Stock metadata does not match the trusted registry");
   }
 
-  const fill = verifiedSellFill(tx, mined, call);
   const shares =
     fill && fill.tokensSpent > 0n && multiplier && multiplier.value > 0n
       ? (fill.tokensSpent * multiplier.value) / 10n ** 18n
@@ -381,13 +462,13 @@ export function promoteSellReceipt(
     intent: {
       id: hint.intentId,
       kind: "sell",
-      ticker: token.ticker,
-      issuer: token.issuer,
-      asset: call.stock,
-      tokenDecimals: token.decimals,
+      ticker: effectiveToken.ticker,
+      issuer: effectiveToken.issuer,
+      asset: effectiveStock,
+      tokenDecimals: effectiveToken.decimals,
       user: tx.sender,
       recipient: tx.sender,
-      spend: { asset: call.stock, raw: call.tokensIn ?? fill?.tokensSpent ?? 0n, decimals: 18 },
+      spend: { asset: effectiveStock, raw: call.tokensIn ?? fill?.tokensSpent ?? 0n, decimals: 18 },
       minShares: 0n,
       toleranceBps: 0,
       approvedAt: null,

@@ -140,7 +140,7 @@ describe("verification-sell", () => {
       expect(call.kind).toBe("sell");
       if (call.kind === "sell") {
         expect(call.router.toLowerCase()).toBe(LIQUIDMESH_ROUTER.toLowerCase());
-        expect(call.stock.toLowerCase()).toBe(NVDAB_STOCK.toLowerCase());
+        expect(call.stock?.toLowerCase()).toBe(NVDAB_STOCK.toLowerCase());
       }
     });
 
@@ -232,7 +232,7 @@ describe("verification-sell", () => {
       ];
 
       const minedEvidence = makeMined("success", logs);
-      const fill = verifiedSellFill(tx, minedEvidence, call, USDT_BSC);
+      const fill = verifiedSellFill(tx, minedEvidence, call, [NVDA_TOKEN], USDT_BSC);
 
       expect(fill).not.toBeNull();
       expect(fill!.tokensSpent).toBe(25000000000000000n);
@@ -260,7 +260,7 @@ describe("verification-sell", () => {
       ];
 
       const minedEvidence = makeMined("success", logs);
-      const fill = verifiedSellFill(tx, minedEvidence, call, USDT_BSC);
+      const fill = verifiedSellFill(tx, minedEvidence, call, [NVDA_TOKEN], USDT_BSC);
       const result = reconcileSell(
         tx,
         minedEvidence,
@@ -370,7 +370,7 @@ describe("verification-sell", () => {
         makeTransferLog(USDT_BSC, LIQUIDMESH_ROUTER, USER, 5500000000000000000n, 1),
       ];
       const minedEvidence = makeMined("success", logs);
-      const fill = verifiedSellFill(tx, minedEvidence, call, USDT_BSC);
+      const fill = verifiedSellFill(tx, minedEvidence, call, [NVDA_TOKEN], USDT_BSC);
       const result = reconcileSell(
         tx,
         minedEvidence,
@@ -398,7 +398,7 @@ describe("verification-sell", () => {
       };
 
       const minedEvidence = makeMined("reverted", []);
-      const fill = verifiedSellFill(tx, minedEvidence, call, USDT_BSC);
+      const fill = verifiedSellFill(tx, minedEvidence, call, [NVDA_TOKEN], USDT_BSC);
       const result = reconcileSell(
         tx,
         minedEvidence,
@@ -496,6 +496,200 @@ describe("verification-sell", () => {
 
       const parsed = parseReceiptHint(malformedSellPayload);
       expect(parsed).toBeNull();
+    });
+  });
+
+  describe("Review fixes (Findings 1, 2, 3)", () => {
+    it("refuses stock approval to a different spender (Finding 1)", () => {
+      const wrongSpender = "0x1111111111111111111111111111111111111111" as Address;
+      const tx = makeApprovalTx(25000000000000000n, wrongSpender, NVDAB_STOCK);
+      const hint = makeSellHint();
+
+      expect(() =>
+        verifySignedSellCall(tx, hint, [NVDA_TOKEN], APPROVE_TARGET, LIQUIDMESH_ROUTER),
+      ).toThrow("Only a stock approval to configured approve target is accepted");
+    });
+
+    it("log strictness: rejects fill when log blockNumber does not match receipt (Finding 2)", () => {
+      const tx = makeSellTx();
+      const call = {
+        kind: "sell" as const,
+        stock: NVDAB_STOCK,
+        router: LIQUIDMESH_ROUTER,
+        minUsdtOut: 6000000000000000000n,
+        quotedUsdtOut: 6100000000000000000n,
+        tokensIn: 25000000000000000n,
+      };
+
+      const badLog = makeTransferLog(NVDAB_STOCK, USER, LIQUIDMESH_ROUTER, 25000000000000000n, 0);
+      badLog.blockNumber = 999n;
+      const usdtLog = makeTransferLog(USDT_BSC, LIQUIDMESH_ROUTER, USER, 6100000000000000000n, 1);
+      const minedEvidence = makeMined("success", [badLog, usdtLog]);
+
+      const fill = verifiedSellFill(tx, minedEvidence, call, [NVDA_TOKEN], USDT_BSC);
+      expect(fill).toBeNull();
+
+      const result = reconcileSell(
+        tx,
+        minedEvidence,
+        call,
+        fill,
+        null,
+        null,
+        call.minUsdtOut,
+        call.quotedUsdtOut,
+      );
+      expect(result.status).toBe("UNRECONCILED");
+    });
+
+    it("log strictness: rejects fill when log transactionHash does not match receipt (Finding 2)", () => {
+      const tx = makeSellTx();
+      const call = {
+        kind: "sell" as const,
+        stock: NVDAB_STOCK,
+        router: LIQUIDMESH_ROUTER,
+        minUsdtOut: 6000000000000000000n,
+        quotedUsdtOut: 6100000000000000000n,
+        tokensIn: 25000000000000000n,
+      };
+
+      const badLog = makeTransferLog(NVDAB_STOCK, USER, LIQUIDMESH_ROUTER, 25000000000000000n, 0);
+      badLog.transactionHash =
+        "0x9999999999999999999999999999999999999999999999999999999999999999" as Hex;
+      const usdtLog = makeTransferLog(USDT_BSC, LIQUIDMESH_ROUTER, USER, 6100000000000000000n, 1);
+      const minedEvidence = makeMined("success", [badLog, usdtLog]);
+
+      const fill = verifiedSellFill(tx, minedEvidence, call, [NVDA_TOKEN], USDT_BSC);
+      expect(fill).toBeNull();
+    });
+
+    it("log strictness: rejects fill when duplicate logIndex is present (Finding 2)", () => {
+      const tx = makeSellTx();
+      const call = {
+        kind: "sell" as const,
+        stock: NVDAB_STOCK,
+        router: LIQUIDMESH_ROUTER,
+        minUsdtOut: 6000000000000000000n,
+        quotedUsdtOut: 6100000000000000000n,
+        tokensIn: 25000000000000000n,
+      };
+
+      const log1 = makeTransferLog(NVDAB_STOCK, USER, LIQUIDMESH_ROUTER, 25000000000000000n, 0);
+      const log2 = makeTransferLog(USDT_BSC, LIQUIDMESH_ROUTER, USER, 6100000000000000000n, 0);
+      const minedEvidence = makeMined("success", [log1, log2]);
+
+      const fill = verifiedSellFill(tx, minedEvidence, call, [NVDA_TOKEN], USDT_BSC);
+      expect(fill).toBeNull();
+    });
+
+    it("stock attribution without a quote: picks the trusted token with Transfer out of sender (Finding 3)", () => {
+      const tx = makeSellTx();
+      const callWithoutQuoteStock = {
+        kind: "sell" as const,
+        stock: null,
+        router: LIQUIDMESH_ROUTER,
+        minUsdtOut: null,
+        quotedUsdtOut: null,
+        tokensIn: null,
+      };
+
+      const NVDAON_STOCK = "0xa9ee28c80f960b889dfbd1902055218cba016f75" as Address;
+      const NVDAON_TOKEN: RegistryToken = {
+        ticker: "NVDA",
+        issuer: "ondo",
+        address: NVDAON_STOCK,
+        symbol: "NVDAon",
+        decimals: 18,
+        assetType: 1,
+        multiplierSource: "onchain-multiplier",
+        executable: true,
+      };
+
+      const logs: ChainLog[] = [
+        makeTransferLog(NVDAB_STOCK, USER, LIQUIDMESH_ROUTER, 25000000000000000n, 0),
+        makeTransferLog(USDT_BSC, LIQUIDMESH_ROUTER, USER, 6100000000000000000n, 1),
+      ];
+      const minedEvidence = makeMined("success", logs);
+
+      const fill = verifiedSellFill(
+        tx,
+        minedEvidence,
+        callWithoutQuoteStock,
+        [NVDA_TOKEN, NVDAON_TOKEN],
+        USDT_BSC,
+      );
+      expect(fill).not.toBeNull();
+      expect(fill?.stockAddress).toBe(NVDAB_STOCK);
+      expect(fill?.tokensSpent).toBe(25000000000000000n);
+      expect(fill?.usdtReceived).toBe(6100000000000000000n);
+    });
+
+    it("stock attribution without a quote: returns null when no trusted token transferred out (Finding 3)", () => {
+      const tx = makeSellTx();
+      const callWithoutQuoteStock = {
+        kind: "sell" as const,
+        stock: null,
+        router: LIQUIDMESH_ROUTER,
+        minUsdtOut: null,
+        quotedUsdtOut: null,
+        tokensIn: null,
+      };
+
+      const someOtherToken = "0x8888888888888888888888888888888888888888" as Address;
+      const logs: ChainLog[] = [
+        makeTransferLog(someOtherToken, USER, LIQUIDMESH_ROUTER, 25000000000000000n, 0),
+        makeTransferLog(USDT_BSC, LIQUIDMESH_ROUTER, USER, 6100000000000000000n, 1),
+      ];
+      const minedEvidence = makeMined("success", logs);
+
+      const fill = verifiedSellFill(
+        tx,
+        minedEvidence,
+        callWithoutQuoteStock,
+        [NVDA_TOKEN],
+        USDT_BSC,
+      );
+      expect(fill).toBeNull();
+    });
+
+    it("stock attribution without a quote: returns null when multiple trusted tokens transferred out (Finding 3)", () => {
+      const tx = makeSellTx();
+      const callWithoutQuoteStock = {
+        kind: "sell" as const,
+        stock: null,
+        router: LIQUIDMESH_ROUTER,
+        minUsdtOut: null,
+        quotedUsdtOut: null,
+        tokensIn: null,
+      };
+
+      const NVDAON_STOCK = "0xa9ee28c80f960b889dfbd1902055218cba016f75" as Address;
+      const NVDAON_TOKEN: RegistryToken = {
+        ticker: "NVDA",
+        issuer: "ondo",
+        address: NVDAON_STOCK,
+        symbol: "NVDAon",
+        decimals: 18,
+        assetType: 1,
+        multiplierSource: "onchain-multiplier",
+        executable: true,
+      };
+
+      const logs: ChainLog[] = [
+        makeTransferLog(NVDAB_STOCK, USER, LIQUIDMESH_ROUTER, 25000000000000000n, 0),
+        makeTransferLog(NVDAON_STOCK, USER, LIQUIDMESH_ROUTER, 10000000000000000n, 1),
+        makeTransferLog(USDT_BSC, LIQUIDMESH_ROUTER, USER, 6100000000000000000n, 2),
+      ];
+      const minedEvidence = makeMined("success", logs);
+
+      const fill = verifiedSellFill(
+        tx,
+        minedEvidence,
+        callWithoutQuoteStock,
+        [NVDA_TOKEN, NVDAON_TOKEN],
+        USDT_BSC,
+      );
+      expect(fill).toBeNull();
     });
   });
 });

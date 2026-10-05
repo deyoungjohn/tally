@@ -5,6 +5,7 @@ import {
   HINT_KIND,
   HINT_TTL_MS,
   RECEIPTS_KIND,
+  parseReceiptHint,
   receiptHintKey,
   type StoredHint,
   type StoredReceipt,
@@ -447,4 +448,93 @@ it("evidence promoted during an ingestion read still refuses a different intent"
       maxAgeMs: 0,
     }),
   ).toBeNull();
+});
+
+it("stock approval to a different spender is refused (Finding 1)", async () => {
+  const sellHint = {
+    version: 1,
+    kind: "sell",
+    txHash: "0x" + "a".repeat(64),
+    intentId: "intent-sell-appr-1",
+    attempt: 1,
+    user: "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
+    ticker: "NVDA",
+    isResumed: false,
+    quote: null,
+    simulation: null,
+  };
+  const nvdaStock = "0x02fca66c1d1afb4e2a7884261eb00f63598a7436";
+  const wrongSpender = "11".repeat(20);
+  const input = `0x095ea7b3000000000000000000000000${wrongSpender}0000000000000000000000000000000000000000000000000058d15e17628000`;
+  const original = engine.transactions;
+  engine = {
+    ...engine,
+    transactions: {
+      ...original,
+      getTransaction: async () => ({
+        hash: sellHint.txHash as `0x${string}`,
+        sender: sellHint.user as `0x${string}`,
+        destination: nvdaStock as `0x${string}`,
+        value: 0n,
+        input: input as `0x${string}`,
+        inputSelector: "0x095ea7b3",
+        blockNumber: 1000n,
+        gasLimit: 60000n,
+      }),
+    },
+  };
+  const res = await post()(request(sellHint));
+  expect(res.status).toBe(422);
+});
+
+it("failed guardRouter read leaves hint pending without fallback (Finding 1)", async () => {
+  const sellHint = {
+    version: 1,
+    kind: "sell",
+    txHash: "0x" + "b".repeat(64),
+    intentId: "intent-sell-pending-1",
+    attempt: 1,
+    user: "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
+    ticker: "NVDA",
+    isResumed: false,
+    quote: null,
+    simulation: null,
+  };
+  const nvdaStock = "0x02fca66c1d1afb4e2a7884261eb00f63598a7436";
+  const input = `0x095ea7b3000000000000000000000000b44446b0c8e56988c34f7ff73ae904982b5fdda50000000000000000000000000000000000000000000000000058d15e17628000`;
+  const original = engine.transactions;
+  const originalTrade = engine.trade;
+  engine = {
+    ...engine,
+    transactions: {
+      ...original,
+      getTransaction: async () => ({
+        hash: sellHint.txHash as `0x${string}`,
+        sender: sellHint.user as `0x${string}`,
+        destination: nvdaStock as `0x${string}`,
+        value: 0n,
+        input: input as `0x${string}`,
+        inputSelector: "0x095ea7b3",
+        blockNumber: 1000n,
+        gasLimit: 60000n,
+      }),
+    },
+    trade: {
+      ...originalTrade,
+      guardRouter: async () => {
+        throw new Error("RPC error reading guard router");
+      },
+    },
+  };
+  const res = await post()(request(sellHint));
+  expect(res.status).toBe(202);
+  const parsed = parseReceiptHint(sellHint);
+  expect(parsed).not.toBeNull();
+  const stored = store.latest<StoredHint>(HINT_KIND, receiptHintKey(parsed!), {
+    maxAgeMs: 0,
+  });
+  expect(stored?.data.state).toBe("pending");
+  expect(warn).toHaveBeenCalledWith(
+    expect.stringContaining("guard router read unavailable; hint remains pending"),
+  );
 });

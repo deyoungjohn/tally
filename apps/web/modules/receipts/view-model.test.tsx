@@ -2,9 +2,11 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { Address, Hex } from "@tally/core";
+import { LIQUIDMESH_ROUTER } from "@tally/config";
 import { createFixtureEngine } from "@tally/engine";
 import { openStore, type OpenSnapshotStore } from "@tally/modkit";
 import {
+  DEFAULT_LIQUIDMESH_ROUTER,
   HINT_KIND,
   HINT_TTL_MS,
   RECEIPTS_KIND,
@@ -382,4 +384,8 @@ it("sell receipt view model constructs correct ladder, status, and client-report
   expect(vm.ladder[1].reason).toBe("Sell does not record simulation output");
   expect(vm.ladder[2].stage).toBe("Received");
   expect(vm.ladder[2].tokens).toBe("0.025");
+});
+
+it("DEFAULT_LIQUIDMESH_ROUTER in mod-receipts matches LIQUIDMESH_ROUTER from config (Finding 4)", () => {
+  expect(DEFAULT_LIQUIDMESH_ROUTER.toLowerCase()).toBe(LIQUIDMESH_ROUTER.toLowerCase());
 });

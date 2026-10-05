@@ -5,3 +5,4 @@ export * from "./trade";
 export * from "./trade-chain";
 export * from "./trade-fixture";
 export * from "./views";
+export * from "./guard-router";

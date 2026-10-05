@@ -5,6 +5,7 @@ import {
   HINT_KIND,
   HINT_TTL_MS,
   RECEIPTS_KIND,
+  equalAddress,
   parseReceiptHint,
   receiptHintKey,
   verifySignedCall,
@@ -104,36 +105,44 @@ export function createReceiptPost(deps: Dependencies) {
         const engine = await deps.engine();
         const tx = await engine.transactions.getTransaction(hint.txHash);
         if (tx) {
-          try {
-            if (hint.kind === "sell") {
-              const tokens = await engine.ports.registry.tokensFor(hint.ticker);
-              const stockAddr = tokens[0]?.address ?? hint.quote?.stock;
-              let approveTarget: Address = LIQUIDMESH_ROUTER;
-              if (stockAddr) {
-                const guard = await (
-                  engine as unknown as {
-                    trade?: {
-                      chain?: {
-                        readGuard?: (s: Address, r: Address) => Promise<{ approveTarget: Address }>;
-                      };
-                    };
-                  }
-                ).trade?.chain
-                  ?.readGuard?.(stockAddr, LIQUIDMESH_ROUTER)
-                  .catch(() => null);
-                if (guard?.approveTarget) approveTarget = guard.approveTarget;
-              }
-              verifySignedSellCall(tx, hint, tokens, approveTarget, LIQUIDMESH_ROUTER);
-            } else {
-              verifySignedCall(tx, hint, SHAREGUARD_DEPLOYED, USDT_BSC);
+          if (hint.kind === "sell") {
+            const tokens = await engine.ports.registry.tokensFor(hint.ticker);
+            const matchingToken = tokens.find((t) => equalAddress(t.address, tx.destination));
+            const stockAddr = matchingToken?.address ?? hint.quote?.stock ?? tokens[0]?.address;
+            if (!stockAddr) {
+              return response(422, "Transaction does not match a supported signed intent");
             }
-          } catch {
-            return response(422, "Transaction does not match a supported signed intent");
+            let guardInfo: { routerAllowed: boolean; approveTarget: Address } | null = null;
+            try {
+              guardInfo = await engine.trade.guardRouter(stockAddr);
+            } catch {
+              deps.onWarn(
+                `Receipt ${hint.txHash}: guard router read unavailable; hint remains pending`,
+              );
+              reason = "Guard router read unavailable; awaiting verification";
+              state = "pending";
+            }
+            if (guardInfo) {
+              try {
+                verifySignedSellCall(tx, hint, tokens, guardInfo.approveTarget, LIQUIDMESH_ROUTER);
+              } catch {
+                return response(422, "Transaction does not match a supported signed intent");
+              }
+              await engine.transactions.getReceipt(hint.txHash);
+              state = "verified";
+              reason = "Signed transaction verified; awaiting worker evidence";
+            }
+          } else {
+            try {
+              verifySignedCall(tx, hint, SHAREGUARD_DEPLOYED, USDT_BSC);
+            } catch {
+              return response(422, "Transaction does not match a supported signed intent");
+            }
+            // Acceptance still stores only an untrusted hint; worker obtains the full receipt again.
+            await engine.transactions.getReceipt(hint.txHash);
+            state = "verified";
+            reason = "Signed transaction verified; awaiting worker evidence";
           }
-          // Acceptance still stores only an untrusted hint; worker obtains the full receipt again.
-          await engine.transactions.getReceipt(hint.txHash);
-          state = "verified";
-          reason = "Signed transaction verified; awaiting worker evidence";
         }
       } catch {
         deps.onWarn(
