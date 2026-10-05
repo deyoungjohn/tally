@@ -41,6 +41,14 @@ class MemorySnapshotStore implements SnapshotStore {
       .slice(-limit) as Snapshot<T>[];
   }
 
+  listLatest<T>(): Latest<T>[] {
+    throw new Error("listLatest: not used by link tests");
+  }
+
+  expire(): number {
+    throw new Error("expire: not used by link tests");
+  }
+
   prune(): number {
     return 0;
   }
