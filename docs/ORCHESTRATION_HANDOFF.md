@@ -40,12 +40,12 @@ Written 2026-10-04 by Claude (chief orchestrator) for **GPT-6 Astra**, who takes
 | WO | Module | Agent | Status | Next action |
 |---|---|---|---|---|
 | 00 | Foundation (modkit, worker, flags, health, ModuleBoundary) | B Codex #1 | **Merged** | none |
-| 01 | M3 follow-up (`onStage` events only; landing lead moved to WO-12) | D Antigravity (also holds WO-06) | **APPROVE** (re-review @ d0d1255, pack green). Money path: **Claude check pending** | User squash-merges after Claude's check; then WO-02 slice B starts. |
+| 01 | M3 follow-up (`onStage` events only; landing lead moved to WO-12) | D Antigravity (also holds WO-06) | **APPROVE** (money-path check done, no change) | User squash-merges; then WO-02 slice B starts. |
 | 02 | Receipts + Quality | C Codex #2 | **Slice A merged.** Slice B pending WO-01 | After WO-01 merges: dispatch slice B on the same branch name `mod/WO-02-receipts` (fresh from main; user decision 2026-10-04). Notes 2–3 in its REVIEW.md apply. |
 | 03 | Portfolio + Statement | D Antigravity | **Merged** (PR #7, `a732de4`; fixes 8–10 in `af9bac6`) | none. Collectors stay additive; WO-04 rebases over `collectors.ts`. |
 | 04 | Flow + Radar | B Codex #1 | **Merged** (PR #8, `0032642`). Follow-up (worker pace `TALLY_WORKER_RPS`, clean shutdown) at 866c2bd: **APPROVE after one small fix** (onWarn default, review addendum) | User squash-merges the follow-up after the fix. Then flag-on gate is met on the code side; optional EC2 re-run. Ghost wiring into core still NOT applied. |
-| 05 | Agent layer: MCP, Wallet Skill, upstream PR | B Codex #1 | **APPROVE once a fresh pack at 6791592 is green** (all review findings and the credentials/auth-code mapping done). **Claude check pending** | User runs `FULL=1` pack, then the $6 live buy (`live-buy-test.sh`), hash into the PR, squash-merge; user opens the upstream PR. |
-| 06 | Guardian alerts + read-only bot commands | D Antigravity (reassigned from E, 2026-10-04) | **Slice A merged. Slice B: CHANGES (small)** at 41ec7df (3 must-fix: radar read key, issuer default, `alerts` row growth; 3 should-fix). **Claude check pending** (link flow, error leakage) | agy fixes; fresh pack; re-review. bStock pause alerts ship inactive; `engine.pauseState` follow-up after WO-05 merges. |
+| 05 | Agent layer: MCP, Wallet Skill, upstream PR | B Codex #1 | **APPROVE** @ 643e5cd (FULL pack green; money-path check done; live $6 buy recorded: `0x48349a8d…164992`) | User squash-merges; user opens the upstream PR from `docs/upstream/`. |
+| 06 | Guardian alerts + read-only bot commands | D Antigravity (reassigned from E, 2026-10-04) | **Slice A merged. Slice B: CHANGES (small)** at 8a2b31b: 2 must-fix (worker reads `status`/`multiplier` snapshots nothing writes; prev-state age) + 4 should-fix. Security checks done | agy fixes; re-review (no new pack needed for small fixes). bStock pause alerts ship inactive; `engine.pauseState` follow-up after WO-05 merges. |
 | 07 | Sell + Switch | C | Wave 2 | Blocked on gates V-B1/V-B2 (Mon). **Escalate review to Claude** (contracts + money). |
 | 08 | Guardian autopilot | C | Wave 2 | Blocked on V-AW. No longer owns `skills/share-true-trading/**` (moved to WO-05). **Escalate to Claude.** |
 | 09 | Pies | B | Wave 2, after WO-05 | |
@@ -117,13 +117,9 @@ Agents must stop and ask before touching non-owned paths or adding dependencies.
 
 Record every approval in the WO's **Owns** as `Approved <date>, additive only: …` (see WO-03/WO-04), commit to main, and tell the agent to rebase. That keeps `review_owned.py` accurate. Never approve: changes to ShareGuard, the buy path, `packages/core/src/integrity.ts` (orchestrator applies wiring), fixtures/raw, spike/results, CI secrets.
 
-## 9. Escalate to Claude (sparingly; quota)
+## 9. Escalations (updated 2026-10-05)
 
-Ask the user to bring Claude in for:
-1. **The pre-submission review** (Fri 9 – Sat 10): whole-repo pass, demo flow, README claims vs evidence.
-2. Disagreements you can't resolve from the docs, or anything that might be a security issue.
-
-Batch escalations: one message with the branch names and your own REVIEW.md drafts, so Claude only verifies.
+The chief engineer reassigned the escalations to the day-to-day orchestrator. The orchestrator does the money-path and security checks itself and writes them into the branch's REVIEW.md ("For Claude" sections became "Money-path check" or "Security checks"). Claude (Opus 5.5) does **one** thing: the whole-repo review, the demo flow and README claims against evidence, **Fri 9 – Sat 10**. Ask the user to bring Claude in earlier only for a disagreement you cannot resolve from the docs.
 
 ## 10. Open gates (MODULES.md §5) and who runs them
 
@@ -149,6 +145,8 @@ Batch escalations: one message with the branch names and your own REVIEW.md draf
 ## 11b. Known issues for later (don't fix inside other WOs)
 
 - `engine.portfolio` / `portfolioFor` (`packages/engine/src/views.ts`) uses floats and silently skips tokens with an unknown multiplier. The web Portfolio still reads it. WO-12 should switch the page to WO-03's `PortfolioVM`; WO-05 adds a separate bigint `sharesOf` and leaves this function alone.
+
+- **Decision (2026-10-05, orchestrator, chief engineer delegated): ghost-rule wiring into the core quote path is NOT done.** Radar shows the cleaned-flow grade via the view model; `/quote`, the bot and MCP show the engine's raw-volume grade. Reason: a ghost verdict makes a token non-executable, so wiring it would change buy gating on the money path just before submission, and the engine would have to read the worker's SQLite store. The README must say the Radar grade is "cleaned flow" and the quote grade is "raw volume". Opus 5.5 may revisit it in the Fri 9 review.
 
 ## 12. Hard rules you must keep
 
