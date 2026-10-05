@@ -40,12 +40,12 @@ Written 2026-10-04 by Claude (chief orchestrator) for **GPT-6 Astra**, who takes
 | WO | Module | Agent | Status | Next action |
 |---|---|---|---|---|
 | 00 | Foundation (modkit, worker, flags, health, ModuleBoundary) | B Codex #1 | **Merged** | none |
-| 01 | M3 follow-up (`onStage` events only; landing lead moved to WO-12) | D Antigravity (also holds WO-06) | **APPROVE** (money-path check done, no change) | User squash-merges; then WO-02 slice B starts. |
+| 01 | M3 follow-up (`onStage` events only; landing lead moved to WO-12) | D Antigravity | **Merged** (PR #13, `d938edc`) | none. WO-02 slice B may start (also needs WO-05, merged). |
 | 02 | Receipts + Quality | C Codex #2 | **Slice A merged.** Slice B pending WO-01 | After WO-01 merges: dispatch slice B on the same branch name `mod/WO-02-receipts` (fresh from main; user decision 2026-10-04). Notes 2–3 in its REVIEW.md apply. |
 | 03 | Portfolio + Statement | D Antigravity | **Merged** (PR #7, `a732de4`; fixes 8–10 in `af9bac6`) | none. Collectors stay additive; WO-04 rebases over `collectors.ts`. |
 | 04 | Flow + Radar | B Codex #1 | **Merged** (PR #8, `0032642`). Follow-up (worker pace `TALLY_WORKER_RPS`, clean shutdown) at 866c2bd: **APPROVE after one small fix** (onWarn default, review addendum) | User squash-merges the follow-up after the fix. Then flag-on gate is met on the code side; optional EC2 re-run. Ghost wiring into core still NOT applied. |
-| 05 | Agent layer: MCP, Wallet Skill, upstream PR | B Codex #1 | **APPROVE** @ 643e5cd (FULL pack green; money-path check done; live $6 buy recorded: `0x48349a8d…164992`) | User squash-merges; user opens the upstream PR from `docs/upstream/`. |
-| 06 | Guardian alerts + read-only bot commands | D Antigravity (reassigned from E, 2026-10-04) | **Slice A merged. Slice B: CHANGES (small)** at 8a2b31b: 2 must-fix (worker reads `status`/`multiplier` snapshots nothing writes; prev-state age) + 4 should-fix. Security checks done | agy fixes; re-review (no new pack needed for small fixes). bStock pause alerts ship inactive; `engine.pauseState` follow-up after WO-05 merges. |
+| 05 | Agent layer: MCP, Wallet Skill, upstream PR | B Codex #1 | **Merged** (PR #12, `2d62b25`); live $6 buy `0x48349a8d…164992` | user opens the upstream PR from `docs/upstream/`. |
+| 06 | Guardian alerts + read-only bot commands | D Antigravity (reassigned from E, 2026-10-04) | **Slice A merged. Slice B: CHANGES (small)** at 70f7a99: 2 must-fix (derived multiplier rounding gives false share-count alerts; red bot test after WO-05 merge) + 2 should-fix. Security checks done | agy fixes; re-review (no new pack needed). bStock pause alerts ship inactive; `engine.pauseState` follow-up. |
 | 07 | Sell + Switch | C | Wave 2 | Blocked on gates V-B1/V-B2 (Mon). **Escalate review to Claude** (contracts + money). |
 | 08 | Guardian autopilot | C | Wave 2 | Blocked on V-AW. No longer owns `skills/share-true-trading/**` (moved to WO-05). **Escalate to Claude.** |
 | 09 | Pies | B | Wave 2, after WO-05 | |
