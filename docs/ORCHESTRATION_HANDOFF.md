@@ -46,7 +46,7 @@ Written 2026-10-04 by Claude (chief orchestrator) for **GPT-6 Astra**, who takes
 | 04 | Flow + Radar | B Codex #1 | **Merged** (PR #8, `0032642`). Follow-up (worker pace `TALLY_WORKER_RPS`, clean shutdown) at 866c2bd: **APPROVE after one small fix** (onWarn default, review addendum) | User squash-merges the follow-up after the fix. Then flag-on gate is met on the code side; optional EC2 re-run. Ghost wiring into core still NOT applied. |
 | 05 | Agent layer: MCP, Wallet Skill, upstream PR | B Codex #1 | **Merged** (PR #12, `2d62b25`); live $6 buy `0x48349a8d…164992` | user opens the upstream PR from `docs/upstream/`. |
 | 06 | Guardian alerts + read-only bot commands | D Antigravity | **Slice B merged.** `engine.pauseState` follow-up: **APPROVE** @ 6c85a76 | user squash-merges. |
-| 07 | Sell (Switch cut) | C Codex #2 | Sell PR @ 54f2af2: **CHANGES** (5 must-fix: router and approve-target allow-list, API floor required, no $1 fallback, NFLX suffix bug, allowance fallback). Gates: V-B1 FAIL (Switch cancelled), V-B2 PASS pre-market | Agent 07 fixes; user re-runs V-B2 in regular hours (after 13:30 UTC) and does one live $6 sell. |
+| 07 | Sell (Switch cut) | C Codex #2 | **APPROVE** @ 504d134 (all review findings fixed; FULL pack green) | User squash-merges, then WO-12 builds the sell UI (prompt to Sonnet). User: one live $6 sell; V-B2 re-run in regular hours. Next for 07: propose the additive receipts extension for sells. Guided two-step Move comes after the UI. |
 | 08 | Guardian autopilot | C | Wave 2 | Blocked on V-AW. No longer owns `skills/share-true-trading/**` (moved to WO-05). **Escalate to Claude.** |
 | 09 | Pies | B | Wave 2, after WO-05 | |
 | 10 | Rewards → Stocks | D | Wave 2, if V-C gates pass | |
