@@ -24,7 +24,7 @@ export interface ReceiptVM extends Freshness {
   intentId: string | null;
   ticker: string | null;
   user: string | null;
-  kind: "swap" | "approval" | null;
+  kind: "swap" | "approval" | "sell" | "stock_approval" | null;
   status: ReceiptStatus | null;
   ladder: {
     stage: "Quoted" | "Simulated" | "Received";
@@ -118,16 +118,17 @@ export function receiptVM(snapshot: Latest<StoredReceipt>): ReceiptVM {
   const quote = r?.quote;
   const receivedTokens = d.verifiedFill?.tokens ?? result?.tokensReceived;
   const receivedShares = d.verifiedFill?.shares ?? result?.sharesReceived;
-  const qConversion = d.hint.quote
-    ? {
-        multiplier: BigInt(d.hint.quote.multiplier),
-        tokenDecimals: 18,
-        source: "untrusted-browser-hint",
-        observationId: "client-hint",
-        observedAt: null,
-        observedAtReason: "Client reported",
-      }
-    : r?.conversion;
+  const qConversion =
+    d.hint.quote && "multiplier" in d.hint.quote && d.hint.quote.multiplier != null
+      ? {
+          multiplier: BigInt(d.hint.quote.multiplier),
+          tokenDecimals: 18,
+          source: "untrusted-browser-hint",
+          observationId: "client-hint",
+          observedAt: null,
+          observedAtReason: "Client reported",
+        }
+      : r?.conversion;
   return {
     ...vm,
     status,
@@ -145,55 +146,107 @@ export function receiptVM(snapshot: Latest<StoredReceipt>): ReceiptVM {
           ? (d.pendingReason ?? "Awaiting a mined receipt; transaction hash retained")
           : d.kind === "approval"
             ? "USDT approval confirmed; no stock fill"
-            : status === "UNRECONCILED"
-              ? (result?.notes.at(-1) ?? d.pendingReason ?? "Evidence incomplete")
-              : null,
-    signedMinimumShares: r ? formatUnits(r.intent.minShares, 18) : null,
+            : d.kind === "stock_approval"
+              ? "Stock approval confirmed; no sale fill"
+              : status === "UNRECONCILED"
+                ? (result?.notes.at(-1) ?? d.pendingReason ?? "Evidence incomplete")
+                : d.kind === "sell" && status === "RECONCILED"
+                  ? `Sold ${formatUnits(result?.tokensSpent ?? 0n, 18)} tokens for ${formatUnits(result?.tokensReceived ?? 0n, 18)} USDT.`
+                  : null,
+    signedMinimumShares:
+      d.kind === "sell"
+        ? d.hint.quote && "minUsdtOut" in d.hint.quote && d.hint.quote.minUsdtOut
+          ? `${formatUnits(BigInt(d.hint.quote.minUsdtOut), 18)} USDT (client-reported floor)`
+          : null
+        : r
+          ? formatUnits(r.intent.minShares, 18)
+          : null,
     diffVsQuoteBps: result?.diffVsQuoteBps ?? null,
     diffVsSimBps: result?.diffVsSimBps ?? null,
     comparisonTrust: d.baselineTrust,
     provenance: `${snapshot.source}; last verified ${new Date(d.verifiedAt).toISOString()}; ${d.baselineTrust === "client-hint" ? "quote is client-reported" : "recorded comparison"}`,
     ladder:
-      d.kind === "approval"
+      d.kind === "approval" || d.kind === "stock_approval"
         ? []
-        : [
-            {
-              stage: "Quoted",
-              tokens: quote ? formatUnits(quote.expectedOut.raw, quote.expectedOut.decimals) : null,
-              shares:
-                quote && qConversion
-                  ? formatUnits(receiptShares(quote.expectedOut.raw, qConversion), 18)
+        : d.kind === "sell"
+          ? [
+              {
+                stage: "Quoted",
+                tokens:
+                  d.hint.quote && "tokensIn" in d.hint.quote
+                    ? formatUnits(BigInt(d.hint.quote.tokensIn), 18)
+                    : null,
+                shares: null,
+                source:
+                  d.baselineTrust === "client-hint" ? "client-reported quote" : "recorded quote",
+                reason: r?.quoteMissingReason ?? null,
+              },
+              {
+                stage: "Simulated",
+                tokens: null,
+                shares: null,
+                source: "unavailable",
+                reason: "Sell does not record simulation output",
+              },
+              {
+                stage: "Received",
+                tokens:
+                  receivedTokens === null || receivedTokens === undefined
+                    ? null
+                    : formatUnits(receivedTokens, 18),
+                shares:
+                  receivedShares === null || receivedShares === undefined
+                    ? null
+                    : formatUnits(receivedShares, 18),
+                source: snapshot.source,
+                reason:
+                  receivedTokens == null
+                    ? "No reconciled stock tokens spent"
+                    : receivedShares == null
+                      ? "Shares unavailable; engine multiplier could not be determined at verification time"
+                      : null,
+              },
+            ]
+          : [
+              {
+                stage: "Quoted",
+                tokens: quote
+                  ? formatUnits(quote.expectedOut.raw, quote.expectedOut.decimals)
                   : null,
-              source:
-                d.baselineTrust === "client-hint" ? "client-reported quote" : "recorded quote",
-              reason: r?.quoteMissingReason ?? null,
-            },
-            {
-              stage: "Simulated",
-              tokens: r?.simulation
-                ? formatUnits(r.simulation.expectedOut.raw, r.simulation.expectedOut.decimals)
-                : null,
-              shares:
-                r?.simulation && r.conversion
-                  ? formatUnits(receiptShares(r.simulation.expectedOut.raw, r.conversion), 18)
+                shares:
+                  quote && qConversion
+                    ? formatUnits(receiptShares(quote.expectedOut.raw, qConversion), 18)
+                    : null,
+                source:
+                  d.baselineTrust === "client-hint" ? "client-reported quote" : "recorded quote",
+                reason: r?.quoteMissingReason ?? null,
+              },
+              {
+                stage: "Simulated",
+                tokens: r?.simulation
+                  ? formatUnits(r.simulation.expectedOut.raw, r.simulation.expectedOut.decimals)
                   : null,
-              source: r?.simulation?.source ?? "unavailable",
-              reason: r?.simulationMissingReason ?? null,
-            },
-            {
-              stage: "Received",
-              tokens:
-                receivedTokens === null || receivedTokens === undefined
-                  ? null
-                  : formatUnits(receivedTokens, r?.intent.tokenDecimals ?? 18),
-              shares:
-                receivedShares === null || receivedShares === undefined
-                  ? null
-                  : formatUnits(receivedShares, 18),
-              source: snapshot.source,
-              reason: receivedShares == null ? "No reconciled stock output available" : null,
-            },
-          ],
+                shares:
+                  r?.simulation && r.conversion
+                    ? formatUnits(receiptShares(r.simulation.expectedOut.raw, r.conversion), 18)
+                    : null,
+                source: r?.simulation?.source ?? "unavailable",
+                reason: r?.simulationMissingReason ?? null,
+              },
+              {
+                stage: "Received",
+                tokens:
+                  receivedTokens === null || receivedTokens === undefined
+                    ? null
+                    : formatUnits(receivedTokens, r?.intent.tokenDecimals ?? 18),
+                shares:
+                  receivedShares === null || receivedShares === undefined
+                    ? null
+                    : formatUnits(receivedShares, 18),
+                source: snapshot.source,
+                reason: receivedShares == null ? "No reconciled stock output available" : null,
+              },
+            ],
     evidence: {
       ...vm.evidence,
       block: d.chainReceipt?.blockNumber.toString() ?? null,

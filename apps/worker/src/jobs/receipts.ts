@@ -5,11 +5,18 @@ import {
   RECEIPT_MAX_AGE_MS,
   receiptHintKey,
   verifySignedCall,
+  verifySignedSellCall,
+  verifiedSellFill,
   promoteReceipt,
+  promoteSellReceipt,
   verifyMinedTransaction,
+  equalAddress,
+  type ReceiptHint,
+  type SellMultiplierEvidence,
   type StoredHint,
   type StoredReceipt,
 } from "@tally/mod-receipts";
+import { LIQUIDMESH_ROUTER } from "@tally/engine";
 import type { WorkerJob } from "../runner";
 
 /** Untrusted discovery is ephemeral; only verified chain transactions enter protected evidence. */
@@ -30,7 +37,11 @@ export const job: WorkerJob = {
     const byHash = new Map(evidence.map((s) => [s.key, s]));
     const targets = new Map(
       evidence
-        .filter((s) => !s.data.chainReceipt || (s.data.kind === "swap" && !s.data.receipt))
+        .filter(
+          (s) =>
+            !s.data.chainReceipt ||
+            ((s.data.kind === "swap" || s.data.kind === "sell") && !s.data.receipt),
+        )
         .map((s) => [receiptHintKey(s.data.hint), s.data.hint]),
     );
     const hints = ctx.store.listLatest<StoredHint>(HINT_KIND, options);
@@ -42,7 +53,9 @@ export const job: WorkerJob = {
         s.data.state === "rejected" ||
         (bound?.data.hint.intentId === s.data.hint.intentId &&
           bound.data.chainReceipt &&
-          (bound.data.kind === "approval" || bound.data.receipt))
+          (bound.data.kind === "approval" ||
+            bound.data.kind === "stock_approval" ||
+            bound.data.receipt))
       )
         continue;
       // Preserve the original hint for already protected evidence; retain other candidates too.
@@ -80,7 +93,44 @@ export const job: WorkerJob = {
         }
         let call;
         try {
-          call = verifySignedCall(tx, hint);
+          if (hint.kind === "sell") {
+            const tokens = await ctx.engine.ports.registry.tokensFor(hint.ticker);
+            const matchingToken = tokens.find((t) => equalAddress(t.address, tx.destination));
+            const stockAddr = matchingToken?.address ?? hint.quote?.stock ?? tokens[0]?.address;
+            if (!stockAddr) {
+              ctx.onWarn(`Receipt ${hash}: stock address could not be resolved from registry`);
+              const previous = ctx.store.latest<StoredHint>(HINT_KIND, key, options);
+              if (previous)
+                ctx.store.put({
+                  ...previous,
+                  data: {
+                    ...previous.data,
+                    state: "rejected",
+                    reason: "Transaction does not match supported signed intent",
+                  },
+                });
+              continue;
+            }
+            let guardInfo;
+            try {
+              guardInfo = await ctx.engine.trade.guardRouter(stockAddr);
+            } catch {
+              ctx.onWarn(
+                `Receipt ${hash}: failed to read guard router for ${stockAddr}; hint remains pending`,
+              );
+              // Leave hint pending: no fallback, do not mark rejected, advance to next hint
+              continue;
+            }
+            call = verifySignedSellCall(
+              tx,
+              hint,
+              tokens,
+              guardInfo.approveTarget,
+              LIQUIDMESH_ROUTER,
+            );
+          } else {
+            call = verifySignedCall(tx, hint);
+          }
         } catch {
           ctx.onWarn(`Receipt ${hash}: transaction rejected by signed-call verification`);
           const previous = ctx.store.latest<StoredHint>(HINT_KIND, key, options);
@@ -157,14 +207,47 @@ export const job: WorkerJob = {
               pendingReason: "Stock metadata verification unavailable",
             } satisfies StoredReceipt,
           });
-        const tokens =
-          call.kind === "swap" ? await ctx.engine.ports.registry.tokensFor(hint.ticker) : [];
-        active();
-        const token =
-          call.kind === "swap"
-            ? (tokens.find((t) => t.address.toLowerCase() === call.stock.toLowerCase()) ?? null)
-            : null;
-        const data = promoteReceipt(hint, tx, mined, call, token, ctx.now());
+        let data: StoredReceipt;
+        if (call.kind === "sell" || call.kind === "stock_approval") {
+          const tokens = await ctx.engine.ports.registry.tokensFor(hint.ticker);
+          let token =
+            call.stock !== null
+              ? (tokens.find((t) => equalAddress(t.address, call.stock)) ?? null)
+              : null;
+          if (!token && mined && call.kind === "sell") {
+            const fill = verifiedSellFill(tx, mined, call, tokens);
+            const stockAddr = fill?.stockAddress;
+            if (stockAddr) {
+              token = tokens.find((t) => equalAddress(t.address, stockAddr)) ?? null;
+            }
+          }
+          let multEvidence: SellMultiplierEvidence | null = null;
+          try {
+            const facts = await ctx.engine.facts(hint.ticker);
+            const tokenFact = token
+              ? facts.find((f) => equalAddress(f.address, token.address))
+              : null;
+            if (tokenFact?.multiplier && tokenFact.multiplier.value > 0n) {
+              multEvidence = {
+                value: tokenFact.multiplier.value,
+                source: tokenFact.multiplier.source,
+                observedAt: ctx.now(),
+              };
+            }
+          } catch {
+            // multiplier unavailable
+          }
+          data = promoteSellReceipt(hint, tx, mined, call, token, multEvidence, ctx.now(), tokens);
+        } else {
+          const tokens =
+            call.kind === "swap" ? await ctx.engine.ports.registry.tokensFor(hint.ticker) : [];
+          active();
+          const token =
+            call.kind === "swap"
+              ? (tokens.find((t) => t.address.toLowerCase() === call.stock.toLowerCase()) ?? null)
+              : null;
+          data = promoteReceipt(hint as ReceiptHint, tx, mined, call, token, ctx.now());
+        }
         data.lastCheckedAt = now;
         ctx.store.put({
           kind: RECEIPTS_KIND,

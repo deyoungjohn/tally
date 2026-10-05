@@ -1,12 +1,15 @@
-import { SHAREGUARD_DEPLOYED, USDT_BSC } from "@tally/config";
+import { LIQUIDMESH_ROUTER, SHAREGUARD_DEPLOYED, USDT_BSC } from "@tally/config";
+import type { Address } from "@tally/core";
 import type { SnapshotStore } from "@tally/modkit";
 import {
   HINT_KIND,
   HINT_TTL_MS,
   RECEIPTS_KIND,
+  equalAddress,
   parseReceiptHint,
   receiptHintKey,
   verifySignedCall,
+  verifySignedSellCall,
   type StoredHint,
   type StoredReceipt,
 } from "@tally/mod-receipts";
@@ -102,15 +105,44 @@ export function createReceiptPost(deps: Dependencies) {
         const engine = await deps.engine();
         const tx = await engine.transactions.getTransaction(hint.txHash);
         if (tx) {
-          try {
-            verifySignedCall(tx, hint, SHAREGUARD_DEPLOYED, USDT_BSC);
-          } catch {
-            return response(422, "Transaction does not match a supported signed intent");
+          if (hint.kind === "sell") {
+            const tokens = await engine.ports.registry.tokensFor(hint.ticker);
+            const matchingToken = tokens.find((t) => equalAddress(t.address, tx.destination));
+            const stockAddr = matchingToken?.address ?? hint.quote?.stock ?? tokens[0]?.address;
+            if (!stockAddr) {
+              return response(422, "Transaction does not match a supported signed intent");
+            }
+            let guardInfo: { routerAllowed: boolean; approveTarget: Address } | null = null;
+            try {
+              guardInfo = await engine.trade.guardRouter(stockAddr);
+            } catch {
+              deps.onWarn(
+                `Receipt ${hint.txHash}: guard router read unavailable; hint remains pending`,
+              );
+              reason = "Guard router read unavailable; awaiting verification";
+              state = "pending";
+            }
+            if (guardInfo) {
+              try {
+                verifySignedSellCall(tx, hint, tokens, guardInfo.approveTarget, LIQUIDMESH_ROUTER);
+              } catch {
+                return response(422, "Transaction does not match a supported signed intent");
+              }
+              await engine.transactions.getReceipt(hint.txHash);
+              state = "verified";
+              reason = "Signed transaction verified; awaiting worker evidence";
+            }
+          } else {
+            try {
+              verifySignedCall(tx, hint, SHAREGUARD_DEPLOYED, USDT_BSC);
+            } catch {
+              return response(422, "Transaction does not match a supported signed intent");
+            }
+            // Acceptance still stores only an untrusted hint; worker obtains the full receipt again.
+            await engine.transactions.getReceipt(hint.txHash);
+            state = "verified";
+            reason = "Signed transaction verified; awaiting worker evidence";
           }
-          // Acceptance still stores only an untrusted hint; worker obtains the full receipt again.
-          await engine.transactions.getReceipt(hint.txHash);
-          state = "verified";
-          reason = "Signed transaction verified; awaiting worker evidence";
         }
       } catch {
         deps.onWarn(

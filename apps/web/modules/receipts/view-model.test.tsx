@@ -1,9 +1,12 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+import type { Address, Hex } from "@tally/core";
+import { LIQUIDMESH_ROUTER } from "@tally/config";
 import { createFixtureEngine } from "@tally/engine";
 import { openStore, type OpenSnapshotStore } from "@tally/modkit";
 import {
+  DEFAULT_LIQUIDMESH_ROUTER,
   HINT_KIND,
   HINT_TTL_MS,
   RECEIPTS_KIND,
@@ -257,4 +260,132 @@ it("candidate hints keep transaction hashes, deduplicate pending counts and resp
   await seed();
   expect(await loadQuality(options)).toMatchObject({ pendingCount: 0, unverifiedPendingCount: 0 });
   expect((await loadReceipts(options)).items).toHaveLength(1);
+});
+
+it("sell receipt view model constructs correct ladder, status, and client-reported floor", async () => {
+  const txHash = ("0x" + "c".repeat(64)) as Hex;
+  const user = "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7" as Address;
+  const router = "0xb44446b0c8e56988c34f7ff73ae904982b5fdda5" as Address;
+  const stock = "0x02fca66c1d1afb4e2a7884261eb00f63598a7436" as Address;
+  const emptyHex = "0x" as Hex;
+  const storedSell: StoredReceipt = {
+    kind: "sell",
+    baselineTrust: "client-hint",
+    verifiedAt: 1000,
+    hint: {
+      version: 1,
+      kind: "sell",
+      txHash: txHash,
+      intentId: "intent-sell-1",
+      attempt: 1,
+      user: user,
+      ticker: "NVDA",
+      isResumed: false,
+      quote: {
+        stock: stock,
+        issuer: "bstock",
+        tokensIn: "25000000000000000",
+        minUsdtOut: "5800000000000000000",
+        quotedUsdtOut: "5880000000000000000",
+        hops: 1,
+        routeText: "NVDAB → USDT",
+        builtAt: 900,
+        expiresAt: 915,
+      },
+      simulation: null,
+    },
+    receipt: {
+      network: "bsc",
+      chainId: 56,
+      intent: {
+        id: "intent-sell-1",
+        kind: "sell",
+        attempt: 1,
+        initiatedAt: 900,
+        user: user,
+        recipient: user,
+        spend: {
+          asset: stock,
+          raw: 25000000000000000n,
+          decimals: 18,
+        },
+        minShares: 0n,
+        toleranceBps: 0,
+        approvedAt: null,
+        guard: null,
+      },
+      quote: null,
+      quoteMissingReason: null,
+      simulation: null,
+      simulationMissingReason: "Sell does not record simulation output",
+      conversion: {
+        multiplier: 1000778223752807865n,
+        tokenDecimals: 18,
+        source: "engine",
+        observationId: "obs-1",
+        observedAt: 950,
+        stalenessReason: null,
+      },
+      conversionMissingReason: null,
+      txHash: txHash,
+      realized: null,
+      notes: [],
+    },
+    transaction: {
+      hash: txHash,
+      sender: user,
+      destination: router,
+      value: 0n,
+      input: emptyHex,
+      inputSelector: emptyHex,
+      gasLimit: 100000n,
+      blockNumber: 1000n,
+    },
+    chainReceipt: {
+      hash: txHash,
+      sender: user,
+      destination: router,
+      blockNumber: 1000n,
+      gasUsed: 50000n,
+      status: "success",
+      logs: [],
+    },
+    result: {
+      status: "RECONCILED",
+      notes: [],
+      tokensSpent: 25000000000000000n,
+      tokensReceived: 5880000000000000000n,
+      sharesReceived: null,
+      guarded: null,
+      diffVsQuoteBps: 0,
+      diffVsSimBps: null,
+    },
+    verifiedFill: {
+      tokens: 25000000000000000n,
+      shares: 24980559535211267n,
+    },
+  };
+
+  store.put({
+    kind: RECEIPTS_KIND,
+    key: txHash,
+    source: "recorded-chain",
+    observedAt: 1000,
+    data: storedSell,
+  });
+
+  const vm = await loadReceipt(txHash, { store, now: 1000, enabled: true });
+  expect(vm.state).toBe("ready");
+  expect(vm.status).toBe("RECONCILED");
+  expect(vm.signedMinimumShares).toBe("5.8 USDT (client-reported floor)");
+  expect(vm.ladder).toHaveLength(3);
+  expect(vm.ladder[0].stage).toBe("Quoted");
+  expect(vm.ladder[1].stage).toBe("Simulated");
+  expect(vm.ladder[1].reason).toBe("Sell does not record simulation output");
+  expect(vm.ladder[2].stage).toBe("Received");
+  expect(vm.ladder[2].tokens).toBe("0.025");
+});
+
+it("DEFAULT_LIQUIDMESH_ROUTER in mod-receipts matches LIQUIDMESH_ROUTER from config (Finding 4)", () => {
+  expect(DEFAULT_LIQUIDMESH_ROUTER.toLowerCase()).toBe(LIQUIDMESH_ROUTER.toLowerCase());
 });

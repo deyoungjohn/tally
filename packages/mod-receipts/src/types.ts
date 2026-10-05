@@ -12,7 +12,7 @@ export interface TokenAmount {
 /** Stock-output operations; direct stablecoin-output sells need a separate minimum-out model. */
 export interface Intent {
   id: string;
-  kind: "buy" | "switch" | "rewardsToStock";
+  kind: "buy" | "switch" | "rewardsToStock" | "sell";
   ticker: string;
   asset: Address;
   issuer: Issuer;

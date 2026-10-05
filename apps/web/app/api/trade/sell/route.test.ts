@@ -1,9 +1,34 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { POST } from "./route";
 import * as serverEngine from "../../../../lib/server/engine";
 
 describe("/api/trade/sell route", () => {
+  beforeEach(() => {
+    vi.stubEnv("FEATURE_SELL", "1");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("returns 404 when FEATURE_SELL is off", async () => {
+    vi.stubEnv("FEATURE_SELL", "0");
+    const req = new NextRequest("http://localhost:3000/api/trade/sell", {
+      method: "POST",
+      body: JSON.stringify({
+        ticker: "NVDA",
+        issuer: "bstock",
+        shares: 0.025,
+        user: "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
+      }),
+    });
+    const res = await POST(req);
+    expect(res.status).toBe(404);
+    const data = await res.json();
+    expect(data.error.kind).toBe("not_found");
+    expect(data.error.message).toBe("Sell is disabled.");
+  });
   it("rejects invalid body without ticker or user", async () => {
     const req = new NextRequest("http://localhost:3000/api/trade/sell", {
       method: "POST",

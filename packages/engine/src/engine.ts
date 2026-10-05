@@ -33,6 +33,7 @@ import {
   type TradeRequest,
 } from "./trade";
 import { prepareSell, type SellPlan, type SellRequest } from "./sell";
+import { readGuardRouter } from "./guard-router";
 import { feedSignerFromEnv, liveTradeChain } from "./trade-chain";
 import { fixtureTradeChain } from "./trade-fixture";
 import {
@@ -111,6 +112,7 @@ export interface Engine {
     prepare(req: TradeRequest): Promise<TradePlan>;
     receipt(txHash: Hex, ticker?: string): Promise<TradeReceipt>;
     prepareSell(req: SellRequest): Promise<SellPlan>;
+    guardRouter(stock: Address): Promise<{ routerAllowed: boolean; approveTarget: Address }>;
   };
   /** Integrity grades for every token of the given tickers (cached 2 minutes). */
   radar(tickers: readonly string[]): Promise<RadarReport>;
@@ -261,6 +263,7 @@ function build(o: BuildOptions): Engine {
       prepare: (req) => prepareTrade(tradeDeps, req),
       receipt: (hash, ticker) => getTradeReceipt(tradeDeps, hash, ticker),
       prepareSell: (req) => prepareSell(sellDeps, req),
+      guardRouter: (stock) => readGuardRouter(o.tradeChain, stock),
     },
     facts: (ticker) => inspectTicker(ports, ticker),
     quote,
