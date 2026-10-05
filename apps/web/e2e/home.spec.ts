@@ -162,11 +162,11 @@ test.describe("radar and portfolio pages", () => {
 
   test("radar grades every token with reasons and filters ghost markets", async ({ page }) => {
     await page.goto("/radar");
-    await expect(page.getByTestId("radar-NVDAx")).toContainText("Ghost market", {
+    await expect(page.getByTestId("radar-NVDAx")).toContainText("Not Tradable", {
       timeout: 20_000,
     });
     await expect(page.getByTestId("radar-NVDAon")).toBeVisible();
-    await page.getByRole("radio", { name: "Ghost" }).click();
+    await page.getByRole("radio", { name: "Not Tradable" }).click();
     await expect(page.getByTestId("radar-NVDAon")).toHaveCount(0);
     await expect(page.getByTestId("radar-NVDAx")).toBeVisible();
   });
@@ -263,7 +263,7 @@ test.describe("signed-in changes", () => {
     const dialog = page.getByRole("dialog", { name: "Send from your wallet" });
     await expect(dialog).toBeVisible();
     await dialog.getByTestId("send-to").fill("0x123");
-    await expect(dialog.getByRole("alert")).toContainText("valid wallet address");
+    await expect(dialog.getByRole("alert")).toContainText("42 characters");
     await expect(dialog.getByTestId("send-review")).toBeDisabled();
     await dialog.getByTestId("send-to").fill("0x2Bf7EdF53bc6BE6FF98F149387F3818cE28d2930");
     await dialog.getByTestId("send-amount").fill("1");

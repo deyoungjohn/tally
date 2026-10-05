@@ -85,7 +85,7 @@ export function ProgressIsland({ phase }: { phase: FlowPhase }) {
                   className="w-[min(320px,calc(100vw-56px))] flex-col items-stretch gap-3 !px-6 !py-4"
                 >
                   <span
-                    className="text-center text-[14px] font-semibold"
+                    className="text-center text-[15px] font-semibold"
                     aria-label={`Step ${shown.step} of 4: ${shown.label}`}
                   >
                     {shown.label}
@@ -148,7 +148,7 @@ export function SignInSheet({ open, onClose }: { open: boolean; onClose: () => v
         Sign in with your email or Google. We make you a wallet in a few seconds. No crypto
         experience needed.
       </p>
-      <label className="panel mt-5 flex cursor-pointer items-start gap-3 p-4 text-[14px] leading-snug">
+      <label className="panel mt-5 flex cursor-pointer items-start gap-3 p-4 text-[15px] leading-snug">
         <input
           type="checkbox"
           checked={agree}
@@ -282,7 +282,7 @@ export function TopUpSheet({
             {address ? <Qr text={address} /> : null}
             <div className="min-w-0 flex-1">
               <p className="t-meta">Your wallet address</p>
-              <p className="mono truncate-mid mt-1 text-[13px]" data-testid="deposit-address">
+              <p className="mono truncate-mid mt-1 text-[14px]" data-testid="deposit-address">
                 {address}
               </p>
               <div className="mt-3">
@@ -292,7 +292,7 @@ export function TopUpSheet({
           </div>
           <div
             role="alert"
-            className="flex gap-3 rounded-[18px] border border-[rgba(242,193,78,.3)] bg-[rgba(242,193,78,.08)] p-4 text-[14px]"
+            className="flex gap-3 rounded-[18px] border border-[rgba(242,193,78,.3)] bg-[rgba(242,193,78,.08)] p-4 text-[15px]"
           >
             <AlertTriangle size={18} className="mt-0.5 flex-none text-amber" aria-hidden />
             <p>
@@ -348,7 +348,7 @@ export function ReviewSheet({
           {notice ? (
             <p
               role="status"
-              className="rounded-[14px] bg-[rgba(242,193,78,.1)] px-4 py-3 text-[14px] text-amber"
+              className="rounded-[14px] bg-[rgba(242,193,78,.1)] px-4 py-3 text-[15px] text-amber"
             >
               {notice}
             </p>
@@ -356,9 +356,9 @@ export function ReviewSheet({
           <div className="field">
             <p className="t-meta">You&apos;ll get at least</p>
             <p className="t-big mt-1" data-testid="min-shares">
-              {fmtShares(min)} <span className="text-[22px] text-fg2">{plan.ticker} shares</span>
+              {fmtShares(min)} <span className="text-[23px] text-fg2">{plan.ticker} shares</span>
             </p>
-            <p className="mt-2 text-[14px] text-fg2">
+            <p className="mt-2 text-[15px] text-fg2">
               …or nothing happens. Tally checks this in shares, on-chain, before it keeps the trade.
             </p>
           </div>
@@ -394,7 +394,7 @@ export function ReviewSheet({
               </dd>
             </div>
             <div className="detail-row">
-              <dt>Tolerance</dt>
+              <dt>Slippage</dt>
               <dd>{plan.tolerancePct}%</dd>
             </div>
           </dl>
@@ -446,7 +446,7 @@ export function ReceiptCard({
         </h2>
       </div>
       <p className="t-big mt-4" data-testid="receipt-shares">
-        {fmtShares(shares)} <span className="text-[22px] text-fg2">{ticker} shares</span>
+        {fmtShares(shares)} <span className="text-[23px] text-fg2">{ticker} shares</span>
       </p>
       <dl className="mt-4">
         <div className="detail-row">
@@ -491,7 +491,7 @@ export function ReceiptCard({
           aria-label="View transaction on BscScan (opens in a new tab)"
         >
           <ExternalLink size={16} aria-hidden /> BscScan{" "}
-          <span className="mono text-[12px] text-fg2">{shortHash(receipt.txHash)}</span>
+          <span className="mono text-[13px] text-fg2">{shortHash(receipt.txHash)}</span>
         </a>
         <Button variant="ghost" onClick={onDismiss}>
           Done

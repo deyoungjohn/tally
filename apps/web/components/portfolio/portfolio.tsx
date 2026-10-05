@@ -7,10 +7,13 @@ import type { PortfolioReport } from "@tally/engine";
 import { Button, ButtonLink } from "@/components/motion/button";
 import { ComingSoon } from "@/components/trade/coming-soon";
 import { GradeBadge, TokenLogo } from "@/components/trade/badges";
+import { CopyAddress } from "@/components/wallet/copy-address";
 import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { useJson } from "@/lib/hooks/use-json";
-import { ISSUER_LABEL, fmtShares, fmtUsd } from "@/lib/format";
+import { ISSUER_LABEL } from "@/lib/format";
 import { nameOf } from "@/lib/tickers";
+import { LiveNumber, LiveShares, LiveUsd } from "@/components/motion/live";
+import { LearnMore } from "@/components/learn-more";
 
 type Group = PortfolioReport["groups"][number];
 
@@ -24,23 +27,37 @@ export function HoldingGroup({ g, example }: { g: Group; example?: boolean }) {
           <p className="t-meta mono">{g.ticker}</p>
         </div>
         <div className="text-right">
-          <p className="num text-[22px] font-bold tracking-tight">{fmtShares(g.shares)}</p>
-          <p className="t-meta">shares{g.valueUsd === null ? "" : ` · ≈ ${fmtUsd(g.valueUsd)}`}</p>
+          <LiveShares
+            value={g.shares}
+            className="num flex justify-end text-[23px] font-bold tracking-tight"
+          />
+          <p className="t-meta flex items-center justify-end gap-1">
+            shares
+            {g.valueUsd === null ? null : (
+              <>
+                {" · ≈ "}
+                <LiveUsd value={g.valueUsd} />
+              </>
+            )}
+          </p>
         </div>
       </div>
       <ul className="m-0 mt-4 grid list-none gap-2 p-0">
         {g.parts.map((p) => (
           <li
             key={p.address}
-            className="flex items-center justify-between gap-3 rounded-[14px] bg-white/[0.03] px-3 py-2 text-[13.5px]"
+            className="flex items-center justify-between gap-3 rounded-[14px] bg-white/[0.03] px-3 py-2 text-[14.5px]"
           >
             <span className="flex items-center gap-2">
-              <GradeBadge grade={p.grade} className="!h-6 !w-6 !text-[11px]" />
-              {ISSUER_LABEL[p.issuer]} <span className="mono text-[12px] text-fg3">{p.symbol}</span>
+              <GradeBadge grade={p.grade} className="!h-6 !w-6 !text-[12px]" />
+              {ISSUER_LABEL[p.issuer]} <span className="mono text-[13px] text-fg3">{p.symbol}</span>
             </span>
             <span className="num text-fg2">
-              {p.tokens.toFixed(6)} tokens × {Number(p.multiplier.toFixed(6))} ={" "}
-              <b className="text-fg">{fmtShares(p.shares)}</b>
+              <LiveNumber value={p.tokens} decimals={6} /> tokens ×{" "}
+              {Number(p.multiplier.toFixed(6))} ={" "}
+              <b className="text-fg">
+                <LiveShares value={p.shares} />
+              </b>
             </span>
           </li>
         ))}
@@ -48,7 +65,7 @@ export function HoldingGroup({ g, example }: { g: Group; example?: boolean }) {
       {example ? null : (
         <Link
           href={`/trade/${g.ticker}`}
-          className="mt-3 inline-flex min-h-[44px] items-center gap-1 text-[13px] text-blue"
+          className="mt-3 inline-flex min-h-[44px] items-center gap-1 text-[14px] text-blue"
         >
           Buy more {g.ticker} <ArrowRight size={13} aria-hidden />
         </Link>
@@ -104,6 +121,7 @@ export function PortfolioPage() {
   const address = viewing ?? (wallet.authenticated ? wallet.address : undefined) ?? null;
   const { data, error, loading } = useJson<PortfolioReport>(
     address ? `/api/portfolio?address=${address}` : null,
+    { refreshMs: 10_000 },
   );
 
   return (
@@ -112,7 +130,7 @@ export function PortfolioPage() {
       <h1 className="t-h2 mt-3 max-w-[22ch]">Your tokenized shares, counted in shares.</h1>
       <p className="t-lead mt-3 max-w-[62ch]">
         Holdings from different issuers add up in share units, so 1.2 shares from Ondo and 0.5 from
-        bStock read as 1.7 shares, not two confusing token balances.
+        bStock read as 1.7 shares, not two confusing token balances. <LearnMore concept="shares" />
       </p>
 
       {!address ? (
@@ -202,22 +220,25 @@ export function PortfolioPage() {
             <div className="glass p-5">
               <p className="t-meta">Total value of tokenized stock holdings</p>
               <p className="t-big mt-1" data-testid="total-value">
-                {data ? fmtUsd(data.totalValueUsd) : "–"}
+                <LiveUsd value={data?.totalValueUsd} />
               </p>
-              <p className="t-meta mt-1 mono">
-                {address.slice(0, 6)}…{address.slice(-4)}
-              </p>
+              <p className="t-meta mt-4">Wallet address</p>
+              <CopyAddress address={address} className="mt-1" />
             </div>
             <div className="panel p-5">
               <p className="t-meta">Other assets in this wallet</p>
               <dl className="mt-2">
                 <div className="detail-row">
                   <dt>USDT</dt>
-                  <dd>{data ? fmtUsd(data.wallet.usdt) : "–"}</dd>
+                  <dd>
+                    <LiveUsd value={data?.wallet.usdt} />
+                  </dd>
                 </div>
                 <div className="detail-row">
                   <dt>BNB (for network fees)</dt>
-                  <dd>{data ? data.wallet.bnb.toFixed(5) : "–"}</dd>
+                  <dd>
+                    <LiveNumber value={data?.wallet.bnb} decimals={5} />
+                  </dd>
                 </div>
               </dl>
             </div>

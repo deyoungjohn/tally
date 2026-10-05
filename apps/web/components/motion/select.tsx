@@ -1,5 +1,6 @@
 "use client";
-// beui.dev/components/motion/select (unchanged). Restyled at the use sites with Tally's glass tokens.
+// beui.dev/components/motion/select. Restyled at the use sites with Tally's glass tokens. Tally addition: one highlight pill
+// glides from the previous hovered or focused item to the current one (like the beUI menus) instead of each item lighting up on its own.
 
 import { Check, ChevronDown } from "lucide-react";
 import { motion, type Transition, useReducedMotion, type Variants } from "motion/react";
@@ -49,6 +50,9 @@ interface SelectContextValue {
   disabled: boolean;
   placement: Placement;
   setPlacement: (p: Placement) => void;
+  /** The item under the pointer or keyboard focus: its box inside the list, or null. */
+  hover: { top: number; height: number } | null;
+  setHover: (h: { top: number; height: number } | null) => void;
 }
 
 const SelectContext = createContext<SelectContextValue | null>(null);
@@ -100,6 +104,7 @@ export function Select({
   const [internal, setInternal] = useState(defaultValue);
   const [labels, setLabels] = useState<Map<string, string>>(new Map());
   const [placement, setPlacement] = useState<Placement>("bottom");
+  const [hover, setHover] = useState<{ top: number; height: number } | null>(null);
 
   const controlled = value !== undefined;
   const current = controlled ? value : internal;
@@ -165,6 +170,8 @@ export function Select({
       disabled,
       placement,
       setPlacement,
+      hover,
+      setHover,
     }),
     [
       current,
@@ -178,6 +185,7 @@ export function Select({
       baseId,
       disabled,
       placement,
+      hover,
     ],
   );
 
@@ -380,11 +388,43 @@ export function SelectContent({ className, children }: SelectContentProps) {
         variants={ctx.reduce ? undefined : LIST_VARIANTS}
         initial={false}
         animate={open ? "show" : "hidden"}
-        className="p-1"
+        className="relative p-1"
+        onPointerLeave={() => ctx.setHover(null)}
       >
+        <Highlight />
         {children}
       </motion.div>
     </motion.div>
+  );
+}
+
+function Highlight() {
+  const ctx = useSelectContext("Highlight");
+  const shown = useRef(false);
+  const h = ctx.hover;
+  // The first hover after the pill was hidden snaps to the item and fades in; later hovers glide.
+  const snap = !shown.current;
+  shown.current = h !== null;
+  return (
+    <motion.div
+      aria-hidden
+      initial={false}
+      animate={{ y: h?.top ?? 0, height: h?.height ?? 0, opacity: h ? 1 : 0 }}
+      transition={
+        ctx.reduce
+          ? { duration: 0 }
+          : {
+              y: snap
+                ? { duration: 0 }
+                : { type: "spring", stiffness: 520, damping: 40, mass: 0.6 },
+              height: snap
+                ? { duration: 0 }
+                : { type: "spring", stiffness: 520, damping: 40, mass: 0.6 },
+              opacity: { duration: 0.15 },
+            }
+      }
+      className="pointer-events-none absolute left-1 right-1 top-0 rounded-lg bg-muted"
+    />
   );
 }
 
@@ -399,6 +439,11 @@ export function SelectItem({ value, disabled = false, className, children }: Sel
   const ctx = useSelectContext("SelectItem");
   const selected = ctx.value === value;
   const label = typeof children === "string" ? children : value;
+  const liRef = useRef<HTMLLIElement>(null);
+  const glideTo = () => {
+    const li = liRef.current;
+    if (li && !disabled) ctx.setHover({ top: li.offsetTop, height: li.offsetHeight });
+  };
 
   useLayoutEffect(() => {
     ctx.register(value, label);
@@ -406,7 +451,13 @@ export function SelectItem({ value, disabled = false, className, children }: Sel
   }, [ctx.register, ctx.unregister, value, label]);
 
   return (
-    <motion.li variants={ctx.reduce ? undefined : ITEM_VARIANTS}>
+    <motion.li
+      ref={liRef}
+      className="relative"
+      variants={ctx.reduce ? undefined : ITEM_VARIANTS}
+      onPointerEnter={glideTo}
+      onFocus={glideTo}
+    >
       <button
         type="button"
         role="option"
@@ -415,9 +466,7 @@ export function SelectItem({ value, disabled = false, className, children }: Sel
         onClick={() => ctx.select(value)}
         className={cn(
           "flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm outline-none transition-colors",
-          selected
-            ? "bg-muted text-foreground"
-            : "text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:bg-muted",
+          selected ? "text-foreground" : "text-muted-foreground hover:text-foreground",
           "disabled:pointer-events-none disabled:opacity-50",
           className,
         )}

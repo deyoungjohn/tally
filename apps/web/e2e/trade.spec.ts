@@ -41,7 +41,7 @@ for (const width of WIDTHS) {
       await quoteLoaded(page);
       await expect(page.getByTestId("row-NVDAon")).toBeVisible();
       await expect(page.getByTestId("row-NVDAB")).toBeVisible();
-      await expect(page.getByTestId("row-NVDAx")).toContainText("Ghost market");
+      await expect(page.getByTestId("row-NVDAx")).toContainText("Not Tradable");
       await expect(page.getByTestId("row-NVDAon")).toContainText("Best");
       await expect(page.getByTestId("min-received")).toContainText("shares");
       const overflow = await page.evaluate(
@@ -182,8 +182,8 @@ test.describe("keyboard path", () => {
     await page.goto("/trade/NVDA");
     await quoteLoaded(page);
     await page.getByLabel("You pay").focus();
-    // Tolerance radio group: arrow keys move the choice.
-    const tol = page.getByRole("radiogroup", { name: "Price tolerance" });
+    // Slippage radio group: arrow keys move the choice.
+    const tol = page.getByRole("radiogroup", { name: "Slippage" });
     await tol.getByRole("radio", { name: "1%" }).focus();
     await page.keyboard.press("ArrowRight");
     await expect(tol.getByRole("radio", { name: "2%" })).toBeChecked();
@@ -292,10 +292,15 @@ for (const [w, h] of [
     await page.goto("/trade/NVDA");
     await quoteLoaded(page);
     const pill = page
-      .getByRole("radiogroup", { name: "Price tolerance" })
+      .getByRole("radiogroup", { name: "Slippage" })
       .getByRole("radio", { checked: true });
-    // Page coordinates: opening the dialog scrolls the page, and the pill must not move on the page itself.
-    const top = () => pill.evaluate((el) => el.getBoundingClientRect().top + window.scrollY);
+    // Measured against the card: opening the dialog can scroll the page (the card is sticky on desktop), but the pill must not move inside it.
+    const top = () =>
+      pill.evaluate(
+        (el) =>
+          el.getBoundingClientRect().top -
+          document.querySelector('[data-testid="trade-card"]')!.getBoundingClientRect().top,
+      );
     const before = await top();
     await page.getByTestId("buy-button").click();
     const dialog = page.getByRole("dialog", { name: "Create your account" });

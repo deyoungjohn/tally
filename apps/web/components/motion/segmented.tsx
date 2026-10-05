@@ -71,7 +71,7 @@ export function Segmented<T extends string>({
               onClick={() => onChange(o.value)}
               onKeyDown={(e) => onKey(e, i)}
               className={cn(
-                "relative min-h-[36px] min-w-[44px] rounded-full px-4 text-[14px] font-semibold transition-colors",
+                "relative min-h-[36px] min-w-[44px] rounded-full px-4 text-[15px] font-semibold transition-colors",
                 active ? "text-[var(--silver-ink)]" : "text-fg2 hover:text-fg",
               )}
             >

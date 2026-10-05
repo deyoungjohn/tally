@@ -16,11 +16,13 @@ import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { HoldingGroup, EXAMPLE_GROUP } from "@/components/portfolio/portfolio";
 import { RadarRowCard, RadarStats, useRadar } from "@/components/radar/radar";
 import type { QuoteDto } from "@/lib/dto";
-import { ISSUER_LABEL, fmtPct, fmtShares, fmtUsd } from "@/lib/format";
+import { ISSUER_LABEL, fmtShares, fmtUsd } from "@/lib/format";
 import { useJson } from "@/lib/hooks/use-json";
 import { useLiveQuote } from "@/lib/hooks/use-live-quote";
 import { BUYABLE_TICKERS, isBuyable } from "@/lib/tickers";
 import type { PortfolioReport } from "@tally/engine";
+import { LivePct, LiveUsd } from "@/components/motion/live";
+import { ReturningUser } from "@/components/wallet/returning-user";
 
 /* ----------------------------------------------------------------- hero card */
 
@@ -62,7 +64,7 @@ export function HomeTradeCard() {
           You pay
         </label>
         <div className="mt-2 flex items-center gap-1">
-          <span className="text-[clamp(36px,5vw,56px)] font-bold leading-none text-fg3">$</span>
+          <span className="text-[clamp(37px,5vw,57px)] font-bold leading-none text-fg3">$</span>
           <input
             id="home-amount"
             className="amount-input"
@@ -76,13 +78,13 @@ export function HomeTradeCard() {
             }}
           />
         </div>
-        <p className="mt-2 min-h-[20px] text-[13px] text-red" role={tooSmall ? "alert" : undefined}>
+        <p className="mt-2 min-h-[20px] text-[14px] text-red" role={tooSmall ? "alert" : undefined}>
           {tooSmall ? "Minimum is $6." : ""}
         </p>
       </div>
       <div className="field mt-2" data-testid="home-get">
         <p className="t-meta">You get, at the best price right now</p>
-        <p className="t-big mt-2 !text-[clamp(30px,3.6vw,46px)]">
+        <p className="t-big mt-2 !text-[clamp(31px,3.6vw,47px)]">
           {row?.shares === undefined ? (
             <span className="text-fg-disabled">–</span>
           ) : (
@@ -93,16 +95,16 @@ export function HomeTradeCard() {
                 startOnView={false}
                 duration={0.5}
               />{" "}
-              <span className="text-[20px] text-fg2">{ticker} shares</span>
+              <span className="text-[21px] text-fg2">{ticker} shares</span>
             </>
           )}
         </p>
         {row ? (
-          <p className="mt-2 text-[13.5px] text-fg2">
-            via {ISSUER_LABEL[row.issuer]} · {fmtUsd(row.usdPerShare)} per share ·{" "}
+          <p className="mt-2 text-[14.5px] text-fg2">
+            via {ISSUER_LABEL[row.issuer]} · <LiveUsd value={row.usdPerShare} /> per share ·{" "}
             <span className={row.premium! < 0 ? "pos" : "neg"}>
               {row.premium! < 0 ? "▼ " : "▲ "}
-              {fmtPct(row.premium)} vs US
+              <LivePct value={row.premium} /> vs US
             </span>
             {row.feeUsd === undefined ? "" : ` · fee ≈ ${fmtUsd(row.feeUsd, 3)}`}
           </p>
@@ -129,6 +131,7 @@ export function HomeTradeCard() {
             <ActionLabel text="Get Started" /> <ArrowRight size={16} aria-hidden />
           </ButtonLink>
         )}
+        <ReturningUser className="mt-3 text-center" />
       </div>
       {phase.name === "done" ? (
         <div className="mt-3">
@@ -142,7 +145,7 @@ export function HomeTradeCard() {
         </div>
       ) : null}
       {phase.name === "error" ? (
-        <p role="alert" className="mt-3 text-[13.5px] text-red" data-testid="home-error">
+        <p role="alert" className="mt-3 text-[14.5px] text-red" data-testid="home-error">
           {phase.message}
         </p>
       ) : null}
@@ -225,7 +228,7 @@ export function TickerStrip() {
           >
             <span className="font-semibold">{t.ticker}</span>
             <span className="num text-fg2">
-              {prices[t.ticker] ? fmtUsd(prices[t.ticker]) : "…"}
+              {prices[t.ticker] ? <LiveUsd value={prices[t.ticker]} /> : "…"}
             </span>
           </Link>
         </li>
@@ -241,7 +244,7 @@ export function HomeComparison() {
   return (
     <div data-testid="home-comparison">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="t-h3 !text-[18px]">Live comparison</h3>
+        <h3 className="t-h3 !text-[19px]">Live comparison</h3>
         <StockPicker value={ticker} onChange={setTicker} className="!w-[min(100%,230px)]" />
       </div>
       <IssuerList
@@ -252,7 +255,7 @@ export function HomeComparison() {
         showTitle={false}
       />
       {q.error && !q.data ? (
-        <p role="alert" className="mt-3 text-[14px] text-amber">
+        <p role="alert" className="mt-3 text-[15px] text-amber">
           {q.error.message}
         </p>
       ) : null}
@@ -265,7 +268,9 @@ export function HomeComparison() {
 export function HomePortfolioPreview() {
   const wallet = useTallyWallet();
   const address = wallet.authenticated ? wallet.address : undefined;
-  const { data } = useJson<PortfolioReport>(address ? `/api/portfolio?address=${address}` : null);
+  const { data } = useJson<PortfolioReport>(address ? `/api/portfolio?address=${address}` : null, {
+    refreshMs: 15_000,
+  });
   if (address && data && data.groups.length > 0)
     return (
       <div>

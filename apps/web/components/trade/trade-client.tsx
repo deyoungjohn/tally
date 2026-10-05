@@ -145,7 +145,7 @@ function TradeInner({
               <StockPicker value={ticker} onChange={changeTicker} />
               {q ? <SessionBadge session={q.session} /> : null}
             </div>
-            <h1 className="t-h2 mt-4 !text-[clamp(30px,5vw,44px)]">{name}</h1>
+            <h1 className="t-h2 mt-4 !text-[clamp(31px,5vw,45px)]">{name}</h1>
             <p className="t-meta mono">{ticker} · tokenized, not the underlying share</p>
           </div>
 
@@ -185,14 +185,14 @@ function TradeInner({
             <p className="flex items-center gap-2 font-semibold">
               <ShieldCheck size={18} aria-hidden /> Guaranteed in shares, on-chain
             </p>
-            <p className="mt-1 text-[14px] text-fg2">
+            <p className="mt-1 text-[15px] text-fg2">
               Tally checks how many <b className="text-fg">shares</b> your tokens represent and
               cancels the whole trade if you&apos;d get fewer than your minimum. Your USDT stays
               put. These are tokenized shares issued by Ondo and bStocks, not the underlying stock.
             </p>
           </div>
           {!buyable ? (
-            <p role="status" className="order-5 text-[14px] text-amber">
+            <p role="status" className="order-5 text-[15px] text-amber">
               {ticker} can be compared here, but buying it isn&apos;t switched on yet.
             </p>
           ) : null}
@@ -228,7 +228,7 @@ function TradeInner({
                   <p className="font-semibold">{phase.message}</p>
                   {phase.txHash ? (
                     <a
-                      className="mono mt-1 inline-block text-[12.5px] text-blue"
+                      className="mono mt-1 inline-block text-[13.5px] text-blue"
                       href={`https://bscscan.com/tx/${phase.txHash}`}
                       target="_blank"
                       rel="noreferrer"
@@ -270,7 +270,7 @@ function TradeInner({
               onBuy={onBuy}
             />
             {quote.error && !q ? (
-              <p role="alert" className="text-[14px] text-amber" data-testid="quote-error">
+              <p role="alert" className="text-[15px] text-amber" data-testid="quote-error">
                 {quote.error.message}
               </p>
             ) : null}

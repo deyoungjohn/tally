@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ExternalLink } from "lucide-react";
 import { SHAREGUARD_DEPLOYED } from "@tally/config";
+import { CONCEPTS } from "@/lib/concepts";
 
 export const metadata: Metadata = { title: "Docs: how Tally works · Tally" };
 
@@ -105,6 +106,27 @@ export default function Docs() {
             </ol>
           </section>
 
+          <section id="concepts">
+            <h2>The reasoning behind each number</h2>
+            <p className="mt-3">
+              The short explanations on the site (the “Read more” links) end here. The full
+              write-ups, with references, are being written.
+            </p>
+            <div className="mt-4 grid gap-4">
+              {Object.values(CONCEPTS).map((c) => (
+                <div key={c.id} id={`how-${c.id}`} className="scroll-mt-28">
+                  <h3 className="font-semibold text-fg">{c.title}</h3>
+                  {c.paragraphs.map((t) => (
+                    <p key={t} className="mt-2">
+                      {t}
+                    </p>
+                  ))}
+                  <p className="t-meta mt-2">Full write-up with references: coming soon.</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
           <section id="guarantee">
             <h2>The guarantee</h2>
             <p className="mt-3">
@@ -156,13 +178,13 @@ export default function Docs() {
             <dl className="mt-3">
               <div className="detail-row">
                 <dt>ShareGuard v1 (BNB Smart Chain, verified)</dt>
-                <dd className="mono text-[12.5px]">
+                <dd className="mono text-[13.5px]">
                   <Ext href={`${BSCSCAN}/address/${GUARD}`}>{GUARD}</Ext>
                 </dd>
               </div>
               <div className="detail-row">
                 <dt>Route used for stock buys</dt>
-                <dd className="mono text-[12.5px]">
+                <dd className="mono text-[13.5px]">
                   <Ext href={`${BSCSCAN}/address/0xB44446b0c8E56988c34f7Ff73Ae904982b5FdDA5`}>
                     0xB444…dDA5
                   </Ext>
@@ -170,7 +192,7 @@ export default function Docs() {
               </div>
               <div className="detail-row">
                 <dt>USDT</dt>
-                <dd className="mono text-[12.5px]">
+                <dd className="mono text-[13.5px]">
                   <Ext href={`${BSCSCAN}/address/0x55d398326f99059fF775485246999027B3197955`}>
                     0x55d3…7955
                   </Ext>
@@ -183,9 +205,9 @@ export default function Docs() {
                 <div key={hash} className="detail-row">
                   <dt>
                     {label}
-                    <span className="block text-[12.5px] text-fg3">{what}</span>
+                    <span className="block text-[13.5px] text-fg3">{what}</span>
                   </dt>
-                  <dd className="mono text-[12.5px]">
+                  <dd className="mono text-[13.5px]">
                     <Ext href={`${BSCSCAN}/tx/${hash}`}>
                       {hash.slice(0, 10)}…{hash.slice(-6)}
                     </Ext>

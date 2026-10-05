@@ -6,8 +6,12 @@ import { Button } from "@/components/motion/button";
 import { Segmented } from "@/components/motion/segmented";
 import { ActionLabel } from "./flow-host";
 import type { RowDto } from "@/lib/dto";
-import { ISSUER_LABEL, fmtPct, fmtShares, fmtUsd } from "@/lib/format";
+import { ISSUER_LABEL, fmtShares, fmtUsd } from "@/lib/format";
 import { TokenLogo } from "./badges";
+import { LivePct, LiveUsd } from "@/components/motion/live";
+import { LearnMore } from "@/components/learn-more";
+import { Tip } from "@/components/ui/tooltip";
+import { ReturningUser } from "@/components/wallet/returning-user";
 
 export type Unit = "usd" | "shares";
 export const TOLERANCES = [0.5, 1, 2] as const;
@@ -80,7 +84,7 @@ export function TradeCard(p: TradeCardProps) {
           <div className="mt-2 flex items-center gap-3">
             <div className="flex min-w-0 flex-1 items-center gap-1">
               {p.unit === "usd" ? (
-                <span className="text-[clamp(36px,5vw,56px)] font-bold leading-none text-fg3">
+                <span className="text-[clamp(37px,5vw,57px)] font-bold leading-none text-fg3">
                   $
                 </span>
               ) : null}
@@ -106,7 +110,7 @@ export function TradeCard(p: TradeCardProps) {
           </div>
           <p
             id="amount-hint"
-            className="mt-2 min-h-[20px] text-[13px] text-red"
+            className="mt-2 min-h-[20px] text-[14px] text-red"
             role={tooSmall ? "alert" : undefined}
           >
             {tooSmall ? `Minimum is $${MIN_USD}.` : ""}
@@ -124,7 +128,7 @@ export function TradeCard(p: TradeCardProps) {
           <p className="t-meta">{p.unit === "usd" ? "You get" : "You pay about"}</p>
           <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
             <p
-              className="t-big min-w-0 !text-[clamp(30px,3.6vw,46px)]"
+              className="t-big min-w-0 !text-[clamp(31px,3.6vw,47px)]"
               data-testid="you-get"
               aria-busy={p.quoteLoading}
             >
@@ -158,7 +162,7 @@ export function TradeCard(p: TradeCardProps) {
               <span className="flex flex-col items-start leading-tight">
                 <span>{p.unit === "usd" ? `${p.ticker} shares` : "USDT"}</span>
                 {p.row ? (
-                  <span className="text-[11px] font-medium text-fg3">
+                  <span className="text-[12px] font-medium text-fg3">
                     via {ISSUER_LABEL[p.row.issuer]}
                   </span>
                 ) : null}
@@ -171,11 +175,15 @@ export function TradeCard(p: TradeCardProps) {
       <dl className="mt-3" data-testid="details">
         <div className="detail-row">
           <dt>Price per share</dt>
-          <dd>{fmtUsd(p.row?.usdPerShare)}</dd>
+          <dd>
+            <LiveUsd value={p.row?.usdPerShare} />
+          </dd>
         </div>
         <div className="detail-row">
           <dt>vs US price</dt>
-          <dd>{fmtPct(p.row?.premium)}</dd>
+          <dd>
+            <LivePct value={p.row?.premium} />
+          </dd>
         </div>
         <div className="detail-row">
           <dt>Network fee (estimated)</dt>
@@ -186,7 +194,11 @@ export function TradeCard(p: TradeCardProps) {
           <dd className="max-w-[60%]">{p.row?.routeText ?? "–"}</dd>
         </div>
         <div className="detail-row">
-          <dt>At least (guaranteed)</dt>
+          <dt>
+            <Tip text="The fewest shares you can receive. If the trade would give you less, it is cancelled on-chain.">
+              <span className="border-b border-dotted border-fg3">Min amount to receive</span>
+            </Tip>
+          </dt>
           <dd data-testid="min-received">
             {minShares === undefined ? "–" : `${fmtShares(minShares)} shares`}
           </dd>
@@ -195,10 +207,12 @@ export function TradeCard(p: TradeCardProps) {
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <span className="t-meta" id="tol-label">
-          Price can move up to
+          <Tip text="How much worse than the quote you accept before the trade is cancelled.">
+            <span className="border-b border-dotted border-fg3">Slippage</span>
+          </Tip>
         </span>
         <Segmented
-          label="Price tolerance"
+          label="Slippage"
           value={String(p.tolerance)}
           onChange={(v) => p.onTolerance(Number(v))}
           options={TOLERANCES.map((t) => ({ value: String(t), label: `${t}%` }))}
@@ -215,9 +229,10 @@ export function TradeCard(p: TradeCardProps) {
           {icon ? <Lock size={18} aria-hidden /> : null}
           <ActionLabel text={label} />
         </Button>
+        <ReturningUser className="mt-3 text-center" />
         <p className="t-meta mt-3 text-center">
           If you&apos;d get fewer shares than the minimum above, the trade doesn&apos;t happen. Not
-          investment advice.
+          investment advice. <LearnMore concept="guarantee" />
         </p>
       </div>
     </section>

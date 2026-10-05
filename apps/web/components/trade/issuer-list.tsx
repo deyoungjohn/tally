@@ -4,10 +4,13 @@ import { ChevronDown } from "lucide-react";
 import { LayoutGroup, motion, useReducedMotion } from "motion/react";
 import { useState } from "react";
 import type { QuoteDto, RowDto } from "@/lib/dto";
-import { ISSUER_LABEL, fmtPct, fmtShares, fmtUsd } from "@/lib/format";
+import { ISSUER_LABEL, fmtUsd } from "@/lib/format";
 import { SPRING_LAYOUT } from "@/lib/ease";
 import { cn } from "@/lib/utils";
 import { FlagBadge, GradeBadge, TokenLogo } from "./badges";
+import { LivePct, LiveShares, LiveUsd } from "@/components/motion/live";
+import { Tip } from "@/components/ui/tooltip";
+import { LearnMore } from "@/components/learn-more";
 
 function Premium({ p }: { p: number | undefined }) {
   if (p === undefined) return <span className="text-fg3">–</span>;
@@ -16,7 +19,7 @@ function Premium({ p }: { p: number | undefined }) {
   return (
     <span className={cn("num", cheaper ? "pos" : p > 0 ? "neg" : "text-fg2")}>
       {cheaper ? "▼ " : p > 0 ? "▲ " : ""}
-      {fmtPct(p)} <span className="text-fg3">vs US</span>
+      <LivePct value={p} /> <span className="text-fg3">vs US</span>
     </span>
   );
 }
@@ -74,37 +77,50 @@ function Row({ r, selected, onSelect }: { r: RowDto; selected: boolean; onSelect
           <span className="min-w-0 flex-1">
             <span className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">{ISSUER_LABEL[r.issuer]}</span>
-              <span className="mono text-[12px] text-fg3">{r.symbol}</span>
-              {r.isBest ? <span className="chip-best">Best</span> : null}
-              {r.flags.includes("ghost") ? <FlagBadge flag="ghost" /> : null}
+              <span className="mono text-[13px] text-fg3">{r.symbol}</span>
+              {r.isBest ? (
+                <Tip
+                  text="Best: the most shares for your money right now, network fee included."
+                  focusable={false}
+                >
+                  <span className="chip-best">Best</span>
+                </Tip>
+              ) : null}
+              {r.flags.includes("ghost") ? <FlagBadge flag="ghost" inButton /> : null}
               {r.unitTrap ? (
-                <span className="badge badge-amber" title="One token is more than one share">
-                  {r.multiplier} shares per token
-                </span>
+                <Tip
+                  text="Unit trap: one token is more than one share, so its price and balance look off by that factor. Tally always shows shares."
+                  focusable={false}
+                >
+                  <span className="badge badge-amber">{r.multiplier} shares per token</span>
+                </Tip>
               ) : null}
             </span>
             {pickable ? (
-              <span className="mt-1 block text-[13px] text-fg2">
-                <span className="num text-fg">{fmtUsd(r.usdPerShare)}</span> per share ·{" "}
+              <span className="mt-1 block text-[14px] text-fg2">
+                <LiveUsd value={r.usdPerShare} className="num text-fg" /> per share ·{" "}
                 <Premium p={r.premium} />
               </span>
             ) : (
-              <span className="mt-1 block text-[13px] text-fg3">
+              <span className="mt-1 block text-[14px] text-fg3">
                 {r.notExecutableReason ?? r.error ?? "Not available"}
               </span>
             )}
           </span>
           <span className="text-right">
             {pickable ? (
-              <span className="num block text-[17px] font-semibold">{fmtShares(r.shares)}</span>
+              <LiveShares
+                value={r.shares}
+                className="num flex justify-end text-[18px] font-semibold"
+              />
             ) : null}
             {pickable ? <span className="t-meta">shares</span> : null}
           </span>
-          <GradeBadge grade={r.grade} />
+          <GradeBadge grade={r.grade} inButton />
         </span>
         {pickable ? <PremiumBar p={r.premium} /> : null}
       </button>
-      <div className="flex items-center justify-between gap-3 px-4 pb-3 text-[12.5px] text-fg3">
+      <div className="flex items-center justify-between gap-3 px-4 pb-3 text-[13.5px] text-fg3">
         <span className="num">
           {r.feeUsd === undefined ? "" : `Network fee ≈ ${fmtUsd(r.feeUsd, 3)}`}
           {r.hops ? ` · ${r.hops} ${r.hops === 1 ? "step" : "steps"}` : ""}
@@ -125,7 +141,7 @@ function Row({ r, selected, onSelect }: { r: RowDto; selected: boolean; onSelect
       </div>
       {open ? (
         <div
-          className="border-t border-white/[0.06] px-4 py-3 text-[13.5px] text-fg2"
+          className="border-t border-white/[0.06] px-4 py-3 text-[14.5px] text-fg2"
           data-testid={`why-${r.symbol}`}
         >
           {r.routeText ? (
@@ -176,10 +192,16 @@ export function IssuerList({
   return (
     <div className="mt-4">
       <div className="mb-2 flex items-center justify-between">
-        {showTitle ? <h2 className="t-h3 !text-[18px]">Compared by issuer</h2> : <span />}
+        {showTitle ? <h2 className="t-h3 !text-[19px]">Compared by issuer</h2> : <span />}
         <span className="t-meta" aria-live="off">
           {loading ? "Refreshing…" : "Live"}
         </span>
+      </div>
+      <div className="mb-3">
+        <p className="t-meta">
+          Ranked by shares you get, not by token price.{" "}
+          <LearnMore concept="premium" label="Read more" />
+        </p>
       </div>
       <LayoutGroup>
         <ul className="m-0 grid grid-cols-1 gap-3 p-0" aria-label="Quotes by issuer">

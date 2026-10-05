@@ -2,12 +2,13 @@
 
 import { ExternalLink, Send } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { encodeFunctionData, isAddress, parseUnits } from "viem";
+import { encodeFunctionData, parseUnits } from "viem";
 import type { PortfolioReport } from "@tally/engine";
 import { USDT_BSC } from "@tally/config";
 import { Button } from "@/components/motion/button";
 import { Modal } from "@/components/motion/modal";
 import { Segmented } from "@/components/motion/segmented";
+import { checkRecipient } from "@/lib/address";
 import { ERC20_TRANSFER_ABI } from "@/lib/erc20";
 import { fmtUsd, shortHash } from "@/lib/format";
 import { useJson } from "@/lib/hooks/use-json";
@@ -42,18 +43,16 @@ export function SendModal({ open, onClose }: { open: boolean; onClose: () => voi
     }
   }, [open]);
 
-  const recipientOk = isAddress(to.trim());
+  const check = useMemo(() => checkRecipient(to, wallet.address), [to, wallet.address]);
+  const recipientOk = check.ok;
   const n = Number(amount);
   const amountOk = n > 0 && n <= balance + 1e-12;
-  const same =
-    wallet.address !== undefined && to.trim().toLowerCase() === wallet.address.toLowerCase();
   const problem = useMemo(() => {
-    if (to !== "" && !recipientOk) return "That isn't a valid wallet address.";
-    if (same) return "That's your own address.";
+    if (to !== "" && !check.ok) return check.problem;
     if (amount !== "" && n > balance)
       return `You only have ${asset === "USDT" ? fmtUsd(balance) : balance.toFixed(5)} ${asset}.`;
     return null;
-  }, [to, recipientOk, same, amount, n, balance, asset]);
+  }, [to, check, amount, n, balance, asset]);
 
   const max = () =>
     setAmount(
@@ -66,7 +65,10 @@ export function SendModal({ open, onClose }: { open: boolean; onClose: () => voi
     setStep("sending");
     setError(null);
     try {
-      const recipient = to.trim() as `0x${string}`;
+      // Validated again at the moment of sending, not only when the form was filled in.
+      const again = checkRecipient(to, wallet.address);
+      if (!again.ok) throw new Error(again.problem);
+      const recipient = again.address;
       const wei = parseUnits(amount, 18);
       const h =
         asset === "USDT"
@@ -112,7 +114,7 @@ export function SendModal({ open, onClose }: { open: boolean; onClose: () => voi
             rel="noreferrer"
           >
             <ExternalLink size={16} aria-hidden /> BscScan{" "}
-            <span className="mono text-[12px] text-fg2">{shortHash(hash)}</span>
+            <span className="mono text-[13px] text-fg2">{shortHash(hash)}</span>
           </a>
           <Button onClick={onClose}>Done</Button>
         </div>
@@ -140,9 +142,13 @@ export function SendModal({ open, onClose }: { open: boolean; onClose: () => voi
               placeholder="0x…"
               value={to}
               disabled={step !== "form"}
-              onChange={(e) => setTo(e.target.value)}
+              onChange={(e) => setTo(e.target.value.replace(/\s+/g, ""))}
               aria-invalid={to !== "" && !recipientOk}
               autoComplete="off"
+              autoCapitalize="off"
+              autoCorrect="off"
+              spellCheck={false}
+              aria-describedby="send-to-problem"
               data-testid="send-to"
             />
           </label>
@@ -167,13 +173,13 @@ export function SendModal({ open, onClose }: { open: boolean; onClose: () => voi
             </div>
           </label>
           {problem ? (
-            <p role="alert" className="text-[13.5px] text-red">
+            <p role="alert" id="send-to-problem" className="text-[14.5px] text-red">
               {problem}
             </p>
           ) : null}
           {step === "form" ? (
             <Button
-              disabled={!recipientOk || !amountOk || same}
+              disabled={!recipientOk || !amountOk}
               onClick={() => setStep("confirm")}
               data-testid="send-review"
             >
@@ -181,17 +187,17 @@ export function SendModal({ open, onClose }: { open: boolean; onClose: () => voi
             </Button>
           ) : (
             <div className="grid gap-3">
-              <div className="rounded-[16px] border border-[rgba(242,193,78,.3)] bg-[rgba(242,193,78,.08)] p-4 text-[14px]">
+              <div className="rounded-[16px] border border-[rgba(242,193,78,.3)] bg-[rgba(242,193,78,.08)] p-4 text-[15px]">
                 You are sending{" "}
                 <b>
                   {amount} {asset}
                 </b>{" "}
-                to <span className="mono break-all text-[12.5px]">{to.trim()}</span> on BNB Smart
+                to <span className="mono break-all text-[13.5px]">{to.trim()}</span> on BNB Smart
                 Chain. This can&apos;t be undone, so check the address and that it accepts BNB Smart
                 Chain (BEP-20).
               </div>
               {error ? (
-                <p role="alert" className="text-[13.5px] text-red">
+                <p role="alert" className="text-[14.5px] text-red">
                   {error}
                 </p>
               ) : null}
