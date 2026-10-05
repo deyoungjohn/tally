@@ -50,6 +50,16 @@ export function PiesContent({ vm }: { vm: PiesViewModel }) {
       )}
       <section aria-label="Rebalance plan">
         {vm.plan.reason && <p>{vm.plan.reason}</p>}
+        {vm.plan.unavailable.map((fact, i) => (
+          <p key={`unavailable:${fact.ticker}:${i}`}>
+            Unavailable {fact.ticker}: {fact.reason}
+          </p>
+        ))}
+        {vm.plan.excluded.map((fact, i) => (
+          <p key={`excluded:${fact.ticker}:${i}`}>
+            Excluded {fact.ticker}: {fact.reason}
+          </p>
+        ))}
         {vm.plan.legs.map((leg) => (
           <p key={leg.id}>
             {leg.sequence}. {leg.side} {leg.ticker} via {leg.issuer}:{" "}
