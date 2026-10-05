@@ -39,6 +39,7 @@ export type SignedCall =
       recipient: Address;
     };
 export interface StoredReceipt {
+  lastCheckedAt?: number;
   kind: "swap" | "approval";
   transaction: TransactionEvidence;
   chainReceipt: MinedEvidence | null;

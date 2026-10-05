@@ -307,6 +307,7 @@ it("registry failure retains the real mined receipt, marks incomplete evidence U
   const vm = await loadReceipt(hint.txHash, { store, now: 1000, enabled: true });
   expect(vm).toMatchObject({
     status: "UNRECONCILED",
+    ticker: null,
     evidence: { block: "125272679", gasUsed: "440520" },
   });
   expect(await loadQuality({ store, now: 1000, enabled: true })).toMatchObject({
@@ -318,4 +319,34 @@ it("registry failure retains the real mined receipt, marks incomplete evidence U
   expect((await loadReceipt(hint.txHash, { store, now: 2000, enabled: true })).status).toBe(
     "RECONCILED",
   );
+});
+it("synthetic unknown hints rotate through the bounded poll batch without renewing their expiry or age", async () => {
+  const read = vi.fn(async (_hash: string) => null);
+  engine = { ...engine, transactions: { ...engine.transactions, getTransaction: read } };
+  for (let i = 0; i < 51; i++) {
+    const hash =
+      `0x${(BigInt(edges.missingHash) + BigInt(i)).toString(16).padStart(64, "0")}` as `0x${string}`;
+    store.put({
+      kind: HINT_KIND,
+      key: hash,
+      source: "synthetic-browser-hint",
+      observedAt: 1000 + i,
+      data: {
+        hint: { ...hint, txHash: hash },
+        receivedAt: 1000 + i,
+        expiresAt: 1000 + i + HINT_TTL_MS,
+        state: "pending",
+        reason: "Synthetic missing transaction",
+      } satisfies StoredHint,
+    });
+  }
+  await run(2000);
+  expect(read).toHaveBeenCalledTimes(50);
+  const firstBatch = new Set(read.mock.calls.map(([hash]) => hash));
+  await run(3000);
+  expect(new Set(read.mock.calls.map(([hash]) => hash)).size).toBe(51);
+  expect(firstBatch.size).toBe(50);
+  const latest = store.listLatest<StoredHint>(HINT_KIND, { maxAgeMs: 0, now: 3000, limit: 1000 });
+  expect(latest.every((s) => s.data.expiresAt === s.observedAt + HINT_TTL_MS)).toBe(true);
+  expect(latest.every((s) => s.ageMs >= 1950)).toBe(true);
 });

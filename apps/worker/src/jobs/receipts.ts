@@ -32,7 +32,9 @@ export const job: WorkerJob = {
         .filter((s) => !s.data.chainReceipt || (s.data.kind === "swap" && !s.data.receipt))
         .map((s) => [s.key, s.data.hint]),
     );
-    for (const s of ctx.store.listLatest<StoredHint>(HINT_KIND, options)) {
+    const hints = ctx.store.listLatest<StoredHint>(HINT_KIND, options);
+    const hintByHash = new Map(hints.map((s) => [s.key, s]));
+    for (const s of hints) {
       if (
         s.data.expiresAt <= now ||
         s.data.state === "rejected" ||
@@ -47,11 +49,17 @@ export const job: WorkerJob = {
       if (ctx.signal?.aborted) throw new Error("Receipts run cancelled");
     };
     // Poll oldest verification first; a bounded run cannot let new arrivals starve pending evidence.
-    const ordered = [...targets].sort(
-      ([a], [b]) => (byHash.get(a)?.observedAt ?? 0) - (byHash.get(b)?.observedAt ?? 0),
-    );
+    const checkedAt = (hash: string) =>
+      byHash.get(hash)?.data.lastCheckedAt ?? hintByHash.get(hash)?.data.lastCheckedAt ?? 0;
+    const ordered = [...targets].sort(([a], [b]) => checkedAt(a) - checkedAt(b));
     for (const [hash, hint] of ordered.slice(0, 50)) {
       active();
+      const previous = byHash.get(hash),
+        previousHint = hintByHash.get(hash);
+      // A failed read still advances polling order without renewing evidence age or hint expiry.
+      if (previous) ctx.store.put({ ...previous, data: { ...previous.data, lastCheckedAt: now } });
+      if (previousHint)
+        ctx.store.put({ ...previousHint, data: { ...previousHint.data, lastCheckedAt: now } });
       try {
         const tx = await ctx.engine.transactions.getTransaction(hash);
         active();
@@ -79,6 +87,7 @@ export const job: WorkerJob = {
         if (!byHash.has(hash)) {
           // The signed transaction is already real evidence even if receipt/metadata RPC fails next.
           const data: StoredReceipt = {
+            lastCheckedAt: now,
             kind: call.kind,
             transaction: tx,
             chainReceipt: null,
@@ -108,6 +117,7 @@ export const job: WorkerJob = {
             source: process.env.TALLY_FIXTURES === "1" ? "recorded-chain" : "chain-rpc",
             observedAt: ctx.now(),
             data: {
+              lastCheckedAt: now,
               kind: call.kind,
               transaction: tx,
               chainReceipt: mined,
@@ -128,6 +138,7 @@ export const job: WorkerJob = {
             ? (tokens.find((t) => t.address.toLowerCase() === call.stock.toLowerCase()) ?? null)
             : null;
         const data = promoteReceipt(hint, tx, mined, call, token, ctx.now());
+        data.lastCheckedAt = now;
         ctx.store.put({
           kind: RECEIPTS_KIND,
           key: hash,

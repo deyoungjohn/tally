@@ -29,6 +29,7 @@ export interface ReceiptHint {
   simulation: { available: boolean; missingReason: string | null } | null;
 }
 export interface StoredHint {
+  lastCheckedAt?: number;
   hint: ReceiptHint;
   receivedAt: number;
   expiresAt: number;
