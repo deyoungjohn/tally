@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 const body = z
   .object({
     ticker: z.string().toUpperCase().regex(TICKER_RE),
-    issuer: z.enum(["ondo", "bstock"]),
+    issuer: z.enum(["ondo", "bstock", "xstocks"]),
     usd: z.number().positive().max(10_000).optional(),
     shares: z.number().positive().max(10_000).optional(),
     tokens: z.string().regex(/^\d+$/).optional(),
