@@ -1,9 +1,8 @@
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { createRuntime } from "./runtime";
 import { createServer } from "./server";
 
 try {
-  const server = await createServer(createRuntime());
+  const server = await createServer();
   await server.connect(new StdioServerTransport());
 } catch {
   process.stderr.write(

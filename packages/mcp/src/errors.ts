@@ -7,12 +7,30 @@ export class ToolError extends Error {
   }
 }
 
+export function isMissingCredentialsError(error: unknown): boolean {
+  const message = (error as { message?: unknown } | null)?.message;
+  return (
+    typeof message === "string" &&
+    message.startsWith("BINANCE_W3_API_KEY and BINANCE_W3_API_SECRET are not set")
+  );
+}
+
 /** Never expose arbitrary upstream messages (they can contain credential-bearing transport URLs). */
 export function plainError(error: unknown): { kind: string; message: string } {
+  if (isMissingCredentialsError(error))
+    return {
+      kind: "auth",
+      message:
+        "Data-provider credentials are not set in this environment. Load the Tally API credentials, then retry. No transaction was sent.",
+    };
   if (error instanceof ToolError) return { kind: error.kind, message: error.message };
   const e = error as { kind?: unknown; code?: unknown; message?: unknown } | null;
   const kind = typeof e?.kind === "string" ? e.kind : "unavailable";
   const code = String(e?.code ?? "");
+  if (code === "40103")
+    return { kind: "auth", message: "Request timestamp rejected: check this machine's clock" };
+  if (code === "40101" || code === "40102")
+    return { kind: "auth", message: "API key or signature rejected" };
   if (code === "40375" || kind === "below_minimum")
     return { kind: "below_minimum", message: "Minimum order is 6 USDT." };
   if (code === "40304" || kind === "region_block")

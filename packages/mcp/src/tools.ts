@@ -67,20 +67,21 @@ const definitions: Tool[] = [
   },
 ];
 
+export function toolDefinitions(fixtures: boolean): Tool[] {
+  return definitions.map((definition) => ({
+    ...definition,
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: !fixtures,
+    },
+  }));
+}
+
 export function registerTools(runtime: Runtime, registry = new ToolRegistry()): ToolRegistry {
   const handlers = [getConsolidatedQuote, getSharesOf, getIntegrity, buildGuardedSwap];
-  for (const [i, definition] of definitions.entries())
-    registry.add(
-      {
-        ...definition,
-        annotations: {
-          readOnlyHint: true,
-          destructiveHint: false,
-          idempotentHint: true,
-          openWorldHint: !runtime.fixtures,
-        },
-      },
-      (args) => handlers[i]!(runtime, args),
-    );
+  for (const [i, definition] of toolDefinitions(runtime.fixtures).entries())
+    registry.add(definition, (args) => handlers[i]!(runtime, args));
   return registry;
 }

@@ -73,6 +73,8 @@ Install/copy `skills/share-true-trading` into your client's skill directory, pre
 
 Live clients must run in an allowed region, with the existing server environment inherited from its protected env file. Remove `TALLY_FIXTURES=1`; never paste API credentials or credential-bearing RPC URLs into MCP config or chat. For a remote Seoul host, stdio over SSH is sufficient: launch the same command in a user-managed shell that already loads the protected environment. No new public HTTP MCP endpoint is provided.
 
+If you see “Data-provider credentials are not set in this environment,” export `BINANCE_W3_API_KEY` and `BINANCE_W3_API_SECRET` in the shell that starts the MCP server or CLI, then restart the server or retry the CLI; the repo does not load a `.env` file.
+
 ## Optional tools from WO-02 / WO-07
 
 At startup the server dynamically imports `src/tools/get-receipt.ts`, `sell.ts`, `switch.ts` **only if present**. Those files must export `register(registry, engine)`; `registry.add(ToolDefinition, async (args) => result)` installs a tool with the common JSON/error handling. It receives the same signer-free engine. Missing files, bad exports, failed imports and throwing registrations warn through URL-redacted diagnostics and leave the four core tools working; startup continues with the other optional tools. Coordinate that export with those owners; their files and business logic are untouched here.
@@ -133,13 +135,13 @@ baw contract-call preview --help
 baw contract-call preview --binanceChainId 56 --from <wallet> --to 0x28F6F19bffbF25E36452c78d12090F0bC922970a --value 0 --inputData <plan.tx.data> --gasLimit <plan.tx.gasLimit> --json
 ```
 
-If help does not list `--gasLimit`, omit it and state in the facts shown that the sent limit is baw's own and may differ from Tally's simulation. Record the actual approval/swap preview and execute command lines used in this PR. Inspect parsed transaction, simulation, risks and authority changes alongside decoded plan fields and share floor. After explicit confirmation, while the **15-second plan expiry** still holds:
+If help does not list `--gasLimit`, omit it and state in the facts shown that the sent limit is baw's own and may differ from Tally's simulation. Record the actual approval/swap preview and execute command lines used in this PR. Inspect parsed transaction, simulation, risks and authority changes alongside decoded plan fields and share floor. Rebuild if the plan is older than about **90 seconds**; the on-chain deadline is **300 seconds** and the share floor protects the price. The engine's 15-second quote freshness check applies when creating the plan, not to this review window. Check the actual calldata deadline. After explicit buy confirmation, with a plan no older than about 90 seconds and its deadline still ahead:
 
 ```bash
 baw contract-call execute --requestId <swap-preview-requestId> --json
 ```
 
-If expiry passes during review, rebuild, preview and obtain confirmation again. Do not execute the old request. Save the returned hash before polling; for pending App approval track the same order, never submit another.
+If the plan becomes older than about 90 seconds or its deadline passes during review, rebuild, preview and obtain confirmation again. Do not execute the old request. Save the returned hash before polling; for pending App approval track the same order, never submit another.
 
 5. Verify the receipt through the MCP receipt tool if installed, or:
 
