@@ -9,7 +9,7 @@ for (const width of [375, 768, 1280])
     }) => {
       await page.setViewportSize({ width, height: 900 });
       await page.emulateMedia({ reducedMotion });
-      const directory = join(process.cwd(), "app/dev/receipts/evidence");
+      const directory = join(process.cwd(), "test-results/receipts/evidence");
       mkdirSync(directory, { recursive: true });
       await page.goto(`/dev/receipts?txHash=${hash}`);
       await expect(page.getByRole("region", { name: "Receipt", exact: true })).toBeVisible();

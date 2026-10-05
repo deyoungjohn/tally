@@ -2,8 +2,8 @@
 import { createFixtureEngine } from "@tally/engine";
 import { openStore } from "@tally/modkit";
 import { promoteReceipt, verifySignedCall, reconcile, RECEIPTS_KIND } from "@tally/mod-receipts";
-import { recordedHint } from "../../../../../packages/mod-receipts/src/fixtures/ingestion";
-import { recordedReceipt } from "../../../../../packages/mod-receipts/src/fixtures/recorded";
+import { recordedHint } from "../../../../packages/mod-receipts/src/fixtures/ingestion";
+import { recordedReceipt } from "../../../../packages/mod-receipts/src/fixtures/recorded";
 async function seed() {
   if (process.env.TALLY_RECEIPT_PREVIEW !== "1" || !process.env.TALLY_DATA_DIR)
     throw new Error("Preview needs an explicit isolated TALLY_DATA_DIR");

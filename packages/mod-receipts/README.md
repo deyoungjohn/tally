@@ -126,8 +126,12 @@ quote/simulation stays missing. Delivery failures warn, retry twice and never
 interrupt trading; unmount cancels outstanding requests and timers.
 
 The endpoint requires same origin and JSON, limits the actual stream to 16 KiB,
-limits each IP (30/minute) and hash (10/minute), and binds each hash to one intent.
+limits each IP (30/minute) and hash (10/minute). Pending hints are keyed by
+`txHash:intentId`, so unverified claims cannot lock out another intent. Only
+promoted chain evidence binds a hash to one intent and refuses another with 409.
 Cloudflare supplies the IP header; without it callers share a conservative bucket.
+Trust `cf-connecting-ip` only when the origin is reachable exclusively through
+Cloudflare; the EC2 must not expose port 3000 publicly.
 It rejects foreign destinations, mismatched senders and malformed signed calls.
 Only ShareGuard's two buy selectors and a nonzero, non-unlimited USDT approval to
 ShareGuard are accepted. Signed assets, spend, recipient and minimum come from
@@ -136,8 +140,10 @@ chain calldata. Browser metadata never supplies those facts.
 When a reverse proxy gives Next an internal request URL, set `TALLY_APP_ORIGIN`
 to the canonical public origin (scheme + host + optional port, no path or trailing
 slash). This value is server-controlled; forwarded-host headers are not trusted.
+In production, the server environment needs `TALLY_APP_ORIGIN=https://<public domain>` when `FEATURE_RECEIPTS=1`.
 The web and worker must share `TALLY_DATA_DIR`. Hints use unprotected
-`receipt-hint` rows, expire after 15 minutes and are capped at 1000 current keys.
+`receipt-hint` rows, expire after 15 minutes and are capped at 1000 hints, including
+multiple intents for one hash. Activity and Quality count pending transactions once.
 
 `pnpm worker receipts` verifies hints through `engine.transactions`, checks stock
 metadata against the engine registry, and promotes evidence to protected
@@ -169,7 +175,7 @@ while completed/pending counts and fill rate retain chain evidence. It exposes
 reference and spend-token USD observations remain required: no $1 peg is assumed.
 At fewer than five verified comparison fills, the view model and plain component
 say there is insufficient data. Latest-list consumers cap at 1000 keys and report
-truncation; worker polls at most 50 eligible hashes per run.
+truncation; worker polls at most 50 eligible candidates per run.
 
 `get_receipt(txHash)` is a flag-gated, read-only MCP snapshot lookup registered
 through WO-05's optional loader. It distinguishes verified evidence, pending
@@ -184,8 +190,12 @@ Offline previews and browser evidence (isolated database, actual F11 vectors):
 
 ```bash
 pnpm build
-pnpm --filter @tally/web exec playwright test --config app/dev/receipts/playwright.config.ts
+pnpm --filter @tally/web exec playwright test --config modules/receipts/playwright.config.ts
 ```
+
+The config, spec and offline seed live in `apps/web/modules/receipts/`. Screenshots
+are generated under ignored `apps/web/test-results/receipts/evidence/`; attach them
+to the PR instead of committing binaries or placing test files in route folders.
 
 Both feature flags remain default off. The ingestion endpoint is an unauthenticated
 hint writer and still needs the orchestrator's security review before merge.
