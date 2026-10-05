@@ -1,0 +1,11 @@
+{
+  "id": "tech-trio",
+  "name": "Tech trio",
+  "description": "Example allocation, not advice",
+  "executable": true,
+  "holdings": [
+    { "ticker": "NVDA", "targetWeightBps": 4000 },
+    { "ticker": "AAPL", "targetWeightBps": 3500 },
+    { "ticker": "TSLA", "targetWeightBps": 2500 }
+  ]
+}

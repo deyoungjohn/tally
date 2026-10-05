@@ -1,0 +1,13 @@
+{
+  "id": "growth-five",
+  "name": "Growth five",
+  "description": "Example allocation, not advice",
+  "executable": true,
+  "holdings": [
+    { "ticker": "NVDA", "targetWeightBps": 3000 },
+    { "ticker": "AAPL", "targetWeightBps": 2500 },
+    { "ticker": "TSLA", "targetWeightBps": 1500 },
+    { "ticker": "QQQ", "targetWeightBps": 2000 },
+    { "ticker": "SPY", "targetWeightBps": 1000 }
+  ]
+}
