@@ -7,6 +7,9 @@ import type { PortfolioReport } from "@tally/engine";
 import { Button, ButtonLink } from "@/components/motion/button";
 import { ComingSoon } from "@/components/trade/coming-soon";
 import { GradeBadge, TokenLogo } from "@/components/trade/badges";
+import { SellSheet } from "@/components/trade/sell-sheet";
+import { useSellFlow } from "@/components/trade/use-sell-flow";
+import { useModuleFlags } from "@/lib/hooks/use-flags";
 import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { useJson } from "@/lib/hooks/use-json";
 import { ISSUER_LABEL } from "@/lib/format";
@@ -15,8 +18,18 @@ import { LiveNumber, LiveShares, LiveUsd } from "@/components/motion/live";
 import { LearnMore } from "@/components/learn-more";
 
 type Group = PortfolioReport["groups"][number];
+type Part = Group["parts"][number];
 
-export function HoldingGroup({ g, example }: { g: Group; example?: boolean }) {
+export function HoldingGroup({
+  g,
+  example,
+  onSell,
+}: {
+  g: Group;
+  example?: boolean;
+  /** Present only when selling is switched on and this is the signed-in wallet's own portfolio. xStocks tokens get no Sell action. */
+  onSell?: (p: Part) => void;
+}) {
   return (
     <li className="panel list-none p-5" data-testid={`group-${g.ticker}`}>
       <div className="flex items-center gap-3">
@@ -45,7 +58,7 @@ export function HoldingGroup({ g, example }: { g: Group; example?: boolean }) {
         {g.parts.map((p) => (
           <li
             key={p.address}
-            className="flex items-center justify-between gap-3 rounded-[14px] bg-white/[0.03] px-3 py-2 text-[14.5px]"
+            className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-[14px] bg-white/[0.03] px-3 py-2 text-[14.5px]"
           >
             <span className="flex items-center gap-2">
               <GradeBadge grade={p.grade} className="!h-6 !w-6 !text-[12px]" />
@@ -58,6 +71,17 @@ export function HoldingGroup({ g, example }: { g: Group; example?: boolean }) {
                 <LiveShares value={p.shares} />
               </b>
             </span>
+            {onSell && p.issuer !== "xstocks" ? (
+              <Button
+                variant="glassy"
+                className="!h-9 !px-4 text-[14.5px]"
+                onClick={() => onSell(p)}
+                aria-label={`Sell ${p.symbol}`}
+                data-testid={`sell-${p.symbol}`}
+              >
+                Sell
+              </Button>
+            ) : null}
           </li>
         ))}
       </ul>
@@ -118,10 +142,22 @@ export function PortfolioPage() {
     if (a && ADDR.test(a)) setViewing(a);
   }, []);
   const address = viewing ?? (wallet.authenticated ? wallet.address : undefined) ?? null;
-  const { data, error, loading } = useJson<PortfolioReport>(
+  const { data, error, loading, reload } = useJson<PortfolioReport>(
     address ? `/api/portfolio?address=${address}` : null,
     { refreshMs: 10_000 },
   );
+
+  // Selling: behind FEATURE_SELL (read through /api/modules/health), and only on the signed-in wallet's own holdings.
+  const flags = useModuleFlags();
+  const sell = useSellFlow();
+  const own =
+    wallet.authenticated &&
+    !!wallet.address &&
+    address?.toLowerCase() === wallet.address.toLowerCase();
+  const canSell = flags.sell === true && own;
+  useEffect(() => {
+    if (sell.phase.name === "confirmed") reload();
+  }, [sell.phase.name, reload]);
 
   return (
     <main id="main" className="wrap pb-24 pt-10 min-[561px]:pt-14">
@@ -204,7 +240,21 @@ export function PortfolioPage() {
             ) : (
               <ul className="m-0 grid list-none gap-3 p-0">
                 {data.groups.map((g) => (
-                  <HoldingGroup key={g.ticker} g={g} />
+                  <HoldingGroup
+                    key={g.ticker}
+                    g={g}
+                    onSell={
+                      canSell
+                        ? (p) =>
+                            void sell.open({
+                              ticker: p.ticker,
+                              issuer: p.issuer as "ondo" | "bstock",
+                              symbol: p.symbol,
+                              probeShares: p.shares,
+                            })
+                        : undefined
+                    }
+                  />
                 ))}
               </ul>
             )}
@@ -239,12 +289,11 @@ export function PortfolioPage() {
                 </div>
               </dl>
             </div>
-            <ComingSoon
-              items={["Dividends received as shares", "Sell to USDT or BNB", "Price alerts"]}
-            />
+            <ComingSoon items={["Dividends received as shares", "Sell to USDT", "Price alerts"]} />
           </aside>
         </div>
       )}
+      {flags.sell === true ? <SellSheet flow={sell} /> : null}
     </main>
   );
 }
