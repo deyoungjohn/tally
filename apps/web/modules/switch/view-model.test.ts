@@ -16,7 +16,7 @@ describe("switch module view models", () => {
   it("empty sell sheet prompts for share amount", async () => {
     const vm = await loadSellSheet();
     expect(vm.state).toBe("empty");
-    expect(vm.availabilityReason).toBe("Enter a share amount to sell.");
+    expect(vm.availabilityReason).toBe("Enter a share amount to sell or choose max.");
     expect(vm.sharesIn).toBe("0");
     expect(vm.minUsdtFloor).toBe("0");
   });
@@ -40,6 +40,20 @@ describe("switch module view models", () => {
     expect(vm.error).toBeNull();
   });
 
+  it("max sell sheet uses raw token balance without floating-point conversion", async () => {
+    const vm = await loadSellSheet({
+      ticker: "NVDA",
+      issuer: "bstock",
+      max: true,
+      rawBalance: "49999999999999999",
+      user: "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
+    });
+
+    expect(vm.state).toBe("ready");
+    expect(vm.isMax).toBe(true);
+    expect(vm.tokensIn).toBe("49999999999999999");
+  });
+
   it("switch sheet returns two_step or empty without claiming false atomicity", async () => {
     const emptyVm = await loadSwitchSheet();
     expect(emptyVm.state).toBe("empty");
@@ -55,7 +69,7 @@ describe("switch module view models", () => {
     expect(vm.state).toBe("two_step");
     expect(vm.twoStepRequired).toBe(true);
     expect(vm.directRoute).toBe(false);
-    expect(vm.availabilityReason).toContain("Gate V-B1");
+    expect(vm.availabilityReason).toContain("code 40368");
     expect(vm.destinationFloorShares).toBeTruthy();
   });
 });

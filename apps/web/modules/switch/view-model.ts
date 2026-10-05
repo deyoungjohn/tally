@@ -16,6 +16,7 @@ export interface SellSheetVM {
   feeEstimateUsd: number | null;
   integrityGrade: "A" | "B" | "C" | "D" | "F" | null;
   availabilityReason: string | null;
+  isMax?: boolean;
   stale: boolean;
   ageMs: number | null;
   source: string | null;
@@ -60,13 +61,18 @@ export async function loadSellSheet(params?: {
   ticker?: string;
   issuer?: "ondo" | "bstock";
   shares?: number;
+  tokens?: string;
+  max?: boolean;
+  rawBalance?: string;
   user?: Address;
 }): Promise<SellSheetVM> {
   const ticker = params?.ticker?.toUpperCase() ?? "NVDA";
   const issuer = params?.issuer ?? "bstock";
+  const isMax = Boolean(params?.max);
+  const rawTokens = params?.tokens ?? (isMax ? params?.rawBalance : undefined);
   const shares = params?.shares ?? 0;
 
-  if (!params?.ticker || shares <= 0) {
+  if (!params?.ticker || (!rawTokens && shares <= 0)) {
     return {
       state: "empty",
       ticker,
@@ -82,7 +88,8 @@ export async function loadSellSheet(params?: {
       costPct: null,
       feeEstimateUsd: null,
       integrityGrade: null,
-      availabilityReason: "Enter a share amount to sell.",
+      availabilityReason: "Enter a share amount to sell or choose max.",
+      isMax: false,
       stale: false,
       ageMs: null,
       source: null,
@@ -90,13 +97,16 @@ export async function loadSellSheet(params?: {
     };
   }
 
+  // When selling max, use the raw token balance directly without floating-point conversion
+  const tokensIn = rawTokens ?? "25654736000000000";
+
   return {
     state: "ready",
     ticker,
     issuer,
     symbol: issuer === "bstock" ? `${ticker}B` : `${ticker}on`,
     stock: "0x02fca66c1d1afb4e2a7884261eb00f63598a7436",
-    tokensIn: "25654736000000000",
+    tokensIn,
     sharesIn: "25674701000000000",
     quotedUsdtOut: "6000000000000000000",
     minUsdtFloor: "5940000000000000000",
@@ -106,6 +116,7 @@ export async function loadSellSheet(params?: {
     feeEstimateUsd: 0.03,
     integrityGrade: "A",
     availabilityReason: null,
+    isMax,
     stale: false,
     ageMs: 0,
     source: "Binance Web3 Aggregator + BSC RPC",
@@ -167,7 +178,7 @@ export async function loadSwitchSheet(params?: {
     toGrade: "A",
     destinationFloorShares: "25849000000000000",
     availabilityReason:
-      "Single-route switch is pending Gate V-B1 verification. Use Sell then Buy as two separate steps.",
+      "Single-route switch is unavailable: upstream Binance DEX aggregator forbids stock-to-stock pairing on BNB Chain (code 40368: Ondo asset on chain 56 can only pair with allowed stablecoins). Use Sell then Buy as two separate steps.",
     directRoute: false,
     twoStepRequired: true,
     stale: false,

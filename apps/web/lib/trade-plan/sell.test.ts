@@ -90,7 +90,7 @@ describe("sell trade-plan client helper", () => {
     ).rejects.toThrow("Token cannot be sold.");
   });
 
-  it("emitSellStage dispatches stages to local listener", () => {
+  it("emitSellStage does not dispatch buy-shaped events to receipts", () => {
     const intent = createSellIntent(
       "NVDA",
       "bstock",
@@ -100,44 +100,10 @@ describe("sell trade-plan client helper", () => {
       5940000000000000000n,
     );
 
-    const stages: string[] = [];
-    const listener = vi.fn((stage) => {
-      stages.push(stage);
-    });
-
+    const listener = vi.fn();
     emitSellStage(intent, "intent", { listener });
-    expect(stages).toContain("intent");
-
-    const mockPlan = {
-      ticker: "NVDA",
-      issuer: "bstock" as const,
-      symbol: "NVDAB",
-      stock: NVDAB,
-      user: USER,
-      quotedUsdtOut: "6000000000000000000",
-      sharesIn: "25674701000000000",
-      multiplier: "1000778223752807865",
-      usdPerShare: 233.8,
-      referencePrice: 233.9,
-      routeText: "NVDAB → USDT",
-      hops: 1,
-      vendor: "Elfomofi",
-      builtAt: 1000,
-      expiresAt: 16000,
-      warnings: [],
-      simulation: { ethCall: "ok" as const, binance: "ok" as const },
-    } as unknown as SellPlan;
-
-    emitSellStage(intent, "quote", { plan: mockPlan, listener });
-    expect(stages).toContain("quote");
-
-    emitSellStage(intent, "simulation", { plan: mockPlan, listener });
-    expect(stages).toContain("simulation");
-
+    emitSellStage(intent, "quote", { listener });
     emitSellStage(intent, "signed", { txHash: "0x123", listener });
-    expect(stages).toContain("signed");
-
-    emitSellStage(intent, "realized", { txHash: "0x123", status: "success", listener });
-    expect(stages).toContain("realized");
+    expect(listener).not.toHaveBeenCalled();
   });
 });

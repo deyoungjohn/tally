@@ -262,4 +262,165 @@ describe("prepareSell engine logic", () => {
       prepareSell(deps, { ticker: "NVDA", issuer: "bstock", shares: 0.025, user: USER }),
     ).rejects.toThrow("This issuer needs a signed order. Try the other issuer.");
   });
+
+  it("refuses sell route when router tx.to is not allow-listed", async () => {
+    const foreignRouter = "0x1111111111111111111111111111111111111111" as Address;
+    const deps = createMockDeps({
+      api: {
+        ...createMockDeps().api,
+        async swap() {
+          return {
+            executionMode: "SWAP",
+            quoteId: "q-1",
+            approveTarget: ROUTER,
+            tx: {
+              to: foreignRouter,
+              data: "0x1234",
+              minReceiveAmount: "5940000000000000000",
+              gas: "450000",
+            },
+          } as unknown as Awaited<ReturnType<SellDeps["api"]["swap"]>>;
+        },
+      },
+    });
+
+    await expect(
+      prepareSell(deps, { ticker: "NVDA", issuer: "bstock", shares: 0.025, user: USER }),
+    ).rejects.toThrow("The sell route router is not on the allow list.");
+  });
+
+  it("refuses sell route when approveTarget does not match ShareGuard configuration", async () => {
+    const chain = fixtureTradeChain(fixtureWallet());
+    chain.readGuard = async (s) => ({
+      ...(await fixtureTradeChain(fixtureWallet()).readGuard(s, ROUTER)),
+      approveTarget: "0x2222222222222222222222222222222222222222" as Address,
+    });
+
+    const deps = createMockDeps({ chain });
+
+    await expect(
+      prepareSell(deps, { ticker: "NVDA", issuer: "bstock", shares: 0.025, user: USER }),
+    ).rejects.toThrow("The route's approval target doesn't match ShareGuard's configuration.");
+  });
+
+  it("refuses plan when router tx.minReceiveAmount is missing", async () => {
+    const deps = createMockDeps({
+      api: {
+        ...createMockDeps().api,
+        async swap() {
+          return {
+            executionMode: "SWAP",
+            quoteId: "q-1",
+            approveTarget: ROUTER,
+            tx: {
+              to: ROUTER,
+              data: "0x1234",
+              gas: "450000",
+            },
+          } as unknown as Awaited<ReturnType<SellDeps["api"]["swap"]>>;
+        },
+      },
+    });
+
+    await expect(
+      prepareSell(deps, { ticker: "NVDA", issuer: "bstock", shares: 0.025, user: USER }),
+    ).rejects.toThrow("The router did not enforce a minimum receive amount floor.");
+  });
+
+  it("refuses plan when router tx.minReceiveAmount is below tolerance floor", async () => {
+    const deps = createMockDeps({
+      api: {
+        ...createMockDeps().api,
+        async swap() {
+          return {
+            executionMode: "SWAP",
+            quoteId: "q-1",
+            approveTarget: ROUTER,
+            tx: {
+              to: ROUTER,
+              data: "0x1234",
+              minReceiveAmount: "5000000000000000000", // below 1% floor of 6e18
+              gas: "450000",
+            },
+          } as unknown as Awaited<ReturnType<SellDeps["api"]["swap"]>>;
+        },
+      },
+    });
+
+    await expect(
+      prepareSell(deps, { ticker: "NVDA", issuer: "bstock", shares: 0.025, user: USER }),
+    ).rejects.toThrow("The router's minimum receive amount is below tolerance floor.");
+  });
+
+  it("throws invalid_request when usd sell has missing reference price", async () => {
+    const deps = createMockDeps({
+      reference: async () => null,
+    });
+
+    await expect(
+      prepareSell(deps, { ticker: "NVDA", issuer: "bstock", usd: 25, user: USER }),
+    ).rejects.toThrow("No reference price; enter shares instead.");
+  });
+
+  it("allows ticker ending in X (e.g. NFLX) when issuer is bstock", async () => {
+    const chain = fixtureTradeChain(fixtureWallet());
+    chain.erc20Balances = async () => [100_000_000_000_000_000n];
+    const deps = createMockDeps({
+      chain,
+      tokenAllowance: async () => 100_000_000_000_000_000n,
+      quote: async () =>
+        ({
+          ticker: "NFLX",
+          amount: { usd: 6 },
+          rows: [
+            {
+              ticker: "NFLX",
+              issuer: "bstock",
+              symbol: "NFLXB",
+              address: NVDAB,
+              multiplier: { value: 10n ** 18n },
+              integrity: { flags: [] },
+            },
+          ],
+        }) as unknown as ConsolidatedQuote,
+    });
+
+    const plan = await prepareSell(deps, {
+      ticker: "NFLX",
+      issuer: "bstock",
+      shares: 0.025,
+      user: USER,
+    });
+    expect(plan.status).toBe("ready");
+    expect(plan.ticker).toBe("NFLX");
+  });
+
+  it("defaults to needs_approval and warns when allowance simulation fails", async () => {
+    const chain = fixtureTradeChain(fixtureWallet());
+    chain.erc20Balances = async () => [100_000_000_000_000_000n];
+    chain.simulate = async (tx) => {
+      // simulate allowance fails
+      if (tx.data.startsWith("0xdd62ed3e")) {
+        return { ok: false, reason: "execution reverted", revertData: "0x" };
+      }
+      return { ok: true, returnData: "0x" };
+    };
+
+    const warnings: string[] = [];
+    const deps = createMockDeps({
+      chain,
+      onWarn: (w) => warnings.push(w),
+    });
+
+    const plan = await prepareSell(deps, {
+      ticker: "NVDA",
+      issuer: "bstock",
+      tokens: "25654736000000000",
+      user: USER,
+    });
+
+    expect(plan.status).toBe("needs_approval");
+    expect(plan.warnings.some((w) => w.includes("token allowance"))).toBe(true);
+    expect(warnings.some((w) => w.includes("token allowance"))).toBe(true);
+  });
 });

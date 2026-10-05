@@ -1,7 +1,8 @@
-import { BSC_CHAIN_ID, MIN_ORDER_USDT, USDT_BSC } from "@tally/config";
+import { BSC_CHAIN_ID, LIQUIDMESH_ROUTER, MIN_ORDER_USDT, USDT_BSC } from "@tally/config";
 import {
   BelowMinimumError,
   E18,
+  expectedSwapGas,
   feeUsd,
   gasLimitFromEstimate,
   mulDiv,
@@ -48,7 +49,9 @@ export interface SellPlan {
   tokensIn: string;
   sharesIn: string;
   quotedUsdtOut: string;
+  /** Minimum USDT received. Enforced on-chain by the router's minReceiveAmount. */
   minUsdtOut: string;
+  floorSource: "router";
   multiplier: string;
   usdPerShare: number;
   referencePrice: number | null;
@@ -78,13 +81,12 @@ export interface SellDeps {
   quote: (input: QuoteInput) => Promise<ConsolidatedQuote>;
   bnbUsd: () => Promise<number>;
   reference: (ticker: string) => Promise<{ price: number } | null>;
-  tokenAllowance?: (stock: Address, owner: Address, spender: Address) => Promise<bigint>;
+  tokenAllowance?: (stock: Address, owner: Address, spender: Address) => Promise<bigint | null>;
   now?: () => number;
   onWarn?: (m: string) => void;
 }
 
 const APPROVE_GAS = 60_000n;
-const ESTIMATED_SWAP_GAS = 450_000n;
 
 function pickRow(
   cq: ConsolidatedQuote,
@@ -103,7 +105,7 @@ async function readTokenAllowance(
   stock: Address,
   owner: Address,
   spender: Address,
-): Promise<bigint> {
+): Promise<bigint | null> {
   if (deps.tokenAllowance) return deps.tokenAllowance(stock, owner, spender);
   try {
     const data = encodeFunctionData({
@@ -119,10 +121,12 @@ async function readTokenAllowance(
         data: sim.returnData,
       });
     }
-  } catch {
-    // fall through to default chain allowance
+  } catch (e) {
+    deps.onWarn?.(
+      `sell: token allowance read failed: ${e instanceof Error ? e.message : String(e)}`,
+    );
   }
-  return deps.chain.allowance(owner);
+  return null;
 }
 
 /**
@@ -136,7 +140,7 @@ export async function prepareSell(deps: SellDeps, req: SellRequest): Promise<Sel
   if (!(tolerancePct >= 0.1 && tolerancePct <= 5))
     throw new TradeError("invalid_request", "Tolerance must be between 0.1% and 5%.");
 
-  if (req.issuer === "xstocks" || req.ticker.toUpperCase().endsWith("X")) {
+  if (req.issuer === "xstocks") {
     throw new TradeError("not_buyable", "No market to exit this token on BNB Chain.");
   }
 
@@ -178,8 +182,10 @@ export async function prepareSell(deps: SellDeps, req: SellRequest): Promise<Sel
       throw new BelowMinimumError(req.usd);
     }
     const ref = await deps.reference(ticker).catch(() => null);
-    const unitPrice = ref?.price ?? 1;
-    const estShares = req.usd / unitPrice;
+    if (!ref || !Number.isFinite(ref.price) || ref.price <= 0) {
+      throw new TradeError("invalid_request", "No reference price; enter shares instead.");
+    }
+    const estShares = req.usd / ref.price;
     const sharesBigInt = parseDecimal(estShares.toFixed(8), 18);
     amountIn = mulDiv(sharesBigInt, E18, multiplier);
   } else {
@@ -212,8 +218,8 @@ export async function prepareSell(deps: SellDeps, req: SellRequest): Promise<Sel
     );
   }
 
-  // Check 5 USD minimum enforced by Binance aggregator
-  if (raw.tokensOut < 5n * 10n ** 18n) {
+  // Check minimum order size enforced by Binance aggregator and config
+  if (raw.tokensOut < BigInt(MIN_ORDER_USDT) * 10n ** 18n) {
     throw new BelowMinimumError(Number(raw.tokensOut) / 1e18);
   }
 
@@ -241,11 +247,44 @@ export async function prepareSell(deps: SellDeps, req: SellRequest): Promise<Sel
     (sw.routerResult?.approveTarget ?? raw.approveTarget ?? sw.tx.to) as string
   ).toLowerCase() as Address;
 
-  // 5. Floor in USDT: router's minReceiveAmount enforces the floor
+  // Enforce router allow-list: router must be allow-listed LiquidMesh router
+  if (router !== LIQUIDMESH_ROUTER.toLowerCase()) {
+    throw new TradeError("router_not_allowed", "The sell route router is not on the allow list.");
+  }
+
+  // Enforce that approval target matches ShareGuard's configured approveTarget for this router
+  const g = await deps.chain.readGuard(stock, router);
+  if (!g.routerAllowed) {
+    throw new TradeError(
+      "router_not_allowed",
+      "The sell route router is not enabled on ShareGuard.",
+    );
+  }
+  if (g.approveTarget.toLowerCase() !== approveTarget) {
+    throw new TradeError(
+      "router_not_allowed",
+      "The route's approval target doesn't match ShareGuard's configuration.",
+    );
+  }
+
+  // 5. Floor in USDT: router's minReceiveAmount must be present and enforce the floor
   const quotedUsdtOut = raw.tokensOut;
   const toleranceBps = BigInt(Math.round(tolerancePct * 100));
-  const fallbackFloor = mulDiv(quotedUsdtOut, 10_000n - toleranceBps, 10_000n);
-  const minUsdtOut = sw.tx.minReceiveAmount ? BigInt(sw.tx.minReceiveAmount) : fallbackFloor;
+  const expectedFloor = mulDiv(quotedUsdtOut, 10_000n - toleranceBps, 10_000n);
+
+  if (!sw.tx.minReceiveAmount) {
+    throw new TradeError(
+      "route_failed",
+      "The router did not enforce a minimum receive amount floor.",
+    );
+  }
+  const minUsdtOut = BigInt(sw.tx.minReceiveAmount);
+  if (minUsdtOut < expectedFloor) {
+    throw new TradeError(
+      "route_failed",
+      "The router's minimum receive amount is below tolerance floor.",
+    );
+  }
 
   const sharesIn = mulDiv(amountIn, multiplier, E18);
   const usdPerShare = sharesIn > 0n ? Number(quotedUsdtOut) / Number(sharesIn) : 0;
@@ -261,7 +300,8 @@ export async function prepareSell(deps: SellDeps, req: SellRequest): Promise<Sel
 
   const stockBal = stockBalances[0] ?? 0n;
   const bnbBal = bnbBalResult.bnb;
-  const bnbNeeded = (APPROVE_GAS + gasLimitFromEstimate(ESTIMATED_SWAP_GAS)) * gasPriceWei;
+  const bnbNeeded =
+    (APPROVE_GAS + gasLimitFromEstimate(BigInt(expectedSwapGas(raw.legCount)))) * gasPriceWei;
 
   const base = {
     builtAt: now(),
@@ -276,6 +316,7 @@ export async function prepareSell(deps: SellDeps, req: SellRequest): Promise<Sel
     sharesIn: sharesIn.toString(),
     quotedUsdtOut: quotedUsdtOut.toString(),
     minUsdtOut: minUsdtOut.toString(),
+    floorSource: "router" as const,
     multiplier: multiplier.toString(),
     usdPerShare,
     referencePrice: ref?.price ?? null,
@@ -298,7 +339,11 @@ export async function prepareSell(deps: SellDeps, req: SellRequest): Promise<Sel
     };
   }
 
-  if (allowance < amountIn) {
+  if (allowance === null || allowance < amountIn) {
+    if (allowance === null) {
+      warnings.push("Could not verify on-chain token allowance; approval transaction prepared.");
+      deps.onWarn?.("sell: token allowance could not be determined, defaulting to needs_approval");
+    }
     return {
       ...base,
       status: "needs_approval",
