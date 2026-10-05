@@ -45,8 +45,8 @@ Written 2026-10-04 by Claude (chief orchestrator) for **GPT-6 Astra**, who takes
 | 03 | Portfolio + Statement | D Antigravity | **Merged** (PR #7, `a732de4`; fixes 8–10 in `af9bac6`) | none. Collectors stay additive; WO-04 rebases over `collectors.ts`. |
 | 04 | Flow + Radar | B Codex #1 | **Merged** (PR #8, `0032642`). Follow-up (worker pace `TALLY_WORKER_RPS`, clean shutdown) at 866c2bd: **APPROVE after one small fix** (onWarn default, review addendum) | User squash-merges the follow-up after the fix. Then flag-on gate is met on the code side; optional EC2 re-run. Ghost wiring into core still NOT applied. |
 | 05 | Agent layer: MCP, Wallet Skill, upstream PR | B Codex #1 | **Merged** (PR #12, `2d62b25`); live $6 buy `0x48349a8d…164992` | user opens the upstream PR from `docs/upstream/`. |
-| 06 | Guardian alerts + read-only bot commands | D Antigravity | **Slice B merged** (PR #10, `50c9130`) | Follow-up: `engine.pauseState` for bStock pause alerts (approved in Owns). |
-| 07 | Sell + Switch | C | Wave 2 | Blocked on gates V-B1/V-B2 (Mon). **Escalate review to Claude** (contracts + money). |
+| 06 | Guardian alerts + read-only bot commands | D Antigravity | **Slice B merged.** Follow-up `engine.pauseState` @ 5c29b67: **CHANGES (small)** (redact the error reason; add `pause.test.ts`); rebase on `main` first | agy fixes; user squash-merges. |
+| 07 | Sell + Switch | C Codex #2 | **Started 2026-10-05** (sell first; switch waits for gate V-B1). Additive paths approved in the WO (engine `sell.ts`/`switch.ts`, chain `switch-call.ts`, two API routes). Receipts extension for sells/switches to be proposed later | Review; user runs gates V-B1/V-B2 and the live $6 sell. |
 | 08 | Guardian autopilot | C | Wave 2 | Blocked on V-AW. No longer owns `skills/share-true-trading/**` (moved to WO-05). **Escalate to Claude.** |
 | 09 | Pies | B | Wave 2, after WO-05 | |
 | 10 | Rewards → Stocks | D | Wave 2, if V-C gates pass | |
