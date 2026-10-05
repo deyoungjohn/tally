@@ -32,6 +32,7 @@ import {
   type TradeReceipt,
   type TradeRequest,
 } from "./trade";
+import { prepareSell, type SellPlan, type SellRequest } from "./sell";
 import { feedSignerFromEnv, liveTradeChain } from "./trade-chain";
 import { fixtureTradeChain } from "./trade-fixture";
 import { portfolioFor, radarFor, type PortfolioReport, type RadarReport } from "./views";
@@ -102,6 +103,7 @@ export interface Engine {
     guard: Address;
     prepare(req: TradeRequest): Promise<TradePlan>;
     receipt(txHash: Hex, ticker?: string): Promise<TradeReceipt>;
+    prepareSell(req: SellRequest): Promise<SellPlan>;
   };
   /** Integrity grades for every token of the given tickers (cached 2 minutes). */
   radar(tickers: readonly string[]): Promise<RadarReport>;
@@ -223,6 +225,15 @@ function build(o: BuildOptions): Engine {
     ]);
     return r;
   };
+  const sellDeps = {
+    api,
+    chain: o.tradeChain,
+    quote,
+    bnbUsd: ports.chain.bnbUsd,
+    reference: (t: string) => ports.facts.reference(t),
+    now,
+    onWarn: o.onWarn,
+  };
   const radar = radarFor(ports, now);
   return {
     paceWorkerRequests: pace?.configure,
@@ -239,6 +250,7 @@ function build(o: BuildOptions): Engine {
       guard: o.guard,
       prepare: (req) => prepareTrade(tradeDeps, req),
       receipt: (hash, ticker) => getTradeReceipt(tradeDeps, hash, ticker),
+      prepareSell: (req) => prepareSell(sellDeps, req),
     },
     facts: (ticker) => inspectTicker(ports, ticker),
     quote,
@@ -325,3 +337,4 @@ export function createFixtureEngine(
 
 export type { Address };
 export type { FlowChain, FlowReceipt, TransferLog } from "@tally/chain";
+export type { SellPlan, SellRequest } from "./sell";
