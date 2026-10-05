@@ -3,6 +3,7 @@ import type { ModuleHealth, SnapshotStore } from "@tally/modkit";
 import { deduplicateAlerts } from "./dedup";
 import {
   deliverPendingAlerts,
+  redactSecrets,
   type DeliverAlertsResult,
   type TelegramDeliverySender,
 } from "./delivery";
@@ -40,6 +41,9 @@ export interface GuardianJobContext {
   now: () => number;
   onWarn: (msg: string) => void;
   sender?: TelegramDeliverySender;
+  pauseState?: (
+    tokenAddress: string,
+  ) => Promise<{ paused: boolean | null; reason?: string | null; observedAt?: number }>;
   testWallet?: string;
   isProduction?: boolean;
 }
@@ -358,13 +362,24 @@ export async function runGuardianEvaluation(ctx: GuardianJobContext): Promise<Gu
       continue;
     }
 
-    // Finding 4: bStock pause alerts warning
+    // bStock on-chain pause evaluation via injected pauseState accessor
     let isPausedOnchain: boolean | null = null;
     if (tokenIssuer === "bstock") {
-      isPausedOnchain = null;
-      if (!warnedPauseThisRun) {
-        ctx.onWarn("bStock pause alerts are inactive until engine.pauseState lands");
-        warnedPauseThisRun = true;
+      if (ctx.pauseState) {
+        try {
+          const pauseRes = await ctx.pauseState(tokenAddr);
+          isPausedOnchain = pauseRes.paused;
+        } catch (err) {
+          const rawMsg = err instanceof Error ? err.message : String(err);
+          ctx.onWarn(`pauseState failed for ${tokenAddr}: ${redactSecrets(rawMsg)}`);
+          isPausedOnchain = null;
+        }
+      } else {
+        isPausedOnchain = null;
+        if (!warnedPauseThisRun) {
+          ctx.onWarn("bStock pause alerts are inactive: engine.pauseState is not configured");
+          warnedPauseThisRun = true;
+        }
       }
     }
 

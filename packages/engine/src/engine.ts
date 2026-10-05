@@ -36,6 +36,7 @@ import { feedSignerFromEnv, liveTradeChain } from "./trade-chain";
 import { fixtureTradeChain } from "./trade-fixture";
 import { portfolioFor, radarFor, type PortfolioReport, type RadarReport } from "./views";
 import { sharesOf, type SharesReport } from "./shares";
+import { pauseState, type PauseStateResult } from "./pause";
 import type { Hex } from "viem";
 import {
   chainPort,
@@ -107,6 +108,7 @@ export interface Engine {
   /** A wallet's holdings in shares across issuers. Read-only: any address works. */
   portfolio(address: Address, tickers: readonly string[]): Promise<PortfolioReport>;
   sharesOf(address: Address, tickers?: readonly string[]): Promise<SharesReport>;
+  pauseState(tokenAddress: Address): Promise<PauseStateResult>;
   /** What `/api/health` reports: Binance auth and the region detector, RPC height, the guard and the Ondo feed's age (blueprint §14). */
   health(): Promise<HealthReport>;
   /** Raw ports, for tests. */
@@ -232,6 +234,7 @@ function build(o: BuildOptions): Engine {
     radar,
     portfolio: (address, tickers) => portfolioFor(ports, o.tradeChain, address, tickers, now),
     sharesOf: (address, tickers) => sharesOf(ports, o.tradeChain, address, tickers, o.onWarn),
+    pauseState: (tokenAddress) => pauseState(o.tradeChain, tokenAddress, now),
     trade: {
       guard: o.guard,
       prepare: (req) => prepareTrade(tradeDeps, req),

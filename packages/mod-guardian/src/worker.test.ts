@@ -366,10 +366,10 @@ describe("Guardian Worker (worker.ts)", () => {
 
     await runGuardianEvaluation(ctx);
 
-    // Check Finding 4 exact wording
+    // Check updated inactive wording when pauseState is not configured
     expect(
       warnings.some((w) =>
-        w.includes("bStock pause alerts are inactive until engine.pauseState lands"),
+        w.includes("bStock pause alerts are inactive: engine.pauseState is not configured"),
       ),
     ).toBe(true);
 
@@ -1163,5 +1163,222 @@ describe("Guardian Worker (worker.ts)", () => {
     expect(warnings).toContain(
       "Linked Telegram chats exist, but TELEGRAM_BOT_TOKEN is not configured; alerts are stored, not delivered",
     );
+  });
+
+  // bStock pause alerts via engine.pauseState
+  it("bStock holding when pauseState returns paused: true gives exactly one alert", async () => {
+    const store = openStore(":memory:");
+    const currentTime = 1_000_000;
+    const warnings: string[] = [];
+
+    const ctx: GuardianJobContext = {
+      store,
+      health: store.health,
+      now: () => currentTime,
+      onWarn: (msg) => warnings.push(msg),
+      pauseState: async (_token) => ({
+        paused: true,
+        reason: null,
+        observedAt: currentTime,
+      }),
+      isProduction: false,
+    };
+
+    store.put({
+      kind: "wallet:active",
+      key: "bsc",
+      data: { address: wallet },
+      source: "test",
+      observedAt: currentTime,
+    });
+
+    store.put({
+      kind: "portfolio",
+      key: wallet,
+      data: {
+        holdings: [
+          {
+            tokenContractAddress: nvdaAddr,
+            ticker: "NVDA",
+            issuer: "bstock",
+            balanceTokens: 10n * 10n ** 18n,
+            balanceShares: 10n * 10n ** 18n,
+            isRecognized: true,
+          },
+        ],
+      },
+      source: "test",
+      observedAt: currentTime,
+    });
+
+    store.put({
+      kind: "radar",
+      key: nvdaAddr,
+      data: {
+        ticker: "NVDA",
+        address: nvdaAddr,
+        issuer: "bstock",
+        grade: "B",
+        reasons: [],
+        ghost: false,
+      } as RadarSnapshotSubset,
+      source: "radar",
+      observedAt: currentTime,
+    });
+
+    const run = await runGuardianEvaluation(ctx);
+    expect(run.generatedAlerts).toBe(1);
+
+    const alerts = store.latest<Alert[]>("alerts", wallet, { maxAgeMs: 60_000 })?.data ?? [];
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]!.rule).toBe("paused");
+    expect(alerts[0]!.title).toBe("NVDA via bStock is paused");
+    expect(alerts[0]!.body).toContain("is paused by its pause manager");
+    expect(alerts[0]!.severity).toBe("warning");
+  });
+
+  it("bStock holding when pauseState returns paused: null gives zero alerts and one warning", async () => {
+    const store = openStore(":memory:");
+    const currentTime = 1_000_000;
+    const warnings: string[] = [];
+
+    const ctx: GuardianJobContext = {
+      store,
+      health: store.health,
+      now: () => currentTime,
+      onWarn: (msg) => warnings.push(msg),
+      pauseState: async (_token) => ({
+        paused: null,
+        reason: "pause check reverted",
+        observedAt: currentTime,
+      }),
+      isProduction: false,
+    };
+
+    store.put({
+      kind: "wallet:active",
+      key: "bsc",
+      data: { address: wallet },
+      source: "test",
+      observedAt: currentTime,
+    });
+
+    store.put({
+      kind: "portfolio",
+      key: wallet,
+      data: {
+        holdings: [
+          {
+            tokenContractAddress: nvdaAddr,
+            ticker: "NVDA",
+            issuer: "bstock",
+            balanceTokens: 10n * 10n ** 18n,
+            balanceShares: 10n * 10n ** 18n,
+            isRecognized: true,
+          },
+        ],
+      },
+      source: "test",
+      observedAt: currentTime,
+    });
+
+    store.put({
+      kind: "radar",
+      key: nvdaAddr,
+      data: {
+        ticker: "NVDA",
+        address: nvdaAddr,
+        issuer: "bstock",
+        grade: "B",
+        reasons: [],
+        ghost: false,
+      } as RadarSnapshotSubset,
+      source: "radar",
+      observedAt: currentTime,
+    });
+
+    const run = await runGuardianEvaluation(ctx);
+    expect(run.generatedAlerts).toBe(0);
+
+    const alerts = store.latest<Alert[]>("alerts", wallet, { maxAgeMs: 60_000 });
+    expect(alerts).toBeNull();
+
+    expect(
+      warnings.some(
+        (w) =>
+          w.includes("bStock pause state for NVDA") &&
+          w.includes("is unknown; no pause alert evaluated"),
+      ),
+    ).toBe(true);
+  });
+
+  it("redacts secret URLs when pauseState throws with an RPC endpoint URL", async () => {
+    const store = openStore(":memory:");
+    const currentTime = 1_000_000;
+    const warnings: string[] = [];
+
+    const ctx: GuardianJobContext = {
+      store,
+      health: store.health,
+      now: () => currentTime,
+      onWarn: (msg) => warnings.push(msg),
+      pauseState: async () => {
+        throw new Error(
+          "HTTP 500 error connecting to https://bsc.rpc.nodereal.io/?apikey=SECRET_KEY_999: timeout",
+        );
+      },
+      isProduction: false,
+    };
+
+    store.put({
+      kind: "wallet:active",
+      key: "bsc",
+      data: { address: wallet },
+      source: "test",
+      observedAt: currentTime,
+    });
+
+    store.put({
+      kind: "portfolio",
+      key: wallet,
+      data: {
+        holdings: [
+          {
+            tokenContractAddress: nvdaAddr,
+            ticker: "NVDA",
+            issuer: "bstock",
+            balanceTokens: 10n * 10n ** 18n,
+            balanceShares: 10n * 10n ** 18n,
+            isRecognized: true,
+          },
+        ],
+      },
+      source: "test",
+      observedAt: currentTime,
+    });
+
+    store.put({
+      kind: "radar",
+      key: nvdaAddr,
+      data: {
+        ticker: "NVDA",
+        address: nvdaAddr,
+        issuer: "bstock",
+        grade: "B",
+        reasons: [],
+        ghost: false,
+      } as RadarSnapshotSubset,
+      source: "radar",
+      observedAt: currentTime,
+    });
+
+    const run = await runGuardianEvaluation(ctx);
+    expect(run.generatedAlerts).toBe(0);
+
+    const pauseFailureWarning = warnings.find((w) => w.startsWith("pauseState failed for"));
+    expect(pauseFailureWarning).toBeDefined();
+    expect(pauseFailureWarning).toContain("[redacted url]");
+    expect(pauseFailureWarning).not.toContain("https://");
+    expect(pauseFailureWarning).not.toContain("SECRET_KEY_999");
   });
 });
