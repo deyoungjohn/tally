@@ -199,3 +199,43 @@ it("primary failure retains a stale snapshot's source/time, warns, and marks the
     store.close();
   }
 });
+
+it("a timed-out run cannot expire hints", async () => {
+  vi.useFakeTimers();
+  const store = openStore(":memory:");
+  const stop = new AbortController();
+  let expiredRun: WorkerContext | undefined;
+  store.put({
+    kind: "receipt-hint",
+    key: "pending",
+    data: {},
+    source: "browser-hint",
+    observedAt: 0,
+  });
+  const loop = runJobs(
+    [
+      {
+        name: "receipts",
+        intervalMs: 100,
+        timeoutMs: 25,
+        run: async (ctx) => {
+          expiredRun = ctx;
+          await new Promise<void>(() => {});
+        },
+      },
+    ],
+    { store, health: store.health, engine: createFixtureEngine(), now: Date.now, onWarn: vi.fn() },
+    stop.signal,
+  );
+  try {
+    await vi.advanceTimersByTimeAsync(25);
+    expect(() => expiredRun?.store.expire({ kind: "receipt-hint", olderThanMs: 1 })).toThrow(
+      "timed out after 25 ms",
+    );
+    expect(store.listLatest("receipt-hint", { maxAgeMs: 0 })).toHaveLength(1);
+  } finally {
+    stop.abort();
+    await loop;
+    store.close();
+  }
+});

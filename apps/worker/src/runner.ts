@@ -34,6 +34,11 @@ async function runOnce(
     store: {
       latest: context.store.latest.bind(context.store),
       history: context.store.history.bind(context.store),
+      listLatest: context.store.listLatest.bind(context.store),
+      expire: (opts) => {
+        assertActive();
+        return context.store.expire(opts);
+      },
       put: (snapshot) => {
         assertActive();
         context.store.put(snapshot);

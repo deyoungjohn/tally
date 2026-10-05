@@ -276,3 +276,40 @@ it("flags default all off and accept only FEATURE_<NAME>=1", () => {
   for (const name of MODULE_NAMES)
     expect(flags({ [`FEATURE_${name.toUpperCase()}`]: "1" })[name]).toBe(true);
 });
+
+it("listLatest selects one row per key, breaks timestamp ties by insertion, and bounds the limit", () => {
+  const s = store();
+  for (const [key, observedAt, data] of [
+    ["a", 10, 1],
+    ["a", 10, 2],
+    ["a", 5, 3],
+    ["b", 20, 4],
+  ] as const)
+    s.put({ kind: "receipt-hint", key, observedAt, data, source: "fixture" });
+  s.put({ kind: "other", key: "c", observedAt: 100, data: 5, source: "fixture" });
+  expect(s.listLatest("receipt-hint", { maxAgeMs: 10, now: 21 })).toMatchObject([
+    { key: "b", data: 4, ageMs: 1, stale: false },
+    { key: "a", data: 2, ageMs: 11, stale: true },
+  ]);
+  expect(s.listLatest("receipt-hint", { maxAgeMs: 10, limit: 1 })).toHaveLength(1);
+  expect(s.listLatest("receipt-hint", { maxAgeMs: 10, limit: 0 })).toEqual([]);
+  for (const limit of [-1, 1001, 1.5, NaN])
+    expect(() => s.listLatest("receipt-hint", { maxAgeMs: 10, limit })).toThrow(RangeError);
+  for (let i = 0; i < 201; i++)
+    s.put({ kind: "bounded", key: String(i), data: {}, source: "fixture", observedAt: i });
+  expect(s.listLatest("bounded", { maxAgeMs: 10 })).toHaveLength(200);
+  expect(() => s.listLatest("bounded", { maxAgeMs: -1 })).toThrow(RangeError);
+});
+it("expire cleans the latest expired hint, retains the cutoff, and refuses every protected kind", () => {
+  const s = store();
+  for (const kind of ["receipt-hint", ...EVIDENCE_SNAPSHOT_KINDS])
+    for (const observedAt of [10, 20])
+      s.put({ kind, key: String(observedAt), data: {}, source: "fixture", observedAt });
+  expect(s.expire({ kind: "receipt-hint", olderThanMs: 20 })).toBe(1);
+  expect(s.listLatest("receipt-hint", { maxAgeMs: 0 })).toMatchObject([{ observedAt: 20 }]);
+  for (const kind of EVIDENCE_SNAPSHOT_KINDS) {
+    expect(() => s.expire({ kind, olderThanMs: 100 })).toThrow("protected evidence");
+    expect(s.listLatest(kind, { maxAgeMs: 0 })).toHaveLength(2);
+  }
+  expect(() => s.expire({ kind: "receipt-hint", olderThanMs: NaN })).toThrow(RangeError);
+});

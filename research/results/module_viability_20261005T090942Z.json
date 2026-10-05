@@ -1,0 +1,96 @@
+{
+  "runAtUtc": "2026-10-05T09:09:26Z",
+  "guard": "6",
+  "switch": [
+    {
+      "from": "NVDAB",
+      "to": "NVDAon",
+      "usdTarget": 7.0,
+      "amountIn": "29676934404765388",
+      "sourceTokenPrice": 235.8734195562993,
+      "error": "/api/v1/dex/aggregator/quote: http=200 body={\"code\": 40368, \"msg\": \"Ondo asset on chain 56 can only pair with allowed stablecoin(s); got: 0x02fca66c1d1afb4e2a7884261eb00f63598a7436\", \"data\": null, \"timestamp\": 1791191366880, \"success\": false}"
+    },
+    {
+      "from": "NVDAon",
+      "to": "NVDAB",
+      "usdTarget": 7.0,
+      "amountIn": "29656304261981508",
+      "sourceTokenPrice": 236.03750279072332,
+      "error": "/api/v1/dex/aggregator/quote: http=200 body={\"code\": 40368, \"msg\": \"Ondo asset on chain 56 can only pair with allowed stablecoin(s); got: 0x02fca66c1d1afb4e2a7884261eb00f63598a7436\", \"data\": null, \"timestamp\": 1791191369117, \"success\": false}"
+    },
+    {
+      "from": "AAPLB",
+      "to": "AAPLon",
+      "usdTarget": 7.0,
+      "amountIn": "21005180029567988",
+      "sourceTokenPrice": 333.25113091848937,
+      "error": "/api/v1/dex/aggregator/quote: http=200 body={\"code\": 40368, \"msg\": \"Ondo asset on chain 56 can only pair with allowed stablecoin(s); got: 0x431a3bee82e2ca41e49895cbece5bb0f76a89b7a\", \"data\": null, \"timestamp\": 1791191370691, \"success\": false}"
+    },
+    {
+      "from": "AAPLon",
+      "to": "AAPLB",
+      "usdTarget": 7.0,
+      "amountIn": "20949452496791260",
+      "sourceTokenPrice": 334.1376105686848,
+      "error": "/api/v1/dex/aggregator/quote: http=200 body={\"code\": 40368, \"msg\": \"Ondo asset on chain 56 can only pair with allowed stablecoin(s); got: 0x431a3bee82e2ca41e49895cbece5bb0f76a89b7a\", \"data\": null, \"timestamp\": 1791191372406, \"success\": false}"
+    }
+  ],
+  "sell": [
+    {
+      "from": "NVDAB",
+      "to": "USDT",
+      "usdTarget": 7.0,
+      "amountIn": "29671898654643680",
+      "sourceTokenPrice": 235.9134506852494,
+      "mode": "SWAP",
+      "vendor": "LiquidMesh",
+      "routes": 1,
+      "route": "Pancakeswap V3:USDT",
+      "toTokenAmount": "7002379360157271784",
+      "priceImpactPercent": "0.0005197959",
+      "error": "/api/v1/dex/aggregator/swap: http=200 body={\"code\": 40001, \"msg\": \"Parameter [userWalletAddress] error: invalid token address, EVM chains require 0x + 40 hex characters (e.g. 0x55d398326f99059fF775485246999027B3197955)\", \"data\": null, \"timestamp\": 1791191374556, \"success\": false}"
+    },
+    {
+      "from": "NVDAon",
+      "to": "USDT",
+      "usdTarget": 7.0,
+      "amountIn": "29660500075181696",
+      "sourceTokenPrice": 236.0041126163352,
+      "mode": "SWAP",
+      "vendor": "LiquidMesh",
+      "routes": 1,
+      "route": "Uniswap V4:NVDAB > Pancakeswap V3:USDT",
+      "toTokenAmount": "7001017110956541110",
+      "priceImpactPercent": "0.0006162633",
+      "error": "/api/v1/dex/aggregator/swap: http=200 body={\"code\": 40001, \"msg\": \"Parameter [userWalletAddress] error: invalid token address, EVM chains require 0x + 40 hex characters (e.g. 0x55d398326f99059fF775485246999027B3197955)\", \"data\": null, \"timestamp\": 1791191377025, \"success\": false}"
+    },
+    {
+      "from": "AAPLB",
+      "to": "USDT",
+      "usdTarget": 7.0,
+      "amountIn": "21005180029567988",
+      "sourceTokenPrice": 333.25113091848937,
+      "mode": "SWAP",
+      "vendor": "LiquidMesh",
+      "routes": 1,
+      "route": "Uniswap V4:USDT",
+      "toTokenAmount": "6997200633776676554",
+      "priceImpactPercent": "0.0003799836",
+      "error": "/api/v1/dex/aggregator/swap: http=200 body={\"code\": 40001, \"msg\": \"Parameter [userWalletAddress] error: invalid token address, EVM chains require 0x + 40 hex characters (e.g. 0x55d398326f99059fF775485246999027B3197955)\", \"data\": null, \"timestamp\": 1791191379356, \"success\": false}"
+    },
+    {
+      "from": "AAPLon",
+      "to": "USDT",
+      "usdTarget": 7.0,
+      "amountIn": "20949242761118708",
+      "sourceTokenPrice": 334.14095582451466,
+      "mode": "SWAP",
+      "vendor": "LiquidMesh",
+      "routes": 1,
+      "route": "Uniswap V3:BSC_ETH > Genius:USDC > Rfq Neptunex:USDT",
+      "toTokenAmount": "6945949274944597462",
+      "priceImpactPercent": "0.0040481031",
+      "error": "/api/v1/dex/aggregator/swap: http=200 body={\"code\": 40001, \"msg\": \"Parameter [userWalletAddress] error: invalid token address, EVM chains require 0x + 40 hex characters (e.g. 0x55d398326f99059fF775485246999027B3197955)\", \"data\": null, \"timestamp\": 1791191381584, \"success\": false}"
+    }
+  ]
+}

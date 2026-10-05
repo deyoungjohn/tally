@@ -32,6 +32,7 @@ import {
   type TradeReceipt,
   type TradeRequest,
 } from "./trade";
+import { prepareSell, type SellPlan, type SellRequest } from "./sell";
 import { feedSignerFromEnv, liveTradeChain } from "./trade-chain";
 import { fixtureTradeChain } from "./trade-fixture";
 import {
@@ -42,8 +43,21 @@ import {
   type PortfolioReport,
   type RadarReport,
 } from "./views";
+import { sharesOf, type SharesReport } from "./shares";
+import { pauseState, type PauseStateResult } from "./pause";
 import type { Hex } from "viem";
-import { chainPort, clientFromEnv, onchainMultiplierReader } from "@tally/chain";
+import {
+  chainPort,
+  clientFromEnv,
+  onchainMultiplierReader,
+  flowChainFromEnv,
+  type FlowChain,
+  transactionsFromEnv,
+  type Transactions,
+} from "@tally/chain";
+import { fixtureTransactions } from "./transactions-fixture";
+import { fixtureFlowChain } from "./flow-fixture";
+import { workerRequestPace, type WorkerRequestPaceOptions } from "./worker-request-pace";
 import {
   TtlCache,
   amountBucket,
@@ -69,8 +83,25 @@ export interface HealthReport {
 }
 
 export interface Engine {
+  /** Opt-in live worker pacing/cancellation; ordinary web/quote engines keep their existing rate. */
+  paceWorkerRequests?: (options: WorkerRequestPaceOptions) => void;
   /** Scheduled read-only calls. Existing trade/quote ports are unchanged. */
-  collectors: Pick<BinanceCollectors, "registry" | "prices">;
+  collectors: Pick<
+    BinanceCollectors,
+    | "registry"
+    | "prices"
+    | "portfolioOverview"
+    | "recentPnl"
+    | "tokenLatestPnl"
+    | "dexHistory"
+    | "trades"
+    | "holders"
+    | "topTraders"
+    | "topLiquidity"
+  >;
+  /** Read-only flow evidence; independent from the existing trade chain. */
+  chain: FlowChain;
+  transactions: Transactions;
   quote(input: QuoteInput): Promise<ConsolidatedQuote>;
   /** Every token of a ticker with its facts, bounds and the full integrity check log, and no quote (`tally facts`). */
   facts(ticker: string): Promise<TokenInspection[]>;
@@ -79,6 +110,7 @@ export interface Engine {
     guard: Address;
     prepare(req: TradeRequest): Promise<TradePlan>;
     receipt(txHash: Hex, ticker?: string): Promise<TradeReceipt>;
+    prepareSell(req: SellRequest): Promise<SellPlan>;
   };
   /** Integrity grades for every token of the given tickers (cached 2 minutes). */
   radar(tickers: readonly string[]): Promise<RadarReport>;
@@ -86,6 +118,8 @@ export interface Engine {
   portfolio(address: Address, tickers: readonly string[]): Promise<PortfolioReport>;
   /** Every tokenized stock token a wallet holds, any ticker and issuer (the Send list). Read-only: any address works. */
   holdings(address: Address): Promise<HoldingsReport>;
+  sharesOf(address: Address, tickers?: readonly string[]): Promise<SharesReport>;
+  pauseState(tokenAddress: Address): Promise<PauseStateResult>;
   /** What `/api/health` reports: Binance auth and the region detector, RPC height, the guard and the Ondo feed's age (blueprint §14). */
   health(): Promise<HealthReport>;
   /** Raw ports, for tests. */
@@ -106,14 +140,24 @@ interface BuildOptions {
   guard: Address;
   tradeChain: TradeChain;
   signer?: FeedSigner;
+  flowChain: FlowChain;
+  transactions: Transactions;
+  workerPacing?: boolean;
 }
 
 function build(o: BuildOptions): Engine {
   const now = o.now ?? Date.now;
+  const pace = o.workerPacing ? workerRequestPace(o.fetch) : undefined;
+  const transport = pace?.fetch ?? o.fetch;
+  const onWarn = pace
+    ? (message: string) => {
+        if (!pace.aborted()) o.onWarn?.(message);
+      }
+    : o.onWarn;
   const client = new BinanceClient({
     apiKey: o.apiKey,
     apiSecret: o.apiSecret,
-    fetch: o.fetch,
+    fetch: transport,
     now,
     ratePerSec: o.ratePerSec,
     burst: o.ratePerSec ? Math.max(3, o.ratePerSec) : undefined,
@@ -121,10 +165,10 @@ function build(o: BuildOptions): Engine {
   const api = new BinanceApi(client);
   const data = new BinanceData({
     api,
-    pub: new PublicApi(o.fetch),
+    pub: new PublicApi(transport),
     onchain: o.onchain,
     now,
-    onWarn: o.onWarn,
+    onWarn,
     baseline: o.baseline,
   });
   const bnb = new TtlCache<number>(TTL_MS.bnbPrice, now);
@@ -190,18 +234,33 @@ function build(o: BuildOptions): Engine {
     ]);
     return r;
   };
+  const sellDeps = {
+    api,
+    chain: o.tradeChain,
+    quote,
+    bnbUsd: ports.chain.bnbUsd,
+    reference: (t: string) => ports.facts.reference(t),
+    now,
+    onWarn: o.onWarn,
+  };
   const radar = radarFor(ports, now);
   return {
+    paceWorkerRequests: pace?.configure,
     collectors: new BinanceCollectors(client),
+    chain: o.flowChain,
+    transactions: o.transactions,
     ports,
     health,
     radar,
     portfolio: (address, tickers) => portfolioFor(ports, o.tradeChain, address, tickers, now),
     holdings: (address) => holdingsFor(ports, o.tradeChain, address, now),
+    sharesOf: (address, tickers) => sharesOf(ports, o.tradeChain, address, tickers, o.onWarn),
+    pauseState: (tokenAddress) => pauseState(o.tradeChain, tokenAddress, now),
     trade: {
       guard: o.guard,
       prepare: (req) => prepareTrade(tradeDeps, req),
       receipt: (hash, ticker) => getTradeReceipt(tradeDeps, hash, ticker),
+      prepareSell: (req) => prepareSell(sellDeps, req),
     },
     facts: (ticker) => inspectTicker(ports, ticker),
     quote,
@@ -232,6 +291,9 @@ export function createLiveEngine(
     guard,
     tradeChain: liveTradeChain(rpc, guard),
     signer: feedSignerFromEnv(env),
+    flowChain: flowChainFromEnv(env, onWarn),
+    transactions: transactionsFromEnv(env, onWarn),
+    workerPacing: true,
   });
 }
 
@@ -278,7 +340,11 @@ export function createFixtureEngine(
     guard: SHAREGUARD_DEPLOYED,
     tradeChain: o.tradeChain ?? fixtureTradeChain(),
     signer: o.signer,
+    flowChain: fixtureFlowChain(),
+    transactions: fixtureTransactions(),
   });
 }
 
 export type { Address };
+export type { FlowChain, FlowReceipt, TransferLog } from "@tally/chain";
+export type { SellPlan, SellRequest } from "./sell";

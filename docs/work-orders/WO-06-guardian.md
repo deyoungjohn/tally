@@ -13,6 +13,9 @@
 - `apps/bot/**` (except `package.json` deps, which WO-00 adds)
 - `apps/worker/src/jobs/guardian.ts`
 - `apps/web/modules/guardian/**`, `apps/web/app/dev/guardian/**`
+- Approved 2026-10-04, **additive only**: workspace dependencies `@tally/engine` and `@tally/core` (`workspace:*`) in `apps/bot/package.json` and the matching `pnpm-lock.yaml` importer lines, for the read-only commands (task 9). No external packages.
+- Approved 2026-10-04, **additive only**: a read-only pause accessor in a new file `packages/engine/src/pause.ts` (+ `pause.test.ts`) and one accessor line in `packages/engine/src/engine.ts` (`engine.pauseState(tokenAddress): Promise<{ paused: boolean | null; reason: string | null; observedAt: number }>`). It calls the existing `TradeChain.readGuard(stock, router)` (router = the configured allow-listed router constant) and maps `tokenPaused` true/false, and `undefined` (the check reverted, which fails closed on-chain) or a token ShareGuard is not configured for to `paused: null` with a reason. No change to `trade.ts`, ShareGuard or the buy path. Guardian's worker awaits it once per holding per run and passes the result as `isPausedOnchain` (never defaulting unknown to false). Pause alerts therefore cover assets configured in ShareGuard; say so in the PR. The WO-05 PR also adds one accessor line to `engine.ts`: expect a trivial rebase conflict.
+- Reassigned 2026-10-04 from agent E to agent D (Antigravity). Slices ship as separate PRs on the same branch name `mod/WO-06-guardian` (slice B starts fresh from main after slice A merges).
 
 ## Tasks
 
@@ -27,6 +30,11 @@
 6. Telegram (grammY, long polling): `/start` link flow (one-time code shown in the web app), `/alerts on|off`, `/quiet 22-07`, delivery of alerts. Bot token from env `TELEGRAM_BOT_TOKEN` only.
 7. View models (UI split: you ship the logic and a typed view model plus a plain, unstyled component in `apps/web/modules/<name>/`; the UI agent (WO-12, Sonnet) builds the real page from your view model. Don't style, don't create pages outside `apps/web/app/dev/<name>/`.): `AlertFeedVM` and `GuardianSettingsVM` (rules, thresholds, quiet hours, Telegram link state). The UI agent builds the Guardian page.
 8. Earnings rule: only if the orchestrator confirms a source (gate V-E); otherwise leave a disabled rule stub with a reason.
+9. **Read-only bot commands (restored from blueprint M6, §13)**, answered from snapshots and `@tally/engine` only (no keys held, nothing signed):
+   - `/quote <TICKER> [usd]` → issuer comparison in shares (price per share, premium vs US, fee, grade, `best`), same numbers as the web app.
+   - `/shares <address>` → holdings in shares per ticker across issuers (`null` + reason when a multiplier is unknown, never 1:1).
+   - `/shield` → tokens currently flagged (paused, ghost, unit mismatch, stale data) with plain-English reasons.
+   Replies within 3 s from cached snapshots; when data is stale, say how old it is.
 
 ## Exit checks
 
@@ -34,6 +42,7 @@
 - [ ] Telegram down (mocked) → alerts still written and visible on the web feed; error in health.
 - [ ] One rule throws → other rules still evaluate (test).
 - [ ] View-model tests: empty feed, de-duplicated feed, Telegram not linked.
+- [ ] Command tests (fixture mode): `/quote NVDA 25` shows both issuers in shares; `/shares` on the burner wallet; `/shield` lists a paused and a ghost token; stale snapshot → age shown.
 
 ## Out of scope
 

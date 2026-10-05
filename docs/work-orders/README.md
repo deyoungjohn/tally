@@ -1,16 +1,16 @@
 # Work orders: who builds what, when, and how it gets merged
 
-Roles: **orchestrator** (Claude, in the Cowork session) writes work orders and reviews every PR; **chief engineer** (the user) reviews after the orchestrator, merges, runs anything live, and owns keys and deployments; **agents** build one work order each on their own branch.
+Roles: **day-to-day orchestrator** (Astra; Claude remains chief orchestrator for escalations and final review) writes work orders and reviews every PR; **chief engineer** (the user) reviews after the orchestrator, merges, runs anything live, and owns keys and deployments; **agents** build one work order each on their own branch.
 
 ## Team and assignments
 
 | Agent (tool · model) | Strength we use it for | Wave 1 (Sat 3 – Mon 5) | Wave 2 (Tue 6 – Thu 8) |
 |---|---|---|---|
-| **A: Sonnet** (Claude Code cloud session, Claude Pro) | Owns **all UI**: reads screenshots, follows `DESIGN.md`, built the current screens | **WO-01 M3 trade flow** (in progress), then **WO-12** correction pass | **WO-12** screens (Portfolio, Radar, Guardian, Receipt/Quality, Pies) as view models merge |
-| **B: Codex** (ChatGPT Plus #1) | Solid TypeScript, infra | **WO-00 Foundation**, then **WO-04 Flow** | **WO-09 Pies** |
+| **A: Sonnet** (Claude Code cloud session, Claude Pro) | Owns **all UI**: reads screenshots, follows `DESIGN.md`, built the current screens | **WO-12** correction pass and the landing lead (moved from WO-01 on 2026-10-04) | **WO-12** screens (Portfolio, Radar, Guardian, Receipt/Quality, Pies) as view models merge |
+| **B: Codex** (ChatGPT Plus #1) | Solid TypeScript, infra | **WO-00 Foundation** (merged), then **WO-04 Flow** | **WO-05 Agent layer**, then **WO-09 Pies** |
 | **C: Codex** (ChatGPT Plus #2) | Careful pure logic + tests, Foundry | **WO-02 Receipts + Quality** (pure part first) | **WO-07 Sell + Switch** (fork tests J/K), then **WO-08 Autopilot** |
-| **D: Antigravity** (Gemini, Pro) | Logic + view models; **backup UI agent** | **WO-03 Portfolio + Statement** (logic + view models) | **WO-10 Rewards** (if gates pass) / takes over WO-12 slices if Sonnet is out of quota |
-| **E: OpenCode** (strongest model you can connect) | Rules engine, bot | **WO-06 Guardian alerts** | Integration tests, e2e |
+| **D: Antigravity** (Gemini, Pro) | Logic + view models; **backup UI agent** | **WO-03 Portfolio + Statement** (merged), then **WO-01 M3 follow-up** (stage events, urgent) and **WO-06 Guardian** in parallel (user decision 2026-10-04) | **WO-10 Rewards** (if gates pass) / takes over WO-12 slices if Sonnet is out of quota |
+| **E: OpenCode** (strongest model you can connect) | Rules engine, bot | _free_ (WO-06 moved to D on 2026-10-04; candidate: V-C gate scripts) | Integration tests, e2e |
 | **F: Cline · Muse Spark (free)** | Low-risk support only | **WO-11 Evidence, fixtures, docs** | README, demo script, screenshots |
 
 **UI split:** module agents ship logic + a typed view model + a plain component in `apps/web/modules/<name>/`; Sonnet (WO-12) owns every page and visual component and builds them from those view models. No file has two owners. See `AGENTS.md`.
@@ -28,7 +28,7 @@ Notes:
 | Sat 3, evening | Orchestration docs merged. Dispatch WO-00 (B), WO-01 (A), WO-02 pure part (C), WO-03 pure part (D), WO-06 pure part (E), WO-11 (F). |
 | Sun 4, 12:00 | **WO-00 merged** (everyone rebases). Gate V-AW (`baw` capabilities) answered. |
 | Mon 5 | V-B1/V-B2 run by the user in pre-market + regular hours. WO-02, WO-03 merged. |
-| Tue 6 | **WO-01 (M3) merged.** WO-04 merged. Dispatch wave 2. |
+| Tue 6 | **WO-01 follow-up merged** (urgent; earlier if ready). WO-02B starts only after `onStage` merges. WO-04 merged. Dispatch wave 2. |
 | Wed 7 | WO-06 merged. Earnings source decided (V-E). |
 | Thu 8, 23:59 | **Cut line.** Anything unmerged ships flag-off. |
 | Fri 9 | Integration day: flags on, e2e on EC2, live $6 receipts/switch/sell. |
@@ -38,11 +38,13 @@ Notes:
 ## Review protocol
 
 1. The agent pushes `mod/WO-xx-<slug>` and opens a PR using the template.
-2. The user runs, from the repo root:
-   - PowerShell: `pwsh scripts/review-pack.ps1 mod/WO-xx-<slug>`
-   - bash/WSL: `bash scripts/review-pack.sh mod/WO-xx-<slug>`
+2. The user runs, in WSL from any clone or worktree of the repo (the branch doesn't need to be pushed):
 
-   This writes `review/<branch>/` (diff, changed-file list, owned-path check, and typecheck/lint/test output). `review/` is git-ignored.
+   ```bash
+   bash scripts/review-pack.sh mod/WO-xx-<slug>          # add FULL=1 in front to include build + e2e
+   ```
+
+   It writes `review/<branch>/` into the Windows clone (`/mnt/c/Users/DELL/Projects/tally/review/`, where the orchestrator can read it): meta, commits, diff, changed files, owned-path check, uncommitted files in the agent's worktree, and typecheck/lint/format/test output. `review/` is git-ignored.
 3. The user tells the orchestrator "review WO-xx". The orchestrator reads the pack and writes `review/<branch>/REVIEW.md`: verdict **APPROVE** or **CHANGES**, with numbered findings (severity, file:line, what to change).
 4. The user pastes the findings to the agent; the agent fixes and replies per finding; repeat from 2.
 5. After the orchestrator approves, the user reviews, squash-merges to `main`, and tells the other agents to rebase.
@@ -64,11 +66,12 @@ When done, open a PR with .github/pull_request_template.md filled in, with evide
 | WO | Title | Agent | Branch |
 |---|---|---|---|
 | 00 | Foundation: modkit, worker, flags, health, ModuleBoundary | B | `mod/WO-00-foundation` |
-| 01 | M3 web trade flow (blueprint §17) | A | Sonnet's existing M3 branch |
-| 02 | Receipts + Execution quality report | C | `mod/WO-02-receipts` |
+| 01 | M3 follow-up (stage events only; landing moved to WO-12; base merged) | D (reassigned from A, 2026-10-04) | `mod/WO-01-m3-followup` (fresh from main) |
+| 02 | Receipts + Execution quality report | C | `mod/WO-02-receipts` (slices A and B) |
 | 03 | Portfolio + Statement | D | `mod/WO-03-statement` |
 | 04 | Flow + Radar page | B | `mod/WO-04-flow` |
-| 06 | Guardian alerts (rules, Telegram, web feed) | E | `mod/WO-06-guardian` |
+| 05 | Agent layer: MCP server, Wallet Skill, upstream PR (blueprint M5) | B (backup E) | `mod/WO-05-agent-layer` |
+| 06 | Guardian alerts (rules, Telegram, web feed) + read-only bot commands | D (reassigned from E, 2026-10-04) | `mod/WO-06-guardian` |
 | 07 | Sell + Switch issuer | C | `mod/WO-07-switch` |
 | 08 | Guardian autopilot | C | `mod/WO-08-autopilot` |
 | 09 | Pies | B | `mod/WO-09-pies` |
@@ -76,4 +79,4 @@ When done, open a PR with .github/pull_request_template.md filled in, with evide
 | 11 | Evidence, fixtures, docs support | F | `mod/WO-11-support` |
 | 12 | UI: every page and visual component | A (backup D) | `mod/WO-12-ui`, then `mod/WO-12-ui-<screen>` |
 
-(WO-05 is intentionally unused: the Radar page is part of WO-04.)
+(The Radar page is part of WO-04; WO-05 is the agent layer.)
