@@ -192,6 +192,7 @@ export function Glide({
       <span
         ref={pill}
         aria-hidden
+        data-glide-pill
         style={{ opacity: 0, ...pillStyle }}
         className={cn(
           "pointer-events-none absolute left-0 top-0 -z-10 rounded-full bg-white/[0.09]",

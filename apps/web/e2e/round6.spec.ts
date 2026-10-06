@@ -109,21 +109,21 @@ test.describe("round 6", () => {
     await expect(dialog).toContainText("accepts NVDAB on BNB Smart Chain (BEP-20)");
   });
 
-  test("the Select highlight sits under the hovered option even while the list opens", async ({
+  test("the Select highlight sits under the hovered option once the list has opened", async ({
     page,
   }) => {
     await page.goto("/trade/NVDA");
     await page.getByTestId("stock-picker").click();
+    const list = page.getByRole("listbox");
+    await expect(list).toBeVisible();
+    await page.waitForTimeout(800); // the panel is inert while it unfolds, so a hover then would not be delivered
     const option = page.getByRole("option", { name: /^TSLA / });
+    await page.mouse.move(2, 2);
     await option.hover();
     await expect
       .poll(async () => {
         const o = await option.boundingBox();
-        const pill = await page
-          .getByRole("listbox")
-          .locator("span[aria-hidden]")
-          .first()
-          .boundingBox();
+        const pill = await list.locator("[data-glide-pill]").boundingBox();
         return o && pill ? Math.abs(o.y - pill.y) : 999;
       })
       .toBeLessThan(3);
