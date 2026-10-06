@@ -140,7 +140,10 @@ test.describe("round 7", () => {
   }) => {
     await mockWallet(page);
     await flags(page, { sell: false });
+    // Wait for the real portfolio read (the signed-out page also shows an example group), then look at the first row.
+    const loaded = page.waitForResponse(/\/api\/portfolio\?address=/);
     await page.goto("/portfolio");
+    await loaded;
     const row = page.getByTestId("group-NVDA").locator("ul > li").first();
     await expect(row).toContainText("NVDAB", { timeout: 20_000 });
     const look = (id: string) =>
