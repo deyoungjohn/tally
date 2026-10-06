@@ -47,3 +47,8 @@
 ## Out of scope
 
 Any automatic action (WO-08).
+
+## Session verification (follow-up, 2026-10-06)
+
+Approved additive: new `apps/web/lib/server/session.ts`, `apps/web/app/api/session/**` (Guardian feed, settings and link-code routes; `active-wallet` registration for the statement worker) and one dependency, `@privy-io/node`, in `apps/web`. The app has no other server-side proof of which wallet a browser owns, so Guardian's per-wallet data and the Telegram link must only use an address the server verified from Privy's own user record. `PRIVY_APP_SECRET` lives only in `/etc/tally/tally.env`. The client side (sending the access token) belongs to WO-12. Full instructions: `docs/prompts/wo06-privy-session.md`.
+
