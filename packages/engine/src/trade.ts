@@ -22,6 +22,7 @@ import {
   decodeGuarded,
   encodeApprove,
   encodeSwapCall,
+  GUARD_SOURCE,
   feedUpdateTypedData,
   type FeedUpdate,
   type GuardReading,
@@ -300,7 +301,8 @@ export async function prepareTrade(deps: TradeDeps, req: TradeRequest): Promise<
   const stored = g.sharesPerToken;
   let m: bigint;
   let feed: { update: FeedUpdate; signature: Hex } | undefined;
-  if (g.source === 2) {
+  // The guard stores no on-chain multiplier for Ondo (source Feed): its feed goes stale after maxAge and has to be refreshed by a signed update.
+  if (g.source === GUARD_SOURCE.Feed) {
     if (stored !== undefined && ppm(stored, engineM) <= SAME_PPM) {
       m = stored;
     } else if (deps.signer) {

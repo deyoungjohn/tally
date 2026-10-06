@@ -1,7 +1,7 @@
 import { encodeAbiParameters, encodeEventTopics, type Hex, type TransactionReceipt } from "viem";
 import { SHAREGUARD_DEPLOYED, USDT_BSC } from "@tally/config";
 import type { Address } from "@tally/core";
-import { SHAREGUARD_ABI, type GuardReading } from "@tally/chain";
+import { GUARD_SOURCE, SHAREGUARD_ABI, type GuardReading } from "@tally/chain";
 import type { TradeChain } from "./trade";
 
 /** Pseudo transaction hashes the offline wallet mock returns, so fixture mode can answer receipt polls deterministically. */
@@ -53,7 +53,7 @@ export function fixtureTradeChain(
       return {
         paused: false,
         enabled: m !== undefined,
-        source: s === NVDAON ? 2 : 0,
+        source: s === NVDAON ? GUARD_SOURCE.Feed : GUARD_SOURCE.UiMultiplier,
         tokenPaused: state.tokenPaused ?? false,
         sharesPerToken: m,
         sharesPerTokenError:

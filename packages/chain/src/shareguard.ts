@@ -172,6 +172,9 @@ export function decodeGuarded(
   };
 }
 
+/** ShareGuard's `Source` enum, in contract order (contracts/src/ShareGuard.sol). Ondo is Feed (3); 2 is xStocks, which Tally never routes. */
+export const GUARD_SOURCE = { None: 0, UiMultiplier: 1, Multiplier: 2, Feed: 3 } as const;
+
 export interface GuardReading {
   paused: boolean;
   enabled: boolean;
