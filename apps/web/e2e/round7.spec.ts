@@ -152,6 +152,8 @@ test.describe("round 7", () => {
           weight: Number(cs.fontWeight),
         };
       });
+    // Retry until the row has settled: right after load the rows can still be re-rendering.
+    await expect.poll(async () => (await look("holding-symbol-NVDAB")).size).toBeGreaterThan(0);
     const sym = await look("holding-symbol-NVDAB");
     const issuer = await look("holding-issuer-NVDAB");
     expect(sym.text).toMatch(/NVDA(B|on)/);
