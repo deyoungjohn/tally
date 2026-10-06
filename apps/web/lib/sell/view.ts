@@ -2,6 +2,7 @@
 // fixed numbers, so nothing here comes from it). Every number shown is a value the plan returned; nothing is recomputed from
 // a displayed float, and wording states facts without advice.
 
+import { MIN_SELL_USDT } from "@tally/config";
 import type { SellPlan } from "@tally/engine";
 
 export type SellStatus = SellPlan["status"];
@@ -141,7 +142,7 @@ export function explainSellError(e: unknown): SellFailure {
     case "below_minimum":
       return {
         kind: "below_minimum",
-        message: "The sale is below the $6 minimum order. Nothing was sold.",
+        message: `The sale is below the $${MIN_SELL_USDT} minimum order. Transaction will fail.`,
       };
     case "quotes_unavailable":
       return {

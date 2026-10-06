@@ -114,10 +114,10 @@ function createMockDeps(overrides: Partial<SellDeps> = {}): SellDeps {
 }
 
 describe("prepareSell engine logic", () => {
-  it("refuses sell below $6 before calling network", async () => {
+  it("refuses a sale below $5 before calling network", async () => {
     const deps = createMockDeps();
     await expect(
-      prepareSell(deps, { ticker: "NVDA", issuer: "bstock", usd: 5, user: USER }),
+      prepareSell(deps, { ticker: "NVDA", issuer: "bstock", usd: 4, user: USER }),
     ).rejects.toBeInstanceOf(BelowMinimumError);
   });
 

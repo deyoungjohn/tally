@@ -74,9 +74,9 @@ export default function Docs() {
               trading tool: it never mints or redeems tokens, and nothing here is investment advice.
             </p>
             <p className="mt-3">
-              A token is not always one share. Ondo&apos;s NFLX token is ten shares, bStock&apos;s
-              is one. Tally multiplies every token by its share multiplier so all quotes are in the
-              same unit: shares.
+              A token is not always one share. Ondo&apos;s NFLXon token is ten shares, bStock&apos;s
+              NFLXB is one. Tally multiplies every token by its share multiplier so all quotes are
+              in the same unit: shares.
             </p>
           </section>
 

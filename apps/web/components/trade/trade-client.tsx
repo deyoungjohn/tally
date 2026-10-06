@@ -12,7 +12,7 @@ import { SellSheet } from "./sell-sheet";
 import { useSellFlow } from "./use-sell-flow";
 import { useLiveQuote, type QuoteAmount } from "@/lib/hooks/use-live-quote";
 import { fmtUsd, SESSION_LABEL } from "@/lib/format";
-import { isBuyable, nameOf } from "@/lib/tickers";
+import { isBuyable, nameOf, tokenPair } from "@/lib/tickers";
 import { ComingSoon } from "./coming-soon";
 import { StockPicker } from "./stock-picker";
 import { SessionBadge } from "./badges";
@@ -145,6 +145,7 @@ function TradeInner({
         issuer: holding.issuer as "ondo" | "bstock",
         symbol: holding.symbol,
         probeShares: holding.shares,
+        probeUsd: holding.valueUsd,
       },
       sellText || undefined,
     );
@@ -180,7 +181,7 @@ function TradeInner({
               {q ? <SessionBadge session={q.session} /> : null}
             </div>
             <h1 className="t-h2 mt-4 !text-[clamp(31px,5vw,45px)]">{name}</h1>
-            <p className="t-meta mono">{ticker} · tokenized, not the underlying share</p>
+            <p className="t-meta mono">{tokenPair(ticker)} · tokenized, not the underlying share</p>
           </div>
 
           <div className="glass order-2 min-w-0 p-5">
@@ -227,12 +228,12 @@ function TradeInner({
           </div>
           {!buyable ? (
             <p role="status" className="order-5 text-[15px] text-amber">
-              {ticker} can be compared here, but buying it isn&apos;t switched on yet.
+              {tokenPair(ticker)} can be compared here, but buying isn&apos;t switched on yet.
             </p>
           ) : null}
           <p className="sr-only" aria-live="polite" data-testid="live-summary">
             {best && q
-              ? `${ticker}: ${best.symbol} is best now at ${fmtUsd(best.usdPerShare)} per share. ${SESSION_LABEL[q.session] ?? ""}`
+              ? `${best.symbol} is best now at ${fmtUsd(best.usdPerShare)} per share. ${SESSION_LABEL[q.session] ?? ""}`
               : ""}
           </p>
         </div>
@@ -298,6 +299,7 @@ function TradeInner({
                 text: sellText,
                 onText: setSellText,
                 heldShares: holding?.shares ?? 0,
+                symbol: holding?.symbol,
                 usdOut:
                   row?.usdPerShare !== undefined && Number(sellText) > 0
                     ? Number(sellText) * row.usdPerShare

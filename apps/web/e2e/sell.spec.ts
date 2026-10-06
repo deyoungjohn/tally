@@ -219,7 +219,7 @@ test.describe("sell", () => {
     page.on("request", (r) => urls.push(new URL(r.url()).pathname));
 
     const sheet = await openSheet(page);
-    await sheet.getByTestId("sell-shares").fill("0.01");
+    await sheet.getByTestId("sell-shares").fill("0.025");
     await expect(sheet.getByTestId("sell-plan")).toHaveAttribute("data-status", "ready");
     await expect(sheet.getByTestId("sell-sends")).toContainText("0.010007");
     await expect(sheet.getByTestId("sell-min")).toContainText("2.3166 USDT");
@@ -233,8 +233,8 @@ test.describe("sell", () => {
     expect(txs[0]).toMatchObject({ to: ROUTER, data: "0xfeed02", gas: "390000", value: "0" });
     expect(bodies.length).toBeGreaterThanOrEqual(3);
     expect(hashes[0]).toBe(HASH);
-    await expect(sheet).toContainText("Confirmed on-chain. Check your USDT balance");
-    await expect(sheet).toContainText("reconciled sell receipts are coming");
+    await expect(sheet).toContainText("Confirmed on-chain");
+    await expect(sheet).not.toContainText("receipts are coming");
     await expect(sheet).not.toContainText(/you received/i);
     // Gas is shown in dollars (0.031 estimated at the 390000 limit, 281000 used), with the unit count kept for agents.
     await expect(sheet.getByTestId("sell-fee")).toContainText("$0.022");
@@ -286,7 +286,7 @@ test.describe("sell", () => {
     const hashes = await stubStatus(page, ["success"]);
     const hints = await stubReceipts(page);
     const sheet = await openSheet(page);
-    await sheet.getByTestId("sell-shares").fill("0.01");
+    await sheet.getByTestId("sell-shares").fill("0.025");
     await expect(sheet.getByTestId("sell-needs-approval")).toContainText("exactly");
     await expect(sheet.getByTestId("sell-confirm")).toHaveCount(0);
     approved = true;
@@ -317,7 +317,7 @@ test.describe("sell", () => {
     await stubStatus(page, ["success"]);
     const hints = await stubReceipts(page, 404);
     const sheet = await openSheet(page);
-    await sheet.getByTestId("sell-shares").fill("0.01");
+    await sheet.getByTestId("sell-shares").fill("0.025");
     await sheet.getByTestId("sell-confirm").click();
     await expect(sheet.getByTestId("sell-confirmed")).toBeVisible({ timeout: 20_000 });
     await expect(sheet.getByTestId("sell-failed")).toHaveCount(0);
@@ -391,7 +391,7 @@ test.describe("sell", () => {
     await flags(page, true);
     await stubSell(page, (b, n) => ({ json: n === 1 ? plan() : plan({ status: "needs_funds" }) }));
     const sheet = await openSheet(page);
-    await sheet.getByTestId("sell-shares").fill("0.01");
+    await sheet.getByTestId("sell-shares").fill("0.025");
     await expect(sheet.getByTestId("sell-needs-funds")).toContainText("more BNB for network fees");
     await expect(sheet.getByTestId("sell-needs-funds")).toContainText("0.0012");
     await expect(sheet.getByTestId("sell-confirm")).toHaveCount(0);
@@ -415,7 +415,7 @@ test.describe("sell", () => {
     }));
     await stubStatus(page, ["success"]);
     const sheet = await openSheet(page);
-    await sheet.getByTestId("sell-shares").fill("0.01");
+    await sheet.getByTestId("sell-shares").fill("0.025");
     await expect(sheet.getByTestId("sell-min")).toContainText("2.3166 USDT");
     await sheet.getByTestId("sell-confirm").click();
     await expect(sheet.getByTestId("sell-notice")).toContainText("quote changed");
@@ -432,7 +432,7 @@ test.describe("sell", () => {
     await stubSell(page, () => ({ json: plan() }));
     const hashes = await stubStatus(page, ["success"]);
     const sheet = await openSheet(page);
-    await sheet.getByTestId("sell-shares").fill("0.01");
+    await sheet.getByTestId("sell-shares").fill("0.025");
     await sheet.getByTestId("sell-confirm").click();
     await expect(sheet.getByTestId("sell-error")).toContainText(
       "You cancelled in your wallet. Nothing was sold.",
@@ -447,7 +447,7 @@ test.describe("sell", () => {
     await flags(page, true);
     const bodies = await stubSell(page, () => ({ json: plan({ expiresInMs: 5_000 }) }));
     const sheet = await openSheet(page);
-    await sheet.getByTestId("sell-shares").fill("0.01");
+    await sheet.getByTestId("sell-shares").fill("0.025");
     await expect(sheet.getByTestId("sell-plan")).toBeVisible();
     await expect(sheet.getByTestId("sell-auto-refresh")).toHaveText(
       "Quotes refresh automatically every 15s",
@@ -473,7 +473,7 @@ test.describe("sell", () => {
         : { json: plan() },
     );
     const sheet = await openSheet(page);
-    await sheet.getByTestId("sell-shares").fill("0.01");
+    await sheet.getByTestId("sell-shares").fill("0.025");
     await expect(sheet.getByTestId("sell-confirm")).toBeEnabled();
     await sheet.getByTestId("sell-confirm").click(); // the fresh plan at confirm is request 3
     await expect(sheet.getByTestId("sell-error")).toContainText(
@@ -495,7 +495,7 @@ test.describe("sell", () => {
     await sheet.getByTestId("sell-all").click();
     await expect(sheet.getByTestId("sell-all")).toHaveText("Selling all");
     await expect(sheet.getByTestId("sell-shares")).toBeEditable();
-    await sheet.getByTestId("sell-shares").fill("0.01");
+    await sheet.getByTestId("sell-shares").fill("0.025");
     await expect(sheet.getByTestId("sell-all")).toHaveText("Sell all");
     await expect(sheet.getByTestId("sell-slider-available")).toContainText("shares in your wallet");
     const slider = sheet.getByTestId("sell-slider-input");
@@ -537,7 +537,7 @@ test.describe("sell", () => {
       }));
       await stubStatus(page, ["success"]);
       const sheet = await openSheet(page);
-      await sheet.getByTestId("sell-shares").fill("0.01");
+      await sheet.getByTestId("sell-shares").fill("0.025");
       await expect(sheet.getByTestId("sell-plan")).toBeVisible();
       await expect(sheet.getByTestId("sell-warnings")).toContainText("second simulation check");
       await expect(sheet).not.toContainText("x.example");

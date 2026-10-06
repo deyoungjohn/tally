@@ -8,7 +8,7 @@ import {
   SelectValue,
 } from "@/components/motion/select";
 import { cn } from "@/lib/utils";
-import { BUYABLE_TICKERS } from "@/lib/tickers";
+import { BUYABLE_TICKERS, tokenPair } from "@/lib/tickers";
 import { TokenLogo } from "./badges";
 
 /** The five stocks Tally can buy, in beUI's Select (glass trigger and panel, unfolding animation). */
@@ -32,7 +32,7 @@ export function StockPicker({
       <SelectContent className="select-panel">
         {BUYABLE_TICKERS.map((t) => (
           <SelectItem key={t.ticker} value={t.ticker}>
-            {`${t.ticker} · ${t.name}`}
+            {`${t.name} · ${tokenPair(t.ticker)}`}
           </SelectItem>
         ))}
       </SelectContent>

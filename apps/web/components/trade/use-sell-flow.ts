@@ -9,6 +9,7 @@ import type { Hex } from "viem";
 import type { SellPlan } from "@tally/engine";
 import { useTallyWallet } from "@/components/wallet/wallet-context";
 import type { Address } from "@tally/core";
+import { MIN_SELL_USDT } from "@tally/config";
 import { createSellIntent, fetchSellPlan, postSellReceiptHint } from "../../lib/trade-plan/sell";
 import type { SellIntent } from "../../lib/trade-plan/sell";
 import { explainSellError, planGotWorse, type SellFailure } from "../../lib/sell/view";
@@ -19,6 +20,8 @@ export interface SellTarget {
   symbol: string;
   /** The holding's shares as the Portfolio shows them. Used only for the opening check, never signed. */
   probeShares: number;
+  /** What that holding is worth in dollars, for the minimum-sale check before any request is made. Never signed. */
+  probeUsd?: number | null;
 }
 
 export type SellPhase =
@@ -42,6 +45,8 @@ export type SellPhase =
       gasUsed: number | null;
       /** What the gas cost in dollars, worked out from the plan's own fee estimate; null when that was not known. */
       feeUsd: number | null;
+      /** The router-enforced least USDT of this sale (1e18 integer string), to set beside the verified amount. */
+      floorUsdt: string | null;
       bscscan: string;
     }
   | { name: "failed"; failure: SellFailure; hash?: string; bscscan?: string };
@@ -152,6 +157,18 @@ export interface TxStatus {
   bscscan: string;
 }
 
+/** Roughly what the sale is worth, from the holding's own value; null when that is unknown. The engine's check stays the authority. */
+export function estimateSaleUsd(t: SellTarget, i: SellInputs): number | null {
+  if (t.probeUsd === null || t.probeUsd === undefined || !(t.probeShares > 0)) return null;
+  if (i.all) return t.probeUsd;
+  const n = parseShares(i.text);
+  return n === null ? null : (n / t.probeShares) * t.probeUsd;
+}
+export function isBelowMinimum(t: SellTarget, i: SellInputs): boolean {
+  const v = estimateSaleUsd(t, i);
+  return v !== null && v < MIN_SELL_USDT;
+}
+
 /** The share amount the form can request, or null when the text is not a positive amount. */
 export function parseShares(text: string): number | null {
   if (!SHARES_RE.test(text) || text === "" || text === ".") return null;
@@ -186,6 +203,8 @@ export function useSellFlow() {
   const lastPlan = useRef<SellPlan | null>(null);
 
   const requestFor = useCallback((t: SellTarget, i: SellInputs) => {
+    // Below the minimum sale there is nothing to ask the server: the sheet says so and offers no way to confirm.
+    if (isBelowMinimum(t, i)) return null;
     const base = { ticker: t.ticker, issuer: t.issuer, tolerancePct: i.tolerancePct };
     if (i.all) return rawBalance.current ? { ...base, tokens: rawBalance.current } : null;
     const shares = parseShares(i.text);
@@ -211,7 +230,8 @@ export function useSellFlow() {
     const failure = explainSellError(e);
     if (failure.kind === "refused" || failure.kind === "region")
       return setPhase({ name: "refused", failure });
-    if (keepForm) setPhase({ name: "form", plan: lastPlan.current, refreshing: false, failure });
+    // The old plan was for different inputs: keeping it would leave a Confirm button on screen for a sale that was just refused.
+    if (keepForm) setPhase({ name: "form", plan: null, refreshing: false, failure });
     else setPhase({ name: "failed", failure });
   }, []);
 
@@ -245,7 +265,7 @@ export function useSellFlow() {
   );
 
   const watch = useCallback(
-    async (hash: string, id: number, fee?: Pending["fee"]) => {
+    async (hash: string, id: number, fee?: Pending["fee"], floorUsdt?: string) => {
       setPhase({ name: "mining", hash, slow: false });
       try {
         const s = await waitForTx(hash, id, () =>
@@ -260,6 +280,7 @@ export function useSellFlow() {
             blockNumber: s.blockNumber ?? null,
             gasUsed: s.gasUsed ?? null,
             feeUsd: feeInDollars(fee, s.gasUsed),
+            floorUsdt: floorUsdt ?? null,
             bscscan: s.bscscan,
           });
         else
@@ -556,6 +577,7 @@ export function useSellFlow() {
         hash,
         id,
         fresh.tx.feeUsd === null ? undefined : { usd: fresh.tx.feeUsd, limit: fresh.tx.gasLimit },
+        fresh.minUsdtOut,
       );
     } catch (e) {
       if (id !== runId.current || (e as { kind?: string }).kind === "cancelled") return;
@@ -601,8 +623,21 @@ export function useSellFlow() {
         attempt: 1,
         isResumed: true,
       });
-    void watch(pending.hash, id, pending.fee);
+    void watch(pending.hash, id, pending.fee, pending.intent?.minUsdtOut);
   }, [watch]);
 
-  return { phase, target, inputs, setInputs, sellAll, open, refresh, approve, confirm, close };
+  const belowMinimum = target ? isBelowMinimum(target, inputs) : false;
+  return {
+    phase,
+    target,
+    inputs,
+    setInputs,
+    sellAll,
+    open,
+    refresh,
+    approve,
+    confirm,
+    close,
+    belowMinimum,
+  };
 }

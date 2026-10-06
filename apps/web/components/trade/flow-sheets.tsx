@@ -356,7 +356,7 @@ export function ReviewSheet({
           <div className="field">
             <p className="t-meta">You&apos;ll get at least</p>
             <p className="t-big mt-1" data-testid="min-shares">
-              {fmtShares(min)} <span className="text-[23px] text-fg2">{plan.ticker} shares</span>
+              {fmtShares(min)} <span className="text-[23px] text-fg2">{plan.symbol} shares</span>
             </p>
             <p className="mt-2 text-[15px] text-fg2">
               …or nothing happens. Tally checks this in shares, on-chain, before it keeps the trade.
@@ -455,13 +455,11 @@ export function ReceiptModal({
 function ReceiptBody({
   receipt,
   plan,
-  ticker,
   symbol,
   onDismiss,
 }: {
   receipt: ReceiptDto;
   plan?: PlanDto;
-  ticker: string;
   symbol: string;
   onDismiss: () => void;
 }) {
@@ -470,7 +468,7 @@ function ReceiptBody({
   return (
     <div data-testid="receipt">
       <p className="t-big mt-3" data-testid="receipt-shares">
-        {fmtShares(shares)} <span className="text-[23px] text-fg2">{ticker} shares</span>
+        {fmtShares(shares)} <span className="text-[23px] text-fg2">{symbol} shares</span>
       </p>
       <dl className="mt-4">
         <div className="detail-row">
@@ -487,10 +485,18 @@ function ReceiptBody({
         </div>
         <div className="detail-row">
           <dt>Tokens received</dt>
-          <dd>
-            {fromWei(f.tokensOut).toFixed(6)} {symbol}
+          <dd data-testid="receipt-tokens">
+            {floorTokens(fromWei(f.tokensOut))} {symbol}
           </dd>
         </div>
+        {plan ? (
+          <div className="detail-row">
+            <dt>Guaranteed at least</dt>
+            <dd data-testid="receipt-min">
+              {floorTokens(minTokens(plan))} {symbol}
+            </dd>
+          </div>
+        ) : null}
         <div className="detail-row">
           <dt>Network fee</dt>
           <dd>
@@ -499,12 +505,6 @@ function ReceiptBody({
               : fmtUsd(receipt.gasUsd, 3)}
           </dd>
         </div>
-        {plan ? (
-          <div className="detail-row">
-            <dt>Guaranteed at least</dt>
-            <dd>{fmtShares(fromWei(plan.minShares))} shares</dd>
-          </div>
-        ) : null}
       </dl>
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <a
@@ -524,3 +524,11 @@ function ReceiptBody({
     </div>
   );
 }
+
+/** The guaranteed minimum in the same unit as "Tokens received" (tokens of this issuer), so the two lines compare directly. */
+function minTokens(plan: PlanDto): number {
+  const m = BigInt(plan.multiplier);
+  return m === 0n ? fromWei(plan.minShares) : fromWei((BigInt(plan.minShares) * 10n ** 18n) / m);
+}
+/** Six decimals, rounded down: a floor is never shown higher than it is. */
+const floorTokens = (n: number) => (Math.floor(n * 1e6) / 1e6).toFixed(6);

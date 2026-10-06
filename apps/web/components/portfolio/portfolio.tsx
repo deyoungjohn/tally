@@ -12,8 +12,10 @@ import { useSellFlow } from "@/components/trade/use-sell-flow";
 import { useModuleFlags } from "@/lib/hooks/use-flags";
 import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { useJson } from "@/lib/hooks/use-json";
-import { ISSUER_LABEL } from "@/lib/format";
-import { nameOf } from "@/lib/tickers";
+import { MIN_SELL_USDT } from "@tally/config";
+import { Tip } from "@/components/ui/tooltip";
+import { ISSUER_LABEL, fmtUsd } from "@/lib/format";
+import { nameOf, tokenPair } from "@/lib/tickers";
 import { LiveNumber, LiveShares, LiveUsd } from "@/components/motion/live";
 import { LearnMore } from "@/components/learn-more";
 
@@ -36,7 +38,7 @@ export function HoldingGroup({
         <TokenLogo ticker={g.ticker} />
         <div className="min-w-0 flex-1">
           <p className="font-semibold">{nameOf(g.ticker)}</p>
-          <p className="t-meta mono">{g.ticker}</p>
+          <p className="t-meta mono">{g.parts.map((x) => x.symbol).join(" · ")}</p>
         </div>
         <div className="text-right">
           <LiveShares
@@ -62,7 +64,18 @@ export function HoldingGroup({
           >
             <span className="flex items-center gap-2">
               <GradeBadge grade={p.grade} className="!h-6 !w-6 !text-[12px]" />
-              {ISSUER_LABEL[p.issuer]} <span className="mono text-[13px] text-fg3">{p.symbol}</span>
+              <span
+                className="text-[16px] font-bold text-fg"
+                data-testid={`holding-symbol-${p.symbol}`}
+              >
+                {p.symbol}
+              </span>
+              <span
+                className="text-[12.5px] font-light text-fg3"
+                data-testid={`holding-issuer-${p.symbol}`}
+              >
+                {ISSUER_LABEL[p.issuer]}
+              </span>
             </span>
             <span className="num text-fg2">
               <LiveNumber value={p.tokens} decimals={6} /> tokens ×{" "}
@@ -72,15 +85,34 @@ export function HoldingGroup({
               </b>
             </span>
             {onSell && p.issuer !== "xstocks" ? (
-              <Button
-                variant="glassy"
-                className="!h-9 !px-4 text-[14.5px]"
-                onClick={() => onSell(p)}
-                aria-label={`Sell ${p.symbol}`}
-                data-testid={`sell-${p.symbol}`}
-              >
-                Sell
-              </Button>
+              p.valueUsd !== null && p.valueUsd < MIN_SELL_USDT ? (
+                // Worth less than the smallest sale: unclickable, and the tooltip says why.
+                <Tip
+                  text={`This holding is worth ${fmtUsd(p.valueUsd)}, below the $${MIN_SELL_USDT} minimum sale.`}
+                >
+                  <span className="inline-flex">
+                    <Button
+                      variant="glassy"
+                      className="!h-9 !px-4 text-[14.5px]"
+                      disabled
+                      aria-label={`Sell ${p.symbol} (below the $${MIN_SELL_USDT} minimum sale)`}
+                      data-testid={`sell-${p.symbol}`}
+                    >
+                      Sell
+                    </Button>
+                  </span>
+                </Tip>
+              ) : (
+                <Button
+                  variant="glassy"
+                  className="!h-9 !px-4 text-[14.5px]"
+                  onClick={() => onSell(p)}
+                  aria-label={`Sell ${p.symbol}`}
+                  data-testid={`sell-${p.symbol}`}
+                >
+                  Sell
+                </Button>
+              )
             ) : null}
           </li>
         ))}
@@ -90,7 +122,7 @@ export function HoldingGroup({
           href={`/trade/${g.ticker}`}
           className="mt-3 inline-flex min-h-[44px] items-center gap-1 text-[14px] text-blue"
         >
-          Buy more {g.ticker} <ArrowRight size={13} aria-hidden />
+          Buy more {nameOf(g.ticker)} <ArrowRight size={13} aria-hidden />
         </Link>
       )}
     </li>
@@ -251,6 +283,7 @@ export function PortfolioPage() {
                               issuer: p.issuer as "ondo" | "bstock",
                               symbol: p.symbol,
                               probeShares: p.shares,
+                              probeUsd: p.valueUsd,
                             })
                         : undefined
                     }
@@ -260,8 +293,8 @@ export function PortfolioPage() {
             )}
             {data?.failed.length ? (
               <p className="t-meta mt-3 text-amber" role="status">
-                Couldn&apos;t read {data.failed.map((f) => f.ticker).join(", ")}; those are missing
-                from the totals above.
+                Couldn&apos;t read {data.failed.map((f) => tokenPair(f.ticker)).join(", ")}; those
+                are missing from the totals above.
               </p>
             ) : null}
           </section>

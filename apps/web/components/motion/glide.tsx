@@ -12,7 +12,7 @@
 // Mark each item with `data-glide`. The item that is selected (`rest`) keeps the pill when nothing is hovered:
 // by default the one with aria-current="page", aria-selected="true" or aria-checked="true".
 
-import { animate, useReducedMotion } from "motion/react";
+import { useReducedMotion } from "motion/react";
 import {
   type ElementType,
   type HTMLAttributes,
@@ -23,7 +23,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { SPRING_LAYOUT } from "@/lib/ease";
 import { cn } from "@/lib/utils";
 
 interface Box {
@@ -145,20 +144,27 @@ export function Glide({
   };
 
   // Imperative on purpose: a hidden pill must not fly in from the corner, and a hiding one must stay where it was while it fades.
+  // The move is a CSS transition, not a JS spring: the browser retargets it from the pill's current position on every new
+  // hover (so fast pointer travel never restarts it from rest) and runs it on the compositor, so a busy page (live numbers
+  // ticking, quotes re-rendering) cannot starve it into a visible snap.
   useLayoutEffect(() => {
     const el = pill.current;
     if (!el) return;
+    const move =
+      "transform 0.34s cubic-bezier(0.22, 1.25, 0.36, 1), width 0.34s cubic-bezier(0.22, 1.25, 0.36, 1), height 0.34s cubic-bezier(0.22, 1.25, 0.36, 1)";
     if (box) {
       const jump = !visible.current || reduce;
-      animate(
-        el,
-        { x: box.x, y: box.y, width: box.w, height: box.h },
-        jump ? { duration: 0 } : SPRING_LAYOUT,
-      );
-      animate(el, { opacity: 1 }, { duration: reduce ? 0 : 0.16 });
+      el.style.transition = jump ? "none" : `${move}, opacity 0.16s`;
+      el.style.width = `${box.w}px`;
+      el.style.height = `${box.h}px`;
+      el.style.transform = `translate(${box.x}px, ${box.y}px)`;
+      if (jump) void el.offsetWidth; // commit the jump before the next change is allowed to animate
+      el.style.transition = reduce ? "none" : `${move}, opacity 0.16s`;
+      el.style.opacity = "1";
       visible.current = true;
     } else {
-      animate(el, { opacity: 0 }, { duration: reduce ? 0 : 0.16 });
+      el.style.transition = reduce ? "none" : "opacity 0.16s";
+      el.style.opacity = "0";
       visible.current = false;
     }
   }, [box, reduce]);
@@ -192,6 +198,7 @@ export function Glide({
       <span
         ref={pill}
         aria-hidden
+        data-glide-pill
         style={{ opacity: 0, ...pillStyle }}
         className={cn(
           "pointer-events-none absolute left-0 top-0 -z-10 rounded-full bg-white/[0.09]",

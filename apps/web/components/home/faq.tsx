@@ -15,7 +15,7 @@ const TABS = [
       {
         question: "Is one token one share?",
         answer:
-          "Not always. Ondo's NFLX token is ten shares, bStock's is one. Tally always shows you share units, so prices compare fairly.",
+          "Not always. Ondo's NFLXon token is ten shares, bStock's NFLXB is one. Tally always shows you share units, so prices compare fairly.",
       },
       {
         question: "Do I need to know crypto?",

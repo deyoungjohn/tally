@@ -54,7 +54,7 @@ export function LiquidityBadge({ grade }: { grade: Grade }) {
 export function TokenLogo({ ticker }: { ticker: string }) {
   return (
     <span className="token-logo" aria-hidden>
-      {ticker.slice(0, 4)}
+      {ticker === "USDT" ? "₮" : ticker.slice(0, 2)}
     </span>
   );
 }

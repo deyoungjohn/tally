@@ -26,7 +26,7 @@ async function buyThrough(page: Page) {
   await expect(page.getByRole("dialog", { name: "Review your buy" })).toBeVisible({
     timeout: 20_000,
   });
-  await expect(page.getByTestId("min-shares")).toContainText("NVDA shares");
+  await expect(page.getByTestId("min-shares")).toContainText(/NVDA(on|B) shares/);
   await expect(page.getByRole("dialog", { name: "Review your buy" })).toContainText("Issuer");
   await expect(page.getByRole("dialog", { name: "Review your buy" })).not.toContainText(
     "Bought from",
@@ -81,7 +81,7 @@ test.describe("sign-in and the region declaration", () => {
     await page.goto("/trade/NVDA");
     await quoteLoaded(page);
     const buy = page.getByTestId("buy-button");
-    await expect(buy).toContainText("Buy $6.00 of NVDA");
+    await expect(buy).toContainText(/Buy \$6\.00 of NVDA(on|B)/);
     await buy.click();
     const dialog = page.getByRole("dialog", { name: "Create your account" });
     await expect(dialog).toBeVisible();
@@ -371,7 +371,7 @@ test.describe("receipt modal and trade card order", () => {
     const details = await y(page.getByTestId("details"));
     expect(slip).toBeLessThan(buy);
     expect(buy).toBeLessThan(details);
-    await expect(page.getByTestId("buy-button")).toContainText("Buy $6.00 of NVDA");
+    await expect(page.getByTestId("buy-button")).toContainText(/Buy \$6\.00 of NVDA(on|B)/);
     const w = await page.getByTestId("buy-button").evaluate((el) => ({
       weight: getComputedStyle(el).fontWeight,
       size: getComputedStyle(el).fontSize,

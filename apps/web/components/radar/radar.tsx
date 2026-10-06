@@ -7,7 +7,7 @@ import type { RadarReport, RadarRow } from "@tally/engine";
 import { ButtonLink } from "@/components/motion/button";
 import { MorphingSearch, type MorphingSearchItem } from "@/components/motion/morphing-search";
 import { Segmented } from "@/components/motion/segmented";
-import { nameOf } from "@/lib/tickers";
+import { nameOf, tokenPair } from "@/lib/tickers";
 import { FlagBadge, GradeBadge, LiquidityBadge, TokenLogo } from "@/components/trade/badges";
 import { useJson } from "@/lib/hooks/use-json";
 import { ISSUER_LABEL, fmtUsd } from "@/lib/format";
@@ -113,7 +113,7 @@ function radarSuggestions(rows: RadarRow[]): MorphingSearchItem[] {
       const issuers = [...new Set(list.map((r) => ISSUER_LABEL[r.issuer]))].join(", ");
       return {
         id: `t-${ticker}`,
-        title: `${ticker} · ${nameOf(ticker)}`,
+        title: `${nameOf(ticker)} · ${list.map((r) => r.symbol).join(", ")}`,
         description: issuers,
         keywords: list.map((r) => r.symbol),
         icon: Search,
@@ -221,8 +221,8 @@ export function RadarPage() {
       {data?.failed.length ? (
         <p className="t-meta mt-4 flex items-start gap-2 text-amber" role="status">
           <AlertTriangle size={14} className="mt-0.5 flex-none" aria-hidden /> Couldn&apos;t read:{" "}
-          {data.failed.map((f) => f.ticker).join(", ")}. They are not shown rather than shown as
-          safe.
+          {data.failed.map((f) => tokenPair(f.ticker)).join(", ")}. They are not shown rather than
+          shown as safe.
         </p>
       ) : null}
 

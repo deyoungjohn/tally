@@ -1,4 +1,4 @@
-import { BSC_CHAIN_ID, LIQUIDMESH_ROUTER, MIN_ORDER_USDT, USDT_BSC } from "@tally/config";
+import { BSC_CHAIN_ID, LIQUIDMESH_ROUTER, MIN_SELL_USDT, USDT_BSC } from "@tally/config";
 import {
   BelowMinimumError,
   E18,
@@ -178,7 +178,7 @@ export async function prepareSell(deps: SellDeps, req: SellRequest): Promise<Sel
     const sharesBigInt = parseDecimal(req.shares.toFixed(8), 18);
     amountIn = mulDiv(sharesBigInt, E18, multiplier);
   } else if (req.usd !== undefined) {
-    if (!Number.isFinite(req.usd) || req.usd < MIN_ORDER_USDT) {
+    if (!Number.isFinite(req.usd) || req.usd < MIN_SELL_USDT) {
       throw new BelowMinimumError(req.usd);
     }
     const ref = await deps.reference(ticker).catch(() => null);
@@ -219,7 +219,7 @@ export async function prepareSell(deps: SellDeps, req: SellRequest): Promise<Sel
   }
 
   // Check minimum order size enforced by Binance aggregator and config
-  if (raw.tokensOut < BigInt(MIN_ORDER_USDT) * 10n ** 18n) {
+  if (raw.tokensOut < BigInt(MIN_SELL_USDT) * 10n ** 18n) {
     throw new BelowMinimumError(Number(raw.tokensOut) / 1e18);
   }
 

@@ -19,6 +19,11 @@
   --edge: rgba(255, 255, 255, 0.12);
   --edge2: rgba(255, 255, 255, 0.2);
 
+  /* orange accent (buttons, pills, important words); white text on it */
+  --orange: #f04e13;
+  --orange-hi: #ff7a3d;
+  --orange-text: #ff8350;
+  --orange-glow: rgba(255, 106, 40, 0.38);
   /* silver accent */
   --silver-1: #e8ebef;
   --silver-2: #b4bac3;
@@ -184,45 +189,25 @@ body {
   background-clip: text;
   color: transparent;
 }
+.hl {
+  color: var(--orange-text);
+}
 .dim-text {
   color: #8b9098;
 }
 
-/* ---------- Page background (DESIGN.md §2.4) ---------- */
+/* ---------- Page background ---------- */
+/* One fixed layer: the glow stays put while every section and card floats over it as the page scrolls. */
 .bg {
   position: fixed;
   inset: 0;
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
-  background: linear-gradient(180deg, var(--g2) 0%, var(--g1) 40%, var(--g0) 100%);
-}
-.bg::before {
-  content: "";
-  position: absolute;
-  left: -10%;
-  right: -10%;
-  top: -30%;
-  height: 80%;
-  background: linear-gradient(172deg, #2b2d32 0%, #212327 55%, rgba(33, 35, 39, 0) 100%);
-  clip-path: polygon(0 0, 100% 0, 100% 58%, 0 100%);
-}
-.bg::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(900px 520px at 80% 16%, rgba(220, 225, 232, 0.09), transparent 60%),
-    radial-gradient(700px 500px at 6% 72%, rgba(255, 255, 255, 0.035), transparent 60%);
+  background: #000 url("/bg-glow.webp") center top / cover no-repeat;
 }
 .bg .dots {
-  position: absolute;
-  inset: 0;
-  opacity: 0.4;
-  background-image: radial-gradient(rgba(255, 255, 255, 0.075) 1px, transparent 1.3px);
-  background-size: 26px 26px;
-  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.35) 55%, transparent 90%);
-  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.35) 55%, transparent 90%);
+  display: none;
 }
 
 /* ---------- Surfaces ---------- */
@@ -304,20 +289,19 @@ body {
   pointer-events: none;
 }
 .btn-primary {
-  color: var(--silver-ink);
-  background: linear-gradient(180deg, #fff 0%, #e4e7eb 45%, #b7bdc5 100%);
+  color: #fff;
+  background: linear-gradient(180deg, var(--orange-hi) 0%, var(--orange) 100%);
   box-shadow:
-    inset 0 1px 0 #fff,
-    inset 0 -2px 0 rgba(0, 0, 0, 0.14),
-    0 12px 30px -12px rgba(230, 235, 242, 0.35),
-    0 0 0 1px rgba(0, 0, 0, 0.35);
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.16),
+    0 12px 30px -12px var(--orange-glow);
 }
 .btn-primary:hover {
+  background: linear-gradient(180deg, #ff8a52 0%, #f55a1f 100%);
   box-shadow:
-    inset 0 1px 0 #fff,
-    inset 0 -2px 0 rgba(0, 0, 0, 0.14),
-    0 16px 40px -10px rgba(230, 235, 242, 0.45),
-    0 0 0 1px rgba(0, 0, 0, 0.35);
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.16),
+    0 16px 40px -10px var(--orange-glow);
 }
 .btn-glassy {
   color: var(--fg);
@@ -392,8 +376,8 @@ body {
   border-radius: 999px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--amber);
-  background: rgba(242, 193, 78, 0.12);
+  color: #fff;
+  background: var(--orange);
 }
 .dot-live {
   width: 8px;
@@ -716,8 +700,8 @@ body {
   border-radius: 999px;
   font-size: 12.5px;
   font-weight: 700;
-  color: var(--silver-ink);
-  background: var(--silver);
+  color: #fff;
+  background: var(--orange);
 }
 .row-best {
   border-color: rgba(232, 235, 239, 0.45) !important;
@@ -780,20 +764,20 @@ body {
 
 /* ---------- Header: clearer once the page scrolls (DESIGN §2.6) ---------- */
 .site-bar {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
-  backdrop-filter: blur(14px) saturate(140%);
+  /* Almost no fill and a faint blur: text and page elements scrolling behind stay readable through it. */
+  background: rgba(255, 255, 255, 0.008);
+  border-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(3px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   transition:
     background 0.25s var(--ease),
     backdrop-filter 0.25s var(--ease),
     box-shadow 0.25s var(--ease);
 }
 .site-bar-scrolled {
-  background: linear-gradient(180deg, rgba(34, 36, 41, 0.78), rgba(22, 23, 27, 0.7));
-  backdrop-filter: blur(30px) saturate(160%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.25),
-    0 18px 50px -24px rgba(0, 0, 0, 0.95);
+  background: rgba(0, 0, 0, 0.03);
+  backdrop-filter: blur(4px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 @media (prefers-reduced-motion: reduce) {
   .site-bar {
@@ -869,23 +853,23 @@ body {
   margin: 0;
   background: none;
   border: 0;
-  color: var(--blue);
+  color: var(--orange-text);
   font: inherit;
   /* Caption size wherever it appears (the same as .t-meta), whatever text it ends. */
   font-size: 13.5px;
   line-height: 1.4;
   font-weight: 600;
   text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--blue) 45%, transparent);
+  text-decoration-color: color-mix(in srgb, var(--orange-text) 45%, transparent);
   text-underline-offset: 3px;
   cursor: pointer;
   transition: text-decoration-color 0.2s;
 }
 .learn-more:hover {
-  text-decoration-color: var(--blue);
+  text-decoration-color: var(--orange-text);
 }
 .learn-more:focus-visible {
-  outline: 2px solid var(--blue);
+  outline: 2px solid var(--orange-text);
   outline-offset: 3px;
   border-radius: 4px;
 }

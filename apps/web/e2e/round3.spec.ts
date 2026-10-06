@@ -274,7 +274,7 @@ test.describe("round 3", () => {
     expect(Math.abs(a.height - b.height)).toBeLessThan(3);
   });
 
-  test("Home: the route line sits outside the box, above the button, with no 'via' or percentage", async ({
+  test("Home: the route line sits outside the box, below the button, with no 'via' or percentage", async ({
     page,
   }) => {
     await page.goto("/");
@@ -286,8 +286,8 @@ test.describe("round 3", () => {
     await expect(page.getByTestId("home-get")).not.toContainText("per share");
     const l = (await line.boundingBox())!;
     const b = (await page.getByTestId("home-action").boundingBox())!;
-    expect(l.y).toBeLessThan(b.y);
-    expect(b.y - (l.y + l.height)).toBeLessThan(40);
+    expect(l.y).toBeGreaterThan(b.y + b.height - 1);
+    expect(l.y - (b.y + b.height)).toBeLessThan(40);
   });
 
   test("Live comparison says Updates in real-time", async ({ page }) => {
