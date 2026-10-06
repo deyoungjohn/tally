@@ -5,6 +5,7 @@
 #   ./deploy/restart.sh --build    rebuild first (needed after changing NEXT_PUBLIC_PRIVY_APP_ID or any code)
 #   ./deploy/restart.sh --update   git pull the current branch, install, rebuild, then restart
 #
+# When FEATURE_RECEIPTS=1 in the env file it also (re)starts `pnpm worker receipts`, the job that verifies sell and buy receipt hints.
 # Run it as your normal user (not with sudo): it uses sudo only to read the root-only env file. It never prints secret values.
 set -euo pipefail
 
@@ -12,6 +13,7 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ENV_FILE="${TALLY_ENV_FILE:-/etc/tally/tally.env}"
 PORT="${PORT:-3000}"
 LOG="${TALLY_LOG:-$HOME/tally-web.log}"
+WORKER_LOG="${TALLY_WORKER_LOG:-$HOME/tally-worker-receipts.log}"
 MODE="${1:-}"
 
 cd "$REPO"
@@ -65,6 +67,24 @@ done
 echo "==> starting the server (log: $LOG)"
 PORT="$PORT" HOSTNAME=127.0.0.1 nohup node apps/web/.next/standalone/apps/web/server.js >"$LOG" 2>&1 &
 echo "   pid $!"
+
+# The receipts worker (needs the same env and TALLY_DATA_DIR as the web server). Stopped by name: the patterns are narrow
+# (the pnpm wrapper and the tsx process it starts) and cannot match this script, whose command line is just restart.sh.
+if pgrep -f 'worker receipts|src/cli\.ts receipts' >/dev/null 2>&1; then
+  echo "==> stopping the receipts worker"
+  pkill -f 'worker receipts|src/cli\.ts receipts' >/dev/null 2>&1 || true
+  for _ in $(seq 1 20); do
+    pgrep -f 'worker receipts|src/cli\.ts receipts' >/dev/null 2>&1 || break
+    sleep 0.5
+  done
+fi
+if [[ "${FEATURE_RECEIPTS:-}" == "1" ]]; then
+  echo "==> starting the receipts worker (log: $WORKER_LOG)"
+  nohup pnpm worker receipts >"$WORKER_LOG" 2>&1 &
+  echo "   pid $!"
+else
+  echo "==> receipts worker not started (FEATURE_RECEIPTS is not 1)"
+fi
 
 echo "==> waiting for it to answer"
 up=""
