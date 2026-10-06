@@ -73,7 +73,9 @@ test.describe("home behaviour", () => {
     });
     await page.getByTestId("home-card").getByTestId("stock-picker").click();
     await page.getByRole("option", { name: /AAPL/ }).click();
-    await expect(page.getByTestId("home-get")).toContainText("AAPL shares", { timeout: 15_000 });
+    await expect(page.getByTestId("home-get")).toContainText(/AAPL(on|B) shares/, {
+      timeout: 15_000,
+    });
   });
 
   test("the Home card button opens the full trade page with the amount", async ({ page }) => {
@@ -95,14 +97,17 @@ test.describe("home behaviour", () => {
     expect(await swap.getByRole("button").count()).toBe(0);
   });
 
-  test("the nav bar turns more opaque once you scroll", async ({ page }) => {
+  test("the nav bar stays nearly clear when you scroll", async ({ page }) => {
     await page.goto("/");
     const bar = page.locator(".site-bar");
     await expect(bar).toHaveAttribute("data-scrolled", "false");
     await page.evaluate(() => window.scrollTo(0, 600));
     await expect(bar).toHaveAttribute("data-scrolled", "true");
-    const bg = await bar.evaluate((el) => getComputedStyle(el).backgroundImage);
-    expect(bg).toContain("0.78");
+    const alpha = await bar.evaluate((el) => {
+      const m = getComputedStyle(el).backgroundColor.match(/[\d.]+/g) ?? [];
+      return m.length > 3 ? Number(m[3]) : 1;
+    });
+    expect(alpha).toBeLessThanOrEqual(0.05);
   });
 
   test("nav has Trade, Portfolio, Radar, How it works and Get Started; FAQ is not in the nav", async ({

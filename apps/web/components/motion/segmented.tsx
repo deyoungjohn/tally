@@ -47,7 +47,7 @@ export function Segmented<T extends string>({
       role="radiogroup"
       aria-label={label}
       hover={false}
-      pillStyle={{ background: "linear-gradient(180deg, var(--accent-hi), var(--accent))" }}
+      pillStyle={{ background: "linear-gradient(180deg, var(--orange-hi), var(--orange))" }}
       className={cn(
         "inline-flex items-center gap-1 rounded-full border border-[var(--edge)] bg-white/[0.05] p-1",
         className,

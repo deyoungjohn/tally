@@ -64,8 +64,18 @@ export function HoldingGroup({
           >
             <span className="flex items-center gap-2">
               <GradeBadge grade={p.grade} className="!h-6 !w-6 !text-[12px]" />
-              <span className="mono text-[16px] font-bold text-fg">{p.symbol}</span>
-              <span className="text-[12.5px] font-light text-fg3">{ISSUER_LABEL[p.issuer]}</span>
+              <span
+                className="mono text-[16px] font-bold text-fg"
+                data-testid={`holding-symbol-${p.symbol}`}
+              >
+                {p.symbol}
+              </span>
+              <span
+                className="text-[12.5px] font-light text-fg3"
+                data-testid={`holding-issuer-${p.symbol}`}
+              >
+                {ISSUER_LABEL[p.issuer]}
+              </span>
             </span>
             <span className="num text-fg2">
               <LiveNumber value={p.tokens} decimals={6} /> tokens ×{" "}

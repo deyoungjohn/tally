@@ -86,7 +86,7 @@ test.describe("round 7", () => {
     await page.goto("/portfolio");
     await page.getByTestId("sell-NVDAB").click({ timeout: 20_000 });
     const sheet = page.getByRole("dialog", { name: "Sell NVDAB" });
-    await sheet.getByTestId("sell-shares").fill("0.01");
+    await sheet.getByTestId("sell-shares").fill("0.025");
     await expect(sheet.getByTestId("sell-plan")).toBeVisible();
     const slip = await sheet.getByRole("radiogroup", { name: "Slippage" }).boundingBox();
     const confirm = await sheet.getByTestId("sell-confirm").boundingBox();
@@ -143,19 +143,20 @@ test.describe("round 7", () => {
     await page.goto("/portfolio");
     const row = page.getByTestId("group-NVDA").locator("ul > li").first();
     await expect(row).toContainText("NVDAB", { timeout: 20_000 });
-    const [sym, issuer] = await row.locator("span.flex > span").evaluateAll((els) =>
-      els.slice(-2).map((e) => {
+    const look = (id: string) =>
+      page.getByTestId(id).evaluate((e) => {
         const cs = getComputedStyle(e);
         return {
           text: e.textContent,
           size: parseFloat(cs.fontSize),
           weight: Number(cs.fontWeight),
         };
-      }),
-    );
-    expect(sym!.text).toMatch(/NVDA(B|on)/);
-    expect(sym!.size).toBeGreaterThan(issuer!.size);
-    expect(sym!.weight).toBeGreaterThan(issuer!.weight);
+      });
+    const sym = await look("holding-symbol-NVDAB");
+    const issuer = await look("holding-issuer-NVDAB");
+    expect(sym.text).toMatch(/NVDA(B|on)/);
+    expect(sym.size).toBeGreaterThan(issuer.size);
+    expect(sym.weight).toBeGreaterThan(issuer.weight);
   });
 
   test("Trade page sell mode: the button is unclickable under the minimum sale", async ({
@@ -201,7 +202,7 @@ test.describe("round 7", () => {
     // The arrow turns 180 degrees, smoothly (a transition is set on it).
     const icon = page.getByTestId("flip-button").locator("svg");
     expect(await icon.evaluate((e) => getComputedStyle(e).transitionDuration)).not.toBe("0s");
-    expect(await icon.evaluate((e) => getComputedStyle(e).transform)).toMatch(/matrix\(-1/);
+    expect(await icon.evaluate((e) => getComputedStyle(e).rotate)).toBe("180deg");
   });
 
   test("Home: issuer, price per share and fee sit on one line below the button", async ({
@@ -319,7 +320,7 @@ test.describe("round 7", () => {
     await page.goto("/portfolio");
     await page.getByTestId("sell-NVDAB").click({ timeout: 20_000 });
     const sheet = page.getByRole("dialog", { name: "Sell NVDAB" });
-    await sheet.getByTestId("sell-shares").fill("0.01");
+    await sheet.getByTestId("sell-shares").fill("0.025");
     await sheet.getByTestId("sell-confirm").click();
     await expect(sheet.getByTestId("sell-confirmed")).toBeVisible({ timeout: 20_000 });
     await expect(sheet.getByTestId("sell-receipt-status")).toContainText("Verifying");
@@ -358,7 +359,7 @@ test.describe("round 7", () => {
     await page.goto("/portfolio");
     await page.getByTestId("sell-NVDAB").click({ timeout: 20_000 });
     const sheet = page.getByRole("dialog", { name: "Sell NVDAB" });
-    await sheet.getByTestId("sell-shares").fill("0.01");
+    await sheet.getByTestId("sell-shares").fill("0.025");
     await sheet.getByTestId("sell-confirm").click();
     await expect(sheet.getByTestId("sell-receipt-status")).toContainText(
       "Check your USDT balance",
