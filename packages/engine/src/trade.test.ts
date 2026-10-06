@@ -3,7 +3,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { describe, expect, it } from "vitest";
 import { SHAREGUARD_DEPLOYED, USDT_BSC } from "@tally/config";
 import { BelowMinimumError, type Address } from "@tally/core";
-import { SHAREGUARD_ABI, decodeGuardRevert, feedUpdateTypedData } from "@tally/chain";
+import { GUARD_SOURCE, SHAREGUARD_ABI, decodeGuardRevert, feedUpdateTypedData } from "@tally/chain";
 import { createFixtureEngine } from "./engine";
 import { TradeError, type FeedSigner, type TradePlan } from "./trade";
 import {
@@ -128,6 +128,15 @@ describe("trade plan (blueprint §7.6), on recorded quotes and swap builds", () 
       signature: sig,
     });
     expect(who).toBe(signer.address);
+  });
+
+  it("Ondo is ShareGuard source 3 (Feed), as the deployed contract reports it: a stale feed must be refreshed, not reported as an unreadable share count", async () => {
+    // Live check, 2026-10-06: assetOf(Ondo token).source == 3 and sharesPerToken reverts FeedStale once the feed is older than maxAge.
+    expect(GUARD_SOURCE.Feed).toBe(3);
+    const chain = approved();
+    expect((await chain.readGuard("0xa9ee28c80f960b889dfbd1902055218cba016f75", USER)).source).toBe(
+      3,
+    );
   });
 
   it("Ondo with a stale feed and NO signer is refused, never guessed", async () => {
