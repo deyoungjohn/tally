@@ -389,3 +389,35 @@ it("sell receipt view model constructs correct ladder, status, and client-report
 it("DEFAULT_LIQUIDMESH_ROUTER in mod-receipts matches LIQUIDMESH_ROUTER from config (Finding 4)", () => {
   expect(DEFAULT_LIQUIDMESH_ROUTER.toLowerCase()).toBe(LIQUIDMESH_ROUTER.toLowerCase());
 });
+it("every receipt and activity row carries an ISO observation time (additive); an unknown receipt has none", async () => {
+  const h = await seed("F11_NVDAB");
+  const options = { store, now: 2000, enabled: true };
+  expect(await loadReceipt(h.hint.txHash, options)).toMatchObject({
+    observedAt: "1970-01-01T00:00:01.000Z",
+  });
+  const activity = await loadReceipts(options);
+  expect(activity.items.length).toBeGreaterThan(0);
+  for (const r of activity.items) expect(r.observedAt).toBe("1970-01-01T00:00:01.000Z");
+  const unknown = await loadReceipt(`0x${"ab".repeat(32)}`, options);
+  expect(unknown.observedAt).toBeNull();
+});
+it("a pending hint row also carries the time it was observed", async () => {
+  const h = recordedHint();
+  store.put({
+    kind: HINT_KIND,
+    key: receiptHintKey(h),
+    observedAt: 5000,
+    source: "untrusted-browser-hint",
+    data: {
+      hint: h,
+      receivedAt: 5000,
+      expiresAt: 5000 + HINT_TTL_MS,
+      state: "pending",
+      reason: "RPC unavailable",
+    } satisfies StoredHint,
+  });
+  expect(await loadReceipt(h.txHash, { store, now: 5000, enabled: true })).toMatchObject({
+    state: "pending",
+    observedAt: "1970-01-01T00:00:05.000Z",
+  });
+});
