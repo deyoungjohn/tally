@@ -10,6 +10,8 @@ import { ComingSoon } from "@/components/trade/coming-soon";
 import { useJson } from "@/lib/hooks/use-json";
 import type { PortfolioTab, PortfolioVM, StatementVM } from "@/modules/statement/view-model";
 import type { ActivityVM } from "@/modules/receipts/view-model";
+import type { PortfolioReport } from "@tally/engine";
+import { LiveNumber, LiveUsd } from "@/components/motion/live";
 import { ActivityVmView } from "./activity-vm";
 import { HoldingsVm } from "./holdings-vm";
 import { StatementVmView } from "./statement-vm";
@@ -80,6 +82,12 @@ export function PortfolioVmPanel({
   useEffect(() => {
     if (refreshKey) reload();
   }, [refreshKey, reload]);
+  // "Other assets": only `wallet.usdt` and `wallet.bnb` from the engine route (plain wallet balances). Its holdings groups,
+  // shares and values are the float-based numbers the view model replaces, so they are never read or shown here.
+  const balances = useJson<Pick<PortfolioReport, "wallet" | "asOf">>(
+    `/api/portfolio?address=${q}`,
+    { refreshMs: 30_000 },
+  );
   const vm = portfolio.data?.vm ?? null;
   const tabs = vm?.availableTabs ?? ["holdings"];
   // A tab that stops being offered (its flag went off) falls back to Holdings.
@@ -191,8 +199,58 @@ export function PortfolioVmPanel({
             </div>
           ) : null}
         </div>
+        <WalletBalances
+          data={env ? balances.data : null}
+          failed={!!balances.error}
+          fixtures={env?.fixtures ?? false}
+        />
         <ComingSoon items={["Dividends received as shares", "Sell to USDT", "Price alerts"]} />
       </aside>
+    </div>
+  );
+}
+
+/** A balance read older than this is not shown (a stale reading must not pass for the wallet's current balance). */
+const BALANCES_MAX_AGE_MS = 120_000;
+
+/**
+ * USDT and BNB as plain wallet balances, apart from the share-true holdings. Hidden (never zeros) while loading, when the read
+ * failed or when it is stale; on a fixture server it says the numbers are recorded, not live.
+ */
+function WalletBalances({
+  data,
+  failed,
+  fixtures,
+}: {
+  data: Pick<PortfolioReport, "wallet" | "asOf"> | null;
+  failed: boolean;
+  fixtures: boolean;
+}) {
+  if (failed || !data?.wallet) return null;
+  const age = Date.now() - Date.parse(data.asOf);
+  if (!Number.isFinite(age) || age > BALANCES_MAX_AGE_MS) return null;
+  return (
+    <div className="panel p-5" data-testid="wallet-balances">
+      <p className="t-meta">Other assets in this wallet</p>
+      <dl className="mt-2">
+        <div className="detail-row">
+          <dt>USDT</dt>
+          <dd data-testid="balance-usdt">
+            <LiveUsd value={data.wallet.usdt} />
+          </dd>
+        </div>
+        <div className="detail-row">
+          <dt>BNB (for network fees)</dt>
+          <dd data-testid="balance-bnb">
+            <LiveNumber value={data.wallet.bnb} decimals={5} />
+          </dd>
+        </div>
+      </dl>
+      {fixtures ? (
+        <p className="t-meta mt-2 text-amber" data-testid="balances-fixture-label">
+          Recorded fixture balances, not live.
+        </p>
+      ) : null}
     </div>
   );
 }

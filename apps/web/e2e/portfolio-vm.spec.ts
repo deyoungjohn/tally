@@ -546,6 +546,87 @@ test.describe("portfolio view model: states (stubbed routes)", () => {
   }
 });
 
+/* ---------------------------------------------------------- other assets panel */
+
+test.describe("other assets: wallet.usdt and wallet.bnb only, from /api/portfolio", () => {
+  test.use({ viewport: { width: 1280, height: 900 } });
+  const report = (over: Record<string, unknown> = {}) => ({
+    address: WALLET,
+    asOf: new Date().toISOString(),
+    // Float-based holdings the view model replaces: they must never reach the screen in this mode.
+    groups: [
+      {
+        ticker: "NVDA",
+        shares: 99.123456,
+        valueUsd: 98765.43,
+        referencePrice: 1,
+        parts: [],
+      },
+    ],
+    totalValueUsd: 98765.43,
+    wallet: { usdt: 12.5, bnb: 0.00123 },
+    failed: [],
+    ...over,
+  });
+  const run = async (
+    page: Page,
+    portfolio: { status?: number; body?: unknown },
+    fixtures = false,
+  ) => {
+    await mockWallet(page);
+    await stubPortfolio(page, env(holdingVm(), { fixtures }));
+    await page.route("**/api/portfolio?*", (route) =>
+      route.fulfill({ status: portfolio.status ?? 200, json: portfolio.body ?? report() }),
+    );
+    await page.goto("/portfolio");
+    await expect(page.getByTestId("group-NVDA")).toBeVisible({ timeout: 20_000 });
+  };
+
+  test("shows the two balances as plain wallet balances, never the engine route's float holdings", async ({
+    page,
+  }) => {
+    await run(page, {});
+    await expect(page.getByTestId("balance-usdt")).toContainText("$12.50", { timeout: 20_000 });
+    await expect(page.getByTestId("balance-bnb")).toContainText("0.00123");
+    await expect(page.getByTestId("balances-fixture-label")).toHaveCount(0);
+    const text = await page.getByTestId("portfolio-vm").innerText();
+    expect(text).not.toContain("99.12");
+    expect(text).not.toContain("98,765");
+    // The total comes from the view model, not from the engine route.
+    await expect(page.getByTestId("total-value")).toHaveText("$123.16");
+  });
+
+  test("a fixture server says the balances are recorded, not live", async ({ page }) => {
+    await run(page, {}, true);
+    await expect(page.getByTestId("balances-fixture-label")).toContainText("not live", {
+      timeout: 20_000,
+    });
+  });
+
+  test("a failed read hides the panel instead of showing zeros", async ({ page }) => {
+    await run(page, { status: 500, body: { error: { kind: "internal", message: "x" } } });
+    await page.waitForTimeout(1500);
+    await expect(page.getByTestId("wallet-balances")).toHaveCount(0);
+    await expect(page.getByText("$0.00")).toHaveCount(0);
+  });
+
+  test("a stale read (older than two minutes) is hidden", async ({ page }) => {
+    await run(page, { body: report({ asOf: new Date(Date.now() - 10 * 60_000).toISOString() }) });
+    await page.waitForTimeout(1500);
+    await expect(page.getByTestId("wallet-balances")).toHaveCount(0);
+  });
+
+  test("the real fixture server: panel present and labelled as recorded", async ({ page }) => {
+    // Uses the default (flags-off) server only to prove the engine route's shape still carries wallet.usdt and wallet.bnb.
+    const res = await page.request.get(`/api/portfolio?address=${WALLET}`);
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(typeof body.wallet.usdt).toBe("number");
+    expect(typeof body.wallet.bnb).toBe("number");
+    expect(typeof body.asOf).toBe("string");
+  });
+});
+
 /* ------------------------------------------- wallet registration for the worker */
 
 test.describe("active wallet registration (verified route, called after sign-in)", () => {
@@ -576,7 +657,11 @@ test.describe("active wallet registration (verified route, called after sign-in)
     await page.goto("/");
     await expect.poll(() => seen.length).toBe(1);
     expect(seen[0]).toEqual({ auth: "Bearer mock-access-token", wallet: WALLET, body: null });
-    // Registered once per tab session: another page does not post again.
+    // Wait until the page has recorded the registration (it does so once the response arrives), then check that another page
+    // in the same tab session does not post again.
+    await page.waitForFunction(() =>
+      Object.keys(sessionStorage).some((k) => k.startsWith("tally.activeWallet.")),
+    );
     await page.goto("/portfolio");
     await page.waitForTimeout(800);
     expect(seen).toHaveLength(1);
