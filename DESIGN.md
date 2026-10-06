@@ -2,8 +2,11 @@
 
 Tally's UI is meant to be one of the project's main strengths. This file is the single source of truth for how it looks and moves. Every screen, every component and the Telegram Mini App are built from these tokens. Don't hard-code a colour, radius, shadow or duration that isn't defined here. If something is missing, add it here first.
 
+**Current direction (owner, 2026-10-06, "Round 6"):** black page with one fixed orange glow behind everything, graphite glass surfaces on top, **orange** buttons, pills and important words with white text, silver kept for the quiet highlight pill. Where this file once described the older all-silver look, it has been rewritten; if you find a sentence that still says otherwise, this paragraph and section 2.1 win and the sentence is a bug to fix here. What is *not* changed: every glass or liquid-glass surface keeps its recipe (2.4), and text colours stay as they are (2.1).
+
 **Inspiration and attribution**
-- **Base look: [revenue.family](https://revenue.family).** Dark graphite, frosted-glass cards, rounded pills, metallic buttons, floating 3D chrome shapes. The values below were taken from its public stylesheet (`assets/site.css?v=42`, fetched 2026-10-01) and from the full-page screenshot in `spike/revenue-family-landing-page.png`.
+- **Base look: [revenue.family](https://revenue.family).** Dark graphite, frosted-glass cards, rounded pills, floating shapes. The values below were taken from its public stylesheet (`assets/site.css?v=42`, fetched 2026-10-01) and from the full-page screenshot in `spike/revenue-family-landing-page.png`. Its silver metallic buttons were replaced by orange ones in Round 6.
+- **Colour and background (Round 6): a Dribbble crypto-trading landing design** (black, a single orange spotlight at the top, orange pills and buttons, dark glass cards). The owner's reference image is `docs/design/landing-reference.webp`; the background is `apps/web/public/bg-glow.webp`. The full-page design is the template for the landing page, which is built last (5.1).
 - **Motion: [Linear](https://linear.app)** for crisp entrances, blur-in reveals, staggered lists and glow on hover, plus **[Mercury](https://mercury.com)** for subtle motion: counting numbers, gentle parallax, calm hover lift.
 - **Components: [beUI](https://beui.dev)**, via the BeUI MCP connector. These are shadcn-style React components using Tailwind, `motion/react`, `clsx` and `tailwind-merge`.
 
@@ -14,7 +17,7 @@ Tally's UI is meant to be one of the project's main strengths. This file is the 
 ## 1. Principles
 1. **Money app first, crypto second.** Big, calm numbers; plain words ("shares", "price per share", "you pay"); no jargon on the main path. Tickers, contract addresses and hashes appear only where people look for them, in monospace.
 2. **Glass gives depth, not decoration.** Glass surfaces hold content (quotes, receipts, portfolios). Background effects stay quiet, so the numbers stay legible.
-3. **Monochrome until it matters.** The palette is graphite and silver. Colour appears only to say something: up/cheaper (green), down/costly or error (red), warning or limit (amber), info or links (blue).
+3. **Graphite and silver, with one orange accent.** Surfaces and text are graphite and silver. Orange marks what you can act on or should notice (buttons, pills, selected toggle, "Learn more", an important word). Every other colour still says something: up/cheaper (green), down/costly or error (red), warning (amber), info (blue). Orange is never used for price direction.
 4. **Motion explains state changes.** Price updates roll, quotes re-sort with a glide, a trade animates through its steps. Ambient motion (float, drift) is slow and turns off with reduced motion.
 5. **Same quality on a 375px phone and a 1440px desktop.** Design mobile first, then enhance.
 
@@ -47,12 +50,18 @@ These are Revenue's values with Tally additions marked ★. Put them in `app/glo
   /* silver accent (Revenue's "green" variables are actually silver) */
   --silver-1: #e8ebef;
   --silver-2: #b4bac3;
-  --silver-ink: #0b0c0e;              /* text on silver buttons */
+  --silver-ink: #0b0c0e;              /* text on silver surfaces (the highlight pill, .btn-light) */
   --silver-glow: rgba(225,230,238,.22);
   --silver: linear-gradient(180deg,#ffffff 0%,#d9dde3 40%,#9aa1aa 100%);
 
+  /* ★ orange accent (Round 6): buttons, pills, selected toggle, "Learn more", highlighted words. White text on orange. */
+  --orange:      #f04e13;
+  --orange-hi:   #ff7a3d;                  /* top of the button gradient */
+  --orange-text: #ff8350;                  /* orange used AS TEXT on dark (links, .hl): 7.1–8.6:1 */
+  --orange-glow: rgba(255,106,40,.38);     /* button glow */
+
   /* semantic */
-  --amber: #f2c14e;   /* limits, warnings, "earnings: limited" */
+  --amber: #f2c14e;   /* warnings, "earnings: limited" */
   --red:   #ff6b6b;   /* errors, "costs more", paused */
   --blue:  #6aa9ff;   /* links, info */
   --up:    #3ddc97;   /* ★ "cheaper", price up, success: 9.7–11:1 on g0–g2 */
@@ -76,7 +85,7 @@ These are Revenue's values with Tally additions marked ★. Put them in `app/glo
 | `--card-foreground` / `--popover-foreground` | `var(--fg)` |
 | `--primary` | `var(--silver-1)` |
 | `--primary-foreground` | `var(--silver-ink)` |
-| `--secondary` / `--muted` / `--accent` | `var(--g3)` |
+| `--secondary` / `--muted` / `--accent` | `var(--g3)` (**`--accent` is the shadcn name and stays graphite**: the orange tokens are `--orange*`, never `--accent`) |
 | `--muted-foreground` | `var(--fg2)` |
 | `--border` / `--input` | `var(--edge)` |
 | `--ring` | `var(--edge2)` |
@@ -87,35 +96,40 @@ These are Revenue's values with Tally additions marked ★. Put them in `app/glo
 - `--fg` and `--fg2` are safe everywhere.
 - `--fg3` is for meta text at 12px and up.
 - `--fg-disabled` never carries information.
-- On silver buttons always use `--silver-ink` (15.8:1).
+- On silver surfaces (the quiet highlight pill, `.btn-light`) use `--silver-ink` (15.8:1).
+- On orange buttons and pills the text is white (3.6:1 on `--orange`, which meets AA only for large or bold text): orange controls use 15.5px/600 or heavier, never light small text. Orange *text* on dark is `--orange-text`, not `--orange`.
 - Colour is never the only signal: "cheaper" also gets a ▼ or a "best" label, "paused" also gets an icon.
 
 ### 2.2 Typography
+- **Weight and size (Round 3):** body text is weight **500** and every size in the Tailwind text scale is **+1px** over the original design (the table below shows the current values).
 - **Families:** Inter (400, 500, 600, 700, 800) and JetBrains Mono (500). Load with `next/font/google`. Enable Inter's `cv11` stylistic set: `font-feature-settings: "cv11"`.
 - **Numbers:** every price, amount, share count and percentage uses `font-variant-numeric: tabular-nums`, so digits don't jump while they animate.
 - **Monospace** is for contract addresses, tx hashes, quote IDs and invite/link codes only.
 
 | Role | Size | Weight | Letter spacing | Line height | Notes |
 |---|---|---|---|---|---|
-| Display (hero h1) | `clamp(40px, 6vw, 76px)` | 800 | −0.05em | 0.96 | Fade gradient on the last line (below) |
-| h2 (section) | `clamp(28px, 4vw, 42px)` | 750 | −0.035em | 1.1 | |
-| h3 (card title) | 20–22px | 700 | −0.02em | 1.15 | |
-| Big number (quote, balance) | `clamp(36px, 5vw, 56px)` | 700 | −0.03em | 1 | tabular-nums |
-| Body | 15px | 400 | 0 | 1.55 | `--fg` or `--fg2` |
-| Lead paragraph | 18–19px | 400 | 0 | 1.6 | `--fg2` |
-| UI label / button | 14.5px | 500–600 | −0.1px | 1 | |
-| Eyebrow (pill above a heading) | 13px | 500 | 0 | 34px pill | Glass pill, `<b>` in `--fg` |
-| Kicker ("INVITES", "FAQ") | 12.5px | 600 | 0.12em, uppercase | | `--silver-1` |
-| Footer heading | 12px | 600 | 0.09em, uppercase | | `--fg3` |
-| Meta / caption | 12–13px | 500 | 0 | 1.4 | `--fg3` |
-| Mono | 12–14px | 500 | 0 | | `var(--mono)` |
+| Display (hero h1) | `clamp(41px, 6vw, 77px)` | 800 | −0.05em | 0.96 | Fade gradient on the last line (below) |
+| h2 (section) | `clamp(29px, 4vw, 43px)` | 750 | −0.035em | 1.1 | |
+| h3 (card title) | 22px | 700 | −0.02em | 1.15 | |
+| Big number (quote, balance) | `clamp(37px, 5vw, 57px)` | 700 | −0.03em | 1 | tabular-nums |
+| Body | 16px | 500 | 0 | 1.55 | `--fg` or `--fg2` |
+| Lead paragraph | 19px | 500 | 0 | 1.6 | `--fg2` |
+| UI label / button | 15.5px | 600 | −0.1px | 1 | |
+| Eyebrow (pill above a heading) | 14px | 500 | 0 | 34px pill | Glass pill, `<b>` in `--fg` |
+| Kicker ("INVITES", "FAQ") | 13.5px | 600 | 0.12em, uppercase | | `--silver-1` |
+| Footer heading | 13px | 600 | 0.09em, uppercase | | `--fg3` |
+| Meta / caption (and "Learn more", always) | 13.5px | 500 (Learn more 600) | 0 | 1.4 | `--fg3`; Learn more is `--orange-text` |
+| Mono | 13–15px | 500 | 0 | | `var(--mono)` |
+| Token name in a list row (NVDAB) | 16px | 700 | 0 | | `--fg`, sans (not mono); the issuer after it is 12.5px / 300 / `--fg3` |
 
 **Headline fade** (Revenue's `.gr`). Apply to one word or line of the hero, never to body text:
 ```css
 .fade-text { background: linear-gradient(180deg,#ffffff 0%,#cfd4da 45%,#7e858e 100%);
   -webkit-background-clip: text; background-clip: text; color: transparent; }
 .dim-text  { color: #8b9098; }   /* Revenue's .nk, for a muted third line */
+.hl        { color: var(--orange-text); }   /* an important word, in running text or a heading */
 ```
+(`-webkit-background-clip: text` is the one prefixed property that is still written by hand; for `backdrop-filter` never write the `-webkit-` line, see 2.4.)
 
 ### 2.3 Radii
 | Token | Value | Used for |
@@ -130,28 +144,20 @@ These are Revenue's values with Tally additions marked ★. Put them in `app/glo
 | round | 50% | avatars, issuer and token logos, icon buttons, spheres |
 
 ### 2.4 Surfaces
-**Page background: two-tone graphite with a diagonal band, soft glows and a dot grid.** Use it once, fixed behind everything (Revenue's `.bg`):
+**Page background: one fixed image layer** (Round 6). A black base with an orange spotlight at the top and a few drifting specks, from `apps/web/public/bg-glow.webp` (about 7 KB; keep it compressed, WebP, black-based so it never bands). It is fixed to the viewport: **the background never scrolls; every section and card floats over it.** It is one element, rendered once in `app/layout.tsx`:
 ```css
 .bg { position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none;
-  background: linear-gradient(180deg,var(--g2) 0%,var(--g1) 40%,var(--g0) 100%); }
-.bg::before { content:""; position:absolute; left:-10%; right:-10%; top:-30%; height:80%;
-  background: linear-gradient(172deg,#2b2d32 0%,#212327 55%,rgba(33,35,39,0) 100%);
-  clip-path: polygon(0 0,100% 0,100% 58%,0 100%); }               /* diagonal band */
-.bg::after { content:""; position:absolute; inset:0;
-  background: radial-gradient(900px 520px at 80% 16%,rgba(220,225,232,.09),transparent 60%),
-              radial-gradient(700px 500px at 6% 72%,rgba(255,255,255,.035),transparent 60%); }
-.bg .dots { position:absolute; inset:0; opacity:.4;
-  background-image: radial-gradient(rgba(255,255,255,.075) 1px,transparent 1.3px);
-  background-size: 26px 26px;
-  mask-image: linear-gradient(180deg,#000 0%,rgba(0,0,0,.35) 55%,transparent 90%); }
+  background: #000 url("/bg-glow.webp") center top / cover no-repeat; }
+.bg .dots { display:none; }   /* the old dot grid, band and radial glows are gone */
 ```
-Optional: BeUI `shader-background` with a slow grain or mesh variant at very low opacity, desktop only, paused under reduced motion.
+Use a fixed element, not `background-attachment: fixed` (unreliable on iOS Safari). Page content sits above it at `z-10`. Nothing else may paint a full-page background.
+Optional: BeUI `shader-background` at very low opacity, desktop only, paused under reduced motion (not currently used).
 
 **Glass card: the default container** (Revenue `.glass`):
 ```css
 .glass { position:relative; border-radius:var(--r); border:1px solid var(--edge);
   background: linear-gradient(180deg,rgba(255,255,255,.075),rgba(255,255,255,.028));
-  backdrop-filter: blur(24px) saturate(150%); -webkit-backdrop-filter: blur(24px) saturate(150%);
+  backdrop-filter: blur(24px) saturate(150%);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.14), inset 0 -1px 0 rgba(0,0,0,.25),
               0 30px 70px -35px rgba(0,0,0,.9); }
 ```
@@ -159,7 +165,7 @@ Optional: BeUI `shader-background` with a slow grain or mesh variant at very low
 ```css
 .gcard { padding:20px; border-radius:28px; border:1px solid rgba(255,255,255,.22);
   background: linear-gradient(160deg,rgba(255,255,255,.14),rgba(255,255,255,.04) 55%,rgba(255,255,255,.08));
-  backdrop-filter: blur(26px) saturate(160%); -webkit-backdrop-filter: blur(26px) saturate(160%);
+  backdrop-filter: blur(26px) saturate(160%);
   box-shadow: inset 0 1px 0 rgba(255,255,255,.35), inset 0 -1px 0 rgba(0,0,0,.2),
               0 40px 80px -30px rgba(0,0,0,.9); }
 ```
@@ -171,55 +177,86 @@ Optional: BeUI `shader-background` with a slow grain or mesh variant at very low
 ```
 **Overlay backdrop** (modals, sheets): `background: rgba(5,6,7,.72); backdrop-filter: blur(8px);`
 
+**Never write `-webkit-backdrop-filter` by hand.** The Tailwind/lightningcss build adds the prefix itself; when both lines were written it kept only the prefixed one, which Chrome ignores, and every blurred surface lost its blur in production. Write plain `backdrop-filter`.
+
+**Everything glass stays glass.** The orange change does not touch glass or liquid-glass surfaces (`.glass`, `.gcard`, `.glass-solid`, glassy buttons, token pills, the Select panel, modals, the header bar): they keep the recipes in this section.
+
 **Blur fallback.** Some devices can't render `backdrop-filter`, and stacking many blurred layers is slow on phones.
 ```css
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+@supports not (backdrop-filter: blur(1px)) {
   .glass, .gcard { background: rgba(35,37,42,.92); }
 }
 ```
 **Rule:** at most 3 blurred surfaces visible at once on mobile. Long lists inside a glass card use `.panel` rows, not nested glass.
 
-**3D chrome shapes** (hero only). Our own CSS or SVG spheres and a ring in the spirit of Revenue's: radial-gradient silver spheres (`#fff → #c9ced5 → #5d636c`) with a soft drop shadow, plus a ring with a silver conic or linear gradient. They float with the `float`/`drift` keyframes. They are decorative: `aria-hidden`, and on phones they shrink to 60% and stop drifting.
+**3D chrome shapes** (optional, landing only; the landing template in 5.1 uses a large glowing coin of our own artwork instead). Our own CSS or SVG spheres and a ring in the spirit of Revenue's: radial-gradient silver spheres (`#fff → #c9ced5 → #5d636c`) with a soft drop shadow, plus a ring with a silver conic or linear gradient. They float with the `float`/`drift` keyframes. They are decorative: `aria-hidden`, and on phones they shrink to 60% and stop drifting.
 
 ### 2.5 Buttons
-All buttons: `height: 44px` (min touch target), `padding: 0 20px`, `border-radius: 999px`, `font-weight: 600`, `font-size: 14.5px`, `letter-spacing: -.1px`, `gap: 9px`.
+All buttons: `height: 44px` (min touch target), `padding: 0 20px`, `border-radius: 999px`, `font-weight: 600`, `font-size: 15.5px`, `letter-spacing: -.1px`, `gap: 9px`.
 `transition: transform .15s var(--ease), background .2s, box-shadow .2s, opacity .2s`. Pressed: `transform: scale(.98)`. Disabled: `opacity: .45; pointer-events: none`.
 
 | Variant | Recipe | Use |
 |---|---|---|
-| **Primary (metallic silver)** | `color:#0b0c0e; background:linear-gradient(180deg,#fff 0%,#e4e7eb 45%,#b7bdc5 100%); box-shadow: inset 0 1px 0 #fff, inset 0 -2px 0 rgba(0,0,0,.14), 0 12px 30px -12px rgba(230,235,242,.35), 0 0 0 1px rgba(0,0,0,.35)`. On hover the outer glow grows to `0 16px 40px -10px rgba(230,235,242,.45)`. | The one main action per screen: **Buy**, Continue, Sign in |
+| **Primary (orange)** | `color:#fff; background:linear-gradient(180deg,var(--orange-hi) 0%,var(--orange) 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), inset 0 -2px 0 rgba(0,0,0,.16), 0 12px 30px -12px var(--orange-glow)`. Hover: gradient `#ff8a52 → #f55a1f` and the glow grows to `0 16px 40px -10px`. | The one main action per screen: **Buy**, Sell, Continue, Sign in |
 | **Glassy** | `background:rgba(255,255,255,.07); border:1px solid var(--edge); box-shadow: inset 0 1px 0 rgba(255,255,255,.12); backdrop-filter: blur(14px)`. Hover: `rgba(255,255,255,.12)`. | Secondary: Connect wallet, Top up, filters |
-| **Light** | `background:#f4f5f6; color:#0b0c0d; box-shadow: inset 0 1px 0 #fff, 0 10px 30px -12px rgba(255,255,255,.3)` | Marketing CTAs on hero and sections |
+| **Light** | `background:#f4f5f6; color:#0b0c0d; box-shadow: inset 0 1px 0 #fff, 0 10px 30px -12px rgba(255,255,255,.3)` | Not used in the app. Reserved for a white-on-dark marketing button on the landing page, if the landing design calls for one |
 | **Ghost** | Transparent, `--fg2` text. Hover: `--fg` on `rgba(255,255,255,.06)`. | Tertiary, nav-like |
-| **Icon** | 36–40px circle, `rgba(255,255,255,.08)`, icon 16px | +/− (FAQ), swap-direction arrow, close |
-| **Big trade button** | Primary recipe, full width, height 56px, radius 999px, a lock icon when the user can't trade yet ("Sign in to buy", "Top up to buy") | The trade card's CTA |
+| **Icon** | 36–40px circle, `rgba(255,255,255,.08)`, icon 16px | +/− (FAQ), the flip button, close |
+| **Big trade button** (`.trade-cta`) | Primary recipe, full width, 18px / 750, radius 999px. The label always names the action and the token: "Buy $6.00 of NVDAon", "Sell NVDAB", or "Minimum sale is $5" (then it is disabled) | The trade card's CTA |
 
-BeUI: use `button` (its `MetallicButton` and `StatefulButton` variants) re-skinned with the recipes above. Use `action-swap` for label changes ("Buy" → "Confirm in wallet" → "Buying…" → "Done") and `expanding-arrow-button` for marketing CTAs.
+**Orange pills and chips** use the same fill (`--orange`, white 600 text, pill radius): the "Min $6" limit chip and the "Best" chip. Glass pills (token pills, eyebrow) stay glass.
+**Selected toggle:** the selected option of a `Segmented` control is an orange pill with white text (`linear-gradient(180deg,var(--orange-hi),var(--orange))`). The *hover/selection highlight* in nav, menus and Select lists is a different thing and stays a quiet translucent white pill (2.6).
+
+BeUI: use `button` (its `StatefulButton` variant) re-skinned with the recipes above. Use `action-swap` for label changes ("Buy" → "Confirm in wallet" → "Buying…" → "Done") and `expanding-arrow-button` for marketing CTAs.
 
 ### 2.6 Navigation
-- **Desktop/tablet header:** sticky, `padding: 14px 16px 0`. Inner bar: `max-width: var(--w)`, `height: 62px`, radius 999px, glass recipe, `padding: 0 9px 0 12px`. Left: logo and wordmark. Middle: links. Right: primary or glassy actions (Sign in / wallet chip).
-- **Nav links:** `padding: 8px 14px; border-radius: 999px; color: var(--fg2); font-weight: 500; font-size: 14.5px`. Hover: `--fg` on `rgba(255,255,255,.06)`. Active: `--fg` on `rgba(255,255,255,.09)` plus `inset 0 1px 0 rgba(255,255,255,.08)`. Use BeUI `shared-layout-bg` so the hover pill glides between links.
-- **Mobile (≤760px):** the links collapse. The header keeps logo, wallet chip and a menu button that opens a BeUI `bottom-sheet` with the links as large rows. Inside the app (after sign-in), a bottom tab bar (BeUI `expandable-tabs` or `dock`) with **Trade · Portfolio · Shield · More**.
+- **Desktop/tablet header:** sticky, `padding: 14px 16px 0`. Inner bar: `max-width: var(--w)`, `height: 62px`, radius 999px, `padding: 0 9px 0 12px`. **The bar is nearly clear** so text and page elements scrolling behind it stay visible: `.site-bar` is `background: rgba(255,255,255,.008)`, border `rgba(255,255,255,.1)`, `backdrop-filter: blur(3px)`; once scrolled `rgba(0,0,0,.03)` and `blur(4px)`. The blur must be hard to notice. Left: logo and wordmark. Middle: links. Right: primary (orange) or glassy actions (Get Started / wallet chip).
+- **Nav links:** `padding: 8px 14px; border-radius: 999px; color: var(--fg2); font-weight: 500; font-size: 15.5px`. Hover and current page: text `--fg`. **Links have no background of their own**: the hover/current highlight is the single gliding pill (`components/motion/glide.tsx`, 2.10).
+- **Nav items (owner, 2026-10-03):** Trade, Portfolio, Radar, How it works. The FAQ is a Home section and a footer link only.
+- **Mobile (≤760px):** the links collapse. The header keeps logo, wallet chip and a menu button that opens a BeUI `bottom-sheet` with the links as large rows. Inside the app (after sign-in), a bottom tab bar (BeUI `expandable-tabs` or `dock`) with **Trade · Portfolio · Radar · More**.
 
 ### 2.7 Chips, badges, status
 - **Eyebrow pill** (above the hero heading): 34px, glass, `padding: 0 15px 0 12px`, 13px/500 `--fg2` with a bold part in `--fg`. Example: "● Live on BNB Chain · **3 issuers compared**".
-- **Status badges** (BeUI `animated-badge`): `TRADING` (up-green dot), `PRE-MARKET` / `AFTER HOURS` (blue), `EARNINGS: LIMITED` (amber), `PAUSED: <reason>` (red), `GHOST MARKET` (red, Trap Shield). Use a 12px radius and 12px/600 text.
-- **Limit chip** (Revenue's "Up to $20,000"): amber text on `rgba(242,193,78,.12)`, pill. Example: "Min $6".
+- **Status badges** (BeUI `animated-badge`): `TRADING` (up-green dot), `PRE-MARKET` / `AFTER HOURS` (blue), `EARNINGS: LIMITED` (amber), `PAUSED: <reason>` (red), `Not Tradable` (red, Radar). Use a 12px radius and 12px/600 text. Liquidity tags are named **Liquid** (grade A or B), **Low Liquidity** (C to F) and **Not Tradable** (ghost market); every tag has a tooltip (`components/ui/tooltip.tsx`).
+- **Best chip:** white text on `--orange`.
+- **Limit chip** (Revenue's "Up to $20,000"): white text on `--orange`, pill. Example: "Min $6".
 - **Floating notice chip** (Revenue `.chip`): radius 18px, glass, 24px check circle, `float 7s` animation. Use it in the hero: "Shares delivered ✓ · tx link".
 - **Integrity grade:** a circle 28–32px with the letter A–F. A/B silver, C amber, D–F red. Tooltip lists the reasons.
 
 ### 2.8 Inputs and the trade card
-- **Trade card:** a glass card with radius 22px containing two inner panels (radius 18px): **You pay** and **You get**. A round swap/direction button overlaps the gap between them, as in Revenue's swap card.
-  - **Amount input:** a big number (`clamp(36px,5vw,56px)`, 700). The `$` prefix is in `--fg3`.
-  - **Asset pills:** on the right, a glass pill holding the issuer/token logo, ticker and a sub-label. BeUI `combobox` / `morphing-search` for picking the ticker; a `bottom-sheet` picker on mobile.
-  - **Details rows below:** price per share, premium vs US price, network fee (estimated), route, min received in shares. Label `--fg2` on the left, value `--fg` tabular on the right, hairline dividers `rgba(255,255,255,.06)`.
-  - **Unit toggle:** BeUI `tabs` (pill variant) to switch between **$** and **shares**.
+- **Trade card:** a glass card with radius 22px containing two inner boxes (radius 18px): **You pay** and **You get**, with a **flip button** in the 8px gap between them. The flip button is a 40px round icon button with an up/down arrow (`ArrowUpDown`); it sits in its own zero-height row so it is centred on the gap in both modes, and the arrow turns 180° with a 300ms ease when the mode changes. Pressing it swaps **Buy** and **Sell** (Sell is behind `FEATURE_SELL`; while off the button is disabled and its label says why). In Sell mode the first box is "You sell" (shares of the token the wallet holds), the second "You get about" (USDT), and the slippage row and the "Min amount to receive" row are not shown (the sell sheet has its own).
+  - **Amount input:** a big number (`clamp(37px,5vw,57px)`, 700). The `$` prefix is in `--fg3`.
+  - **Asset pills:** on the right, a glass pill holding the token logo (two-letter monogram, ₮ for USDT) and the **token symbol** (NVDAon, NVDAB). Never a bare ticker (2.11). BeUI `combobox` / `morphing-search` for picking the stock; a `bottom-sheet` picker on mobile.
+  - **Percent slider** (`components/ui/percent-slider.tsx`, native range, silver fill): "Use N% of your {USDT | NVDAB shares | token}", with the wallet's total ("12.50 USDT in your wallet", "0.0257 shares in your wallet") on the right. It sets the amount from the wallet balance (buy: USDT; sell: shares held; Send: USDT, BNB or a tokenized stock) and follows the typed amount back. At 100% a sell uses "Sell all" (the exact raw balance).
+  - **Slippage:** a `Segmented` control (0.5 / 1 / 2%), then the action button, **then** the details rows.
+  - **Details rows below:** price per share, premium vs US price, network fee (estimated), route, min amount to receive in shares. Label `--fg2` on the left, value `--fg` tabular on the right, hairline dividers `rgba(255,255,255,.06)`.
+  - **Unit toggle:** `Segmented` to switch between **$** and **shares**.
+  - **Minimum sale:** a sale worth less than $5 (`MIN_SELL_USDT`) is unclickable: the button reads "Minimum sale is $5" and is disabled; the Portfolio "Sell" button is disabled with a tooltip saying the holding is below the minimum; the sell sheet shows no Confirm.
+- **Sell sheet** (modal): order top to bottom: shares input with "Sell all", percent slider, slippage, **Confirm sale (or Approve) right under the slippage control**, then the plan details (you send, expected, least you receive, route, fee), then the risk line and "Quotes refresh automatically every 15s". After a sale: status, block, network fee in dollars (gas units kept in `data-gas-used`), and, only once the worker has verified it from the chain, "USDT received" with "Guaranteed at least" directly under it in the same unit. Nothing is claimed before that.
+- **Buy receipt** (modal): "Tokens received" with **"Guaranteed at least" directly under it**, both in the token's own unit (e.g. 0.041203 NVDAB), then the network fee.
+- **Home trade card:** the stock picker, "You pay", "You get", then the **Buy {token symbol}** button, then **one line below the button**: issuer · price per share · fee (all on the same baseline, no "via", no percentage).
 - **Text inputs** (wallet address, search): BeUI `input` restyled. Height 48px, radius 14px, `rgba(255,255,255,.04)` background, `--edge` border, focus ring `0 0 0 3px rgba(255,255,255,.08)` with border `--edge2`.
 
 ### 2.9 Data visualisation
 - **Price charts:** single line, `--silver-1` at 1.5px with an area fill gradient (`rgba(232,235,239,.18)` → transparent). The current price is a pulsing dot (`pulse` keyframe). Up and down moves are shown with `--up`/`--red` labels, not by recolouring the whole chart. Candles (Market API) are an optional toggle.
 - **Issuer comparison bars:** horizontal bars of price-per-share premium centred on 0 (the US price). Bars glide when they re-sort.
 - BeUI `number` for every live number: rolling digits on change, count-up on first view. BeUI `price-target-fan` and `returns-calendar` are optional extras for a ticker page.
+
+### 2.10 Highlight pill (hover and selection lists)
+One component owns every "this item is highlighted" pill: `components/motion/glide.tsx` (`<Glide>`; items carry `data-glide`). Used by the nav links, the mobile menu, Select option lists and `Segmented`.
+- **One pill per list**, not a background per item. It is measured from the item's layout offsets (`offsetLeft/Top/Width/Height`, not bounding boxes, so items that are still sliding in or sit in a scaling modal never mis-place it) and moves with a CSS transition (`transform`, `width`, `height`: 340ms, `cubic-bezier(.22,1.25,.36,1)`). A CSS transition retargets from the pill's current position on each new hover and runs off the main thread, so a busy page (live numbers, polling) cannot make it snap. A JS spring was tried and snapped; do not go back to it.
+- **Rests on the selected item** (`aria-current="page"`, `aria-selected="true"` or `aria-checked="true"`), follows the pointer or focus, fades out otherwise. The first time it appears it jumps into place (no flight from the corner). Reduced motion: no transition.
+- **Colour:** quiet translucent white (`rgba(255,255,255,.09)`; inside Select panels `bg-muted`). Only `Segmented`'s *selected* pill is orange (2.5) and it does not follow hover.
+- **Never** give a nav link or option its own hover background: it fights the pill.
+
+### 2.11 Naming and copy rules
+- **No bare tickers.** Wherever a token is named, use the issuer's own symbol: Ondo `NVDAon`, bStock `NVDAB`, xStocks `NVDAx` (`tokenSymbol(ticker, issuer)` in `lib/tickers.ts`). Where a stock is named before an issuer is chosen, show both tokens (`tokenPair(ticker)` → "NVDAon / NVDAB") or the company name ("NVIDIA"). A bare "NVDA" would suggest the user is buying the underlying stock.
+- Always say **tokenized shares**; never imply the underlying shares. UI copy says "the guarantee", not "ShareGuard". No contract address is linked outside `/docs` (transaction links on receipts are fine).
+- **Units:** shares are the main unit; where a number is compared with a floor ("Tokens received" and "Guaranteed at least") both are in the same unit, one directly under the other.
+- **Money fields:** dollars for fees ("Network fee ≈ $0.023"; gas units may sit beside it for agents, e.g. `data-gas-used`).
+- **Minimums:** buy from $6, sell from $5. A refused sale reads "The sale is below the $5 minimum order. Transaction will fail."
+- **"Learn more"** (never "Read more") is always caption size and orange; the modal it opens ends in a "Tell me more" button.
+- **Orange words:** wrap a genuinely important word or phrase in `.hl`; one or two per screen at most.
 
 ---
 
@@ -255,11 +292,12 @@ Keep BeUI's `lib/ease.ts` as the one motion file. Add Revenue's `--ease` there a
 | **Blur-in** (Linear) | from `opacity:0; filter:blur(8px); translateY(8px)` to visible over 400–500ms `EASE_OUT` | hero heading words, section titles (BeUI `text-animation` spring reveal) |
 | **Staggered list** (Linear) | rows enter 40ms apart with `fade` (`opacity 0, y 8px → none`) | issuer quote list, portfolio rows, FAQ |
 | **Glow on hover** (Linear) | radial highlight that follows the cursor inside the card border (`radial-gradient(240px at var(--x) var(--y), rgba(255,255,255,.08), transparent)`), only on hover-capable devices | glass cards, issuer cards |
-| **Tilt** | BeUI `tilt-card`, `max` 8–12°, glare on, only where `(hover:hover) and (pointer:fine)` | hero showcase cards, Trap Shield cards |
+| **Tilt** | BeUI `tilt-card`, `max` 8–12°, glare on, only where `(hover:hover) and (pointer:fine)` | hero showcase cards, Radar cards |
 | **Float / drift** (Revenue) | `float`: translateY −14px at 50%, 7s ease-in-out infinite. `drift`: translate(−30px, 24px) at 50%. | hero chips, spheres |
 | **Number roll** (Mercury-style) | BeUI `number`: rolling digits when a price changes; count-up once when a number first appears | prices, shares, balances, stats |
 | **Gentle parallax** (Mercury) | hero shapes move ≤ 12px on scroll; no other parallax | hero only |
 | **Hover lift** (Mercury) | `translateY(-2px)` plus a slightly stronger shadow, 200ms | clickable cards |
+| **Highlight glide** | one pill per list, measured from layout offsets and moved with a CSS transition (`transform`, `width`, `height`, 340ms, slight overshoot), retargeted from its current position on every new hover; rests on the selected item; fades out otherwise | nav, mobile menu, Select options, Segmented (2.10) |
 | **Re-sort glide** | `layout` animation with `SPRING_LAYOUT` when the best issuer changes | quote list |
 | **Shimmer loading** (Revenue `shim`) | moving gradient over skeletons while quotes load | quote cards, portfolio |
 | **Trade progress** | BeUI `dynamic-island` pill morphs through *Quoting → Approve → Swap → Confirmed*, with a 4-segment progress bar like Revenue's order card | trade flow, top of screen |
@@ -269,7 +307,7 @@ Keep BeUI's `lib/ease.ts` as the one motion file. Add Revenue's `--ease` there a
 | **Marquee** | BeUI `marquee`, pauses on hover: a strip of supported tickers with live share prices | landing |
 
 ### 3.3 Rules
-1. **Animate only `transform`, `opacity` and `filter`.** Never animate width, height or top/left on live data. Use `layout` animations for re-sorting.
+1. **Animate only `transform`, `opacity` and `filter`.** Never animate width, height or top/left on live data. Use `layout` animations for re-sorting. Two deliberate exceptions, both on tiny absolutely-positioned or clipped elements: the highlight pill's `width`/`height` (2.10) and a Select panel's height.
 2. **Never move a price while the user is about to confirm.** On the confirm step, numbers update with a quick cross-fade, and changes beyond the guard show "price changed: review".
 3. **`prefers-reduced-motion: reduce`:**
    - Turn off: float, drift, tilt, parallax, marquee, shader backgrounds.
@@ -308,25 +346,27 @@ Keep BeUI's `lib/ease.ts` as the one motion file. Add Revenue's `--ease` there a
 ## 5. Page blueprints
 Each page lists its sections in order, and the BeUI components to use.
 
-### 5.1 Landing (`/`)
+### 5.1 Landing (built last)
+**The landing page is built from the owner's Dribbble reference** (`docs/design/landing-reference.webp`), on the Round 6 look: black page with the fixed orange spotlight, an orange pill nav action, dark glass cards, orange pills and buttons, white and `--fg2` text. Its sections, in order: header with a small announcement pill above the hero; a two-line hero heading with a muted second line; a short `--fg2` sentence; one orange CTA; a row of floating dark-glass product cards (markets list, price chart card, top-gainer cards); a "trusted by" logo strip; a "How it works" pill and heading with a four-tab switcher (`Segmented`-style) over a product screenshot; a three-up feature card grid (fast, low fees, secure); a large glowing coin with a ring of small token icons ("the whole universe"); an encryption/wallet block with a dashboard card. We borrow the layout and mood, **not** its copy, logos, names, coin artwork or images: everything is our own, and the product claims follow the rules in 2.11 (tokenized shares, never the underlying). The older Revenue-based blueprint below is kept as the content outline; where its visuals conflict with this paragraph (silver CTAs, chrome spheres, diagonal band background), this paragraph wins.
+
 1. **Header:** floating glass pill nav (see 2.6).
 2. **Hero** (two columns ≥980px, stacked below):
    - Eyebrow pill: "● Live on BNB Chain · **Ondo · bStocks · xStocks**".
    - h1 with blur-in: "Buy **tokenized shares**," / a second faded line: "at the best prices." (the tagline never says "buy shares" without "tokenized": these are not the underlying shares).
    - Lead paragraph (`--fg2`): one sentence on comparing issuers and the on-chain share guarantee.
-   - Primary metallic CTA "Get a quote" plus glassy "See the trap" (goes to Trap Shield).
-   - Right side: 2–3 **floating hero glass cards** (`gcard` + `tilt-card`) showing a real quote ("NVDA · 0.0261 shares · Ondo · −0.12% vs US price"), a receipt ("Shares delivered ✓"), and an integrity card ("NFLX token = **10** shares"). Chrome spheres and a ring drift behind them.
+   - Primary orange CTA "Get a quote" plus glassy "See the trap" (goes to Radar).
+   - Right side: 2–3 **floating hero glass cards** (`gcard` + `tilt-card`) showing a real quote ("NVDAon · 0.0261 shares · −0.12% vs US price"), a receipt ("Shares delivered ✓"), and an integrity card ("NFLXon token = **10** shares"). (Chrome spheres and a ring are optional; see 2.4.)
 3. **Ticker marquee:** live share prices across issuers.
-4. **"One stock, three tokens":** the unit trap explained with an interactive card that flips between "token price" and "price per share" (NFLX example, real numbers from the engine).
+4. **"One stock, three tokens":** the unit trap explained with an interactive card that flips between "token price" and "price per share" (NFLXon / NFLXB example, real numbers from the engine).
 5. **Live comparison preview:** the actual trade card (read-only until signed in), plus a notification stack (BeUI `notification-stack`) of recent real fills ("0.0261 NVDA shares · −0.12% · 2m ago").
 6. **ShareGuard section:** "Guaranteed in shares, on-chain". A 3-step diagram (quote → guard → shares) with the BscScan link of a real guarded trade.
-7. **Trap Shield teaser:** "We've caught these so you don't buy them": ghost-market xStocks cards with red badges.
+7. **Radar teaser:** "We've caught these so you don't buy them": ghost-market xStocks cards with red "Not Tradable" badges.
 8. **FAQ** (BeUI `bouncy-accordion`, Revenue layout: title left, accordion right).
 9. **Footer:** a rounded glass card (radius 26px) with columns Product / Learn / Community / Legal, and the disclaimer line ("Not investment advice. Not available in restricted regions.").
 
 ### 5.2 Trade (`/trade/[ticker]`), the core screen
-- **Left (≥980px) or top (mobile):** ticker header (logo, name, live share price with rolling digits, market status badge), price chart, key facts.
-- **Right or below:** the **trade card** (2.8), with the $ / shares toggle.
+- **Desktop (≥980px): the trade card is on the LEFT** and the stock header (picker, name, live price, chart) and issuer comparison are on the right; both columns scroll together (nothing is sticky). **On a phone** the order is price, then the trade card, then the issuer comparison.
+- **The trade card** (2.8) has the $ / shares toggle, the flip button, the percent slider and the details.
 - **Under the card:** the **issuer comparison list**. One row per issuer with:
   - shares you get;
   - price per share;
@@ -335,21 +375,21 @@ Each page lists its sections in order, and the BeUI components to use.
   - hops;
   - integrity grade.
 
-  The best row has a silver border glow and a "Best" chip. Rows re-sort with a glide. A "why?" disclosure explains the route in words ("USDT → BTC → USDC → NVDA (bStock) → NVDA (Ondo)").
+  The best row has a silver border glow and a "Best" chip. Rows re-sort with a glide. A "why?" disclosure explains the route in words ("USDT → BTC → USDC → NVDAB → NVDAon").
 - **Trade flow:** `dynamic-island` progress, confirm sheet with re-quote, and a receipt card in shares with the BscScan link.
 
 ### 5.3 Portfolio (`/portfolio`)
-- **Wallet card** (BeUI `wallet-card`, restyled): total value; holdings in **shares** per ticker, grouped across issuers ("1.73 AAPL = 1.20 via Ondo + 0.53 via bStock"); "dividends received as shares" from multiplier growth.
-- **Holdings list:** `.panel` rows; tap opens a bottom sheet with per-issuer detail.
+- **Wallet card** (BeUI `wallet-card`, restyled): total value; holdings in **shares** per stock, grouped across issuers ("1.73 shares = 1.20 NVDAon + 0.53 NVDAB"); "dividends received as shares" from multiplier growth. The full wallet address is shown, without a copy button.
+- **Holdings list:** `.panel` rows. Each token row starts with the **token name** (NVDAB: 16px bold) followed by the issuer (bStock: 12.5px light, `--fg3`), then tokens × multiplier = shares, then the Sell button (disabled with a tooltip under the minimum sale).
 - **Top up / Connect wallet** actions (glassy) when the balance is low.
 
-### 5.4 Trap Shield (`/shield`)
+### 5.4 Radar (`/radar`, formerly "Trap Shield")
 - **Cards per trap type:**
   - unit mismatch (NFLX 10×);
   - ghost market (xStocks volume ≈ $0);
   - API vs on-chain multiplier disagreement;
   - paused / corporate action.
-- **A searchable table** (BeUI `table`) of every token's integrity grade and reasons.
+- **A searchable list** (beUI Morphing Search, suggestions, surface capped at 380px, no page blur) of every token's integrity grade and reasons, ordered Liquid, then Low Liquidity, then Not Tradable.
 
 ### 5.5 Telegram Mini App (later)
 The same tokens and components inside Telegram's webview. It uses Telegram theme parameters only for the safe area and the header colour. Our graphite palette stays.
@@ -362,13 +402,14 @@ Install with the shadcn CLI. The commands are in the BeUI MCP (`get_install_comm
 | Need | BeUI component |
 |---|---|
 | Hero showcase cards | `tilt-card` |
-| Buttons (primary metallic, stateful) | `button` (MetallicButton, StatefulButton), `action-swap`, `expanding-arrow-button` |
-| Nav hover pill | `shared-layout-bg` |
+| Buttons (primary orange, stateful) | `button` (StatefulButton), `action-swap`, `expanding-arrow-button` |
+| Nav / menu / Select highlight pill | `components/motion/glide.tsx` (`<Glide>` + `data-glide`; our own, modelled on beUI's File Tree and `shared-layout-bg`) |
 | Mobile menu / pickers / confirm | `bottom-sheet` |
 | Desktop modals (sign-in, top-up, confirm) | `morphing-modal`, `center-morph-modal` |
-| Ticker search | `morphing-search`, `command-palette` (⌘K), `combobox` |
-| $ / shares toggle, section tabs | `tabs`, `expandable-tabs` (mobile bottom bar) |
-| Live numbers | `number` |
+| Stock / ticker search | `morphing-search`, `command-palette` (⌘K), `combobox`; the stock dropdown is beUI `select` (glass classes) |
+| $ / shares toggle, slippage, section tabs | `components/motion/segmented.tsx` (beUI `tabs` pill variant on `Glide`), `expandable-tabs` (mobile bottom bar) |
+| Percent of balance | `components/ui/percent-slider.tsx` (native range, ours) |
+| Live numbers | `components/motion/animated-number.tsx` (Spectrum UI Number Ticker, Apache-2.0) via `live.tsx` |
 | Headline reveal, shimmer | `text-animation`, `loading-states` |
 | Status badges | `animated-badge` |
 | Trade progress | `dynamic-island` |
@@ -377,7 +418,7 @@ Install with the shadcn CLI. The commands are in the BeUI MCP (`get_install_comm
 | FAQ | `bouncy-accordion` |
 | Ticker strip | `marquee` |
 | Portfolio card | `wallet-card` |
-| Trap Shield table | `table` |
+| Radar list | `table` or the Radar row cards |
 | Loaders | `loader` |
 | Ambient background (optional, desktop) | `shader-background` |
 | Smooth scroll (optional) | `scroll-animation` (Lenis) |
