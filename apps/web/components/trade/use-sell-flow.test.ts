@@ -57,7 +57,10 @@ let wallet = {
 };
 vi.mock("@/components/wallet/wallet-context", () => ({ useTallyWallet: () => wallet }));
 const fetchSellPlan = vi.fn();
-vi.mock("../../lib/trade-plan/sell", () => ({ fetchSellPlan: (p: unknown) => fetchSellPlan(p) }));
+vi.mock("../../lib/trade-plan/sell", async (orig) => ({
+  ...(await orig<typeof import("../../lib/trade-plan/sell")>()),
+  fetchSellPlan: (p: unknown) => fetchSellPlan(p),
+}));
 
 const HASH = `0x${"ab".repeat(32)}`;
 const STOCK = "0x02fca66c1d1afb4e2a7884261eb00f63598a7436" as const;
@@ -133,8 +136,16 @@ async function openAndType(h: ReturnType<typeof mount>, text = "0.01") {
 }
 
 const fetchedUrls: string[] = [];
+/** Every body POSTed to /api/receipts (the fire-and-forget hint). */
+const hints: Record<string, unknown>[] = [];
+let receiptsReply: "ok" | "404" | "throw" = "ok";
 function stubStatus(status: "success" | "reverted" | "pending" = "success") {
-  globalThis.fetch = vi.fn().mockImplementation(async (url: string) => {
+  globalThis.fetch = vi.fn().mockImplementation(async (url: string, init?: { body?: string }) => {
+    if (url === "/api/receipts") {
+      hints.push(JSON.parse(init?.body ?? "{}"));
+      if (receiptsReply === "throw") throw new Error("network down");
+      return { ok: receiptsReply === "ok", status: receiptsReply === "ok" ? 200 : 404 };
+    }
     fetchedUrls.push(url);
     return {
       ok: true,
@@ -153,6 +164,8 @@ beforeEach(() => {
   vi.useFakeTimers();
   storage.clear();
   fetchedUrls.length = 0;
+  hints.length = 0;
+  receiptsReply = "ok";
   fetchSellPlan.mockReset();
   wallet = {
     authenticated: true,
@@ -352,5 +365,119 @@ describe("useSellFlow", () => {
       expect(p.failure.message).toMatch(/tokens stayed put/);
     }
     h.unmount();
+  });
+
+  describe("receipt hint", () => {
+    it("posts exactly one hint for the sale (kind sell, its hash, the intent id, the user) and none for the approval", async () => {
+      const approvePlan = plan({
+        status: "needs_approval",
+        tx: undefined,
+        simulation: undefined,
+        approve: {
+          to: STOCK,
+          spender: ROUTER,
+          data: "0x095ea7b3deadbeef",
+          amount: "10000000000000000",
+        },
+      });
+      fetchSellPlan.mockResolvedValueOnce(plan());
+      fetchSellPlan.mockResolvedValueOnce(approvePlan);
+      const h = mount();
+      await openAndType(h);
+      fetchSellPlan.mockResolvedValueOnce(plan());
+      await act(async () => void (await h.flow().approve()));
+      await flush();
+      expect(hints).toHaveLength(0); // the approval never posts
+      fetchSellPlan.mockResolvedValueOnce(plan());
+      await act(async () => void (await h.flow().confirm()));
+      await flush();
+      expect(hints).toHaveLength(1);
+      const hint = hints[0]!;
+      expect(hint).toMatchObject({
+        kind: "sell",
+        txHash: HASH,
+        user: wallet.address,
+        ticker: "NVDA",
+        isResumed: false,
+      });
+      expect(typeof hint.intentId).toBe("string");
+      h.unmount();
+    });
+
+    it("saves the hash before the hint is posted", async () => {
+      fetchSellPlan.mockResolvedValue(plan());
+      let saved: string | null = null;
+      const h = mount();
+      await openAndType(h);
+      const orig = globalThis.fetch as unknown as (u: string, i?: unknown) => Promise<unknown>;
+      globalThis.fetch = vi.fn().mockImplementation(async (u: string, i?: unknown) => {
+        if (u === "/api/receipts") saved ??= storage.get("tally.pendingSell") ?? null;
+        return orig(u, i);
+      });
+      await act(async () => void (await h.flow().confirm()));
+      await flush();
+      expect(JSON.parse(saved ?? "null").hash).toBe(HASH);
+      h.unmount();
+    });
+
+    it.each(["404", "throw"] as const)(
+      "a %s from /api/receipts does not change the outcome",
+      async (reply) => {
+        receiptsReply = reply;
+        fetchSellPlan.mockResolvedValue(plan());
+        const h = mount();
+        await openAndType(h);
+        await act(async () => void (await h.flow().confirm()));
+        await flush();
+        expect(hints).toHaveLength(1);
+        expect(h.flow().phase.name).toBe("confirmed");
+        h.unmount();
+      },
+    );
+
+    it("a sale resumed from tally.pendingSell posts once with isResumed true", async () => {
+      stubStatus("pending");
+      storage.set(
+        "tally.pendingSell",
+        JSON.stringify({
+          hash: HASH,
+          ticker: "NVDA",
+          symbol: "NVDAB",
+          at: Date.now(),
+          intent: {
+            id: "intent-1",
+            issuer: "bstock",
+            stock: STOCK,
+            user: wallet.address,
+            tokensIn: "10000000000000000",
+            minUsdtOut: "2316600000000000000",
+            tolerancePct: 1,
+          },
+        }),
+      );
+      const h = mount();
+      await flush();
+      expect(hints).toHaveLength(1);
+      expect(hints[0]).toMatchObject({
+        kind: "sell",
+        txHash: HASH,
+        intentId: "intent-1",
+        isResumed: true,
+      });
+      h.unmount();
+    });
+
+    it("a resumed sale saved by an older build (no intent) posts nothing and still resumes", async () => {
+      stubStatus("success");
+      storage.set(
+        "tally.pendingSell",
+        JSON.stringify({ hash: HASH, ticker: "NVDA", symbol: "NVDAB", at: Date.now() }),
+      );
+      const h = mount();
+      await flush();
+      expect(hints).toHaveLength(0);
+      expect(h.flow().phase.name).toBe("confirmed");
+      h.unmount();
+    });
   });
 });

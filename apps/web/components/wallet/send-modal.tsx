@@ -10,9 +10,10 @@ import { Modal } from "@/components/motion/modal";
 import { Segmented } from "@/components/motion/segmented";
 import { checkRecipient } from "@/lib/address";
 import { ERC20_TRANSFER_ABI } from "@/lib/erc20";
-import { ISSUER_LABEL, fmtUsd, shortHash } from "@/lib/format";
+import { ISSUER_LABEL, fmtShares, fmtUsd, shortHash } from "@/lib/format";
 import { useJson } from "@/lib/hooks/use-json";
 import { cn } from "@/lib/utils";
+import { PercentSlider, percentOf } from "@/components/ui/percent-slider";
 import { useTallyWallet } from "./wallet-context";
 
 type Asset = "USDT" | "BNB" | "STOCK";
@@ -90,13 +91,28 @@ export function SendModal({ open, onClose }: { open: boolean; onClose: () => voi
     return null;
   }, [to, check, unit, amountRaw]);
 
+  /** The most that can be sent: everything, except for BNB, where a little stays for the next transaction's gas. */
+  const maxRaw = useMemo(() => {
+    if (!unit) return 0n;
+    if (asset !== "BNB") return unit.raw;
+    const keep = parseUnits(String(BNB_RESERVE), 18);
+    return unit.raw > keep ? unit.raw - keep : 0n;
+  }, [asset, unit]);
   const max = () => {
-    if (!unit) return;
-    if (asset === "BNB") {
-      const keep = parseUnits(String(BNB_RESERVE), 18);
-      setAmount(formatUnits(unit.raw > keep ? unit.raw - keep : 0n, 18));
-    } else setAmount(balanceText);
+    if (unit) setAmount(formatUnits(maxRaw, unit.decimals));
   };
+  const percent = percentOf(amountRaw, maxRaw);
+  const setPercent = (p: number) => {
+    if (!unit) return;
+    setAmount(
+      formatUnits(p >= 100 ? maxRaw : (maxRaw * BigInt(Math.round(p))) / 100n, unit.decimals),
+    );
+  };
+  // The share count behind a tokenized stock balance (tokens × the issuer's multiplier), when the portfolio read has it.
+  const stockShares =
+    asset === "STOCK" && token
+      ? data?.groups.flatMap((g) => g.parts).find((x) => x.address === token.address)?.shares
+      : undefined;
 
   const send = async () => {
     setStep("sending");
@@ -221,7 +237,7 @@ export function SendModal({ open, onClose }: { open: boolean; onClose: () => voi
             {unit
               ? asset === "USDT"
                 ? fmtUsd(Number(balanceText))
-                : `${shownBalance(unit.raw, unit.decimals)} ${unit.symbol}`
+                : `${shownBalance(unit.raw, unit.decimals)} ${unit.symbol}${stockShares === undefined ? "" : ` (${fmtShares(stockShares)} shares)`}`
               : "choose a token"}
             {asset === "USDT" ? " USDT" : ""}
           </p>
@@ -268,6 +284,13 @@ export function SendModal({ open, onClose }: { open: boolean; onClose: () => voi
               </Button>
             </div>
           </label>
+          <PercentSlider
+            value={percent}
+            onChange={setPercent}
+            label={unit?.symbol ?? "balance"}
+            disabled={step !== "form" || !unit || maxRaw === 0n}
+            testId="send-slider"
+          />
           {problem ? (
             <p role="alert" id="send-to-problem" className="text-[14.5px] text-red">
               {problem}
@@ -289,8 +312,8 @@ export function SendModal({ open, onClose }: { open: boolean; onClose: () => voi
                   {amount} {unit?.symbol ?? ""}
                 </b>{" "}
                 to <span className="mono break-all text-[13.5px]">{to.trim()}</span> on BNB Smart
-                Chain. This can&apos;t be undone, so check the address and that it accepts BNB Smart
-                Chain (BEP-20).
+                Chain. This can&apos;t be undone, so check the address and that it accepts{" "}
+                <b>{unit?.symbol ?? "this token"}</b> on BNB Smart Chain (BEP-20).
               </div>
               {error ? (
                 <p role="alert" className="text-[14.5px] text-red">

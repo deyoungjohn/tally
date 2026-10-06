@@ -46,7 +46,7 @@ export function LearnMore({
           onClick={() => setOpen(false)}
           className="btn btn-glassy mt-5 w-full no-underline"
         >
-          How it works <ArrowRight size={15} aria-hidden />
+          Tell me more <ArrowRight size={15} aria-hidden />
         </Link>
       </Modal>
     </>

@@ -5,6 +5,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatedNumber } from "@/components/motion/animated-number";
 import { Button } from "@/components/motion/button";
 import { useTallyWallet } from "@/components/wallet/wallet-context";
+import { useJson } from "@/lib/hooks/use-json";
+import { useModuleFlags } from "@/lib/hooks/use-flags";
+import type { PortfolioReport } from "@tally/engine";
+import { SellSheet } from "./sell-sheet";
+import { useSellFlow } from "./use-sell-flow";
 import { useLiveQuote, type QuoteAmount } from "@/lib/hooks/use-live-quote";
 import { fmtUsd, SESSION_LABEL } from "@/lib/format";
 import { isBuyable, nameOf } from "@/lib/tickers";
@@ -53,6 +58,23 @@ function TradeInner({
   const [picked, setPicked] = useState<string | undefined>();
   const flow = useTradeFlow();
   const { phase } = flow;
+  // Buying and selling share this card; the flip button between its two boxes swaps them. Selling is behind the server's sell flag.
+  const flags = useModuleFlags();
+  const sellOn = flags.sell === true;
+  const [mode, setMode] = useState<"buy" | "sell">("buy");
+  const [sellText, setSellText] = useState("");
+  const sellFlow = useSellFlow();
+  const portfolio = useJson<PortfolioReport>(
+    wallet.authenticated && wallet.address ? `/api/portfolio?address=${wallet.address}` : null,
+    { refreshMs: 10_000 },
+  );
+  // The largest Ondo or bStock position in this stock: that is the token a sale would use.
+  const holding = useMemo(() => {
+    const parts = portfolio.data?.groups.find((g) => g.ticker === ticker)?.parts ?? [];
+    return parts
+      .filter((x) => x.issuer === "ondo" || x.issuer === "bstock")
+      .sort((a, b) => b.shares - a.shares)[0];
+  }, [portfolio.data, ticker]);
 
   const amount = Number(amountText);
   const quoteAmount = useMemo<QuoteAmount | null>(() => {
@@ -114,6 +136,20 @@ function TradeInner({
     flow.start(p);
   };
 
+  const onSell = () => {
+    if (!wallet.authenticated) return wallet.login();
+    if (!holding) return;
+    void sellFlow.open(
+      {
+        ticker,
+        issuer: holding.issuer as "ondo" | "bstock",
+        symbol: holding.symbol,
+        probeShares: holding.shares,
+      },
+      sellText || undefined,
+    );
+  };
+
   const best = q?.rows.find((r) => r.isBest);
 
   const changeTicker = (t: string) => {
@@ -121,6 +157,7 @@ function TradeInner({
     history.current = [];
     setPoints([]);
     setPicked(undefined);
+    setSellText("");
     setTicker(t);
     flow.cancel();
     try {
@@ -133,6 +170,7 @@ function TradeInner({
   return (
     <main id="main" className="wrap pb-24 pt-8 min-[561px]:pt-12">
       <TradeFlowLayer flow={flow} />
+      {sellOn ? <SellSheet flow={sellFlow} /> : null}
       <div className="flex flex-col gap-4 min-[981px]:grid min-[981px]:grid-cols-[minmax(0,480px)_minmax(0,1fr)] min-[981px]:items-start min-[981px]:gap-8">
         {/* Right on desktop: the stock, its price, then the issuers compared (the trade card is on the left). On a phone the trade card comes second. */}
         <div className="contents min-[981px]:col-start-2 min-[981px]:row-start-1 min-[981px]:grid min-[981px]:min-w-0 min-[981px]:grid-cols-1 min-[981px]:gap-4">
@@ -199,7 +237,7 @@ function TradeInner({
           </p>
         </div>
 
-        <div className="contents min-[981px]:col-start-1 min-[981px]:row-start-1 min-[981px]:sticky min-[981px]:top-24 min-[981px]:grid min-[981px]:min-w-0 min-[981px]:grid-cols-1 min-[981px]:gap-4">
+        <div className="contents min-[981px]:col-start-1 min-[981px]:row-start-1 min-[981px]:grid min-[981px]:min-w-0 min-[981px]:grid-cols-1 min-[981px]:gap-4">
           <div className="order-3 grid min-w-0 grid-cols-1 gap-4">
             {phase.name === "error" ? (
               <div
@@ -252,6 +290,20 @@ function TradeInner({
               }
               quoteLoading={quote.loading}
               onBuy={onBuy}
+              mode={mode}
+              onFlip={() => setMode((m) => (m === "buy" ? "sell" : "buy"))}
+              flipEnabled={sellOn}
+              usdtBalance={portfolio.data?.wallet.usdt ?? null}
+              sell={{
+                text: sellText,
+                onText: setSellText,
+                heldShares: holding?.shares ?? 0,
+                usdOut:
+                  row?.usdPerShare !== undefined && Number(sellText) > 0
+                    ? Number(sellText) * row.usdPerShare
+                    : null,
+                onSell: onSell,
+              }}
             />
             {quote.error && !q ? (
               <p role="alert" className="text-[15px] text-amber" data-testid="quote-error">
@@ -259,7 +311,7 @@ function TradeInner({
               </p>
             ) : null}
             <ComingSoon
-              items={["Sell to USDT or BNB", "Limit price", "Recurring buys"]}
+              items={["Sell to USDT", "Limit price", "Recurring buys"]}
               title="Advanced · coming soon"
             />
           </div>

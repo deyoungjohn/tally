@@ -1,13 +1,16 @@
 "use client";
 // The sell flow (a separate hook; the buy hook is untouched). It plans through /api/trade/sell, approves the exact amount when
 // asked, re-plans before signing, signs exactly the plan's transaction and watches it through /api/trade/tx-status.
-// Sells emit no buy-shaped stage events and never touch the receipts route (sell receipts are not reconciled yet).
+// Sells emit no buy-shaped stage events. Once the sale's hash exists (never the approval's) one fire-and-forget receipt hint is posted
+// through postSellReceiptHint (emitSellStage is not used, so there is exactly one POST per sale); it can never block or fail the sell.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Hex } from "viem";
 import type { SellPlan } from "@tally/engine";
 import { useTallyWallet } from "@/components/wallet/wallet-context";
-import { fetchSellPlan } from "../../lib/trade-plan/sell";
+import type { Address } from "@tally/core";
+import { createSellIntent, fetchSellPlan, postSellReceiptHint } from "../../lib/trade-plan/sell";
+import type { SellIntent } from "../../lib/trade-plan/sell";
 import { explainSellError, planGotWorse, type SellFailure } from "../../lib/sell/view";
 
 export interface SellTarget {
@@ -37,6 +40,8 @@ export type SellPhase =
       hash: string;
       blockNumber: number | null;
       gasUsed: number | null;
+      /** What the gas cost in dollars, worked out from the plan's own fee estimate; null when that was not known. */
+      feeUsd: number | null;
       bscscan: string;
     }
   | { name: "failed"; failure: SellFailure; hash?: string; bscscan?: string };
@@ -56,14 +61,49 @@ const POLL_MS = 3_000;
 const TIMEOUT_MS = 180_000;
 const SLOW_MS = 45_000;
 const DEBOUNCE_MS = 450;
+/** Quotes last 15 s; the sheet asks for a new one a second before, and never more often than this when a request fails. */
+const AUTO_MIN_MS = 5_000;
 const SHARES_RE = /^\d*\.?\d{0,8}$/;
 
+/** What a resumed sale needs to post its receipt hint (bigints as decimal strings). */
+interface PendingIntent {
+  id: string;
+  issuer: "ondo" | "bstock";
+  stock: Address;
+  user: Address;
+  tokensIn: string;
+  minUsdtOut: string;
+  tolerancePct: number;
+}
 interface Pending {
   hash: string;
   ticker: string;
   symbol: string;
   at: number;
+  intent?: PendingIntent;
+  /** The plan's fee estimate and the gas limit it was for, to turn the gas actually used into dollars. */
+  fee?: { usd: number; limit: string };
 }
+const intentOf = (p: Pending): SellIntent | null => {
+  const i = p.intent;
+  if (!i) return null;
+  try {
+    return {
+      ...createSellIntent(
+        p.ticker,
+        i.issuer,
+        i.stock,
+        i.user,
+        BigInt(i.tokensIn),
+        BigInt(i.minUsdtOut),
+        i.tolerancePct,
+      ),
+      id: i.id,
+    };
+  } catch {
+    return null;
+  }
+};
 const readPending = (): Pending | null => {
   try {
     const p = JSON.parse(localStorage.getItem(PENDING_KEY) ?? "null") as Pending | null;
@@ -80,6 +120,28 @@ const writePending = (p: Pending | null) => {
     /* storage blocked: the flow still works, it just can't resume after a reload */
   }
 };
+/** Gas actually used, in dollars: the plan's estimate was for the gas limit, so scale it. Null when either number is missing. */
+export function feeInDollars(fee: Pending["fee"], gasUsed: number | undefined): number | null {
+  if (!fee || gasUsed === undefined) return null;
+  const limit = Number(fee.limit);
+  if (!(limit > 0) || !Number.isFinite(fee.usd)) return null;
+  return (fee.usd * gasUsed) / limit;
+}
+/** The wallet's exact raw balance of one token, from the holdings route (never from a displayed number). Null when it can't be read. */
+async function readRawBalance(t: SellTarget, address: string): Promise<string | null> {
+  try {
+    const res = await fetch(`/api/holdings?address=${address}`, { cache: "no-store" });
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      tokens?: { ticker: string; issuer: string; balanceRaw: string }[];
+    };
+    return (
+      data.tokens?.find((x) => x.ticker === t.ticker && x.issuer === t.issuer)?.balanceRaw ?? null
+    );
+  } catch {
+    return null;
+  }
+}
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export interface TxStatus {
@@ -183,7 +245,7 @@ export function useSellFlow() {
   );
 
   const watch = useCallback(
-    async (hash: string, id: number) => {
+    async (hash: string, id: number, fee?: Pending["fee"]) => {
       setPhase({ name: "mining", hash, slow: false });
       try {
         const s = await waitForTx(hash, id, () =>
@@ -197,6 +259,7 @@ export function useSellFlow() {
             hash,
             blockNumber: s.blockNumber ?? null,
             gasUsed: s.gasUsed ?? null,
+            feeUsd: feeInDollars(fee, s.gasUsed),
             bscscan: s.bscscan,
           });
         else
@@ -222,8 +285,13 @@ export function useSellFlow() {
     [waitForTx],
   );
 
+  const setInputs = useCallback((patch: Partial<SellInputs>) => {
+    setInputsState((cur) => ({ ...cur, ...patch }));
+    setVersion((v) => v + 1);
+  }, []);
+
   /** Opens the sheet: one plan to learn whether the token can be sold at all, and its raw balance. */
-  const open = useCallback(async (t: SellTarget) => {
+  const open = useCallback(async (t: SellTarget, initialText?: string) => {
     const id = ++runId.current;
     targetRef.current = t;
     setTarget(t);
@@ -253,6 +321,7 @@ export function useSellFlow() {
       if (id !== runId.current) return;
       rawBalance.current = p.balances.tokens;
       setPhase({ name: "form", plan: null, refreshing: false });
+      if (initialText) setInputs({ text: initialText, all: false });
     } catch (e) {
       if (id !== runId.current) return;
       const failure = explainSellError(e);
@@ -264,13 +333,15 @@ export function useSellFlow() {
         failure.kind === "busy"
       )
         setPhase({ name: "refused", failure });
-      else setPhase({ name: "form", plan: null, refreshing: false });
+      else {
+        // The check failed for a reason about the amount (for instance a small holding below the minimum). "Sell all" still needs the
+        // exact balance, so it is read from the holdings route; the plan then says in words why the sale can't go ahead.
+        rawBalance.current = await readRawBalance(t, w.address);
+        if (id !== runId.current) return;
+        setPhase({ name: "form", plan: null, refreshing: false });
+        if (initialText) setInputs({ text: initialText, all: false });
+      }
     }
-  }, []);
-
-  const setInputs = useCallback((patch: Partial<SellInputs>) => {
-    setInputsState((cur) => ({ ...cur, ...patch }));
-    setVersion((v) => v + 1);
   }, []);
 
   const sellAll = useCallback(() => setInputs({ all: true, text: "" }), [setInputs]);
@@ -316,6 +387,31 @@ export function useSellFlow() {
       failAs(e, id);
     }
   }, [plan, failAs]);
+
+  // Quotes refresh themselves for as long as the sheet is open: a person's job is to confirm, not to ask for a new quote.
+  const [retry, setRetry] = useState(0);
+  const formPlan = phase.name === "form" ? phase.plan : null;
+  const formRefreshing = phase.name === "form" ? phase.refreshing : false;
+  useEffect(() => {
+    if (!formPlan || formRefreshing) return;
+    const wait = Math.max(AUTO_MIN_MS, formPlan.expiresAt - Date.now() - 1_000);
+    const timer = setTimeout(() => {
+      const t = targetRef.current;
+      if (!t) return;
+      const id = runId.current;
+      plan(t, inputsRef.current)
+        .then((next) => {
+          if (id !== runId.current || !next) return;
+          setPhase((cur) =>
+            cur.name === "form" && !cur.refreshing
+              ? { ...cur, plan: next, failure: undefined }
+              : cur,
+          );
+        })
+        .catch(() => setRetry((n) => n + 1)); // keep showing the last quote and try again
+    }, wait);
+    return () => clearTimeout(timer);
+  }, [formPlan, formRefreshing, retry, plan, setPhase]);
 
   /** Sends the plan's approval for the exact amount, waits for it to mine, then asks for a new plan. */
   const approve = useCallback(async () => {
@@ -429,8 +525,38 @@ export function useSellFlow() {
         data: fresh.tx.data as Hex,
         gas: BigInt(fresh.tx.gasLimit),
       });
-      writePending({ hash, ticker: t.ticker, symbol: t.symbol, at: Date.now() }); // before polling: never lose the hash
-      await watch(hash, id);
+      const intent = createSellIntent(
+        t.ticker,
+        t.issuer,
+        fresh.stock,
+        w.address,
+        BigInt(fresh.tokensIn),
+        BigInt(fresh.minUsdtOut),
+        fresh.tolerancePct,
+      );
+      writePending({
+        hash,
+        ticker: t.ticker,
+        symbol: t.symbol,
+        at: Date.now(),
+        intent: {
+          id: intent.id,
+          issuer: intent.issuer,
+          stock: intent.stock,
+          user: intent.user,
+          tokensIn: fresh.tokensIn,
+          minUsdtOut: fresh.minUsdtOut,
+          tolerancePct: intent.tolerancePct,
+        },
+        fee:
+          fresh.tx.feeUsd === null ? undefined : { usd: fresh.tx.feeUsd, limit: fresh.tx.gasLimit },
+      }); // before polling and before the hint: never lose the hash
+      postSellReceiptHint({ intent, txHash: hash as `0x${string}`, plan: fresh, attempt: 1 });
+      await watch(
+        hash,
+        id,
+        fresh.tx.feeUsd === null ? undefined : { usd: fresh.tx.feeUsd, limit: fresh.tx.gasLimit },
+      );
     } catch (e) {
       if (id !== runId.current || (e as { kind?: string }).kind === "cancelled") return;
       const shown = fresh ?? seen;
@@ -461,8 +587,21 @@ export function useSellFlow() {
     const pending = readPending();
     if (!pending) return;
     const id = ++runId.current;
-    setTarget({ ticker: pending.ticker, issuer: "bstock", symbol: pending.symbol, probeShares: 0 });
-    void watch(pending.hash, id);
+    setTarget({
+      ticker: pending.ticker,
+      issuer: pending.intent?.issuer ?? "bstock",
+      symbol: pending.symbol,
+      probeShares: 0,
+    });
+    const resumed = intentOf(pending);
+    if (resumed)
+      postSellReceiptHint({
+        intent: resumed,
+        txHash: pending.hash as `0x${string}`,
+        attempt: 1,
+        isResumed: true,
+      });
+    void watch(pending.hash, id, pending.fee);
   }, [watch]);
 
   return { phase, target, inputs, setInputs, sellAll, open, refresh, approve, confirm, close };
