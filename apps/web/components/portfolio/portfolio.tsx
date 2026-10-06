@@ -9,7 +9,8 @@ import { ComingSoon } from "@/components/trade/coming-soon";
 import { GradeBadge, TokenLogo } from "@/components/trade/badges";
 import { SellSheet } from "@/components/trade/sell-sheet";
 import { useSellFlow } from "@/components/trade/use-sell-flow";
-import { useModuleFlags } from "@/lib/hooks/use-flags";
+import { useModuleFlagsState } from "@/lib/hooks/use-flags";
+import { PortfolioVmPanel } from "./portfolio-vm";
 import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { useJson } from "@/lib/hooks/use-json";
 import { MIN_SELL_USDT } from "@tally/config";
@@ -174,21 +175,28 @@ export function PortfolioPage() {
     if (a && ADDR.test(a)) setViewing(a);
   }, []);
   const address = viewing ?? (wallet.authenticated ? wallet.address : undefined) ?? null;
+  // With the statement module on, holdings come from its view model (shares, no floats). With it off, the older engine
+  // route keeps the page working. The flag answer is awaited so the wrong version never flashes.
+  const { flags, ready: flagsReady } = useModuleFlagsState();
+  const useVm = flags.statement === true;
   const { data, error, loading, reload } = useJson<PortfolioReport>(
-    address ? `/api/portfolio?address=${address}` : null,
+    address && flagsReady && !useVm ? `/api/portfolio?address=${address}` : null,
     { refreshMs: 10_000 },
   );
 
   // Selling: behind FEATURE_SELL (read through /api/modules/health), and only on the signed-in wallet's own holdings.
-  const flags = useModuleFlags();
   const sell = useSellFlow();
   const own =
     wallet.authenticated &&
     !!wallet.address &&
     address?.toLowerCase() === wallet.address.toLowerCase();
   const canSell = flags.sell === true && own;
+  const [confirmedSales, setConfirmedSales] = useState(0);
   useEffect(() => {
-    if (sell.phase.name === "confirmed") reload();
+    if (sell.phase.name === "confirmed") {
+      reload();
+      setConfirmedSales((n) => n + 1);
+    }
   }, [sell.phase.name, reload]);
 
   return (
@@ -246,6 +254,16 @@ export function PortfolioPage() {
             </ul>
           </section>
         </div>
+      ) : !flagsReady ? (
+        <div className="mt-8" aria-busy="true">
+          <div className="skeleton h-[160px]" />
+        </div>
+      ) : useVm ? (
+        <PortfolioVmPanel
+          address={address}
+          refreshKey={confirmedSales}
+          onSell={canSell ? (t) => void sell.open(t) : undefined}
+        />
       ) : (
         <div className="mt-8 grid grid-cols-1 gap-6 min-[981px]:grid-cols-[1.4fr_1fr]">
           <section aria-label="Holdings">
