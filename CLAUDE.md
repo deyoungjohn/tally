@@ -12,6 +12,7 @@
 - **Git:** one branch and one PR per milestone. Keep `main` deployable.
 - **The Developer Experience Report is written by the user**, not by an AI (the hackathon rejects AI-generated reports). You may point to evidence in `IDEAS.md`.
 - Never add Co-Authored-By or Claude-Session lines to commits or PRs.
+- **Branches: never create a new branch for a small fix.** Create a branch only on the user's explicit instruction or the orchestrator's. Otherwise commit to the branch you are already on (or the one the user or orchestrator named) and push there. Open a PR for that branch only when asked or when the standing rule for that branch says to.
 
 ## Repo state and conventions (updated during M2, 2026-10-02)
 
