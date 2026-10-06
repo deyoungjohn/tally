@@ -47,7 +47,7 @@ Written 2026-10-04 by Claude (chief orchestrator) for **GPT-6 Astra**, who takes
 | 05 | Agent layer: MCP, Wallet Skill, upstream PR | B Codex #1 | **Merged** (PR #12, `2d62b25`); live $6 buy `0x48349a8d…164992` | user opens the upstream PR from `docs/upstream/`. |
 | 06 | Guardian alerts + read-only bot commands | D Antigravity | **Slice B merged.** `engine.pauseState` follow-up: **APPROVE** @ 6c85a76 | user squash-merges. |
 | 07 | Sell (Switch cut) | C Codex #2 | Sell merged (PR #17); sell UI merged (PR #18). Receipts-for-sells merged (PR #19). | Next: Sonnet's `postSellReceiptHint` follow-up; then `FEATURE_RECEIPTS=1` once the recorder is mounted. Next for 07: ShareGuard asset expansion tooling (after the UI). |
-| 08 | Guardian autopilot | C | Wave 2 | V-AW read from docs 2026-10-06, live test pending (caps exist but are account-wide only; see `docs/evidence/V-AW-baw-policy.md`). Recommended: slice A only (decide, decision log, view model; flag-off); executor stays one-tap approve. Not started; behind the UI. No longer owns `skills/share-true-trading/**` (moved to WO-05). **Escalate to Claude.** |
+| 08 | Guardian autopilot | C | Wave 2 | V-AW passed live 2026-10-06 (caps exist but are account-wide only; see `docs/evidence/V-AW-baw-policy.md`). Recommended: slice A only (decide, decision log, view model; flag-off); executor stays one-tap approve. Not started; behind the UI. No longer owns `skills/share-true-trading/**` (moved to WO-05). **Escalate to Claude.** |
 | 09 | Pies | B Codex #1 | Slice A (`mod/WO-09-pies` @ a599703): **APPROVE**, FULL pack green; merge when ready. Slice B (execution) waits for the UI and live sell receipts. | |
 | 10 | Rewards → Stocks | D | Wave 2, if V-C gates pass | |
 | 11 | Evidence, fixtures, docs | F Cline | **APPROVE** @ 7ccd3cc (INDEX and api-observations verified: 36 paths, 149/149 snippet lines) | user squash-merges; nit: reword "byte-for-byte"; later: demo script and README (Thu 8). |
@@ -131,7 +131,7 @@ The chief engineer reassigned the escalations to the day-to-day orchestrator. Th
 
 | Gate | What | Who | Your job |
 |---|---|---|---|
-| V-AW | `baw --help` / policy docs: spend caps or session policy on BSC? | User runs, you read | **Provisional 2026-10-06; one live unattended $6 sell pending (a cap-refusal test is impossible: Binance's lowest caps are $1,000/day, x402 $20).** Docs say caps are account-wide only, set in the Binance App; no per-trade or sell-only policy. WO-08 = logic slice A; executor is one-tap approve; unattended execution is roadmap. |
+| V-AW | `baw --help` / policy docs: spend caps or session policy on BSC? | User runs, you read | **PASS 2026-10-06 (live unattended $6 sell executed with no tap; `docs/evidence/V-AW-live-sell.md`). Cap refusal untestable (lowest caps $1,000/day).** Docs say caps are account-wide only, set in the Binance App; no per-trade or sell-only policy. WO-08 = logic slice A; executor is one-tap approve; unattended execution is roadmap. |
 | V-B1/B2 | Direct stock→stock and stock→USDT quotes, pre-market and regular hours (Mon) | User, `research/module_viability.py` | Pass: `SWAP`, cost < 0.5% at $7. Fail → WO-07 ships sell-only or flag-off. |
 | V-B3 | Fork tests J, K | WO-07 agent | |
 | V-B4 | One live $6 sell and switch reconcile | User, Fri | |
