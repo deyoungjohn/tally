@@ -36,3 +36,4 @@ Ships first, on `mod/WO-09-pies` from fresh `main`. No execution, no worker job,
 
 Approved 2026-10-05, **additive only**: edit `apps/web/app/dev/guardian/page.tsx` to remove its unused optional `_props` argument (`export default async function GuardianDevPreview()`), because Next's generated route types reject it once another dev page is added. No other change to that file; it already ignores query parameters and must keep doing so.
 
+Approved 2026-10-06, **additive only**: the one-line test change in `apps/web/modules/guardian/view-model.test.ts` that calls the zero-argument Guardian page through `Reflect.apply` with the same query-ignore assertion (needed because of the `_props` removal above). No other edit to that file.
