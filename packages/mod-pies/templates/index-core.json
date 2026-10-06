@@ -1,0 +1,10 @@
+{
+  "id": "index-core",
+  "name": "Index core",
+  "description": "Example allocation, not advice",
+  "executable": true,
+  "holdings": [
+    { "ticker": "QQQ", "targetWeightBps": 6000 },
+    { "ticker": "SPY", "targetWeightBps": 4000 }
+  ]
+}

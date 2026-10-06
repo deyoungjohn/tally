@@ -163,9 +163,9 @@ describe("Guardian View Models (apps/web/modules/guardian)", () => {
       process.env.TALLY_TEST_WALLET = "0xtestwallet";
 
       const GuardianDevPreview = (await import("../../app/dev/guardian/page")).default;
-      const jsx = await GuardianDevPreview({
-        searchParams: Promise.resolve({ address: "0xvictim" }),
-      });
+      const jsx = await Reflect.apply(GuardianDevPreview, undefined, [
+        { searchParams: Promise.resolve({ address: "0xvictim" }) },
+      ]);
 
       // Wallet address rendered on page must NOT be the victim address
       expect(JSON.stringify(jsx)).not.toContain("0xvictim");

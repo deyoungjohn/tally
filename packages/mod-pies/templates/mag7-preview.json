@@ -1,0 +1,15 @@
+{
+  "id": "mag7-preview",
+  "name": "Mag 7 preview",
+  "description": "Example allocation, not advice",
+  "executable": false,
+  "holdings": [
+    { "ticker": "AAPL", "targetWeightBps": 1429 },
+    { "ticker": "MSFT", "targetWeightBps": 1429 },
+    { "ticker": "AMZN", "targetWeightBps": 1429 },
+    { "ticker": "GOOGL", "targetWeightBps": 1429 },
+    { "ticker": "META", "targetWeightBps": 1428 },
+    { "ticker": "NVDA", "targetWeightBps": 1428 },
+    { "ticker": "TSLA", "targetWeightBps": 1428 }
+  ]
+}
