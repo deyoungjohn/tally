@@ -11,6 +11,7 @@
 - `packages/mod-autopilot/**`
 - `apps/worker/src/jobs/autopilot.ts`
 - `apps/web/modules/autopilot/**`, `apps/web/app/dev/autopilot/**`
+- `packages/modkit/src/index.ts` (the `prune` function only) and `packages/modkit/src/index.test.ts` (the one evidence-protection test only). Approved 2026-10-06, tightening only: see the approval at the end of this file.
 
 ## Tasks
 
