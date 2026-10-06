@@ -43,7 +43,8 @@ export function spentToday(rows: readonly DecisionRow[], wallet: string, now: nu
 /** Pure decision rail. 'execute' is permission to propose a USDT sale, never an execution. */
 export function decide(alert: Alert, policy: Policy, state: State, now: number): Decision {
   const reasons: string[] = [];
-  if (policy.killSwitch) reasons.push("kill switch on");
+  if (policy.killSwitch !== false)
+    reasons.push(policy.killSwitch === true ? "kill switch on" : "kill switch unknown");
   if (state.rows.some((row) => row.alertId === alert.id)) reasons.push("alert already decided");
   if (
     !Number.isFinite(now) ||
@@ -61,12 +62,12 @@ export function decide(alert: Alert, policy: Policy, state: State, now: number):
     reasons.push("token not allowed");
 
   const p = state.position;
-  if (!p || p.multiplier === null || p.multiplier <= 0n) reasons.push("unknown multiplier");
-  if (!p || p.shares === null || p.shares < 0n) reasons.push("unknown shares");
+  if (typeof p?.multiplier !== "bigint" || p.multiplier <= 0n) reasons.push("unknown multiplier");
+  if (typeof p?.shares !== "bigint" || p.shares < 0n) reasons.push("unknown shares");
   if (
     !p ||
     p.balanceSource !== "chain" ||
-    p.chainBalanceTokens === null ||
+    typeof p.chainBalanceTokens !== "bigint" ||
     p.chainBalanceTokens < 0n
   )
     reasons.push("chain balance unavailable");
@@ -87,12 +88,18 @@ export function decide(alert: Alert, policy: Policy, state: State, now: number):
     if (!Number.isInteger(p.tokenDecimals) || p.tokenDecimals < 0 || p.tokenDecimals > 36)
       reasons.push("unknown token decimals");
   }
-  if (!p || p.usdPerShare === null || p.usdPerShare <= 0n) reasons.push("unknown share price");
+  if (typeof p?.usdPerShare !== "bigint" || p.usdPerShare <= 0n)
+    reasons.push("unknown share price");
 
   if (alert.rule === "paused" && policy.armedRules.paused) {
     const hours = policy.armedRules.paused.longerThanHours;
     if (!Number.isFinite(hours) || hours < 0) reasons.push("invalid pause threshold");
-    else if (!p || p.paused === null || p.pausedSince === null || !Number.isFinite(p.pausedSince))
+    else if (
+      !p ||
+      typeof p.paused !== "boolean" ||
+      typeof p.pausedSince !== "number" ||
+      !Number.isFinite(p.pausedSince)
+    )
       reasons.push("pause duration unknown");
     else if (!p.paused || now - p.pausedSince <= hours * 3_600_000)
       reasons.push("rule condition not met");

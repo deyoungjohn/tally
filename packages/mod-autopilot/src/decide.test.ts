@@ -231,3 +231,13 @@ it("a live receipt with missing spend evidence fails closed rather than resettin
     spentToday([constructedRow({ mode: "live", receiptId: "constructed-receipt" })], wallet, now),
   ).toThrow("Invalid executed decision evidence");
 });
+
+it("omitted facts refuse explicitly; an omitted kill switch never arms a sale", () => {
+  expect(decision({}, {}, { shares: undefined }).reasons).toEqual(["unknown shares"]);
+  expect(decision({}, {}, { multiplier: undefined }).reasons).toEqual(["unknown multiplier"]);
+  expect(decision({}, {}, { chainBalanceTokens: undefined }).reasons).toEqual([
+    "chain balance unavailable",
+  ]);
+  expect(decision({}, {}, { usdPerShare: undefined }).reasons).toEqual(["unknown share price"]);
+  expect(decision({}, { killSwitch: undefined }).reasons).toEqual(["kill switch unknown"]);
+});
