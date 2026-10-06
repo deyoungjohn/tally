@@ -18,7 +18,7 @@ import type { QuoteDto } from "@/lib/dto";
 import { ISSUER_LABEL, fmtShares, fmtUsd } from "@/lib/format";
 import { useJson } from "@/lib/hooks/use-json";
 import { useLiveQuote } from "@/lib/hooks/use-live-quote";
-import { BUYABLE_TICKERS, isBuyable } from "@/lib/tickers";
+import { BUYABLE_TICKERS, isBuyable, tokenPair, tokenSymbol } from "@/lib/tickers";
 import type { PortfolioReport } from "@tally/engine";
 import { LiveUsd } from "@/components/motion/live";
 
@@ -37,7 +37,9 @@ export function HomeTradeCard() {
   const tooSmall = text !== "" && usd < 6;
   const href = `/trade/${ticker}?usd=${usd >= 6 ? usd : 6}`;
   const busy = phase.name !== "idle" && phase.name !== "error" && phase.name !== "done";
-  const idleLabel = `Buy ${ticker}`; // follows the stock dropdown; a sell mode will say "Sell {ticker}" the same way
+  // Follows the best issuer for the chosen stock (NVDAon, NVDAB…), never a bare ticker.
+  const symbol = row?.symbol ?? tokenSymbol(ticker, "ondo");
+  const idleLabel = `Buy ${symbol}`;
   const canBuy =
     !!row?.executable &&
     usd >= 6 &&
@@ -93,17 +95,11 @@ export function HomeTradeCard() {
                 startOnView={false}
                 duration={0.5}
               />{" "}
-              <span className="text-[21px] text-fg2">{ticker} shares</span>
+              <span className="text-[21px] text-fg2">{symbol} shares</span>
             </>
           )}
         </p>
       </div>
-      {row ? (
-        <p className="mt-3 text-center text-[14.5px] text-fg2" data-testid="home-route">
-          {ISSUER_LABEL[row.issuer]} · <LiveUsd value={row.usdPerShare} /> per share
-          {row.feeUsd === undefined ? "" : ` · fee ≈ ${fmtUsd(row.feeUsd, 3)}`}
-        </p>
-      ) : null}
       <div className="mt-3">
         {wallet.authenticated ? (
           // Signed in: the button is the transaction. It says what is happening (price, approve, confirm, buying, done).
@@ -128,6 +124,25 @@ export function HomeTradeCard() {
           </ButtonLink>
         )}
       </div>
+      {row ? (
+        // One line under the button: issuer, price per share and fee. Flex with centred items keeps the rolling number level with the text.
+        <p
+          className="mt-3 flex items-center justify-center gap-x-1.5 whitespace-nowrap text-[13px] text-fg2 min-[400px]:text-[14.5px]"
+          data-testid="home-route"
+        >
+          <span>{ISSUER_LABEL[row.issuer]}</span>
+          <span aria-hidden>·</span>
+          <span className="inline-flex items-center gap-1">
+            <LiveUsd value={row.usdPerShare} /> per share
+          </span>
+          {row.feeUsd === undefined ? null : (
+            <>
+              <span aria-hidden>·</span>
+              <span>fee ≈ {fmtUsd(row.feeUsd, 3)}</span>
+            </>
+          )}
+        </p>
+      ) : null}
       {phase.name === "error" ? (
         <p role="alert" className="mt-3 text-[14.5px] text-red" data-testid="home-error">
           {phase.message}
@@ -164,11 +179,11 @@ export function UnitTrapCard() {
       />
       <dl className="mt-4">
         <div className="detail-row">
-          <dt>Ondo NFLX (10 shares per token)</dt>
+          <dt>Ondo NFLXon (10 shares per token)</dt>
           <dd className="num">{perShare ? "$68.08" : "$680.80"}</dd>
         </div>
         <div className="detail-row">
-          <dt>bStock NFLX (1 share per token)</dt>
+          <dt>bStock NFLXB (1 share per token)</dt>
           <dd className="num">$68.15</dd>
         </div>
       </dl>
@@ -210,7 +225,7 @@ export function TickerStrip() {
             href={`/trade/${t.ticker}`}
             className="panel flex min-h-[44px] items-center gap-3 px-4 text-fg no-underline"
           >
-            <span className="font-semibold">{t.ticker}</span>
+            <span className="font-semibold">{tokenPair(t.ticker)}</span>
             <span className="num text-fg2">
               {prices[t.ticker] ? <LiveUsd value={prices[t.ticker]} /> : "…"}
             </span>

@@ -5,6 +5,8 @@ export const USDT_DECIMALS = 18;
 /** Binance's "native BNB" pseudo-address, used to price BNB for the fee display. */
 export const BNB_NATIVE = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" as const;
 export const MIN_ORDER_USDT = 6;
+/** Smallest sale (in USDT received) Tally will plan. Lower than the buy minimum by the owner's decision (2026-10-06); to be proven on a live sale. */
+export const MIN_SELL_USDT = 5;
 /** LiquidMesh router, also the approve target (blueprint V7). ShareGuard allow-lists it in M2. */
 export const LIQUIDMESH_ROUTER = "0xB44446b0c8E56988c34f7Ff73Ae904982b5FdDA5" as const;
 /** Placeholder `userWalletAddress` for browse quotes: the spike's fixed ShareGuard fork address (F3: quotes ignore wallet history). */

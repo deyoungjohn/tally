@@ -11,7 +11,7 @@ export const CONCEPTS: Record<string, Concept> = {
     id: "shares",
     title: "Why Tally counts in shares",
     paragraphs: [
-      "A tokenized stock is not always one share per token. Ondo's NFLX token is ten shares, and issuers change the number of shares per token over time (for dividends and stock splits).",
+      "A tokenized stock is not always one share per token. Ondo's NFLXon token is ten shares (bStock's NFLXB is one), and issuers change the number of shares per token over time (for dividends and stock splits).",
       "Comparing token prices would therefore mislead you. Tally multiplies every token by its current share multiplier, so every quote, balance and guarantee is in the same unit: shares of the stock.",
     ],
   },

@@ -15,3 +15,11 @@ export const isBuyable = (t: string) => BUYABLE_TICKERS.some((b) => b.ticker ===
 export const nameOf = (t: string) =>
   BUYABLE_TICKERS.find((b) => b.ticker === t.toUpperCase())?.name ?? t;
 export const TICKER_RE = /^[A-Z0-9.]{1,10}$/;
+
+/** The token symbol each issuer uses for a stock: Ondo "NVDAon", bStock "NVDAB", xStocks "NVDAx". The site never shows a bare ticker. */
+export const ISSUER_SUFFIX = { ondo: "on", bstock: "B", xstocks: "x" } as const;
+export const tokenSymbol = (ticker: string, issuer: keyof typeof ISSUER_SUFFIX) =>
+  `${ticker.toUpperCase()}${ISSUER_SUFFIX[issuer]}`;
+/** Both buyable tokens of a stock, for places that name the stock before an issuer is chosen. */
+export const tokenPair = (ticker: string) =>
+  `${tokenSymbol(ticker, "ondo")} / ${tokenSymbol(ticker, "bstock")}`;

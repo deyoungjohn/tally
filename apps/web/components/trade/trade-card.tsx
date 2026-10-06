@@ -1,12 +1,15 @@
 "use client";
 
-import { ArrowDown } from "lucide-react";
+import { ArrowUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { PercentSlider } from "@/components/ui/percent-slider";
 import { AnimatedNumber } from "@/components/motion/animated-number";
 import { Button } from "@/components/motion/button";
 import { Segmented } from "@/components/motion/segmented";
 import { ActionLabel } from "./flow-host";
 import type { RowDto } from "@/lib/dto";
+import { MIN_SELL_USDT } from "@tally/config";
+import { tokenPair } from "@/lib/tickers";
 import { ISSUER_LABEL, fmtShares, fmtUsd } from "@/lib/format";
 import { TokenLogo } from "./badges";
 import { LivePct, LiveUsd } from "@/components/motion/live";
@@ -47,6 +50,8 @@ export interface TradeCardProps {
     text: string;
     onText: (s: string) => void;
     heldShares: number;
+    /** The token symbol being sold (NVDAB, NVDAon). */
+    symbol?: string;
     usdOut: number | null;
     onSell: () => void;
   };
@@ -66,9 +71,15 @@ export function TradeCard(p: TradeCardProps) {
     p.buyable && p.row?.executable && p.spendUsd !== null && p.spendUsd >= MIN_USD && !p.busy;
 
   const selling = p.mode === "sell" && p.sell !== undefined;
+  // The token symbol shown wherever the card names what is bought or sold (never a bare ticker).
+  const sym = (selling ? p.sell?.symbol : p.row?.symbol) ?? tokenPair(p.ticker);
   const sellShares = p.sell && /^\d*\.?\d*$/.test(p.sell.text) ? Number(p.sell.text) : 0;
+  // Below the smallest sale the router path accepts: the button is unclickable, so no sheet has to open just to say so.
+  const belowMinSale =
+    selling && sellShares > 0 && p.sell!.usdOut !== null && p.sell!.usdOut < MIN_SELL_USDT;
   const canSell =
     selling &&
+    !belowMinSale &&
     p.sell!.heldShares > 0 &&
     sellShares > 0 &&
     sellShares <= p.sell!.heldShares + 1e-9 &&
@@ -94,13 +105,13 @@ export function TradeCard(p: TradeCardProps) {
   };
 
   let label: string;
-  if (selling) label = `Sell ${p.ticker}`;
+  if (selling) label = belowMinSale ? `Minimum sale is $${MIN_SELL_USDT}` : `Sell ${sym}`;
   else if (!p.buyable) label = "Quotes only for now";
   else if (p.phaseLabel) label = p.phaseLabel;
   else if (p.busy) label = "Working…";
   else if (!p.row?.executable) label = "Not available";
   else if (tooSmall) label = `Minimum is $${MIN_USD}`;
-  else label = `Buy ${fmtUsd(p.spendUsd)} of ${p.ticker}`; // same words before and after sign-in; sign-in happens when it is pressed
+  else label = p.row ? `Buy ${fmtUsd(p.spendUsd)} of ${p.row.symbol}` : `Buy ${fmtUsd(p.spendUsd)}`; // same words before and after sign-in; sign-in happens when it is pressed
 
   return (
     <section className="glass p-4 min-[561px]:p-6" aria-label="Trade card" data-testid="trade-card">
@@ -154,8 +165,8 @@ export function TradeCard(p: TradeCardProps) {
               />
             </div>
             <span className="token-pill">
-              <TokenLogo ticker={selling || p.unit !== "usd" ? p.ticker : "USDT"} />
-              {selling || p.unit !== "usd" ? p.ticker : "USDT"}
+              <TokenLogo ticker={selling || p.unit !== "usd" ? sym : "USDT"} />
+              {selling || p.unit !== "usd" ? sym : "USDT"}
             </span>
           </div>
           <p
@@ -165,39 +176,46 @@ export function TradeCard(p: TradeCardProps) {
           >
             {selling
               ? p.sell!.heldShares <= 0
-                ? `You don't hold any ${p.ticker} to sell.`
+                ? `You don't hold any ${tokenPair(p.ticker)} to sell.`
                 : sellShares > p.sell!.heldShares
                   ? `You only hold ${fmtShares(p.sell!.heldShares)} shares.`
-                  : ""
+                  : belowMinSale
+                    ? `Minimum sale is $${MIN_SELL_USDT}.`
+                    : ""
               : tooSmall
                 ? `Minimum is $${MIN_USD}.`
                 : ""}
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={p.onFlip}
-          disabled={!p.flipEnabled || p.busy}
-          aria-label={
-            !p.flipEnabled
-              ? "Selling is not switched on yet"
-              : selling
-                ? "Switch to buying"
-                : "Switch to selling"
-          }
-          title={!p.flipEnabled ? "Selling is not switched on yet" : undefined}
-          data-testid="flip-button"
-          className="absolute left-1/2 top-1/2 z-10 grid h-10 w-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-[var(--edge)] bg-[var(--g3)] transition-transform hover:bg-[var(--g4)] enabled:cursor-pointer enabled:active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          <ArrowDown
-            size={16}
-            aria-hidden
-            className={selling ? "rotate-180 transition-transform" : "transition-transform"}
-          />
-        </button>
-
-        <div className="field mt-2">
+        {/* A zero-height row in the gap between the two boxes: the button is centred on the gap in both modes, whatever the boxes hold. */}
+        <div className="relative z-10 h-2" data-testid="flip-row">
+          <button
+            type="button"
+            onClick={p.onFlip}
+            disabled={!p.flipEnabled || p.busy}
+            aria-label={
+              !p.flipEnabled
+                ? "Selling is not switched on yet"
+                : selling
+                  ? "Switch to buying"
+                  : "Switch to selling"
+            }
+            title={!p.flipEnabled ? "Selling is not switched on yet" : undefined}
+            data-testid="flip-button"
+            className="absolute left-1/2 top-1/2 grid h-10 w-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-[var(--edge)] bg-[var(--g3)] transition-colors hover:bg-[var(--g4)] enabled:cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <ArrowUpDown
+              size={17}
+              aria-hidden
+              className={cn(
+                "transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
+                selling && "rotate-180",
+              )}
+            />
+          </button>
+        </div>
+        <div className="field">
           <p className="t-meta">
             {selling ? "You get about" : p.unit === "usd" ? "You get" : "You pay about"}
           </p>
@@ -247,9 +265,9 @@ export function TradeCard(p: TradeCardProps) {
               )}
             </p>
             <span className="token-pill">
-              <TokenLogo ticker={selling ? "USDT" : p.ticker} />
+              <TokenLogo ticker={selling ? "USDT" : sym} />
               <span className="flex flex-col items-start leading-tight">
-                <span>{selling ? "USDT" : p.unit === "usd" ? `${p.ticker} shares` : "USDT"}</span>
+                <span>{selling ? "USDT" : p.unit === "usd" ? `${sym} shares` : "USDT"}</span>
                 {p.row && !selling ? (
                   <span className="text-[12px] font-medium text-fg3">
                     via {ISSUER_LABEL[p.row.issuer]}
@@ -266,7 +284,7 @@ export function TradeCard(p: TradeCardProps) {
           <PercentSlider
             value={sellPercent}
             onChange={onSellPercent}
-            label={`${p.ticker} shares`}
+            label={`${sym} shares`}
             available={
               p.sell!.heldShares > 0
                 ? `${fmtShares(p.sell!.heldShares)} shares in your wallet`

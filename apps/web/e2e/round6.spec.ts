@@ -32,7 +32,7 @@ test.describe("round 6", () => {
     await expect(page.getByTestId("buy-button")).toHaveCount(0);
     await expect(page.getByTestId("trade-card")).not.toContainText("Slippage");
     await flip.click();
-    await expect(page.getByTestId("buy-button")).toContainText("Buy $6.00 of NVDA");
+    await expect(page.getByTestId("buy-button")).toContainText(/Buy \$6\.00 of NVDA(on|B)/);
     await expect(page.getByTestId("mode-label")).toHaveCount(0);
   });
 
@@ -117,7 +117,7 @@ test.describe("round 6", () => {
     const list = page.getByRole("listbox");
     await expect(list).toBeVisible();
     await page.waitForTimeout(800); // the panel is inert while it unfolds, so a hover then would not be delivered
-    const option = page.getByRole("option", { name: /^TSLA / });
+    const option = page.getByRole("option", { name: /^Tesla · / });
     await page.mouse.move(2, 2);
     await option.hover();
     await expect

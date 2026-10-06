@@ -367,6 +367,60 @@ describe("useSellFlow", () => {
     h.unmount();
   });
 
+  describe("minimum sale", () => {
+    const small: SellTarget = { ...target, probeShares: 0.02, probeUsd: 4.7 };
+    it("a holding or amount worth under $5 asks the server for nothing and flags it", async () => {
+      const h = mount();
+      await act(async () => void (await h.flow().open(small)));
+      fetchSellPlan.mockClear();
+      await act(async () => h.flow().setInputs({ text: "0.01" })); // about $2.35
+      await flush();
+      expect(h.flow().belowMinimum).toBe(true);
+      expect(fetchSellPlan).not.toHaveBeenCalled();
+      const p = h.flow().phase;
+      expect(p.name === "form" && p.plan === null).toBe(true);
+      h.unmount();
+    });
+
+    it("sliding back above the minimum clears the flag and asks for a plan", async () => {
+      const big: SellTarget = { ...target, probeShares: 0.02, probeUsd: 10 };
+      fetchSellPlan.mockResolvedValue(plan());
+      const h = mount();
+      await act(async () => void (await h.flow().open(big)));
+      await act(async () => h.flow().setInputs({ text: "0.005" })); // $2.5
+      await flush();
+      expect(h.flow().belowMinimum).toBe(true);
+      fetchSellPlan.mockClear();
+      await act(async () => h.flow().setInputs({ text: "0.015" })); // $7.5
+      await flush();
+      expect(h.flow().belowMinimum).toBe(false);
+      expect(fetchSellPlan).toHaveBeenCalled();
+      h.unmount();
+    });
+
+    it("an engine refusal below the minimum drops the old plan, so no Confirm is left on screen", async () => {
+      fetchSellPlan.mockResolvedValueOnce(plan({ tokensIn: "1" })); // opening check
+      fetchSellPlan.mockResolvedValueOnce(plan());
+      const h = mount();
+      await openAndType(h);
+      expect((h.flow().phase as { plan: SellPlan | null }).plan).not.toBeNull();
+      fetchSellPlan.mockRejectedValueOnce(
+        Object.assign(new Error("Minimum order"), { kind: "below_minimum" }),
+      );
+      await act(async () => h.flow().setInputs({ text: "0.001" }));
+      await flush();
+      const p = h.flow().phase;
+      expect(p.name).toBe("form");
+      if (p.name === "form") {
+        expect(p.plan).toBeNull();
+        expect(p.failure?.message).toBe(
+          "The sale is below the $5 minimum order. Transaction will fail.",
+        );
+      }
+      h.unmount();
+    });
+  });
+
   describe("receipt hint", () => {
     it("posts exactly one hint for the sale (kind sell, its hash, the intent id, the user) and none for the approval", async () => {
       const approvePlan = plan({

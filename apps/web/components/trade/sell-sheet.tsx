@@ -1,7 +1,8 @@
 "use client";
 
 import { AlertTriangle, Check, ExternalLink, Loader2, ShieldCheck } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { MIN_SELL_USDT } from "@tally/config";
 import { Button } from "@/components/motion/button";
 import { Modal } from "@/components/motion/modal";
 import { Segmented } from "@/components/motion/segmented";
@@ -98,9 +99,7 @@ export function SellSheet({ flow }: { flow: Flow }) {
                 </span>
                 Confirmed on-chain
               </p>
-              <p className="mt-2 text-[15px] text-fg2">
-                Confirmed on-chain. Check your USDT balance; reconciled sell receipts are coming.
-              </p>
+              <ReceiptLine hash={phase.hash} floorUsdt={phase.floorUsdt} />
               <dl className="mt-3">
                 {phase.blockNumber !== null ? (
                   <div className="detail-row">
@@ -241,6 +240,21 @@ function FormView({ flow }: { flow: Flow }) {
         </Notice>
       ) : null}
 
+      {view?.next === "approve" ? (
+        <Button big disabled={busy} onClick={() => void flow.approve()} data-testid="sell-approve">
+          <ShieldCheck size={18} aria-hidden /> Approve {view.symbol}
+        </Button>
+      ) : null}
+      {view?.next === "confirm" ? (
+        <Button big disabled={busy} onClick={() => void flow.confirm()} data-testid="sell-confirm">
+          Confirm sale
+        </Button>
+      ) : null}
+      {view?.next === "fund" ? (
+        <Button big disabled data-testid="sell-needs-funds-button">
+          Not enough to sell this amount
+        </Button>
+      ) : null}
       {view ? (
         <div data-testid="sell-plan" data-status={view.status}>
           <dl>
@@ -308,22 +322,12 @@ function FormView({ flow }: { flow: Flow }) {
         </div>
       ) : null}
 
-      {view?.next === "approve" ? (
-        <Button big disabled={busy} onClick={() => void flow.approve()} data-testid="sell-approve">
-          <ShieldCheck size={18} aria-hidden /> Approve {view.symbol}
-        </Button>
+      {flow.belowMinimum && !phase.failure ? (
+        <Notice tone="red" testId="sell-below-min">
+          {`The sale is below the $${MIN_SELL_USDT} minimum order. Transaction will fail.`}
+        </Notice>
       ) : null}
-      {view?.next === "confirm" ? (
-        <Button big disabled={busy} onClick={() => void flow.confirm()} data-testid="sell-confirm">
-          Confirm sale
-        </Button>
-      ) : null}
-      {view?.next === "fund" ? (
-        <Button big disabled data-testid="sell-needs-funds-button">
-          Not enough to sell this amount
-        </Button>
-      ) : null}
-      {!view && !busy && !phase.failure ? (
+      {!view && !busy && !phase.failure && !flow.belowMinimum ? (
         <p className="t-meta">Enter a number of shares, or choose Sell all.</p>
       ) : null}
 
@@ -389,5 +393,74 @@ function HashLink({ hash, href }: { hash: string; href?: string }) {
       <ExternalLink size={16} aria-hidden /> BscScan{" "}
       <span className="mono text-[13px] text-fg2">{shortHash(hash)}</span>
     </a>
+  );
+}
+
+type Receipt =
+  | { state: "off" | "pending" | "failed" | "unreconciled" }
+  | { state: "reconciled"; usdtReceivedRaw: string };
+
+/** Polls the chain-verified sale receipt. Only a reconciled receipt shows an amount; before that there is nothing to claim. */
+function useSellReceipt(hash: string): Receipt {
+  const [r, setR] = useState<Receipt>({ state: "pending" });
+  useEffect(() => {
+    let live = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const t0 = Date.now();
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/receipts?hash=${hash}`, { cache: "no-store" });
+        if (res.status === 404) return live && setR({ state: "off" }); // receipts are not switched on
+        if (res.ok) {
+          const d = (await res.json()) as {
+            state?: string;
+            usdtReceivedRaw?: string;
+          };
+          if (d.state === "reconciled" && d.usdtReceivedRaw)
+            return live && setR({ state: "reconciled", usdtReceivedRaw: d.usdtReceivedRaw });
+          if (d.state === "failed" || d.state === "unreconciled")
+            return live && setR({ state: d.state });
+        }
+      } catch {
+        /* keep trying */
+      }
+      if (Date.now() - t0 < 180_000) timer = setTimeout(poll, 5_000);
+      else if (live) setR({ state: "unreconciled" });
+    };
+    void poll();
+    return () => {
+      live = false;
+      if (timer) clearTimeout(timer);
+    };
+  }, [hash]);
+  return r;
+}
+
+/** What the sale delivered (verified from the chain) and the least it was guaranteed to deliver, in the same unit, one under the other. */
+function ReceiptLine({ hash, floorUsdt }: { hash: string; floorUsdt: string | null }) {
+  const r = useSellReceipt(hash);
+  if (r.state === "reconciled")
+    return (
+      <dl className="mt-2" data-testid="sell-receipt">
+        <div className="detail-row">
+          <dt>USDT received</dt>
+          <dd data-testid="sell-received">{usdtText(r.usdtReceivedRaw)}</dd>
+        </div>
+        {floorUsdt ? (
+          <div className="detail-row">
+            <dt>Guaranteed at least</dt>
+            <dd data-testid="sell-floor">{usdtText(floorUsdt)}</dd>
+          </div>
+        ) : null}
+      </dl>
+    );
+  return (
+    <p className="mt-2 text-[15px] text-fg2" data-testid="sell-receipt-status">
+      {r.state === "pending"
+        ? "Confirmed on-chain. Verifying the amount you received…"
+        : r.state === "unreconciled"
+          ? "Confirmed on-chain. The received amount couldn't be verified yet; check your USDT balance."
+          : "Confirmed on-chain. Check your USDT balance."}
+    </p>
   );
 }

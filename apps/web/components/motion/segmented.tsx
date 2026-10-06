@@ -47,7 +47,7 @@ export function Segmented<T extends string>({
       role="radiogroup"
       aria-label={label}
       hover={false}
-      pillStyle={{ background: "var(--silver)" }}
+      pillStyle={{ background: "linear-gradient(180deg, var(--accent-hi), var(--accent))" }}
       className={cn(
         "inline-flex items-center gap-1 rounded-full border border-[var(--edge)] bg-white/[0.05] p-1",
         className,
@@ -69,7 +69,7 @@ export function Segmented<T extends string>({
             onKeyDown={(e) => onKey(e, i)}
             className={cn(
               "relative min-h-[36px] min-w-[44px] rounded-full px-4 text-[15px] font-semibold transition-colors",
-              active ? "text-[var(--silver-ink)]" : "text-fg2 hover:text-fg",
+              active ? "text-white" : "text-fg2 hover:text-fg",
             )}
           >
             {o.label}
