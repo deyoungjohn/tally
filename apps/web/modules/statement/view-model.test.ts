@@ -269,3 +269,110 @@ describe("WO-03 Slice B: View-model tests", () => {
     }
   });
 });
+
+describe("additive view-model fields (WO-12 decisions 2026-10-06)", () => {
+  const base = (over: Partial<Holding>): Holding => ({
+    tokenContractAddress: "0xa9ee28c80f960b889dfbd1902055218cba016f75",
+    tokenSymbol: "NVDAon",
+    ticker: "NVDA",
+    issuer: "ondo",
+    isRecognized: true,
+    balanceTokens: parseDecimal("0.5", 18),
+    multiplier: E18,
+    balanceShares: parseDecimal("0.5", 18),
+    convertedAtTodaysRatio: false,
+    tokenBalanceUsdE18: 120n * E18,
+    costBasisUsdE18: 115n * E18,
+    avgCostPerShareUsdE18: 230n * E18,
+    pricePerShareUsdE18: 240n * E18,
+    unrealizedPnlUsdE18: 5n * E18,
+    source: "api/portfolio/recent-pnl",
+    ...over,
+  });
+
+  it("never collected (no snapshot) is distinct from a collected wallet that holds nothing", async () => {
+    const never = buildPortfolioVM(null, { walletAddress: WALLET });
+    expect(never.state).toBe("empty");
+    expect(never.emptyKind).toBe("never_collected");
+    expect(never.reason).toBe("No holdings in this wallet."); // unchanged: the fields are additive
+    const noHoldings = buildPortfolioVM(statement({ walletAddress: WALLET, holdings: [] }));
+    expect(noHoldings.emptyKind).toBe("no_holdings");
+    expect(buildStatementVM(null).emptyKind).toBe("never_collected");
+    expect(buildStatementVM(statement({ walletAddress: WALLET })).emptyKind).toBe("no_holdings");
+    // A ready view model has no emptyKind.
+    const ready = buildPortfolioVM(statement({ walletAddress: WALLET, holdings: [base({})] }));
+    expect(ready.state).toBe("ready");
+    expect(ready.emptyKind).toBeUndefined();
+  });
+
+  it("realizedKnown is true only when a sale carries a realized figure", () => {
+    const trade = (realized?: bigint) => ({
+      txHash: `0x${"11".repeat(32)}`,
+      time: 1_000,
+      type: "SELL" as const,
+      tokenContractAddress: "0xa9ee28c80f960b889dfbd1902055218cba016f75",
+      tokenSymbol: "NVDAon",
+      ticker: "NVDA",
+      issuer: "ondo" as const,
+      isRecognized: true,
+      amountTokens: parseDecimal("0.1", 18),
+      multiplier: E18,
+      amountShares: parseDecimal("0.1", 18),
+      convertedAtTodaysRatio: false,
+      pricePerTokenUsdE18: 240n * E18,
+      pricePerShareUsdE18: 240n * E18,
+      valueUsdE18: 24n * E18,
+      ...(realized === undefined ? {} : { realizedPnlUsdE18: realized }),
+    });
+    const without = statement({ walletAddress: WALLET, holdings: [base({})], trades: [trade()] });
+    expect(buildPortfolioVM(without).realizedKnown).toBe(false);
+    expect(buildStatementVM(without).realizedKnown).toBe(false);
+    const withRealized = statement({
+      walletAddress: WALLET,
+      holdings: [base({})],
+      trades: [trade(2n * E18)],
+    });
+    expect(buildPortfolioVM(withRealized).realizedKnown).toBe(true);
+    expect(buildStatementVM(withRealized).realizedKnown).toBe(true);
+  });
+
+  it("the reason shares are unknown passes through on a holding row and a statement line", () => {
+    const reason = "No multiplier observation for this token";
+    const stmt = statement({
+      walletAddress: WALLET,
+      holdings: [base({ multiplier: null, balanceShares: null, sharesUnavailableReason: reason })],
+      trades: [
+        {
+          txHash: `0x${"22".repeat(32)}`,
+          time: 1_000,
+          type: "BUY",
+          tokenContractAddress: "0xa9ee28c80f960b889dfbd1902055218cba016f75",
+          tokenSymbol: "NVDAon",
+          ticker: "NVDA",
+          issuer: "ondo",
+          isRecognized: true,
+          amountTokens: parseDecimal("0.1", 18),
+          multiplier: null,
+          amountShares: null,
+          sharesUnavailableReason: reason,
+          convertedAtTodaysRatio: false,
+          pricePerTokenUsdE18: 240n * E18,
+          pricePerShareUsdE18: null,
+          valueUsdE18: 24n * E18,
+        },
+      ],
+    });
+    const row = buildPortfolioVM(stmt).holdings[0]!.issuers[0]!;
+    expect(row.balanceShares).toBe("unavailable");
+    expect(row.sharesUnavailableReason).toBe(reason);
+    const line = buildStatementVM(stmt).lines[0]!;
+    expect(line.amountShares).toBe("unavailable");
+    expect(line.sharesUnavailableReason).toBe(reason);
+  });
+
+  it("known shares carry no reason key", () => {
+    const row = buildPortfolioVM(statement({ walletAddress: WALLET, holdings: [base({})] }))
+      .holdings[0]!.issuers[0]!;
+    expect("sharesUnavailableReason" in row).toBe(false);
+  });
+});

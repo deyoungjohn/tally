@@ -21,6 +21,8 @@ export interface Freshness {
 export interface ReceiptVM extends Freshness {
   state: "ready" | "pending" | "empty" | "error" | "disabled";
   txHash: string;
+  /** Additive. When this receipt (or its hint) was last observed, ISO 8601; null when unknown. */
+  observedAt?: string | null;
   intentId: string | null;
   ticker: string | null;
   user: string | null;
@@ -72,6 +74,7 @@ const empty = (
 ): ReceiptVM => ({
   state,
   txHash: hash,
+  observedAt: null,
   intentId: null,
   ticker: null,
   user: null,
@@ -131,6 +134,7 @@ export function receiptVM(snapshot: Latest<StoredReceipt>): ReceiptVM {
       : r?.conversion;
   return {
     ...vm,
+    observedAt: new Date(snapshot.observedAt).toISOString(),
     status,
     kind: d.kind,
     intentId: d.hint.intentId,
@@ -264,6 +268,7 @@ export function receiptVM(snapshot: Latest<StoredReceipt>): ReceiptVM {
 export function hintVM(snapshot: Latest<StoredHint>): ReceiptVM {
   return {
     ...empty(snapshot.data.hint.txHash, "pending", snapshot.data.reason),
+    observedAt: new Date(snapshot.observedAt).toISOString(),
     status: "PENDING",
     intentId: snapshot.data.hint.intentId,
     ticker: snapshot.data.hint.ticker,

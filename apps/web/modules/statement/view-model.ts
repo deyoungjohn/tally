@@ -23,6 +23,8 @@ export interface IssuerHoldingVM {
   convertedAtTodaysRatio: boolean;
   valueUsd: string;
   pricePerShareUsd: string;
+  /** Why `balanceShares` reads "unavailable" (additive; absent when shares are known). */
+  sharesUnavailableReason?: string;
   rowActionsSlot: HoldingRowActionMeta;
 }
 
@@ -44,6 +46,13 @@ export interface PortfolioVM {
   totalRealizedPnlUsd: string;
   totalUnrealizedPnlUsd: string;
   holdings: HeadlineHoldingVM[];
+  /**
+   * Additive. For `state: "empty"`: `never_collected` means no snapshot of this wallet exists yet (the worker has not collected
+   * it), `no_holdings` means a snapshot exists and holds nothing. Absent when the state is not empty.
+   */
+  emptyKind?: "never_collected" | "no_holdings";
+  /** Additive. True only when at least one sale carries a realized figure; otherwise `totalRealizedPnlUsd` is a placeholder zero. */
+  realizedKnown?: boolean;
   availableTabs: PortfolioTab[];
   activeTab: PortfolioTab;
   stale: boolean;
@@ -65,6 +74,8 @@ export interface StatementLineVM {
   valueUsd: string;
   realizedPnlUsd?: string;
   convertedAtTodaysRatio: boolean;
+  /** Why `amountShares` reads "unavailable" (additive; absent when shares are known). */
+  sharesUnavailableReason?: string;
   txHash?: string;
 }
 
@@ -74,6 +85,10 @@ export interface StatementVM {
   asOf: string | null;
   asOfReason?: string;
   lines: StatementLineVM[];
+  /** Additive: see `PortfolioVM.emptyKind`. */
+  emptyKind?: "never_collected" | "no_holdings";
+  /** Additive: see `PortfolioVM.realizedKnown`. */
+  realizedKnown?: boolean;
   totalValueUsd: string;
   totalCostBasisUsd: string;
   totalRealizedPnlUsd: string;
@@ -124,6 +139,7 @@ export function buildPortfolioVM(
       totalRealizedPnlUsd: "0.00",
       totalUnrealizedPnlUsd: "0.00",
       holdings: [],
+      realizedKnown: false,
       availableTabs,
       activeTab: "holdings",
       stale,
@@ -141,6 +157,8 @@ export function buildPortfolioVM(
       totalRealizedPnlUsd: "0.00",
       totalUnrealizedPnlUsd: "0.00",
       holdings: [],
+      emptyKind: stmt ? "no_holdings" : "never_collected",
+      realizedKnown: false,
       availableTabs,
       activeTab: "holdings",
       stale,
@@ -165,6 +183,9 @@ export function buildPortfolioVM(
         convertedAtTodaysRatio: h.convertedAtTodaysRatio,
         valueUsd: formatUsd(h.tokenBalanceUsdE18),
         pricePerShareUsd: h.pricePerShareUsdE18 ? formatUsd(h.pricePerShareUsdE18) : "-",
+        ...(h.sharesUnavailableReason
+          ? { sharesUnavailableReason: h.sharesUnavailableReason }
+          : {}),
         rowActionsSlot: {
           token: h.tokenContractAddress,
           issuer: h.issuer,
@@ -212,6 +233,7 @@ export function buildPortfolioVM(
     totalRealizedPnlUsd: formatUsd(stmt.totalRealizedPnlUsdE18),
     totalUnrealizedPnlUsd: formatUsd(stmt.totalUnrealizedPnlUsdE18),
     holdings,
+    realizedKnown: stmt.trades.some((t) => t.realizedPnlUsdE18 !== undefined),
     availableTabs,
     activeTab: "holdings",
     stale,
@@ -245,6 +267,7 @@ export function buildStatementVM(
       asOf: null,
       asOfReason: "Error loading statement",
       lines: [],
+      realizedKnown: false,
       totalValueUsd: "0.00",
       totalCostBasisUsd: "0.00",
       totalRealizedPnlUsd: "0.00",
@@ -271,6 +294,8 @@ export function buildStatementVM(
       asOf: asOfMs ? new Date(asOfMs).toISOString() : null,
       asOfReason: asOfMs ? undefined : "Statement has no observations yet.",
       lines: [],
+      emptyKind: stmt ? "no_holdings" : "never_collected",
+      realizedKnown: false,
       totalValueUsd: "0.00",
       totalCostBasisUsd: "0.00",
       totalRealizedPnlUsd: "0.00",
@@ -302,6 +327,7 @@ export function buildStatementVM(
     valueUsd: formatUsd(t.valueUsdE18),
     realizedPnlUsd: t.realizedPnlUsdE18 !== undefined ? formatUsd(t.realizedPnlUsdE18) : undefined,
     convertedAtTodaysRatio: t.convertedAtTodaysRatio,
+    ...(t.sharesUnavailableReason ? { sharesUnavailableReason: t.sharesUnavailableReason } : {}),
     txHash: t.txHash,
   }));
 
@@ -320,6 +346,7 @@ export function buildStatementVM(
     asOf: stmt.asOf ? new Date(stmt.asOf).toISOString() : null,
     asOfReason: stmt.asOfReason,
     lines,
+    realizedKnown: stmt.trades.some((t) => t.realizedPnlUsdE18 !== undefined),
     totalValueUsd: formatUsd(stmt.totalValueUsdE18),
     totalCostBasisUsd: formatUsd(stmt.totalCostBasisUsdE18),
     totalRealizedPnlUsd: formatUsd(stmt.totalRealizedPnlUsdE18),
