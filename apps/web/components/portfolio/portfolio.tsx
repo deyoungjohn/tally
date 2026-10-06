@@ -65,7 +65,7 @@ export function HoldingGroup({
             <span className="flex items-center gap-2">
               <GradeBadge grade={p.grade} className="!h-6 !w-6 !text-[12px]" />
               <span
-                className="mono text-[16px] font-bold text-fg"
+                className="text-[16px] font-bold text-fg"
                 data-testid={`holding-symbol-${p.symbol}`}
               >
                 {p.symbol}
