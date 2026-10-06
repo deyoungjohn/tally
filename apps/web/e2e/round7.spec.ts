@@ -140,9 +140,12 @@ test.describe("round 7", () => {
   }) => {
     await mockWallet(page);
     await flags(page, { sell: false });
+    // Wait for the real portfolio read (the signed-out page also shows an example group), then look at the first row.
+    const loaded = page.waitForResponse(/\/api\/portfolio\?address=/);
     await page.goto("/portfolio");
-    const row = page.getByTestId("group-NVDA").locator("ul > li").first();
-    await expect(row).toContainText("NVDAB", { timeout: 20_000 });
+    await loaded;
+    // Rows are in whatever order the registry returns them, so look the NVDAB row up by its own test id.
+    await expect(page.getByTestId("holding-symbol-NVDAB")).toBeVisible({ timeout: 20_000 });
     const look = (id: string) =>
       page.getByTestId(id).evaluate((e) => {
         const cs = getComputedStyle(e);

@@ -25,3 +25,33 @@ export function useModuleFlags(): Partial<Record<ModuleName, boolean>> {
   }, []);
   return flags;
 }
+
+/** Same read as `useModuleFlags`, but also says whether the answer has arrived, so a screen can wait instead of flashing the wrong version. */
+export function useModuleFlagsState(): {
+  flags: Partial<Record<ModuleName, boolean>>;
+  ready: boolean;
+} {
+  const [state, setState] = useState<{
+    flags: Partial<Record<ModuleName, boolean>>;
+    ready: boolean;
+  }>({ flags: {}, ready: false });
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/modules/health", { signal: controller.signal, cache: "no-store" })
+      .then(async (r) => {
+        const data = (await r.json()) as { flags?: Partial<Record<ModuleName, unknown>> };
+        setState({
+          flags: Object.fromEntries(
+            Object.entries(data.flags ?? {}).map(([k, v]) => [k, v === true]),
+          ) as Partial<Record<ModuleName, boolean>>,
+          ready: true,
+        });
+      })
+      .catch(() => {
+        // The request failed: treat every flag as off, and stop waiting.
+        if (!controller.signal.aborted) setState({ flags: {}, ready: true });
+      });
+    return () => controller.abort();
+  }, []);
+  return state;
+}

@@ -5,6 +5,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { WalletRoot } from "@/components/wallet/wallet-context";
 import { ReceiptsMount } from "@/components/receipts-mount";
+import { ActiveWalletRegistrar } from "@/components/wallet/active-wallet-registrar";
 import "./globals.css";
 
 const inter = Inter({
@@ -51,6 +52,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </a>
         <WalletRoot>
           <ReceiptsMount />
+          <ActiveWalletRegistrar />
           <div className="relative z-10">
             <SiteHeader />
             {children}

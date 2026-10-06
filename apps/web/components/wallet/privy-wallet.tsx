@@ -40,7 +40,8 @@ const isUserRejection = (e: unknown) =>
   typeof e === "object" && e !== null && (e as { code?: number }).code === 4001;
 
 function Bridge({ onChange }: { onChange: (w: TallyWallet) => void }) {
-  const { ready, authenticated, login, logout, connectWallet, exportWallet } = usePrivy();
+  const { ready, authenticated, login, logout, connectWallet, exportWallet, getAccessToken } =
+    usePrivy();
   const { wallets } = useWallets();
   const { sendTransaction } = useSendTransaction();
 
@@ -53,8 +54,24 @@ function Bridge({ onChange }: { onChange: (w: TallyWallet) => void }) {
   // Privy hands back NEW function objects on every render. If they were dependencies of the value pushed to the app, every
   // render would publish a new value, re-render the app, re-render this bridge and loop forever (React error #185). So the
   // functions live in refs and the published value depends only on primitives.
-  const live = useRef({ login, logout, connectWallet, exportWallet, sendTransaction, wallet });
-  live.current = { login, logout, connectWallet, exportWallet, sendTransaction, wallet };
+  const live = useRef({
+    login,
+    logout,
+    connectWallet,
+    exportWallet,
+    getAccessToken,
+    sendTransaction,
+    wallet,
+  });
+  live.current = {
+    login,
+    logout,
+    connectWallet,
+    exportWallet,
+    getAccessToken,
+    sendTransaction,
+    wallet,
+  };
   const address = wallet?.address as `0x${string}` | undefined;
   const embedded = wallet?.walletClientType === "privy";
 
@@ -70,6 +87,13 @@ function Bridge({ onChange }: { onChange: (w: TallyWallet) => void }) {
       exportWallet: () => {
         const w = live.current.wallet;
         if (w) void live.current.exportWallet({ address: w.address });
+      },
+      async getAccessToken() {
+        try {
+          return (await live.current.getAccessToken()) ?? null;
+        } catch {
+          return null;
+        }
       },
       async sendTx(tx) {
         const w = live.current.wallet;
