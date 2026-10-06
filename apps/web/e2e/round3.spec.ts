@@ -42,7 +42,7 @@ test.describe("round 3", () => {
     await expect(card).not.toContainText("Price can move up to");
   });
 
-  test("Learn more opens a blurred, translucent modal that ends in a link to How it works", async ({
+  test("Learn more opens a blurred, translucent modal that ends in a Tell me more link", async ({
     page,
   }) => {
     await page.goto("/trade/NVDA");
@@ -53,7 +53,7 @@ test.describe("round 3", () => {
       .locator(".overlay-backdrop")
       .evaluate((el) => getComputedStyle(el).backdropFilter);
     expect(blur).toContain("blur");
-    const link = dialog.getByRole("link", { name: "How it works" });
+    const link = dialog.getByRole("link", { name: "Tell me more" });
     await expect(link).toHaveAttribute("href", "/docs#how-guarantee");
     await link.click();
     await expect(page).toHaveURL(/\/docs#how-guarantee$/);

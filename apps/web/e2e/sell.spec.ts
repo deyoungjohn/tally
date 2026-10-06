@@ -25,10 +25,28 @@ async function mockWallet(page: Page, extra: { reject?: boolean } = {}) {
   );
 }
 
-const flags = (page: Page, sell: boolean) =>
+const flags = (page: Page, sell: boolean, receipts = false) =>
   page.route("**/api/modules/health", (route) =>
-    route.fulfill({ json: { health: [], flags: { sell } } }),
+    route.fulfill({ json: { health: [], flags: { sell, receipts } } }),
   );
+
+type Hint = {
+  kind: string;
+  txHash: string;
+  intentId: string;
+  user: string;
+  isResumed: boolean;
+  ticker: string;
+};
+/** Stubs POST /api/receipts and records every body. `status` lets a test answer 404 or 500. */
+async function stubReceipts(page: Page, status = 200) {
+  const hints: Hint[] = [];
+  await page.route("**/api/receipts", async (route) => {
+    if (route.request().method() === "POST") hints.push(route.request().postDataJSON() as Hint);
+    await route.fulfill({ status, json: status === 200 ? { ok: true } : { error: "x" } });
+  });
+  return hints;
+}
 
 interface PlanOver {
   status?: "ready" | "needs_approval" | "needs_funds";
@@ -196,6 +214,7 @@ test.describe("sell", () => {
       json: n < 3 ? plan() : plan({ data: "0xfeed02", gasLimit: "390000" }),
     }));
     const hashes = await stubStatus(page, ["pending", "success"]);
+    const hints = await stubReceipts(page);
     const urls: string[] = [];
     page.on("request", (r) => urls.push(new URL(r.url()).pathname));
 
@@ -217,10 +236,22 @@ test.describe("sell", () => {
     await expect(sheet).toContainText("Confirmed on-chain. Check your USDT balance");
     await expect(sheet).toContainText("reconciled sell receipts are coming");
     await expect(sheet).not.toContainText(/you received/i);
+    // Gas is shown in dollars (0.031 estimated at the 390000 limit, 281000 used), with the unit count kept for agents.
+    await expect(sheet.getByTestId("sell-fee")).toContainText("$0.022");
+    await expect(sheet.getByTestId("sell-fee")).toHaveAttribute("data-gas-used", "281000");
+    await expect(sheet).not.toContainText("Gas used");
     await expect(sheet.getByTestId("sell-hash")).toHaveAttribute("href", /bscscan\.com\/tx\/0x/);
-    expect(
-      urls.some((u) => u.startsWith("/api/trade/receipt") || u.startsWith("/api/receipts")),
-    ).toBe(false);
+    expect(urls.some((u) => u.startsWith("/api/trade/receipt"))).toBe(false);
+    // Exactly one receipt hint for the sale, with the sale's hash.
+    await expect.poll(() => hints.length).toBe(1);
+    expect(hints[0]).toMatchObject({
+      kind: "sell",
+      txHash: HASH,
+      user: USER,
+      ticker: "NVDA",
+      isResumed: false,
+    });
+    expect(hints[0]!.intentId).toBeTruthy();
     await sheet.getByRole("button", { name: "Done" }).click();
     await expect(sheet).toBeHidden();
   });
@@ -253,6 +284,7 @@ test.describe("sell", () => {
       json: n === 1 ? plan() : approved ? plan() : plan({ status: "needs_approval" }),
     }));
     const hashes = await stubStatus(page, ["success"]);
+    const hints = await stubReceipts(page);
     const sheet = await openSheet(page);
     await sheet.getByTestId("sell-shares").fill("0.01");
     await expect(sheet.getByTestId("sell-needs-approval")).toContainText("exactly");
@@ -265,11 +297,93 @@ test.describe("sell", () => {
     expect(txs[0]).toMatchObject({ to: STOCK, gas: "80000", value: "0" });
     expect(txs[0]!.data).toBe("0x095ea7b30000"); // the plan's approval calldata, for the plan's exact amount
     expect(hashes[0]).toBe(APPROVE_HASH);
+    expect(hints).toHaveLength(0); // the approval never posts a hint
     await sheet.getByTestId("sell-confirm").click();
     await expect(sheet.getByTestId("sell-confirmed")).toBeVisible({ timeout: 20_000 });
     txs = await sent(page);
     expect(txs).toHaveLength(2);
     expect(txs[1]).toMatchObject({ to: ROUTER, value: "0" });
+    await expect.poll(() => hints.length).toBe(1);
+    expect(hints[0]!.txHash).toBe(HASH);
+    expect(hints[0]!.txHash).not.toBe(APPROVE_HASH);
+  });
+
+  test("a failing /api/receipts (404 or 500) does not change the sale's outcome", async ({
+    page,
+  }) => {
+    await mockWallet(page);
+    await flags(page, true);
+    await stubSell(page, () => ({ json: plan() }));
+    await stubStatus(page, ["success"]);
+    const hints = await stubReceipts(page, 404);
+    const sheet = await openSheet(page);
+    await sheet.getByTestId("sell-shares").fill("0.01");
+    await sheet.getByTestId("sell-confirm").click();
+    await expect(sheet.getByTestId("sell-confirmed")).toBeVisible({ timeout: 20_000 });
+    await expect(sheet.getByTestId("sell-failed")).toHaveCount(0);
+    expect(hints).toHaveLength(1);
+  });
+
+  test("a sale resumed after a reload posts one hint with isResumed true", async ({ page }) => {
+    await mockWallet(page);
+    await flags(page, true);
+    await stubStatus(page, ["success"]);
+    const hints = await stubReceipts(page);
+    await page.addInitScript(
+      ([hash, user, stock]) => {
+        localStorage.setItem(
+          "tally.pendingSell",
+          JSON.stringify({
+            hash,
+            ticker: "NVDA",
+            symbol: "NVDAB",
+            at: Date.now(),
+            intent: {
+              id: "resumed-intent",
+              issuer: "bstock",
+              stock,
+              user,
+              tokensIn: "10000000000000000",
+              minUsdtOut: "2316600000000000000",
+              tolerancePct: 1,
+            },
+            fee: { usd: 0.031, limit: "375000" },
+          }),
+        );
+      },
+      [HASH, USER, STOCK] as const,
+    );
+    await page.goto("/portfolio");
+    await expect(page.getByTestId("sell-confirmed")).toBeVisible({ timeout: 20_000 });
+    await expect.poll(() => hints.length).toBe(1);
+    expect(hints[0]).toMatchObject({
+      kind: "sell",
+      txHash: HASH,
+      intentId: "resumed-intent",
+      isResumed: true,
+    });
+  });
+
+  test("the recorder runs only when the receipts flag is on", async ({ page }) => {
+    for (const on of [false, true]) {
+      const ctx = await page
+        .context()
+        .browser()!
+        .newContext({ viewport: { width: 1280, height: 900 } });
+      const p = await ctx.newPage();
+      await mockWallet(p);
+      await flags(p, false, on);
+      const hints = await stubReceipts(p);
+      await p.goto("/trade/NVDA");
+      await expect(p.getByTestId("you-get")).toContainText("0.0", { timeout: 15_000 });
+      await p.getByTestId("buy-button").click();
+      await p.getByTestId("confirm-buy").click({ timeout: 20_000 });
+      await expect(p.getByTestId("receipt")).toBeVisible({ timeout: 20_000 });
+      await p.waitForTimeout(1_500);
+      if (on) expect(hints.length).toBeGreaterThan(0);
+      else expect(hints).toHaveLength(0);
+      await ctx.close();
+    }
   });
 
   test("needs funds: shows the shortfall and offers no way to send", async ({ page }) => {
@@ -328,33 +442,70 @@ test.describe("sell", () => {
     await expect(sheet.getByTestId("sell-confirm")).toBeEnabled();
   });
 
-  test("an expired quote is labelled, can be renewed, and errors never show internals", async ({
-    page,
-  }) => {
+  test("quotes refresh by themselves, with no button to ask for one", async ({ page }) => {
     await mockWallet(page);
     await flags(page, true);
-    let n = 0;
-    await stubSell(page, () => {
-      n++;
-      if (n === 3)
-        return {
-          status: 502,
-          json: {
-            error: { kind: "internal", message: "ECONNRESET https://secret.example/rpc?key=abc" },
-          },
-        };
-      return { json: plan({ expiresInMs: 1_200 }) };
-    });
+    const bodies = await stubSell(page, () => ({ json: plan({ expiresInMs: 5_000 }) }));
     const sheet = await openSheet(page);
     await sheet.getByTestId("sell-shares").fill("0.01");
-    await expect(sheet.getByTestId("sell-expired")).toBeVisible({ timeout: 8_000 });
-    await expect(sheet.getByTestId("sell-confirm")).toBeDisabled();
-    await sheet.getByRole("button", { name: "Get a new quote" }).click();
+    await expect(sheet.getByTestId("sell-plan")).toBeVisible();
+    await expect(sheet.getByTestId("sell-auto-refresh")).toHaveText(
+      "Quotes refresh automatically every 15s",
+    );
+    await expect(sheet.getByRole("button", { name: "Get a new quote" })).toHaveCount(0);
+    await expect(sheet).not.toContainText("expired");
+    const before = bodies.length;
+    await expect.poll(() => bodies.length, { timeout: 15_000 }).toBeGreaterThan(before + 1);
+    await expect(sheet.getByTestId("sell-confirm")).toBeEnabled();
+  });
+
+  test("errors never show internals", async ({ page }) => {
+    await mockWallet(page);
+    await flags(page, true);
+    await stubSell(page, (b, n) =>
+      n === 3
+        ? {
+            status: 502,
+            json: {
+              error: { kind: "internal", message: "ECONNRESET https://secret.example/rpc?key=abc" },
+            },
+          }
+        : { json: plan() },
+    );
+    const sheet = await openSheet(page);
+    await sheet.getByTestId("sell-shares").fill("0.01");
+    await expect(sheet.getByTestId("sell-confirm")).toBeEnabled();
+    await sheet.getByTestId("sell-confirm").click(); // the fresh plan at confirm is request 3
     await expect(sheet.getByTestId("sell-error")).toContainText(
       "Something went wrong. Nothing was sold.",
     );
     await expect(sheet).not.toContainText("secret.example");
     await expect(sheet).not.toContainText("ECONNRESET");
+  });
+
+  test("the input is typable after Sell all, and the slider sets a share of the holding", async ({
+    page,
+  }) => {
+    await mockWallet(page);
+    await flags(page, true);
+    const bodies = await stubSell(page, (b) => ({
+      json: plan({ tokensIn: b.tokens ?? "10000000000000000" }),
+    }));
+    const sheet = await openSheet(page);
+    await sheet.getByTestId("sell-all").click();
+    await expect(sheet.getByTestId("sell-all")).toHaveText("Selling all");
+    await expect(sheet.getByTestId("sell-shares")).toBeEditable();
+    await sheet.getByTestId("sell-shares").fill("0.01");
+    await expect(sheet.getByTestId("sell-all")).toHaveText("Sell all");
+    await expect(sheet.getByTestId("sell-slider-available")).toContainText("shares in your wallet");
+    const slider = sheet.getByTestId("sell-slider-input");
+    await slider.fill("50");
+    await expect(sheet.getByTestId("sell-shares")).not.toHaveValue("0.01");
+    const half = Number(await sheet.getByTestId("sell-shares").inputValue());
+    await slider.fill("100");
+    await expect(sheet.getByTestId("sell-all")).toHaveText("Selling all");
+    await expect.poll(() => bodies.at(-1)?.tokens).toBe(RAW_BALANCE);
+    expect(half).toBeGreaterThan(0);
   });
 
   test("a quote route that is refusing this region shows a plain region message", async ({

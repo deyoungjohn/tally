@@ -72,13 +72,32 @@ export function Glide({
   // The pill snaps (no travel) the first time it appears; every later move is a spring.
   const visible = useRef(false);
 
+  // Measured from layout offsets (offsetLeft/Top/Width/Height), not getBoundingClientRect: a bounding box includes transforms, so items
+  // that are still sliding in (a Select's staggered options) or sit in a scaling modal gave the pill the wrong spot. When the item
+  // is not inside the list's offset chain the bounding box is the fallback.
   const measure = useCallback(
     (el: HTMLElement | null): Box | null => {
       const root = ref.current;
       if (!el || !root) return null;
+      if (el.offsetWidth === 0 || el.offsetHeight === 0) return null;
+      let x = 0;
+      let y = 0;
+      let node: HTMLElement | null = el;
+      while (node && node !== root) {
+        x += node.offsetLeft;
+        y += node.offsetTop;
+        node = node.offsetParent as HTMLElement | null;
+      }
+      if (node === root) {
+        return {
+          x: x - root.clientLeft - bleed,
+          y: y - root.clientTop - bleed,
+          w: el.offsetWidth + bleed * 2,
+          h: el.offsetHeight + bleed * 2,
+        };
+      }
       const c = root.getBoundingClientRect();
       const r = el.getBoundingClientRect();
-      if (r.width === 0 || r.height === 0) return null;
       return {
         x: r.left - c.left - root.clientLeft - bleed,
         y: r.top - c.top - root.clientTop - bleed,

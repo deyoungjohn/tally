@@ -1,13 +1,14 @@
 "use client";
 
 import { AlertTriangle, Check, ExternalLink, Loader2, ShieldCheck } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Button } from "@/components/motion/button";
 import { Modal } from "@/components/motion/modal";
 import { Segmented } from "@/components/motion/segmented";
-import { fmtUsd, shortHash } from "@/lib/format";
+import { PercentSlider } from "@/components/ui/percent-slider";
+import { fmtShares, fmtUsd, shortHash } from "@/lib/format";
 import { bnbText, sharesText, toSellSheet, tokensText, usdtText } from "@/lib/sell/view";
-import { SELL_TOLERANCES, type useSellFlow } from "./use-sell-flow";
+import { SELL_TOLERANCES, parseShares, type useSellFlow } from "./use-sell-flow";
 
 type Flow = ReturnType<typeof useSellFlow>;
 
@@ -107,10 +108,22 @@ export function SellSheet({ flow }: { flow: Flow }) {
                     <dd>{phase.blockNumber.toLocaleString("en-US")}</dd>
                   </div>
                 ) : null}
-                {phase.gasUsed !== null ? (
+                {phase.feeUsd !== null ? (
+                  <div className="detail-row">
+                    <dt>Network fee</dt>
+                    <dd data-testid="sell-fee" data-gas-used={phase.gasUsed ?? undefined}>
+                      ≈ {fmtUsd(phase.feeUsd, 3)}
+                      {phase.gasUsed !== null ? (
+                        <span className="sr-only"> ({phase.gasUsed} gas units)</span>
+                      ) : null}
+                    </dd>
+                  </div>
+                ) : phase.gasUsed !== null ? (
                   <div className="detail-row">
                     <dt>Gas used</dt>
-                    <dd>{phase.gasUsed.toLocaleString("en-US")}</dd>
+                    <dd data-testid="sell-fee" data-gas-used={phase.gasUsed}>
+                      {phase.gasUsed.toLocaleString("en-US")} gas units
+                    </dd>
                   </div>
                 ) : null}
               </dl>
@@ -139,11 +152,23 @@ export function SellSheet({ flow }: { flow: Flow }) {
 function FormView({ flow }: { flow: Flow }) {
   const { phase, inputs, target } = flow;
   const plan = phase.name === "form" ? phase.plan : null;
-  const left = useCountdown(plan?.expiresAt ?? null);
   if (phase.name !== "form" || !target) return null;
   const view = plan ? toSellSheet(plan) : null;
-  const expired = plan !== null && left <= 0 && !phase.refreshing;
   const busy = phase.refreshing;
+  // The whole holding in shares, as the Portfolio shows it. Only the slider's scale: "Sell all" always sends the exact raw balance.
+  const heldShares = target.probeShares;
+  const typed = parseShares(inputs.text);
+  const percent = inputs.all
+    ? 100
+    : heldShares > 0 && typed !== null
+      ? Math.min(100, (typed / heldShares) * 100)
+      : 0;
+  const held = heldShares > 0 ? String(Math.floor(heldShares * 1e8) / 1e8) : "";
+  const onPercent = (p: number) => {
+    if (p >= 100) return flow.sellAll();
+    if (p <= 0) return flow.setInputs({ all: false, text: "" });
+    flow.setInputs({ all: false, text: String(Math.floor(((heldShares * p) / 100) * 1e8) / 1e8) });
+  };
 
   return (
     <>
@@ -158,8 +183,7 @@ function FormView({ flow }: { flow: Flow }) {
             inputMode="decimal"
             autoComplete="off"
             placeholder="0.025"
-            value={inputs.all ? (view ? sharesText(view.sharesIn) : "") : inputs.text}
-            readOnly={inputs.all}
+            value={inputs.all ? (view ? sharesText(view.sharesIn) : held) : inputs.text}
             onChange={(e) => {
               const v = e.target.value.replace(",", ".");
               if (/^\d*\.?\d{0,8}$/.test(v)) flow.setInputs({ text: v, all: false });
@@ -177,6 +201,15 @@ function FormView({ flow }: { flow: Flow }) {
           </Button>
         </div>
       </div>
+
+      <PercentSlider
+        value={percent}
+        onChange={onPercent}
+        label={target.symbol}
+        available={heldShares > 0 ? `${fmtShares(heldShares)} shares in your wallet` : undefined}
+        disabled={heldShares <= 0}
+        testId="sell-slider"
+      />
 
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <span className="t-meta">Slippage</span>
@@ -269,38 +302,19 @@ function FormView({ flow }: { flow: Flow }) {
             </p>
           ) : null}
 
-          {expired ? (
-            <p className="t-meta mt-3" role="status" data-testid="sell-expired">
-              This quote has expired.{" "}
-              <button type="button" className="learn-more" onClick={() => void flow.refresh()}>
-                Get a new quote
-              </button>
-            </p>
-          ) : (
-            <p className="t-meta mt-3" data-testid="sell-countdown">
-              Quote valid for {Math.max(0, left)}s. A fresh one is requested when you confirm.
-            </p>
-          )}
+          <p className="t-meta mt-3" data-testid="sell-auto-refresh">
+            Quotes refresh automatically every 15s
+          </p>
         </div>
       ) : null}
 
       {view?.next === "approve" ? (
-        <Button
-          big
-          disabled={busy || expired}
-          onClick={() => void flow.approve()}
-          data-testid="sell-approve"
-        >
+        <Button big disabled={busy} onClick={() => void flow.approve()} data-testid="sell-approve">
           <ShieldCheck size={18} aria-hidden /> Approve {view.symbol}
         </Button>
       ) : null}
       {view?.next === "confirm" ? (
-        <Button
-          big
-          disabled={busy || expired}
-          onClick={() => void flow.confirm()}
-          data-testid="sell-confirm"
-        >
+        <Button big disabled={busy} onClick={() => void flow.confirm()} data-testid="sell-confirm">
           Confirm sale
         </Button>
       ) : null}
@@ -320,18 +334,6 @@ function FormView({ flow }: { flow: Flow }) {
       </p>
     </>
   );
-}
-
-function useCountdown(expiresAt: number | null) {
-  const [left, setLeft] = useState(0);
-  useEffect(() => {
-    if (expiresAt === null) return;
-    const tick = () => setLeft(Math.ceil((expiresAt - Date.now()) / 1000));
-    tick();
-    const t = setInterval(tick, 1000);
-    return () => clearInterval(t);
-  }, [expiresAt]);
-  return expiresAt === null ? 0 : left;
 }
 
 function Notice({
