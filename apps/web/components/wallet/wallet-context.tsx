@@ -37,6 +37,11 @@ export interface TallyWallet {
   connectExternal(): void;
   /** Opens Privy's own export dialog (the key is shown in Privy's isolated frame; Tally never sees it). Embedded wallets only. */
   exportWallet(): void;
+  /**
+   * The signed-in user's Privy access token, for calls the server must verify (it never trusts a wallet address from the
+   * browser by itself). Null when signed out or when it can't be read. Never log or store it.
+   */
+  getAccessToken(): Promise<string | null>;
   /** Reads the wallet's real chain, switches to BSC (56) if needed, signs and sends. Resolves with the tx hash. */
   sendTx(tx: SendTx): Promise<Hex>;
 }
@@ -49,6 +54,9 @@ const IDLE: TallyWallet = {
   logout() {},
   connectExternal() {},
   exportWallet() {},
+  async getAccessToken() {
+    return null;
+  },
   async sendTx() {
     throw new Error("Wallet is not ready");
   },
@@ -89,6 +97,10 @@ function MockBridge({ spec, onChange }: { spec: MockSpec; onChange: (w: TallyWal
       logout: () => setSignedIn(false),
       connectExternal: () => setSignedIn(true),
       exportWallet: () => undefined,
+      // Test hook only: a fixed fake token. The real server verifies tokens with Privy, so this one never passes there.
+      async getAccessToken() {
+        return signedIn ? "mock-access-token" : null;
+      },
       async sendTx(tx) {
         await new Promise((r) => setTimeout(r, 250));
         if (spec.reject)

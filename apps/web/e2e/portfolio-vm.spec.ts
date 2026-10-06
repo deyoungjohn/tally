@@ -545,3 +545,77 @@ test.describe("portfolio view model: states (stubbed routes)", () => {
     });
   }
 });
+
+/* ------------------------------------------- wallet registration for the worker */
+
+test.describe("active wallet registration (verified route, called after sign-in)", () => {
+  test.use({ viewport: { width: 1280, height: 900 } });
+  type Seen = { auth: string | null; wallet: string | null; body: string | null };
+  const watch = async (page: Page, status = 204) => {
+    const seen: Seen[] = [];
+    await page.route("**/api/session/active-wallet", async (route) => {
+      const h = route.request().headers();
+      seen.push({
+        auth: h["authorization"] ?? null,
+        wallet: h["x-tally-wallet"] ?? null,
+        body: route.request().postData(),
+      });
+      await route.fulfill({ status, body: "" });
+    });
+    return seen;
+  };
+
+  test("statement on and signed in: one POST with the bearer token and the wallet header, nothing in the body", async ({
+    page,
+  }) => {
+    await mockWallet(page);
+    await flags(page, { statement: true });
+    const seen = await watch(page);
+    const logs: string[] = [];
+    page.on("console", (m) => logs.push(m.text()));
+    await page.goto("/");
+    await expect.poll(() => seen.length).toBe(1);
+    expect(seen[0]).toEqual({ auth: "Bearer mock-access-token", wallet: WALLET, body: null });
+    // Registered once per tab session: another page does not post again.
+    await page.goto("/portfolio");
+    await page.waitForTimeout(800);
+    expect(seen).toHaveLength(1);
+    expect(logs.join("\n")).not.toContain("mock-access-token");
+  });
+
+  test("statement off: nothing is sent", async ({ page }) => {
+    await mockWallet(page);
+    await flags(page, { statement: false });
+    const seen = await watch(page);
+    await page.goto("/");
+    await page.waitForTimeout(1200);
+    expect(seen).toHaveLength(0);
+  });
+
+  test("signed out: nothing is sent", async ({ page }) => {
+    await page.addInitScript((a) => {
+      (window as unknown as { __tallyMockWallet: unknown }).__tallyMockWallet = {
+        address: a,
+        signedIn: false,
+      };
+    }, WALLET);
+    await flags(page, { statement: true });
+    const seen = await watch(page);
+    await page.goto("/");
+    await page.waitForTimeout(1200);
+    expect(seen).toHaveLength(0);
+  });
+
+  test("a route that is not deployed yet (404) is silent and the page works; it tries again on the next load", async ({
+    page,
+  }) => {
+    await mockWallet(page);
+    await flags(page, { statement: true });
+    const seen = await watch(page, 404);
+    await page.goto("/");
+    await expect.poll(() => seen.length).toBe(1);
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await page.goto("/portfolio");
+    await expect.poll(() => seen.length).toBe(2);
+  });
+});
