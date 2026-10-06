@@ -14,7 +14,6 @@ ENV_FILE="${TALLY_ENV_FILE:-/etc/tally/tally.env}"
 PORT="${PORT:-3000}"
 LOG="${TALLY_LOG:-$HOME/tally-web.log}"
 WORKER_LOG="${TALLY_WORKER_LOG:-$HOME/tally-worker-receipts.log}"
-WORKER_PID="${TALLY_WORKER_PID:-$HOME/.tally-worker-receipts.pid}"
 MODE="${1:-}"
 
 cd "$REPO"
@@ -69,19 +68,19 @@ echo "==> starting the server (log: $LOG)"
 PORT="$PORT" HOSTNAME=127.0.0.1 nohup node apps/web/.next/standalone/apps/web/server.js >"$LOG" 2>&1 &
 echo "   pid $!"
 
-# The receipts worker (needs the same env and TALLY_DATA_DIR as the web server). Stopped by pid file, never by a name pattern.
-if [[ -f "$WORKER_PID" ]]; then
-  old="$(cat "$WORKER_PID" 2>/dev/null || true)"
-  if [[ -n "$old" ]] && kill -0 "$old" 2>/dev/null; then
-    echo "==> stopping the receipts worker (pid $old)"
-    kill -- "-$old" 2>/dev/null || kill "$old" 2>/dev/null || true
-  fi
-  rm -f "$WORKER_PID"
+# The receipts worker (needs the same env and TALLY_DATA_DIR as the web server). Stopped by name: the patterns are narrow
+# (the pnpm wrapper and the tsx process it starts) and cannot match this script, whose command line is just restart.sh.
+if pgrep -f 'worker receipts|src/cli\.ts receipts' >/dev/null 2>&1; then
+  echo "==> stopping the receipts worker"
+  pkill -f 'worker receipts|src/cli\.ts receipts' >/dev/null 2>&1 || true
+  for _ in $(seq 1 20); do
+    pgrep -f 'worker receipts|src/cli\.ts receipts' >/dev/null 2>&1 || break
+    sleep 0.5
+  done
 fi
 if [[ "${FEATURE_RECEIPTS:-}" == "1" ]]; then
   echo "==> starting the receipts worker (log: $WORKER_LOG)"
-  setsid nohup pnpm worker receipts >"$WORKER_LOG" 2>&1 &
-  echo $! >"$WORKER_PID"
+  nohup pnpm worker receipts >"$WORKER_LOG" 2>&1 &
   echo "   pid $!"
 else
   echo "==> receipts worker not started (FEATURE_RECEIPTS is not 1)"
