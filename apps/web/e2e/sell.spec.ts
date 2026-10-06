@@ -236,8 +236,8 @@ test.describe("sell", () => {
     await expect(sheet).toContainText("Confirmed on-chain. Check your USDT balance");
     await expect(sheet).toContainText("reconciled sell receipts are coming");
     await expect(sheet).not.toContainText(/you received/i);
-    // Gas is shown in dollars (0.031 estimated at the 375000 limit, 281000 used), with the unit count kept for agents.
-    await expect(sheet.getByTestId("sell-fee")).toContainText("$0.023");
+    // Gas is shown in dollars (0.031 estimated at the 390000 limit, 281000 used), with the unit count kept for agents.
+    await expect(sheet.getByTestId("sell-fee")).toContainText("$0.022");
     await expect(sheet.getByTestId("sell-fee")).toHaveAttribute("data-gas-used", "281000");
     await expect(sheet).not.toContainText("Gas used");
     await expect(sheet.getByTestId("sell-hash")).toHaveAttribute("href", /bscscan\.com\/tx\/0x/);
