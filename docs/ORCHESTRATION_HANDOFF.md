@@ -131,7 +131,7 @@ The chief engineer reassigned the escalations to the day-to-day orchestrator. Th
 
 | Gate | What | Who | Your job |
 |---|---|---|---|
-| V-AW | `baw --help` / policy docs: spend caps or session policy on BSC? | User runs, you read | **Provisional 2026-10-06; live money test pending (chief engineer's call).** Docs say caps are account-wide only, set in the Binance App; no per-trade or sell-only policy. WO-08 = logic slice A; executor is one-tap approve; unattended execution is roadmap. |
+| V-AW | `baw --help` / policy docs: spend caps or session policy on BSC? | User runs, you read | **Provisional 2026-10-06; one live unattended $6 sell pending (a cap-refusal test is impossible: Binance's lowest caps are $1,000/day, x402 $20).** Docs say caps are account-wide only, set in the Binance App; no per-trade or sell-only policy. WO-08 = logic slice A; executor is one-tap approve; unattended execution is roadmap. |
 | V-B1/B2 | Direct stock→stock and stock→USDT quotes, pre-market and regular hours (Mon) | User, `research/module_viability.py` | Pass: `SWAP`, cost < 0.5% at $7. Fail → WO-07 ships sell-only or flag-off. |
 | V-B3 | Fork tests J, K | WO-07 agent | |
 | V-B4 | One live $6 sell and switch reconcile | User, Fri | |
