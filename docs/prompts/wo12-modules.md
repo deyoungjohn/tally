@@ -2,6 +2,9 @@
 
 You are the UI agent (WO-12). Start a new branch from fresh main: `git fetch origin && git checkout -B claude/wo12-modules origin/main`. One PR per screen from here (branch names `claude/wo12-<screen>` cut from main after the previous one merges; the chief engineer reviews and merges, you never push to main). Read `docs/work-orders/WO-12-ui.md`, `apps/web/modules/README.md`, `DESIGN.md` and `CLAUDE.md` first.
 
+## You run in a cloud session
+Your sandbox is a US data centre with no secrets, no wallet and no access to the EC2, so: develop and test only against fixtures (`TALLY_FIXTURES=1`), never ask for or expect an API key, `PRIVY_APP_SECRET`, a private key or an RPC URL, and never put one in a file or a PR. Playwright needs `PLAYWRIGHT_CHROMIUM_PATH=/opt/pw-browsers/chromium` in the sandbox. The docs and prompts you need are on `main`, so fetch before you start. If `scripts/review-pack.sh` cannot run in your sandbox, say so in the PR and the chief engineer runs it. Anything that needs the live API or the server is run by the chief engineer on their machine.
+
 ## Where things stand
 The app is built: Home, Trade, Portfolio, Radar, Google sign-in, buy, sell and sell receipts work. Those screens still read the older engine routes (`/api/portfolio`, `/api/radar`) that compute with floats and ignore the modules. Your job now is to connect the **module view models that are already merged** and add the screens that do not exist yet. Deadline: everything below except Pies and Guardian by **Wednesday 7 Oct, end of day**.
 

@@ -30,3 +30,8 @@
 ## Out of scope
 
 Custody of keys, any server-held signing key.
+
+## Wave 3 scope (2026-10-06, after gate V-AW passed live)
+
+Gate V-AW passed: a real unattended sell executed through `baw` with no app tap (`docs/evidence/V-AW-live-sell.md`), but Binance's lowest daily limits are $1,000 (so the wallet cap is a backstop and Tally's own caps are the rail). **Slice A (now):** `decide`, the append-only decision log, a shadow-mode worker job and `AutopilotVM`, flag-off, no `baw`, no money path. **Slice B (only on the orchestrator's go):** the executor with an injected `BawPort`, mocked in tests, live only in a user-run script. Sell to USDT is the only action (Switch is cancelled). Full instructions: `docs/prompts/wo08-autopilot.md`. Task 4 above (one-tap approve fallback) now means: if `requireConfirmation` is true the decision downgrades to an alert.
+
