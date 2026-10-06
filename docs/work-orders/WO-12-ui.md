@@ -44,3 +44,8 @@ Start each screen as soon as its view model merges; until then, build against th
 ## Quota note
 
 Claude Pro has usage windows. Batch work: one correction list per pass, one screen per session. If you hit the limit mid-slice, push your branch with a handover note; Antigravity continues the same slice.
+
+## Wave 3 (2026-10-06)
+
+Connect the merged module view models (Portfolio, Radar and flow, Receipt and Quality, `/docs` For agents, then Pies and a safe Guardian) in the order and with the rules in `docs/prompts/wo12-modules.md`. Approved additive: new routes under `apps/web/app/api/vm/**` that call the module loaders on the server (public data only; Guardian never takes an address from the request). Guardian settings wait for server-side session verification, which is the chief engineer's decision.
+

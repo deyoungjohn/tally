@@ -25,6 +25,10 @@ Node 22, pnpm 10. Copy `apps/web/.env.example` to `apps/web/.env.local`. Deploym
 
 Not investment advice. Not available in restricted regions.
 
+## Tally for agents
+
+Tally is also a small tool service for AI agents that deal in tokenized stocks on BNB Chain: **information** (share-true quotes, an A–F integrity grade with a reason for every check, holdings in shares) and **execution** (unsigned buys through ShareGuard, which reverts if the buyer would receive fewer shares than the floor; unsigned sells to USDT). The agent's own wallet signs; Tally holds no keys and sends nothing. The tools are an MCP server (`packages/mcp`) plus a Wallet Skill (`skills/share-true-trading/`). Today it runs as a local process; a hosted endpoint is not live. Details and limits: [`docs/for-agents.md`](docs/for-agents.md).
+
 ## Roadmap
 
 - **Atomic migration between issuers (not built).** Moving a position from one issuer to another (for example Ondo to bStock) in one transaction needs a contract, because the Binance aggregator refuses a direct stock-to-stock route: it answers `40368` ("Ondo asset on chain 56 can only pair with allowed stablecoin(s)") on every bStock/Ondo pair we tried. Selling to USDT and buying the target both work (see `MODULES.md` §5). The design: a small contract pulls the source tokens, sells through the allow-listed router, then buys the target through the deployed ShareGuard (which enforces the destination share floor, pause checks and the multiplier feed) and refunds any USDT residue, reverting the whole move if either floor is missed. Until then, Tally offers a guided two-step move (sell, then buy) with a combined receipt, labelled as two separate steps.

@@ -43,3 +43,16 @@
 ## Out of scope
 
 Autopilot decisions (WO-08), sell/switch tool logic (WO-07), receipts tool (WO-02).
+
+## Slice C (optional, added 2026-10-06): remote HTTP transport, Thursday only
+
+Only if slices A and B are merged and the UI is on track; otherwise skip and say so in the PR. Goal: let a remote agent call the **read-only and unsigned-plan tools** over HTTP, so Tally can be listed as an agent service (see `docs/for-agents.md`). Owns `packages/mcp/src/http.ts` and its tests, plus a short section in `packages/mcp/README.md`. Approved additive edit to `packages/mcp/src/index.ts` for a `--http` switch.
+
+- Use the MCP SDK's Streamable HTTP server transport. If the installed SDK version lacks it, stop and ask; do not add or upgrade dependencies without approval.
+- **Off by default.** Starts only with `TALLY_MCP_HTTP=1`; binds `127.0.0.1` only (the chief engineer decides about exposure, for example through the tunnel). No TLS, no domain logic in the package.
+- Same tools as stdio, same registry. Tools that build plans (`build_guarded_swap`, `build_sell_swap`) stay behind their existing flags and may additionally be switched off for HTTP with `TALLY_MCP_HTTP_PLANS=0`. The server must never sign or send; the existing test that asserts no signer or transport is used must also cover the HTTP path.
+- Per-client rate limit (by `cf-connecting-ip`, as the web app does), request size limit, per-call timeout, and a rejected `Origin` unless it is on an allow-list in env. Mirror the error mapping and the `fixtures` flag: a fixture-mode server must say so in every result.
+- No payments, no authentication scheme beyond an optional shared key from env, no new storage.
+- Tests: tool list and a quote call over HTTP in fixture mode; plans disabled when the switch is off; rate limit trips; oversized body rejected; wrong `Origin` rejected; stdio still works unchanged.
+- User-run (commands in the PR): start with `TALLY_FIXTURES=1 TALLY_MCP_HTTP=1`, list tools and call `get_consolidated_quote` with `curl` against localhost.
+
