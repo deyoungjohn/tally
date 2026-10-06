@@ -25,14 +25,12 @@ const TAB_LABEL: Record<PortfolioTab, string> = {
 function TabBody<T extends { state: string; reason?: string | null; error: string | null }>({
   name,
   env,
-  loading,
   error,
   emptyTitle,
   children,
 }: {
   name: string;
   env: VmEnvelope<T> | null;
-  loading: boolean;
   error: string | null;
   emptyTitle: string;
   children: (vm: T) => React.ReactNode;
@@ -52,7 +50,6 @@ function TabBody<T extends { state: string; reason?: string | null; error: strin
   if (!vm) return <VmDegraded name={name} reason={env.reason} ageMs={env.ageMs} />;
   if (vm.state === "error")
     return <VmDegraded name={name} reason={vm.error ?? "Couldn't load."} ageMs={env.ageMs} />;
-  void loading;
   return (
     <>
       {vm.state === "empty" ? (
@@ -119,7 +116,6 @@ export function PortfolioVmPanel({
           <TabBody
             name="Portfolio"
             env={env}
-            loading={portfolio.loading}
             error={portfolio.error}
             emptyTitle="No tokenized shares yet"
           >
@@ -134,7 +130,6 @@ export function PortfolioVmPanel({
           <TabBody
             name="Activity"
             env={activity.data}
-            loading={activity.loading}
             error={activity.error}
             emptyTitle="No activity yet"
           >
@@ -145,7 +140,6 @@ export function PortfolioVmPanel({
           <TabBody
             name="Statement"
             env={statement.data}
-            loading={statement.loading}
             error={statement.error}
             emptyTitle="No statement yet"
           >

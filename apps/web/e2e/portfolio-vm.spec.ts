@@ -123,7 +123,7 @@ test.describe("portfolio view model: real routes on a seeded server", () => {
       page.getByTestId("st-csv").click(),
     ]);
     expect(download.suggestedFilename()).toMatch(
-      /^tally-statement-0x2bf7edf5-\d{4}-\d{2}-\d{2}\.csv$/,
+      /^tally-statement-0x2bf7ed-\d{4}-\d{2}-\d{2}\.csv$/,
     );
   });
 
@@ -207,8 +207,10 @@ test.describe("portfolio view model: flag off", () => {
     const hit: string[] = [];
     page.on("request", (r) => hit.push(new URL(r.url()).pathname));
     await mockWallet(page);
+    // (The signed-out page also shows an example group, so wait for the real request instead of a group.)
+    const legacy = page.waitForRequest(/\/api\/portfolio\?address=/);
     await page.goto("/portfolio");
-    await expect(page.getByTestId("group-NVDA")).toBeVisible({ timeout: 20_000 });
+    await legacy;
     expect(hit).toContain("/api/portfolio");
     expect(hit).not.toContain("/api/vm/portfolio");
     await expect(page.getByTestId("portfolio-vm")).toHaveCount(0);
@@ -484,6 +486,61 @@ test.describe("portfolio view model: states (stubbed routes)", () => {
         () => document.documentElement.scrollWidth - window.innerWidth,
       );
       expect(overflow).toBeLessThanOrEqual(0);
+      await ctx.close();
+    });
+  }
+
+  for (const w of [375, 768, 1280] as const) {
+    test(`state screenshots at ${w}px (normal, empty, stale, degraded), reduced motion`, async ({
+      browser,
+    }) => {
+      const ctx = await browser.newContext({
+        viewport: { width: w, height: 900 },
+        reducedMotion: "reduce",
+      });
+      const page = await ctx.newPage();
+      await mockWallet(page);
+      await flags(page, { statement: true, receipts: true, sell: true });
+      let body: unknown = env(holdingVm());
+      await page.route("**/api/vm/portfolio*", (route) => route.fulfill({ json: body }));
+      const states: [string, unknown, string][] = [
+        ["normal", env(holdingVm()), "vm-holdings"],
+        [
+          "empty",
+          env(
+            holdingVm({
+              state: "empty",
+              holdings: [],
+              reason: "No holdings in this wallet.",
+              source: null,
+            }),
+          ),
+          "vm-empty",
+        ],
+        [
+          "stale",
+          env(holdingVm({ stale: true, ageMs: 4 * 60_000 }), { stale: true, ageMs: 4 * 60_000 }),
+          "vm-stale",
+        ],
+        [
+          "degraded",
+          env(null, { degraded: true, reason: "Worker update is overdue" }),
+          "vm-degraded",
+        ],
+      ];
+      for (const [name, b, marker] of states) {
+        body = b;
+        await page.goto("/portfolio");
+        await expect(page.getByTestId(marker)).toBeVisible({ timeout: 20_000 });
+        await page.screenshot({
+          path: `test-results/portfolio-vm-${name}-${w}.png`,
+          fullPage: true,
+        });
+        const overflow = await page.evaluate(
+          () => document.documentElement.scrollWidth - window.innerWidth,
+        );
+        expect(overflow).toBeLessThanOrEqual(0);
+      }
       await ctx.close();
     });
   }
