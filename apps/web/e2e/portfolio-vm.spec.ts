@@ -145,6 +145,16 @@ test.describe("portfolio view model: real routes on a seeded server", () => {
     ).toHaveAttribute("href", /bscscan\.com\/tx\/0x/);
   });
 
+  test("the Other assets panel reads the two balances from the engine route and labels them as recorded", async ({
+    page,
+  }) => {
+    await mockWallet(page);
+    await page.goto(`${server.url}/portfolio`);
+    await expect(page.getByTestId("group-NVDA")).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByTestId("wallet-balances")).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByTestId("balances-fixture-label")).toContainText("not live");
+  });
+
   test("a snapshot older than the freshness window says it is stale, with its age", async ({
     page,
   }) => {

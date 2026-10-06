@@ -227,8 +227,10 @@ function WalletBalances({
   fixtures: boolean;
 }) {
   if (failed || !data?.wallet) return null;
+  // A fixture server stamps its recordings with the recording time, not now: its age says nothing, and the label below says
+  // what it is. On a live server a reading older than two minutes is not shown.
   const age = Date.now() - Date.parse(data.asOf);
-  if (!Number.isFinite(age) || age > BALANCES_MAX_AGE_MS) return null;
+  if (!fixtures && (!Number.isFinite(age) || age > BALANCES_MAX_AGE_MS)) return null;
   return (
     <div className="panel p-5" data-testid="wallet-balances">
       <p className="t-meta">Other assets in this wallet</p>
