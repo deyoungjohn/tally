@@ -144,8 +144,8 @@ test.describe("round 7", () => {
     const loaded = page.waitForResponse(/\/api\/portfolio\?address=/);
     await page.goto("/portfolio");
     await loaded;
-    const row = page.getByTestId("group-NVDA").locator("ul > li").first();
-    await expect(row).toContainText("NVDAB", { timeout: 20_000 });
+    // Rows are in whatever order the registry returns them, so look the NVDAB row up by its own test id.
+    await expect(page.getByTestId("holding-symbol-NVDAB")).toBeVisible({ timeout: 20_000 });
     const look = (id: string) =>
       page.getByTestId(id).evaluate((e) => {
         const cs = getComputedStyle(e);
