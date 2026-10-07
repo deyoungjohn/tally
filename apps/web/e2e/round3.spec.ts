@@ -243,11 +243,20 @@ test.describe("round 3", () => {
     const x0 = (await pill.boundingBox())!.x;
     const last = nav.getByRole("link").last();
     await last.hover();
-    await page.waitForTimeout(700);
-    const lastBox = (await last.boundingBox())!;
+    // The pill glides on a CSS transition. A fixed wait is flaky on a busy machine, so poll until it has
+    // settled on the hovered tab; the thresholds are unchanged.
+    await expect
+      .poll(
+        async () => {
+          const p = (await pill.boundingBox())!;
+          const l = (await last.boundingBox())!;
+          return Math.abs(p.x - l.x);
+        },
+        { timeout: 5_000, intervals: [100, 200, 400] },
+      )
+      .toBeLessThan(2);
     const x1 = (await pill.boundingBox())!;
     expect(x1.x).toBeGreaterThan(x0 + 50);
-    expect(Math.abs(x1.x - lastBox.x)).toBeLessThan(2);
     // The pill never starts from the top of the page: sample it moving back.
     await nav.getByRole("link").first().hover();
     for (let i = 0; i < 6; i++) {
@@ -265,13 +274,19 @@ test.describe("round 3", () => {
     const sheet = page.getByRole("dialog", { name: "Menu" });
     const current = sheet.locator('a[aria-current="page"]');
     await expect(current).toHaveText("Radar");
-    await page.waitForTimeout(700);
     const pill = sheet.locator("ul span[aria-hidden]").first();
     await expect(pill).toHaveCSS("opacity", "1");
-    const a = (await current.boundingBox())!;
-    const b = (await pill.boundingBox())!;
-    expect(Math.abs(a.y - b.y)).toBeLessThan(3);
-    expect(Math.abs(a.height - b.height)).toBeLessThan(3);
+    // Poll for the highlight to settle instead of waiting a fixed time; the thresholds are unchanged.
+    await expect
+      .poll(
+        async () => {
+          const a = (await current.boundingBox())!;
+          const b = (await pill.boundingBox())!;
+          return Math.max(Math.abs(a.y - b.y), Math.abs(a.height - b.height));
+        },
+        { timeout: 5_000, intervals: [100, 200, 400] },
+      )
+      .toBeLessThan(3);
   });
 
   test("Home: the route line sits outside the box, below the button, with no 'via' or percentage", async ({
