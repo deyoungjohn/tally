@@ -46,4 +46,5 @@ Slice B (Pies execution) stays on hold. New work for Agent 09, on the existing b
 - `contracts/deploy/assets.json`, `contracts/deploy/seeds.json`, new files in `contracts/captures/`
 - `contracts/README.md` (the "Expanding the asset list" section)
 - `apps/web/lib/buyable.generated.ts` (new) and, in `apps/web/lib/tickers.ts`, only the definition of `BUYABLE_TICKERS` (same exported shape)
+- Added 2026-10-07 for Batch 1: `contracts/script/capture_batch.sh` (new) and its list file under `contracts/deploy/` (see the Batch 1 section of `docs/prompts/wo09-shareguard-expansion.md`).
 
