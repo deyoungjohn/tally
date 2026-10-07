@@ -179,7 +179,7 @@ test.describe("Migrate", () => {
       // In mock wallet it auto-signs tx, then we wait for status
       // Then it moves to interstitial
       await expect(
-        page.getByRole("dialog").filter({ hasText: "Sold NVDA for 6.99 USDT" }),
+        page.getByRole("dialog").filter({ hasText: "Sold NVDAB for 6.99 USDT" }),
       ).toBeVisible();
 
       // Resume step 2

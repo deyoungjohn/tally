@@ -102,8 +102,8 @@ export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow>
                 </div>
               </div>
               <p className="text-sm text-neutral-500 text-center">
-                Your {fromSymbol} shares have been migrated to {pm.to === "ondo" ? "Ondo" : "bStock"}{" "}
-                ({toSymbol}) using{" "}
+                Your {fromSymbol} shares have been migrated to{" "}
+                {pm.to === "ondo" ? "Ondo" : "bStock"} ({toSymbol}) using{" "}
                 {pm.usdtReceived ? formatUnits(BigInt(pm.usdtReceived), 18) : "?"} USDT.
               </p>
               <div className="flex justify-center mt-2">
