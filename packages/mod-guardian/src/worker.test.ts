@@ -1385,12 +1385,22 @@ describe("Guardian Worker (worker.ts)", () => {
     const store = openStore(":memory:");
     let currentTime = 1_000_000;
     const warnings: string[] = [];
+    
+    let sentMessages = 0;
+    const mockSender = {
+      sendMessage: async () => {
+        sentMessages++;
+        return {};
+      },
+    };
+
     const ctx: GuardianJobContext = {
       store,
       health: store.health,
       now: () => currentTime,
       onWarn: (msg) => warnings.push(msg),
       isProduction: false,
+      sender: mockSender,
     };
 
     // Active wallet
@@ -1474,24 +1484,10 @@ describe("Guardian Worker (worker.ts)", () => {
       },
     });
 
-    // Advance time and drop grade
+    // Advance time. The grade is still B, so no drop yet.
     currentTime += 60_000;
-    store.put({
-      kind: "radar",
-      key: nvdaAddr,
-      data: {
-        ticker: "NVDA",
-        address: nvdaAddr,
-        issuer: "ondo",
-        grade: "F",
-        reasons: ["bad"],
-        ghost: false,
-      } as RadarSnapshotSubset,
-      source: "radar",
-      observedAt: currentTime,
-    });
-
-    // Since gradeDrop is false, it shouldn't generate an alert for grade drop.
+    
+    // Since gradeDrop is false anyway, it wouldn't generate an alert, but let's just run it
     const run2 = await runGuardianEvaluation(ctx);
     expect(run2.generatedAlerts).toBe(0);
 
@@ -1507,16 +1503,32 @@ describe("Guardian Worker (worker.ts)", () => {
           ...{
             paused: true,
             shareCount: true,
-            gradeDrop: true,
+            gradeDrop: true, // enabled now
             ghost: true,
             priceThreshold: true,
             earnings: false,
           },
-          gradeDrop: true,
         },
         quietHours: { enabled: true, startHourUtc: 0, endHourUtc: 23 }, // blocks delivery
         cooldownMs: 604_800_000,
       },
+    });
+
+    // Advance time and drop grade to C (warning severity, non-critical)
+    currentTime += 60_000;
+    store.put({
+      kind: "radar",
+      key: nvdaAddr,
+      data: {
+        ticker: "NVDA",
+        address: nvdaAddr,
+        issuer: "ondo",
+        grade: "C",
+        reasons: ["warning"],
+        ghost: false,
+      } as RadarSnapshotSubset,
+      source: "radar",
+      observedAt: currentTime,
     });
 
     const run3 = await runGuardianEvaluation(ctx);
@@ -1526,7 +1538,7 @@ describe("Guardian Worker (worker.ts)", () => {
     expect(alerts[0]!.deliveredAt).toBeUndefined(); // Delivery suppressed by quiet hours
     expect(alerts[0]!.deliverAt).toBeGreaterThan(currentTime); // Should have a future deliverAt set
 
-    // Advance 2 days. The grade stays F, so the alert condition persists.
+    // Advance 2 days. The grade stays C, so the alert condition persists.
     currentTime += 2 * 86_400_000;
     store.put({
       kind: "radar",
@@ -1535,8 +1547,8 @@ describe("Guardian Worker (worker.ts)", () => {
         ticker: "NVDA",
         address: nvdaAddr,
         issuer: "ondo",
-        grade: "F",
-        reasons: ["bad"],
+        grade: "C",
+        reasons: ["warning"],
         ghost: false,
       } as RadarSnapshotSubset,
       source: "radar",
