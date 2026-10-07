@@ -38,7 +38,7 @@ export interface Position {
   issuer: Issuer;
   chainBalanceTokens: bigint | null;
   balanceSource: "chain" | "unknown";
-  tokenDecimals: number;
+  tokenDecimals: number | null;
   shares: bigint | null;
   multiplier: bigint | null;
   usdPerShare: bigint | null;

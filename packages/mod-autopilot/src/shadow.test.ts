@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { openStore, type OpenSnapshotStore, type SnapshotStore } from "@tally/modkit";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { collectorContext, seedRegistry } from "./collector-fixtures";
 import { job } from "../../../apps/worker/src/jobs/autopilot";
 import { runJobs, type WorkerContext } from "../../../apps/worker/src/runner";
 import { appendDecisionRows, DECISION_LOG_KEY, readDecisionLog } from "./log";
@@ -40,18 +41,12 @@ function seeded() {
     source: "constructed chain",
     observedAt: now,
   });
+  seedRegistry(store);
   return store;
 }
 const context = (store: OpenSnapshotStore): WorkerContext => ({
-  store,
+  ...collectorContext(store),
   health: store.health,
-  now: () => now,
-  onWarn: vi.fn(),
-  engine: new Proxy({} as WorkerContext["engine"], {
-    get: () => {
-      throw new Error("Engine must never be accessed");
-    },
-  }),
 });
 afterEach(() => {
   stores.splice(0).forEach((s) => s.close());
@@ -88,7 +83,7 @@ it("reads the entire protected log beyond listLatest's 1000 row bound", () => {
 });
 
 describe("actual worker job", () => {
-  it("flag off reads and writes nothing; flag on has no execute call or engine access", async () => {
+  it("flag off reads and writes nothing; flag on accesses only read-only collector capabilities", async () => {
     vi.stubEnv("FEATURE_AUTOPILOT", undefined);
     const store = seeded();
     const ctx = context(store);
@@ -104,7 +99,7 @@ describe("actual worker job", () => {
       mode: "shadow",
       decision: "execute",
       inputs: { spentToday: 0n },
-      leg: { tokens: (25n * 10n ** 18n) / 10n },
+      leg: { tokens: (25n * 10n ** 18n) / 100n },
     });
     expect(rows[0]?.receiptId).toBeUndefined();
     expect(Object.keys(job)).toEqual(["name", "intervalMs", "timeoutMs", "run"]);

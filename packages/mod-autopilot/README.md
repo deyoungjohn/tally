@@ -1,7 +1,7 @@
-# Guardian Autopilot — Slice A
+# Guardian Autopilot — Slices A and A2
 
 Flag off by default. This slice records shadow decisions only. There is no execution
-port, subprocess, network call, signing, transaction, Switch action or recurring
+port, subprocess, signing, transaction, Switch action or recurring
 trade implementation. `decision: "execute"` means an eligible hypothetical sale to
 USDT; shadow rows say **would have sold; nothing was executed**.
 
@@ -33,15 +33,15 @@ freshness ceiling, as do sizing facts. Future observations refuse. The budget is
 floor, and the final token amount is bounded by the **chain** balance. Unknown
 shares or multiplier never become 1:1. Rounding below 6 USDT refuses.
 
-## Snapshot-only shell
+## Shadow worker and position collector
 
-The filename loader registers `apps/worker/src/jobs/autopilot.ts`. It reads
+The filename loader registers `apps/worker/src/jobs/autopilot.ts`. It refreshes opt-in positions and reads
 `alerts/<lowercase wallet>` arrays, and remains inactive unless
 `FEATURE_AUTOPILOT=1`. Its interval is 60s and runner timeout is 30s. Start only
 **one Autopilot writer process per store**, as with the module's single worker
 loop. The generic SnapshotStore API has no cross-process compare-and-insert lock.
 
-Input contracts (no producer or configuration UI is added in this slice):
+Input contracts (A2 adds their producers):
 
 - `autopilot-policy/<lowercase wallet>`: `PolicySettings`; 24h TTL. Missing or stale
   settings unarm the rules and warn. Functions are never stored.
@@ -51,7 +51,7 @@ Input contracts (no producer or configuration UI is added in this slice):
   time. `balanceSource` must be `chain`. These facts must not be fabricated from
   Binance's displayed wallet balance. Existing API-derived `portfolio` snapshots
   are deliberately not used for sizing. Missing facts produce reasoned shadow
-  refusals and warnings; no collector outside this work order was changed.
+  refusals and warnings. A2 collects these inside the existing Autopilot job; no other collector is changed.
 - The standalone shadow adapter accepts an injected `isRegularSession`. The worker
   has no session provider in Slice A, so session rules remain alert-only there.
 
@@ -104,8 +104,73 @@ no horizontal overflow, and verify the banner, stale age, zero spend and shadow
 label. Job tests invoke the actual worker with a trap engine, primary-source
 failure after one staged row, a commit failure, and late work after runner timeout.
 
-## User live commands
+## A2 producers and session contract
 
-None for Slice A. All checks use constructed data, an in-memory SnapshotStore or
-recorded fixture-mode engines. No money path or live script is present. The
-executor and all real wallet operations remain gated on a separate Slice B go.
+At the start of the existing job, only wallets with a current stored policy are
+collected (at most 20 wallets, 10 allow-listed tokens each; truncation warns).
+`engine.sharesOf` provides the raw **chain** balance and accepted multiplier;
+shares are calculated with bigint. Registry metadata decimals are accepted only
+when exactly 18; otherwise decimals and shares are null, a warning is emitted,
+and `decide` refuses with `unknown token decimals`. No new engine accessor or
+dependency is introduced. Integrity grades come from `engine.facts`; pause comes
+from `engine.pauseState`. Prices use the fresh prices snapshot reference divided
+by the registry's recorded token-to-share ratio; a registry reference fallback
+warns. Missing references, ratios, balances or multipliers remain null.
+
+Continuous pause starts are `autopilot-pause/<token>` snapshots: the first paused
+reading sets the start, an unpaused reading clears it, and unknown readings leave
+it alone. `autopilot-collector/<wallet>` records the last completed collection's
+position keys, distinguishing never collected from empty. Reads and snapshots
+are staged under the runner's existing 30s cancellation signal. A token read
+failure warns and skips just that token; unavailable registry or all-token failure
+throws before shadow evaluation. Cancellation commits no late results. A store
+failure during position persistence may leave partial input snapshots, but the
+append-only decision log stays unchanged and failed worker health is visible.
+
+`GET /api/session/autopilot/policy` returns the latest policy, ceilings/defaults,
+positions and their age, collector status, and the additive `AutopilotVM`.
+`PUT /api/session/autopilot/policy` accepts decimal USD strings (at most 18 decimal
+places), rejects caps outside $6–$100 per trade / $6–$250 per day, validates the
+three rule IDs and bounds, and accepts only up to 10 registry-listed executable
+Ondo/bStock tokens. Unknown fields, xStocks and unknown addresses are rejected.
+Missing kill switch defaults to **on**, and unset policy is also safe by default.
+Both methods are dynamic, default-off behind the existing flag, rate-limited by
+IP and verified wallet, and use `verifiedWallet(req, x-tally-wallet)` only; query,
+cookie and body addresses never authorize a wallet. Policy writes are limited to
+20 per hour for that verified wallet. All saved policies are new snapshots with
+source `web-session`; the latest row is used even for saves in the same millisecond.
+`autopilot-policy` is not an evidence kind and may be pruned by retention, so old
+policy revisions are not a guaranteed permanent audit trail; decision rows retain
+the policy used for each decision.
+
+API `PolicySettings`/position bigints are serialized as E18 integer strings. The
+optional VM `policy`, `positions` and existing `caps` display decimal strings;
+`policyEditable` is true only when the loader has explicit verified-session proof.
+`collector` has `never collected | empty | stale | ok` plus age. The plain form
+uses the existing session-fetch hook. A separate panel in the dev preview loads
+verified-session observations on demand; constructed data remains explicitly
+labelled and uneditable. No polling, signing or execution is added. The UI agent
+can reuse this panel or consume GET's VM for its own screen.
+
+Tests cover spoofing, validation and both rate limiters, append-only policy saves,
+collector 10:1/1:1 arithmetic, null decimals/multiplier/grade/price, continuous pause,
+opt-in bounds, one-token and whole-source failures, actual 30s runner cancellation,
+and stored policy → collected position → shadow-only decision. Preview Playwright
+checks the form/session save path without a transaction as well as all six viewport
+and reduced-motion captures.
+
+## User-run verification
+
+Deployment and worker setup are described only in [docs/deployment.md](../../docs/deployment.md).
+With the deployed app and existing workers ready, sign in to your wallet, open the
+flag-gated `/dev/autopilot` preview, and click **Load verified shadow observations**.
+In its separate verified-session section, save an allowed registry token and a
+rule with the kill switch off, caps $6 or higher within the ceilings. Wait a minute,
+then click **Load verified shadow observations** again. Positions should show
+chain-derived shares, USD, grade, pause and age. If Guardian has emitted a fresh
+matching alert, its row should say `mode: shadow` and **would have sold; nothing was
+executed** (or explain its refusal); `spentToday` remains zero. Quiet wallets do
+not fabricate alerts. The preview section above remains constructed data.
+Session stop rules still refuse `session unknown`, because no regular-session
+provider is wired; pause alerts still need a fresh matching alert after the
+configured continuous duration. No live command or money path is part of A2.

@@ -85,7 +85,12 @@ export function decide(alert: Alert, policy: Policy, state: State, now: number):
       now - p.observedAt > POSITION_MAX_AGE_MS
     )
       reasons.push("position stale");
-    if (!Number.isInteger(p.tokenDecimals) || p.tokenDecimals < 0 || p.tokenDecimals > 36)
+    if (
+      typeof p.tokenDecimals !== "number" ||
+      !Number.isInteger(p.tokenDecimals) ||
+      p.tokenDecimals < 0 ||
+      p.tokenDecimals > 36
+    )
       reasons.push("unknown token decimals");
   }
   if (typeof p?.usdPerShare !== "bigint" || p.usdPerShare <= 0n)
@@ -133,7 +138,7 @@ export function decide(alert: Alert, policy: Policy, state: State, now: number):
   const position = p!;
   const multiplier = position.multiplier!;
   const price = position.usdPerShare!;
-  const tokenUnit = 10n ** BigInt(position.tokenDecimals);
+  const tokenUnit = 10n ** BigInt(position.tokenDecimals!);
   const shares = min(position.shares!, mulDiv(position.chainBalanceTokens!, multiplier, tokenUnit));
   const positionUsd = mulDiv(shares, price, E18);
   if (positionUsd < MIN_SELL_USD)
