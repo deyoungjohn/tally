@@ -16,6 +16,7 @@ This repo is built by several AI coding agents in parallel (Claude Code, Codex, 
 - **Never** send a transaction, call a live trading endpoint, or deploy a contract. Live checks are run by the user; write the exact command for them in your PR.
 - **Never** edit files in `packages/binance/fixtures/raw/` or `spike/results/` (recorded evidence). Add new fixtures as new files.
 - **Never** change the deployed ShareGuard (`contracts/src/ShareGuard.sol`) or the existing buy path. New contracts are separate files and separate deployments, and only where your work order says so.
+- **Deployment instructions live in `docs/deployment.md` only.** If your work changes how Tally is deployed or run (a deploy script, a service or worker, an environment variable, a feature flag's effect, hosting), update that file in the same PR and link to it instead of repeating steps elsewhere. The orchestrator checks it for conflicting instructions.
 - Don't write the Developer Experience Report or anything that reads like it. You may add evidence pointers to `IDEAS.md` only if your work order says so.
 
 ## Where code runs

@@ -145,7 +145,7 @@ The web and worker must share `TALLY_DATA_DIR`. Hints use unprotected
 `receipt-hint` rows, expire after 15 minutes and are capped at 1000 hints, including
 multiple intents for one hash. Activity and Quality count pending transactions once.
 
-`pnpm worker receipts` verifies hints through `engine.transactions`, checks stock
+The `receipts` worker (started by `deploy/restart.sh`; see `docs/deployment.md`) verifies hints through `engine.transactions`, checks stock
 metadata against the engine registry, and promotes evidence to protected
 `receipts` rows keyed by transaction hash. Signed transactions remain protected
 pending evidence if subsequent reads fail, even after the hint expires. A mined

@@ -251,11 +251,12 @@ export function openStore(
       if (!Number.isFinite(olderThanMs)) throw new RangeError("olderThanMs must be finite");
       if (!Number.isInteger(keepLatest) || keepLatest < 1)
         throw new RangeError("keepLatest must be at least 1");
+      const protectedKinds = [...new Set([...EVIDENCE_SNAPSHOT_KINDS, ...excludeKinds])];
       const filter = [
         kind === undefined ? "1=1" : "kind=?",
-        excludeKinds.length ? `kind NOT IN (${excludeKinds.map(() => "?").join(",")})` : "1=1",
+        `kind NOT IN (${protectedKinds.map(() => "?").join(",")})`,
       ].join(" AND ");
-      const params = [...(kind === undefined ? [] : [kind]), ...excludeKinds];
+      const params = [...(kind === undefined ? [] : [kind]), ...protectedKinds];
       const result = db
         .prepare(
           `DELETE FROM snapshots WHERE id IN (

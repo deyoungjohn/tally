@@ -12,6 +12,7 @@ import type { PlanDto, ReceiptDto } from "@/lib/dto";
 import { fmtPct, fmtShares, fmtUsd, fromWei, shortHash } from "@/lib/format";
 import { ISSUER_LABEL } from "@/lib/format";
 import { fetchPlan, progressOf, type FlowParams, type FlowPhase } from "./use-trade-flow";
+import { ReceiptLink } from "@/components/receipts/receipt-link";
 
 /* ------------------------------------------------------------------ progress */
 
@@ -517,6 +518,7 @@ function ReceiptBody({
           <ExternalLink size={16} aria-hidden /> BscScan{" "}
           <span className="mono text-[13px] text-fg2">{shortHash(receipt.txHash)}</span>
         </a>
+        <ReceiptLink hash={receipt.txHash} />
         <Button variant="ghost" onClick={onDismiss}>
           Done
         </Button>

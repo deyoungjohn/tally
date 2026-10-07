@@ -29,11 +29,14 @@ export async function vmRoute<T>(
   req: NextRequest,
   module: ModuleName,
   load: (ctx: { store: OpenSnapshotStore; wallet: string }) => Promise<T>,
+  /** `wallet: false` is for market-wide data (Radar): no address is read or required. */
+  opts: { wallet?: boolean } = {},
 ) {
   if (!moduleFlags()[module]) return new Response(null, { status: 404 });
   if (rateLimited(req, `vm-${module}`, 60)) return tooMany();
-  const wallet = req.nextUrl.searchParams.get("address") ?? "";
-  if (!ADDRESS.test(wallet)) return fail(400, "invalid_request", "A wallet address is required.");
+  const wallet = opts.wallet === false ? "" : (req.nextUrl.searchParams.get("address") ?? "");
+  if (opts.wallet !== false && !ADDRESS.test(wallet))
+    return fail(400, "invalid_request", "A wallet address is required.");
   let store: OpenSnapshotStore | undefined;
   try {
     store = openStore();

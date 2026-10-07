@@ -64,8 +64,15 @@ describe("snapshot store", () => {
     expect(s.prune({ olderThanMs: 100 })).toBe(0);
     expect(s.prune({ kind: "receipt", olderThanMs: 100 })).toBe(0);
     for (const kind of EVIDENCE_SNAPSHOT_KINDS) expect(s.history(kind, "NVDA", 0)).toHaveLength(2);
-    expect(s.prune({ kind: "receipt", olderThanMs: 100, excludeKinds: [] })).toBe(1);
-    expect(s.history("receipt", "NVDA", 0)[0]?.observedAt).toBe(20);
+    expect(s.prune({ olderThanMs: 100, excludeKinds: [] })).toBe(0);
+    for (const kind of EVIDENCE_SNAPSHOT_KINDS) expect(s.history(kind, "NVDA", 0)).toHaveLength(2);
+    for (const kind of ["extra", "price"])
+      for (const observedAt of [10, 20])
+        s.put({ kind, key: "NVDA", data: observedAt, source: "fixture", observedAt });
+    expect(s.prune({ olderThanMs: 100, excludeKinds: ["extra"] })).toBe(1);
+    expect(s.history("extra", "NVDA", 0)).toHaveLength(2);
+    expect(s.history("price", "NVDA", 0)).toHaveLength(1);
+    for (const kind of EVIDENCE_SNAPSHOT_KINDS) expect(s.history(kind, "NVDA", 0)).toHaveLength(2);
   });
   it("put/latest/history isolate kind and key, order by observation time and honor since/limit", () => {
     const s = store();

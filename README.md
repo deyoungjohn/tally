@@ -21,7 +21,7 @@ pnpm typecheck && pnpm lint && pnpm test
 cd apps/web && TALLY_ALLOW_MISSING_GEO=1 pnpm dev    # region gate fails closed without Cloudflare's header
 pnpm build && pnpm e2e                               # Playwright at 375/768/1280 (needs the standalone build)
 ```
-Node 22, pnpm 10. Copy `apps/web/.env.example` to `apps/web/.env.local`. Deployment to the Seoul EC2: [`deploy/README.md`](deploy/README.md).
+Node 22, pnpm 10. Copy `apps/web/.env.example` to `apps/web/.env.local`. Deployment to the Seoul EC2: [`docs/deployment.md`](docs/deployment.md).
 
 Not investment advice. Not available in restricted regions.
 

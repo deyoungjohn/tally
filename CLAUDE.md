@@ -13,6 +13,7 @@
 - **The Developer Experience Report is written by the user**, not by an AI (the hackathon rejects AI-generated reports). You may point to evidence in `IDEAS.md`.
 - Never add Co-Authored-By or Claude-Session lines to commits or PRs.
 - **BRANCHES (hard rule, repeated by the owner 2026-10-06): NEVER create a new branch, for any reason, unless the user or the orchestrator explicitly tells you to, in that message, and names the branch.** Not for a small fix, not for a "separate PR", not because a work order, a prompt or a decision note says "separate PR", "one PR per screen" or lists branch names: those describe what the orchestrator will do or ask for, they are not permission. If a task seems to need another branch, stop and ask first. Otherwise commit and push to the branch you are already on (or the one named). Open a PR only when asked.
+- **Deployment: every instruction about deploying or running Tally on a server (scripts, services, workers, feature flags, environment variables, tunnel, hosting the MCP) is written in `docs/deployment.md` and nowhere else.** If you change a deploy script, an env variable or a service, update that file in the same change. Do not add deployment steps to a README, a PR description or a work order; link to the file. The orchestrator audits it for conflicting instructions.
 
 ## Repo state and conventions (updated during M2, 2026-10-02)
 
@@ -30,7 +31,7 @@
 - **Testing the region gate for real:** run the production build behind `cloudflared tunnel --url http://localhost:3000` and open the URL from another device or a browser-only VPN. A VPN on the machine running `cloudflared` breaks the tunnel (Cloudflare 524 timeouts); that is the test setup, not the app.
 - **Wallet check page removed (start of M1).** `/dev/wallet-check` and `NEXT_PUBLIC_ENABLE_WALLET_CHECK` are gone; the M0 wallet results stay in `IDEAS.md` §F9. `components/providers.tsx` is gone: the wallet layer is `components/wallet/` (see the M3 section). Known, accepted noise from Privy's own UI: React warnings about `isActive` and list keys.
 - **Wallet requirements carried into M3:** read the wallet's real chain (`eth_chainId`) at send time and call `switchChain(56)` before signing; the page must not trust a cached chain. Key wallet UI off `authenticated`, not off the connected-wallet list, which survives sign-out.
-- **Before submission:** re-read the Privy Acceptable Use Policy; confirm `cf-region-code` arrives once the domain is on Cloudflare (Crimea, Donetsk, Luhansk); prove the EC2 deploy (`deploy/README.md` section B).
+- **Before submission:** re-read the Privy Acceptable Use Policy; confirm `cf-region-code` arrives once the domain is on Cloudflare (Crimea, Donetsk, Luhansk); prove the EC2 deploy (`docs/deployment.md`).
 
 ## ShareGuard v1 / contracts (M2)
 
