@@ -11,7 +11,7 @@ This file collects **evidence only**: what we observed while building Tally on B
 | 3 | A stock-to-stock swap is refused with `40368` ("Ondo asset on chain 56 can only pair with allowed stablecoin(s)"), for every Ondo/bStock pair we tried. A direct one-transaction move between issuers is therefore impossible through the API. | MODULES.md §5 (gate V-B1) |
 | 4 | Ondo is documented as RFQ (EIP-712 plus `order/submit`). In practice a quote without a wallet fails with `40001`, and with a wallet it returned `executionMode: SWAP`, `rfq: null` in every run. | IDEAS.md §F4 |
 | 5 | Ondo's minimum order is "5 USD", checked in dollars: 5 USDT was refused with `40375` because USDT trades at about $0.9995. 6 USDT always worked. | IDEAS.md §F4 |
-| 6 | The API's gas figure is a placeholder: every quote and swap said 450,000 whatever the route; real usage ranged from about 438,000 to 1,024,000, and a transaction sent with 450,000 reverted out of gas. The displayed fee follows the placeholder. | IDEAS.md §F4, §F6 |
+| 6 | The API's gas figure is a placeholder: every quote and swap said 450,000 whatever the route; real usage ranged from about 438,000 to 1,024,000, and a buy sent with the API's 450,000 gas reverted (the failed transaction is described in §F6). The displayed fee follows the placeholder. | IDEAS.md §F4, §F6 |
 | 7 | The "aggregator" returned one route from one vendor (LiquidMesh) for every stock quote, so it offers no price comparison between issuers. Routes change minute to minute and cross other stocks and crypto (many Ondo buys go through a bStock/Ondo pool). | IDEAS.md §F4 |
 | 8 | Rate limit: 30 back-to-back calls from Seoul passed about 5, then every call returned `42900`. Which limit applies (IP, key or endpoint) is undocumented. | IDEAS.md §F10 (rate limit probe) |
 | 9 | Error envelopes differ between modules (`{code,msg,data,success}`, the same without `success`, and `{status,type,code,errorData}` for the Market gateway), and two client mistakes of ours were reported as `50000` server errors. | IDEAS.md §F10 (probes) |
@@ -19,7 +19,6 @@ This file collects **evidence only**: what we observed while building Tally on B
 | 11 | The authenticated RWA list returned 488 tokens (442 Ondo, 46 bStock, 0 xStocks) against 675 on BSC in the public lists, with undocumented paging. It carries `statusInfo`, `tokenToShareRatio` and a reference price that the public lists lack. | IDEAS.md §F10 |
 | 12 | `referencePrice` is per **token**, not per share: Ondo NFLX showed `tokenPrice` 6808.01, `referencePrice` 680.80, `tokenToShareRatio` 10, while the quote API priced the same token at 680.80. Binance's own list disagreed with its own quote API by 10×. | IDEAS.md §F10 |
 | 13 | Schemas written from the docs failed on real data twice (`assetType` is `null` on some rows; `executionMode` sits at the top level of the swap response). A fallback that swallowed the failure hid it until we made every fallback report a warning. | IDEAS.md §F10 (other build findings) |
-| 14 | Documentation said `userWalletAddress` is a recipient option; for sells the router's `minReceiveAmount` and the approve target are returned by the API and must be allow-listed by the caller. | `packages/engine/src/sell.ts`, WO-07 review |
 | 15 | `enableMevProtection` exists only on the broadcast endpoint, so a user who signs in their own wallet cannot use it; we do not claim MEV protection. | IDEAS.md §F10 |
 
 ## Public market data (K-Line)
@@ -29,7 +28,7 @@ This file collects **evidence only**: what we observed while building Tally on B
 | 16 | The public daily K-Line (`.../wallet/dex/market/token/kline/ai`) documents its sixth field as "reserved". In practice it is the day's volume in USD (for NVDAB it matched the 24 h volume in order of magnitude). | `spike/tally-wo09-sustained-volume.json`, `docs/prompts/wo09-shareguard-expansion.md` |
 | 17 | For **every one of the 121 Ondo tokens** that volume is `0` on all 95 days, so the endpoint cannot show Ondo trading at all. | same |
 | 18 | History is shallow: of 68 bStock tokens, 11 have 90 days of candles, 55 have 30 and 13 were listed in the last 30 days. The endpoint caps at 95 candles and omits calendar days with no trades. | same |
-| 19 | "Raw 24 h volume" overstates tradable depth. NVDAon showed about $162,000 of raw daily volume; its USDT pools traded about $1,700 a day on about $9,700 of liquidity, and the bulk came from the NVDAB/NVDAon pool ($48,000 on $2,200 of liquidity). Of 189 tokens above $1,000 of raw volume, 0 Ondo tokens had a median of $1,000 in stable-pair volume over both 7 and 30 days; 23 bStock tokens had $10,000 or more. | `spike/tally-wo09-sustained-volume.json` |
+| 19 | "Raw 24 h volume" overstates tradable depth. NVDAon showed about $162,000 of raw daily volume; its USDT pools traded about $1,700 a day on about $9,700 of liquidity, and the bulk came from the NVDAB/NVDAon pool ($48,000 on $2,200 of liquidity). Of 189 tokens above $1,000 of raw volume, no Ondo token had a median of $1,000 a day in its best stable-pair pool with at least 90% of days at or above $1,000 over both the last 7 and the last 30 days; 23 bStock tokens passed the same test at $10,000 a day (not counting the 10 already enabled). | `spike/tally-wo09-sustained-volume.json` |
 | 20 | Ghost markets are common: NFLXon had $16 of 24 h volume against NVDAB's $16.7 million, so a token can be listed and quotable but not tradable. | IDEAS.md §F10 |
 
 ## Issuer tokens (Ondo, bStock, xStocks)
@@ -40,7 +39,7 @@ This file collects **evidence only**: what we observed while building Tally on B
 | 22 | bStock's `uiMultiplier()` read on chain matched the API; xStocks' `multiplier()` matched the 09-30 snapshot but not the API (1.001701 against 1.000918). | IDEAS.md §F10 |
 | 23 | A rebasing balance drifts from what a wallet service shows: the Agentic Wallet listed 0.025440 NVDAB while the chain held 0.025420 (0.08% less), and a sell sized from the displayed balance was refused by our own plan check. | `docs/evidence/V-AW-live-sell.md` |
 | 24 | bStock has no pause getter; a shared manager contract decides pauses. Ondo's pause is read from the token. Neither is in the API. | IDEAS.md §F11 |
-| 25 | Ondo's multiplier must be pushed by a signer to our contract; an off-by-one in the source enum made every Ondo buy fail with "share count can't be read" until fixed. | PR #23, IDEAS.md §F11 |
+| 25 | Ondo's multiplier is pushed to our contract by a signer. Using the wrong ShareGuard source number for Ondo made every Ondo buy fail with "share count can't be read right now" until the source was corrected to the Feed source (3). | PR #23, IDEAS.md §F11 |
 | 26 | xStocks tokens have no market to exit on BNB Chain in the registry, so they can be shown but not sold. | IDEAS.md §F10 |
 | 27 | Attestation reports: Ondo NVDA's report was 3.2 days old on a Friday, and a live run 18 minutes later showed no deduction for the same token; the cause is not proven. | IDEAS.md §F10 |
 
@@ -51,7 +50,7 @@ This file collects **evidence only**: what we observed while building Tally on B
 | 28 | An unattended sell executed through `baw contract-call preview` then `execute` with no app tap (Developer Mode on, `requireConfirmation=false`), 1 second for the execute; the approval did not count against the Developer Mode quota, the sale counted its USD value ($6.108). | `docs/evidence/V-AW-live-sell.md` |
 | 29 | The App's minimum daily limits are $1,000 (DEX trading and Developer Mode), $5,000 (DeFi, prediction markets) and $20 (x402), so a cap refusal cannot be tested with small money, and the wallet cap is not a tight rail for a small account. Settings cannot be changed from the CLI. | MODULES.md §5 (V-AW), `docs/evidence/V-AW-baw-policy.md` |
 | 30 | The CLI has 149 help pages; none exposes a per-trade cap, a per-rule budget, a contract or function allow-list or a sell-only policy. Docs and CLI agree that out-of-policy actions are rejected or need a second confirmation. | `docs/evidence/V-AW-baw-policy.md` |
-| 31 | Calling a preview with a manual gas limit: the docs say `--gasLimit` is "a cap, not a bypass" and to pass it on preview only; the preview echoed whether the flag was accepted. | `baw contract-call preview --help`, WO-05 live test |
+| 31 | `baw contract-call preview --help` describes `--gasLimit` as "a cap, not a bypass": the transaction is simulated at that limit and the same value goes on chain, and it is passed on preview only. | `baw contract-call preview --help`, `docs/evidence/V-AW-baw-policy.md` |
 | 32 | The Agentic Wallet's session signs out after 48 hours of inactivity and at a maximum duration, so unattended use needs a check before every attempt. | `docs/evidence/V-AW-live-sell.md` |
 
 ## Other tools we depended on
