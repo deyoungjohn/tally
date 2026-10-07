@@ -32,7 +32,7 @@ export interface MinimalPrivyClient {
     };
   };
   users: () => {
-    _get: (userId: string) => Promise<{ linked_accounts?: Array<{ address?: string } | any> }>;
+    _get: (userId: string) => Promise<{ linked_accounts?: Array<{ address?: string } | unknown> }>;
   };
 }
 
