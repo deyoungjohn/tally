@@ -57,3 +57,4 @@ Only if slices A and B are merged and the UI is on track; otherwise skip and say
 - Tests: tool list and a quote call over HTTP in fixture mode; plans disabled when the switch is off; rate limit trips; oversized body rejected; wrong `Origin` rejected; stdio still works unchanged.
 - User-run (commands in the PR): start with `TALLY_FIXTURES=1 TALLY_MCP_HTTP=1`, list tools and call `get_consolidated_quote` with `curl` against localhost.
 
+Slice C full instructions: `docs/prompts/wo05-http-transport.md` (use `node:http` and the SDK's `StreamableHTTPServerTransport`, no Express; stateless; region gate; shared-key option). Approved 2026-10-07: the agent continues on `mod/WO-05-agent-layer` (fast-forward it to main), no new branch.
