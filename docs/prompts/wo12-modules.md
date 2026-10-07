@@ -33,3 +33,9 @@ The app is built: Home, Trade, Portfolio, Radar, Google sign-in, buy, sell and s
 - "View-model requests" and "Needs from the chief engineer" sections, even if empty.
 
 If you are blocked or unsure, stop and ask in the PR; do not guess. If you hit your usage limit mid-slice, push the branch with a handover note.
+
+## Update 2026-10-07 (chief engineer): order and scope
+- **Deferred, do not build:** slice 4 (the "For agents" block on `/docs`). The chief engineer will say when.
+- **Next, in this order, one PR each:** (a) **Guardian** (the session verification is merged: send `Authorization: Bearer <getAccessToken()>` and `x-tally-wallet` through the existing wallet registrar's auth helper; feed and settings from `/api/session/guardian/*`; signed-out and "not linked" states; Telegram link code from `POST /api/session/guardian/link-code`), (b) **Pies** (preview only; `mod/WO-09-pies` is merged), (c) **Autopilot** from `AutopilotVM` (`apps/web/modules/autopilot/view-model.ts`, merged): show the caps with the code ceilings and the backstop banner, the armed rules, the kill switch (display only), spent today and the decision log. It is **shadow mode**: say "nothing is executed" wherever rows appear, show the empty state honestly (no policy or position data is produced yet, so rows may be refusals or absent), and add no buttons that change policy or execute. Each screen sits in `<ModuleBoundary>`, is hidden and 404 when its flag is off, and appears in the nav only when its flag is on.
+- All the rules above still apply (view models only, four states, 375/768/1280 and reduced motion, full pack in the PR).
+
