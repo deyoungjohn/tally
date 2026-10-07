@@ -19,6 +19,10 @@ export async function GET(req: NextRequest) {
   try {
     store = openStore();
     const data = await loadAlertFeed({ walletAddress, store });
+    const { moduleHealthState } = await import("@tally/modkit");
+    const health = moduleHealthState(store.health.get("guardian"));
+    data.moduleDegraded = health.degraded;
+    data.moduleReason = health.reason;
     return json(data);
   } finally {
     store?.close();

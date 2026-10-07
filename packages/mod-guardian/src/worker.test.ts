@@ -1381,4 +1381,170 @@ describe("Guardian Worker (worker.ts)", () => {
     expect(pauseFailureWarning).not.toContain("https://");
     expect(pauseFailureWarning).not.toContain("SECRET_KEY_999");
   });
+  it("honours a saved rule toggle, quiet hours, and cooldown from guardian-settings", async () => {
+    const store = openStore(":memory:");
+    let currentTime = 1_000_000;
+    const warnings: string[] = [];
+    const ctx: GuardianJobContext = {
+      store,
+      health: store.health,
+      now: () => currentTime,
+      onWarn: (msg) => warnings.push(msg),
+      isProduction: false,
+    };
+
+    // Active wallet
+    store.put({
+      kind: "wallet:active",
+      key: "bsc",
+      data: { address: wallet },
+      source: "test",
+      observedAt: currentTime,
+    });
+
+    // Portfolio with NVDA holding
+    store.put({
+      kind: "portfolio",
+      key: wallet,
+      data: {
+        holdings: [
+          {
+            tokenContractAddress: nvdaAddr,
+            ticker: "NVDA",
+            issuer: "ondo",
+            balanceTokens: 10n * 10n ** 18n,
+            balanceShares: 10n * 10n ** 18n,
+            isRecognized: true,
+          },
+        ],
+      },
+      source: "statement",
+      observedAt: currentTime,
+    });
+
+    // Telegram link so delivery works
+    store.put({
+      kind: "guardian-link",
+      key: wallet,
+      data: { walletAddress: wallet, chatId: 123, linkedAt: currentTime, alertsEnabled: true },
+      source: "test",
+      observedAt: currentTime,
+    });
+
+    // Baseline radar (Grade B, not paused)
+    store.put({
+      kind: "radar",
+      key: nvdaAddr,
+      data: {
+        ticker: "NVDA",
+        address: nvdaAddr,
+        issuer: "ondo",
+        grade: "B",
+        reasons: [],
+        ghost: false,
+      } as RadarSnapshotSubset,
+      source: "radar",
+      observedAt: currentTime,
+    });
+
+    // Baseline run
+    await runGuardianEvaluation(ctx);
+
+    // Save custom settings: disable gradeDrop, set quiet hours to block 0-23 UTC (i.e. all hours), cooldown 7 days
+    store.put({
+      kind: "guardian-settings",
+      key: wallet,
+      source: "web-session",
+      observedAt: currentTime,
+      data: {
+        enabled: true,
+        rules: {
+          ...{
+            paused: true,
+            shareCount: true,
+            gradeDrop: true,
+            ghost: true,
+            priceThreshold: true,
+            earnings: false,
+          },
+          gradeDrop: false,
+        },
+        quietHours: { enabled: true, startHourUtc: 0, endHourUtc: 23 },
+        cooldownMs: 604_800_000,
+      },
+    });
+
+    // Advance time and drop grade
+    currentTime += 60_000;
+    store.put({
+      kind: "radar",
+      key: nvdaAddr,
+      data: {
+        ticker: "NVDA",
+        address: nvdaAddr,
+        issuer: "ondo",
+        grade: "F",
+        reasons: ["bad"],
+        ghost: false,
+      } as RadarSnapshotSubset,
+      source: "radar",
+      observedAt: currentTime,
+    });
+
+    // Since gradeDrop is false, it shouldn't generate an alert for grade drop.
+    const run2 = await runGuardianEvaluation(ctx);
+    expect(run2.generatedAlerts).toBe(0);
+
+    // Now turn gradeDrop back on, but we still have quiet hours (all hours blocked)
+    store.put({
+      kind: "guardian-settings",
+      key: wallet,
+      source: "web-session",
+      observedAt: currentTime,
+      data: {
+        enabled: true,
+        rules: {
+          ...{
+            paused: true,
+            shareCount: true,
+            gradeDrop: true,
+            ghost: true,
+            priceThreshold: true,
+            earnings: false,
+          },
+          gradeDrop: true,
+        },
+        quietHours: { enabled: true, startHourUtc: 0, endHourUtc: 23 }, // blocks delivery
+        cooldownMs: 604_800_000,
+      },
+    });
+
+    const run3 = await runGuardianEvaluation(ctx);
+    expect(run3.generatedAlerts).toBe(1); // generates alert
+    const alerts = store.latest<Alert[]>("alerts", wallet, { maxAgeMs: 600_000 })?.data ?? [];
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]!.deliveredAt).toBeUndefined(); // Delivery suppressed by quiet hours
+    expect(alerts[0]!.deliverAt).toBeGreaterThan(currentTime); // Should have a future deliverAt set
+
+    // Advance 2 days. The grade stays F, so the alert condition persists.
+    currentTime += 2 * 86_400_000;
+    store.put({
+      kind: "radar",
+      key: nvdaAddr,
+      data: {
+        ticker: "NVDA",
+        address: nvdaAddr,
+        issuer: "ondo",
+        grade: "F",
+        reasons: ["bad"],
+        ghost: false,
+      } as RadarSnapshotSubset,
+      source: "radar",
+      observedAt: currentTime,
+    });
+
+    const run4 = await runGuardianEvaluation(ctx);
+    // Because cooldown is 7 days, it should NOT generate another alert yet!
+    expect(run4.generatedAlerts).toBe(0);
+  });
 });
