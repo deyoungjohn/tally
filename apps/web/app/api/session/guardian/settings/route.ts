@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { type NextRequest } from "next/server";
 import { verifiedWallet } from "../../../../../lib/server/session";
 import { fail, json, rateLimited } from "../../../../../lib/server/http";
 import { moduleFlags } from "../../../../../lib/flags";

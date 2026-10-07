@@ -4,7 +4,7 @@ vi.mock("server-only", () => ({}));
 
 import { NextRequest } from "next/server";
 import { GET as feedGET } from "./guardian/feed/route";
-import { GET as settingsGET } from "./guardian/settings/route";
+
 import { POST as linkCodePOST } from "./guardian/link-code/route";
 import { POST as activeWalletPOST } from "./active-wallet/route";
 import { clearUserRateLimits } from "../../../lib/server/session";
