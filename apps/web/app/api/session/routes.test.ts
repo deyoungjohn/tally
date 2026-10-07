@@ -73,12 +73,12 @@ describe("session routes", () => {
     delete process.env.TEST_FLAG_STATEMENT;
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+   
   function makeReq(url: string, method: string, headers?: Record<string, string>, body?: unknown) {
     const init: RequestInit = { method };
     if (headers) init.headers = new Headers(headers);
     if (body) init.body = JSON.stringify(body);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     return new NextRequest("http://localhost" + url, init as unknown as Request);
   }
 
