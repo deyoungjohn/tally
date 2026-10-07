@@ -71,6 +71,11 @@ function GradeRow({ g, ticker }: { g: RadarGradeDisplay; ticker: string }) {
               ? "24h volume unknown"
               : `${usdWhole(g.rawVolume24hUsd)} raw volume in 24h on BNB Chain`}
           </p>
+          {g.cleanedFlowUsd24h !== null ? (
+            <p className="text-[14px] text-fg2" data-testid={`radarvm-cleaned-${g.symbol}`}>
+              {usdWhole(g.cleanedFlowUsd24h)} cleaned flow in 24h
+            </p>
+          ) : null}
           <p className="mt-1">
             <BasisTag g={g} />
           </p>
@@ -96,7 +101,7 @@ function GradeRow({ g, ticker }: { g: RadarGradeDisplay; ticker: string }) {
         </div>
         <div className="flex flex-col items-end gap-2">
           <GradeBadge grade={g.grade} />
-          {!g.ghost && isBuyable(ticker) ? (
+          {g.executable !== false && !g.ghost && isBuyable(ticker) ? (
             <Link
               href={`/trade/${ticker}`}
               className="inline-flex min-h-[44px] items-center gap-1 text-[14px] text-blue"
@@ -104,7 +109,9 @@ function GradeRow({ g, ticker }: { g: RadarGradeDisplay; ticker: string }) {
               Buy <ArrowRight size={13} aria-hidden />
             </Link>
           ) : (
-            <span className="t-meta">{g.ghost ? "Not buyable" : "Compare only"}</span>
+            <span className="t-meta" title={g.executableReason ?? undefined}>
+              {g.executable === false || g.ghost ? "Not buyable" : "Compare only"}
+            </span>
           )}
         </div>
       </div>

@@ -13,6 +13,11 @@ export interface RadarGradeDisplay {
   unitTrap: boolean;
   /** Raw 24h on-chain volume in whole dollars, or null when unknown. This is the figure the Trade page quote grade uses. */
   rawVolume24hUsd: string | null;
+  /** False when a recorded fact blocks buying; null when Radar cannot say (never true by guess). */
+  executable: boolean | null;
+  executableReason: string | null;
+  /** The flow module's cleaned 24h volume in whole dollars, or null when flow has none. */
+  cleanedFlowUsd24h: string | null;
   flowActive: boolean;
   flowReason: string | null;
   stale: boolean;
@@ -64,6 +69,12 @@ export function displayRadar(vm: RadarVM): RadarDisplay {
           g.rawVolume24hUsd === null || g.rawVolume24hUsd === undefined
             ? null
             : (BigInt(g.rawVolume24hUsd) / E18).toString(),
+        executable: g.executable ?? null,
+        executableReason: g.executableReason ?? null,
+        cleanedFlowUsd24h:
+          g.cleanedFlowUsd24h === null || g.cleanedFlowUsd24h === undefined
+            ? null
+            : (BigInt(g.cleanedFlowUsd24h) / E18).toString(),
         flowActive: g.flowActive !== false,
         flowReason: g.flowReason ?? null,
         stale: g.stale,
