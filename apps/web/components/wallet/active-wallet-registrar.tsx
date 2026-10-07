@@ -6,6 +6,7 @@
 
 import { useEffect, useRef } from "react";
 import { useModuleFlags } from "@/lib/hooks/use-flags";
+import { fetchWithSession } from "@/lib/hooks/use-session-fetch";
 import { useTallyWallet } from "./wallet-context";
 
 export function ActiveWalletRegistrar() {
@@ -25,13 +26,10 @@ export function ActiveWalletRegistrar() {
     }
     let cancelled = false;
     void (async () => {
-      const token = await walletRef.current.getAccessToken();
-      if (!token || cancelled) return;
-      const res = await fetch("/api/session/active-wallet", {
+      const res = await fetchWithSession(walletRef.current, "/api/session/active-wallet", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "x-tally-wallet": address },
-        cache: "no-store",
       }).catch(() => null);
+      if (cancelled) return;
       // 204 = registered (or already was). Anything else (the route not deployed yet, 401, 404) is silent: the Portfolio
       // simply keeps its honest "not collected yet" state.
       if (res?.ok && !cancelled) {
