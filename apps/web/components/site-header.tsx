@@ -203,7 +203,7 @@ function AccountButton({
       {open ? (
         <div
           role="menu"
-          className="glass !bg-[var(--g2)] absolute right-0 top-[calc(100%+8px)] z-50 grid min-w-[220px] gap-1 p-2"
+          className="glass glass-pop absolute right-0 top-[calc(100%+8px)] z-50 grid min-w-[220px] gap-1 p-2"
         >
           <button
             role="menuitem"

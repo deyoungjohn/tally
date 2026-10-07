@@ -157,7 +157,7 @@ export function MorphMenu({
                 }
                 transition={reduce ? { duration: 0.15 } : SPRING_PANEL}
                 style={{ top: box.top, right: box.right, transformOrigin: "top right" }}
-                className="glass !fixed overflow-hidden !bg-[var(--g2)]"
+                className="glass glass-pop !fixed overflow-hidden"
               >
                 <button
                   type="button"

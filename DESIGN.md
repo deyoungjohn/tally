@@ -82,6 +82,8 @@ These are Revenue's values with Tally additions marked ★. Put them in `app/glo
 | `--background` | `var(--g0)` |
 | `--foreground` | `var(--fg)` |
 | `--card` / `--popover` | `var(--g2)` (glass surfaces override with the glass recipe) |
+
+**Pop-up surfaces (owner, 2026-10-07):** modals, bottom sheets, menus, dropdowns (Select and the search panel), the account menu and tooltips are not grey. They use `--pop-bg` (`.glass-pop`, `.select-panel`, `.tip`, `.glass-solid` in `globals.css`): the same liquid glass as the nav bar (blur and a faint white sheen) over `rgba(0,0,0,.5)` black, so text stays legible over the bright background. Never give a pop-up a solid `--g*` fill.
 | `--card-foreground` / `--popover-foreground` | `var(--fg)` |
 | `--primary` | `var(--silver-1)` |
 | `--primary-foreground` | `var(--silver-ink)` |

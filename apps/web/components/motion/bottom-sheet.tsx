@@ -187,8 +187,7 @@ export function BottomSheet({
               {...gate}
               style={{ ...heightStyle, ...gate.style }}
               className={cn(
-                "glass pointer-events-auto !fixed bottom-0 left-0 right-0 z-50 mx-auto flex max-w-2xl flex-col overflow-hidden !rounded-b-none !rounded-t-[28px] outline-none will-change-transform",
-                "!bg-[var(--g2)]",
+                "glass glass-pop pointer-events-auto !fixed bottom-0 left-0 right-0 z-50 mx-auto flex max-w-2xl flex-col overflow-hidden !rounded-b-none !rounded-t-[28px] outline-none will-change-transform",
                 className,
               )}
               role="dialog"

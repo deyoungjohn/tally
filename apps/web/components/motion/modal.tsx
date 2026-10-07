@@ -116,8 +116,7 @@ export function Modal({
                 exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: 8 }}
                 transition={reduce ? { duration: 0.15 } : SPRING_PANEL}
                 className={cn(
-                  "glass relative z-10 flex max-h-[calc(100svh-32px)] w-full max-w-[520px] flex-col overflow-hidden outline-none",
-                  "!bg-[var(--g2)]",
+                  "glass glass-pop relative z-10 flex max-h-[calc(100svh-32px)] w-full max-w-[520px] flex-col overflow-hidden outline-none",
                   className,
                 )}
               >

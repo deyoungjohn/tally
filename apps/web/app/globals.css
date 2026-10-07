@@ -247,6 +247,17 @@ body {
 .panel:hover {
   background: rgba(255, 255, 255, 0.05);
 }
+/* Pop-up surfaces (modals, sheets, menus, dropdowns, tooltips, the search panel): the same liquid glass as the nav bar, with a
+   faint transparent black underneath so the text on them stays legible over the bright background. One token, one place. */
+:root {
+  --pop-bg:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02)),
+    rgba(0, 0, 0, 0.5);
+  --pop-bg-fallback: rgba(0, 0, 0, 0.88);
+}
+.glass-pop {
+  background: var(--pop-bg);
+}
 .overlay-backdrop {
   background: rgba(5, 6, 7, 0.72);
   backdrop-filter: blur(8px);
@@ -255,6 +266,12 @@ body {
   .glass,
   .gcard {
     background: rgba(35, 37, 42, 0.92);
+  }
+  .glass-pop,
+  .select-panel,
+  .tip,
+  .glass-solid {
+    background: var(--pop-bg-fallback);
   }
 }
 
@@ -799,7 +816,7 @@ body {
   border-color: var(--edge2);
 }
 .select-panel {
-  background: linear-gradient(180deg, rgba(44, 46, 53, 0.86), rgba(27, 28, 33, 0.82));
+  background: var(--pop-bg);
   border: 1px solid var(--edge);
   backdrop-filter: blur(26px) saturate(160%);
   box-shadow:
@@ -837,7 +854,7 @@ body {
   padding: 8px 12px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(24, 26, 30, 0.88);
+  background: var(--pop-bg);
   backdrop-filter: blur(14px) saturate(140%);
   color: var(--fg);
   font-size: 14.5px;
@@ -883,7 +900,7 @@ body {
 
 /* Opaque-ish glass for the search field and its surface (they morph into each other, so they must match). */
 .glass-solid {
-  background: rgba(30, 32, 37, 0.9);
+  background: var(--pop-bg);
   border: 1px solid var(--edge);
   backdrop-filter: blur(20px) saturate(150%);
   box-shadow:
