@@ -11,6 +11,7 @@
 - `packages/mod-pies/**` (including `templates/*.json`)
 - `apps/web/modules/pies/**`, `apps/web/app/dev/pies/**`
 - `apps/worker/src/jobs/pies.ts`
+- ShareGuard expansion, approved 2026-10-07: `contracts/tools/list_candidates.py`, `contracts/tools/list_enabled.py`, `contracts/tools/gen_buyable.py`, `contracts/tools/capture_batch.py`, `contracts/script/AddAssets.s.sol`, `contracts/script/capture_batch.sh`, `contracts/test/AddAssets.t.sol`, `contracts/deploy/assets.json`, `contracts/deploy/seeds.json`, `contracts/deploy/batch-1.json`, `contracts/captures/**`, `contracts/README.md`, `apps/web/lib/buyable.generated.ts`, and the `BUYABLE_TICKERS` definition in `apps/web/lib/tickers.ts`.
 
 ## Tasks
 
