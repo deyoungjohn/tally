@@ -44,3 +44,6 @@ Approved 2026-10-06 (Agent 08's finding), tightening only: in `packages/modkit/s
 ## Slice A2 (2026-10-07): positions and policy producers
 
 Autopilot's shadow log had no inputs, so this slice adds the position collector (chain balance, accepted multiplier, price, grade, continuous pause start, only for wallets that have a policy, inside the existing `autopilot` job) and a verified-session policy writer (`/api/session/autopilot/policy`, kill switch on by default, caps rejected above the code ceilings, allow-list limited to registry-listed executable bStock and Ondo tokens). Still shadow mode: nothing is executed. Full instructions: `docs/prompts/wo08-autopilot-producers.md`. Migrate (WO-13) is Agent 07's, not this work order's.
+
+Decision 2026-10-07 (Agent 08's question): the collector takes `tokenDecimals` from registry metadata and accepts only 18; there is no on-chain `decimals()` accessor and none is added. Anything else is `null` and refuses.
+
