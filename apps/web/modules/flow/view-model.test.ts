@@ -357,3 +357,118 @@ it("the panel shows unknown concentration when a holders row has a null percenta
     store.close();
   }
 });
+
+it("Radar grades carry executable and executableReason only from facts the snapshot has", async () => {
+  const store = openStore(":memory:");
+  try {
+    seed(store, 1000);
+    const healthy = (await loadRadar({ store, now, flowEnabled: true })).cards[0]!.grades[0]!;
+    // Nothing blocks it, but the snapshot cannot say the route is open: null with the reason, never true.
+    expect(healthy.executable).toBeNull();
+    expect(healthy.executableReason).toContain("does not record");
+    const ghost = {
+      ...token,
+      symbol: "NVDAx",
+      issuer: "xstocks" as const,
+      address: "0xc845b2894dbddd03858fd2d643b4ef725fe0849d",
+    };
+    const unknown = {
+      ...ghost,
+      symbol: "NVDAon",
+      issuer: "ondo" as const,
+      address: "0x0000000000000000000000000000000000000abc",
+      multiplier: 0n,
+    };
+    store.put({
+      kind: "radar-registry",
+      key: "bsc",
+      source: "engine",
+      observedAt: now,
+      data: [token, ghost, unknown],
+    });
+    for (const [t, volume] of [
+      [ghost, 0],
+      [unknown, 5000],
+    ] as const)
+      store.put<RadarGradeSnapshot>({
+        kind: "radar",
+        key: t.address,
+        source: "engine",
+        observedAt: now,
+        data: {
+          ...t,
+          ticker: "NVDA",
+          score: 50,
+          grade: "C",
+          reasons: [],
+          ghost: volume === 0,
+          integrity: gradeIntegrity({
+            session: "closed",
+            status: null,
+            now,
+            unitTrap: false,
+            onchainVolume24hUsd: volume,
+          }),
+        },
+      });
+    const grades = (await loadRadar({ store, now, flowEnabled: false })).cards.flatMap(
+      (c) => c.grades,
+    );
+    expect(grades.find((g) => g.symbol === "NVDAx")).toMatchObject({
+      executable: false,
+      executableReason: "Almost no trading: a ghost market",
+    });
+    expect(grades.find((g) => g.symbol === "NVDAon")).toMatchObject({
+      executable: false,
+      executableReason: "The share count of this token is unknown",
+    });
+  } finally {
+    store.close();
+  }
+});
+
+it("cleanedFlowUsd24h is the flow aggregate's own 24h volume as an E18 string, and null when flow has none", async () => {
+  const store = openStore(":memory:");
+  try {
+    seed(store, 1000);
+    // Flow is present but has no coverage: the aggregate itself says the volume is unknown.
+    const none = (await loadRadar({ store, now, flowEnabled: true })).cards[0]!.grades[0]!;
+    expect(none.cleanedFlowUsd24h).toBeNull();
+    const trade = {
+      id: "t1",
+      txHash: `0x${"ab".repeat(32)}`,
+      wallet: "0x00000000000000000000000000000000000000a1",
+      side: "buy" as const,
+      at: now - 60_000,
+      shares: 3n * E18,
+      usd: 700n * E18,
+      pricePerShare: 233n * E18,
+      priceReason: null,
+      source: "binance" as const,
+    };
+    const covered: FlowSnapshot = {
+      token,
+      trades: [trade, { ...trade, id: "t2", usd: 50n * E18, shares: E18 }],
+      labels: {},
+      holders: null,
+      holdersReason: "Holders unavailable",
+      coverageStartMs: now - 7 * 86_400_000,
+      notes: [],
+    };
+    store.put({
+      kind: "flow",
+      key: token.address,
+      source: "binance",
+      observedAt: now - 1000,
+      data: covered,
+    });
+    const grade = (await loadRadar({ store, now, flowEnabled: true })).cards[0]!.grades[0]!;
+    expect(grade.cleanedFlowUsd24h).toBe((750n * E18).toString());
+    expect(grade.gradeBasis).toBe("cleaned flow");
+    // With flow off, the grade is not cleaned-flow and carries no cleaned volume.
+    const off = (await loadRadar({ store, now, flowEnabled: false })).cards[0]!.grades[0]!;
+    expect(off.cleanedFlowUsd24h).toBeNull();
+  } finally {
+    store.close();
+  }
+});

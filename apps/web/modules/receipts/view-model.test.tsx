@@ -421,3 +421,77 @@ it("a pending hint row also carries the time it was observed", async () => {
     observedAt: "1970-01-01T00:00:05.000Z",
   });
 });
+
+it("ReceiptVM names the token: verified against the registry, the browser's word otherwise, null when unknown", async () => {
+  const data = await seed("F11_NVDAB", true);
+  const hash = data.hint.txHash;
+  const options = { store, now: 1000, enabled: true };
+  // No registry snapshot: the issuer comes from the browser hint and is marked as such.
+  expect(await loadReceipt(hash, options)).toMatchObject({
+    symbol: "NVDAB",
+    issuer: "bstock",
+    issuerTrust: "client-hint",
+  });
+  // With the registry naming the verified stock address, the issuer is verified.
+  store.put({
+    kind: "flow-registry",
+    key: "bsc",
+    source: "engine",
+    observedAt: 1000,
+    data: [{ address: data.result!.guarded!.stock, issuer: "bstock" }],
+  });
+  expect(await loadReceipt(hash, options)).toMatchObject({
+    symbol: "NVDAB",
+    issuer: "bstock",
+    issuerTrust: "verified",
+  });
+  expect((await loadReceipts(options)).items[0]).toMatchObject({ issuerTrust: "verified" });
+  // The registry wins over the hint when they disagree: the hint never overrides a verified address.
+  store.put({
+    kind: "radar-registry",
+    key: "bsc",
+    source: "engine",
+    observedAt: 1000,
+    data: [{ address: data.result!.guarded!.stock, issuer: "ondo" }],
+  });
+  expect(await loadReceipt(hash, options)).toMatchObject({
+    symbol: "NVDAon",
+    issuer: "ondo",
+    issuerTrust: "verified",
+  });
+  // An unknown receipt names nothing.
+  expect(await loadReceipt(`0x${"77".repeat(32)}`, options)).toMatchObject({
+    symbol: null,
+    issuer: null,
+    issuerTrust: null,
+  });
+});
+
+it("a pending hint names its token only as the browser's word", async () => {
+  const h = recordedHint();
+  store.put({
+    kind: HINT_KIND,
+    key: receiptHintKey(h),
+    observedAt: 1000,
+    source: "untrusted-browser-hint",
+    data: {
+      hint: h,
+      receivedAt: 1000,
+      expiresAt: 1000 + HINT_TTL_MS,
+      state: "pending",
+      reason: "RPC unavailable",
+    } satisfies StoredHint,
+  });
+  expect(await loadReceipt(h.txHash, { store, now: 1000, enabled: true })).toMatchObject({
+    state: "pending",
+    symbol: "NVDAB",
+    issuer: "bstock",
+    issuerTrust: "client-hint",
+  });
+});
+
+it("ladder stages say what their amount holds: tokens for a buy, tokens in and USDT out for a sale", async () => {
+  const data = await seed("F11_NVDAB", true);
+  const buy = await loadReceipt(data.hint.txHash, { store, now: 1000, enabled: true });
+  expect(buy.ladder.map((s) => s.unit)).toEqual(["tokens", "tokens", "tokens"]);
+});
