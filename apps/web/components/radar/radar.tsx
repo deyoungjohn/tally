@@ -14,6 +14,8 @@ import { ISSUER_LABEL, fmtUsd } from "@/lib/format";
 import { isBuyable } from "@/lib/tickers";
 import { Tip } from "@/components/ui/tooltip";
 import { LearnMore } from "@/components/learn-more";
+import { useModuleFlagsState } from "@/lib/hooks/use-flags";
+import { RadarVmBody } from "./radar-vm";
 
 export const useRadar = () => useJson<RadarReport>("/api/radar");
 
@@ -134,8 +136,8 @@ function radarSuggestions(rows: RadarRow[]): MorphingSearchItem[] {
 
 type Filter = "all" | "flagged" | "ghost" | "unit";
 
-/** The full Radar page body. */
-export function RadarPage() {
+/** Today's Radar body (engine report). Shown while the `flow` flag is off. */
+function RadarLegacyBody() {
   const { data, error, loading } = useRadar();
   const [filter, setFilter] = useState<Filter>("all");
   const [q, setQ] = useState("");
@@ -164,15 +166,7 @@ export function RadarPage() {
   }, [data, filter, q]);
 
   return (
-    <main id="main" className="wrap pb-24 pt-10 min-[561px]:pt-14">
-      <p className="t-kicker">Radar</p>
-      <h1 className="t-h2 mt-3 max-w-[22ch]">Spot the tokens that would mislead you.</h1>
-      <p className="t-lead mt-3 max-w-[62ch]">
-        The same ticker can be a different amount of stock, a market nobody trades, or data that
-        disagrees with itself. Radar grades every token A to F and says why, in plain words.{" "}
-        <LearnMore concept="liquidity" />
-      </p>
-
+    <>
       <div className="mt-8">
         {data ? (
           <RadarStats rows={data.rows} />
@@ -225,6 +219,30 @@ export function RadarPage() {
           shown as safe.
         </p>
       ) : null}
+    </>
+  );
+}
+
+/** The full Radar page. With the `flow` flag on the grades and flow panels come from the flow module's view models. */
+export function RadarPage() {
+  const { flags, ready } = useModuleFlagsState();
+  return (
+    <main id="main" className="wrap pb-24 pt-10 min-[561px]:pt-14">
+      <p className="t-kicker">Radar</p>
+      <h1 className="t-h2 mt-3 max-w-[22ch]">Spot the tokens that would mislead you.</h1>
+      <p className="t-lead mt-3 max-w-[62ch]">
+        The same ticker can be a different amount of stock, a market nobody trades, or data that
+        disagrees with itself. Radar grades every token A to F and says why, in plain words.{" "}
+        <LearnMore concept="liquidity" />
+      </p>
+
+      {!ready ? (
+        <div className="mt-8 skeleton h-[96px]" aria-busy="true" />
+      ) : flags.flow ? (
+        <RadarVmBody />
+      ) : (
+        <RadarLegacyBody />
+      )}
 
       <section className="glass mt-12 p-6 min-[561px]:p-8" aria-labelledby="how-grades">
         <h2 id="how-grades" className="t-h3">
