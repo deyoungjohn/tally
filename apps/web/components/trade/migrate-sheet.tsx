@@ -5,14 +5,13 @@ import { Modal } from "@/components/motion/modal";
 import { Button } from "@/components/motion/button";
 import { useMigrateFlow } from "./use-migrate-flow";
 import { useTradeFlow } from "./use-trade-flow";
-import { SellSheet } from "./sell-sheet";
 import { TradeFlowLayer } from "./flow-host";
 import { formatUnits } from "viem";
 import { ReceiptLink } from "@/components/receipts/receipt-link";
 import { Loader2, ArrowRight } from "lucide-react";
 
 export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
-  const { pm, step, sell, cancel, resumeStep2, waitingReceipt, source, onBuyDone } = flow;
+  const { pm, step, cancel, resumeStep2, waitingReceipt, source, onBuyDone } = flow;
 
   const open = step !== "idle";
 

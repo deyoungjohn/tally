@@ -412,7 +412,9 @@ export function PortfolioPage() {
         </div>
       )}
       {flags.sell === true || flags.switch === true ? (
-        <SellSheet flow={sell} isMigrate={migrate.step === 1} />
+        migrate.step === "idle" || migrate.step === 1 ? (
+          <SellSheet flow={sell} isMigrate={migrate.step === 1} />
+        ) : null
       ) : null}
       {flags.switch === true ? <MigrateSheet flow={migrate} /> : null}
     </main>

@@ -171,30 +171,31 @@ test.describe("Migrate", () => {
       await migrateBtn.click();
 
       // Check sell sheet title
-      await expect(page.getByRole("dialog")).toContainText("Sell NVDAB");
+      await expect(page.getByRole("dialog").filter({ hasText: "Sell NVDAB" })).toBeVisible();
 
       // Check and click through step 1 (Sell)
       await page.getByTestId("sell-all").click();
       await page.getByTestId("sell-confirm").click();
       // In mock wallet it auto-signs tx, then we wait for status
       // Then it moves to interstitial
-      await expect(page.getByRole("dialog")).toContainText("Sold NVDA for 6.99 USDT");
+      await expect(page.getByRole("dialog").filter({ hasText: "Sold NVDA for 6.99 USDT" })).toBeVisible();
 
       // Resume step 2
       await page.getByRole("button", { name: "Buy now" }).click();
 
       // Check buy sheet title
-      await expect(page.getByRole("dialog")).toContainText("Review your buy");
+      await expect(page.getByRole("dialog").filter({ hasText: "Review your buy" })).toBeVisible();
 
       // Confirm buy
       await page.getByTestId("confirm-buy").click();
 
       // Check combined done view
-      await expect(page.getByRole("dialog")).toContainText(
+      const doneDialog = page.getByRole("dialog").filter({ hasText: "Step 1: Sold to USDT" });
+      await expect(doneDialog).toBeVisible();
+      await expect(doneDialog).toContainText(
         /Your .* shares have been migrated to .* using .* USDT/,
       );
-      await expect(page.getByRole("dialog")).toContainText("Step 1: Sold to USDT");
-      await expect(page.getByRole("dialog")).toContainText("Step 2: Bought destination");
+      await expect(doneDialog).toContainText("Step 2: Bought destination");
     });
   });
 });
@@ -301,5 +302,5 @@ test("resumes after reload", async ({ page }) => {
   await page.goto("/portfolio");
 
   // Should auto open interstitial
-  await expect(page.getByRole("dialog")).toContainText("Waiting for the sale to confirm...");
+  await expect(page.getByRole("dialog").filter({ hasText: "Waiting for the sale to confirm..." })).toBeVisible();
 });
