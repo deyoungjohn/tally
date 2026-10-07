@@ -84,7 +84,7 @@ describe("session routes", () => {
       headers: {
         cookie: `walletAddress=${VICTIM}`,
       },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
     const res = await feedGET(req);
     expect(res.status).toBe(200);
