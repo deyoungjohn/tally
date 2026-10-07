@@ -49,7 +49,7 @@ Set `FEATURE_<NAME>=1` in `/etc/tally/tally.env` (only `1` turns a flag on; the 
 | any worker above | `prune` (deletes old snapshots; without it the store grows forever) |
 | `--mcp` | `mcp` |
 
-`FEATURE_SELL` has no worker: it only enables the sell screens and route. `FEATURE_SWITCH` enables the Move entry (guided two-step move between issuers, WO-13) and has no worker. `FEATURE_PIES` and `FEATURE_REWARDS` have none either.
+`FEATURE_SELL` has no worker: it only enables the sell screens and route. `FEATURE_SWITCH` enables the Migrate entry (guided two-step migration between issuers, WO-13) and has no worker. `FEATURE_PIES` and `FEATURE_REWARDS` have none either.
 
 ## Memory (the EC2 has 1.9 GB of RAM and 4 GB of swap)
 

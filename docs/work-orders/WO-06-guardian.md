@@ -57,3 +57,7 @@ Any automatic action (WO-08).
 
 Approved additive: new `apps/web/lib/server/session.ts`, `apps/web/app/api/session/**` (Guardian feed, settings and link-code routes; `active-wallet` registration for the statement worker) and one dependency, `@privy-io/node`, in `apps/web`. The app has no other server-side proof of which wallet a browser owns, so Guardian's per-wallet data and the Telegram link must only use an address the server verified from Privy's own user record. `PRIVY_APP_SECRET` lives only in `/etc/tally/tally.env`. The client side (sending the access token) belongs to WO-12. Full instructions: `docs/prompts/wo06-privy-session.md`.
 
+## Guardian settings write (follow-up, 2026-10-07)
+
+Approved additive: `PUT /api/session/guardian/settings` (session-verified, validated, stored as a new `guardian-settings` snapshot), a validator and saver in `packages/mod-guardian/src/settings.ts` (+ tests and the index export), the route file `apps/web/app/api/session/guardian/settings/route.ts`, `apps/web/modules/guardian/view-model.ts` (optional fields only), and optional `moduleDegraded` and `moduleReason` on the feed and settings view models, filled in the routes. Full instructions: `docs/prompts/wo06-guardian-settings-write.md`.
+

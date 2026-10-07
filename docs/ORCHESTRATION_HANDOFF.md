@@ -55,7 +55,7 @@ Written 2026-10-04 by Claude (chief orchestrator) for **GPT-6 Astra**, who takes
 
 **Ideas queued by the chief engineer (2026-10-05; no plan yet, not scheduled):** customised shareable trade cards that replace the receipt after a trade (buy or sell); recurring buys and sells based on user rules. **ShareGuard asset expansion** is planned in `contracts/README.md` ("Expanding the asset list"), starting after the UI is complete.
 
-**Decisions 2026-10-05 (evening):** BNB payments and BNB-denominated sells are roadmap (see README); the portfolio's coming-soon card must say "Sell to USDT" only; WO-08 not started (reshape or cut after gate V-AW); WO-09 slice A only (logic and view model, flag-off, no UI promised). Order of work after WO-07: sell UI (WO-12), receipts for sells (Agent 07), guided two-step Move (after the UI), demo and README (WO-11, Thu 8).
+**Decisions 2026-10-05 (evening):** BNB payments and BNB-denominated sells are roadmap (see README); the portfolio's coming-soon card must say "Sell to USDT" only; WO-08 not started (reshape or cut after gate V-AW); WO-09 slice A only (logic and view model, flag-off, no UI promised). Order of work after WO-07: sell UI (WO-12), receipts for sells (Agent 07), guided two-step Migrate (after the UI), demo and README (WO-11, Thu 8).
 
 **Agent service (2026-10-06):** the chief engineer wants Tally offered to agents as information plus execution; text in `docs/for-agents.md` and the README; HTTP transport is WO-05 slice C (optional, Thursday only). The blueprint's "Best Use of BNB Agent Studio: not targeted" is reopened as the chief engineer's call; nothing is deployed or claimed. UI wave 3 prompt: `docs/prompts/wo12-modules.md`.
 
