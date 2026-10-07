@@ -18,7 +18,9 @@ const WEB = resolve(__dirname, "..");
 export async function startVmServer(opts: {
   port: number;
   /** "full" seeds statement snapshots and receipts; "none" leaves the store empty and every module never-updated. */
-  seed: "full" | "radar" | "receipts" | "none";
+  seed: "full" | "radar" | "receipts" | "health" | "none";
+  /** With `seed: "health"`: the modules to mark as running. */
+  healthModules?: string[];
   flags?: Record<string, string>;
 }): Promise<VmServer> {
   const dir = mkdtempSync(join(tmpdir(), "tally-vm-e2e-"));
@@ -42,6 +44,21 @@ export async function startVmServer(opts: {
     };
     run(join(WEB, "modules/receipts/seed.ts"), { TALLY_RECEIPT_PREVIEW: "1" });
     run(join(WEB, "e2e/vm-seed.ts"), {});
+  }
+  if (opts.seed === "health") {
+    const r = spawnSync(
+      "pnpm",
+      [
+        "--filter",
+        "@tally/worker",
+        "exec",
+        "tsx",
+        join(WEB, "e2e/health-seed.ts"),
+        ...(opts.healthModules ?? []),
+      ],
+      { env, encoding: "utf8" },
+    );
+    if (r.status !== 0) throw new Error(`seed failed (health-seed): ${r.stderr.slice(0, 300)}`);
   }
   if (opts.seed === "receipts") {
     const r = spawnSync(
