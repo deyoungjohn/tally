@@ -9,6 +9,7 @@ import { TradeFlowLayer } from "./flow-host";
 import { formatUnits, parseUnits } from "viem";
 import { ReceiptLink } from "@/components/receipts/receipt-link";
 import { Loader2, ArrowRight } from "lucide-react";
+import { roundDownToCent } from "@/lib/migrate/state";
 
 export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
   const { pm, step, cancel, resumeStep2, waitingReceipt, source, onBuyDone } = flow;
@@ -61,8 +62,10 @@ export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow>
               <div className="rounded-lg border border-neutral-200 p-4 space-y-2 text-sm">
                 <p>
                   Sold {fromSymbol} for{" "}
-                  {pm.usdtReceived ? formatUnits(BigInt(pm.usdtReceived), 18) : "?"} USDT. Not
-                  bought yet. Your USDT is in your wallet.
+                  {pm.usdtReceived
+                    ? formatUnits(BigInt(roundDownToCent(pm.usdtReceived)), 18)
+                    : "?"}{" "}
+                  USDT. Not bought yet. Your USDT is in your wallet.
                 </p>
                 {source === "wallet" ? (
                   <div className="mt-4">
@@ -104,7 +107,8 @@ export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow>
               <p className="text-sm text-neutral-500 text-center">
                 Your {fromSymbol} shares have been migrated to{" "}
                 {pm.to === "ondo" ? "Ondo" : "bStock"} ({toSymbol}) using{" "}
-                {pm.usdtReceived ? formatUnits(BigInt(pm.usdtReceived), 18) : "?"} USDT.
+                {pm.usdtReceived ? formatUnits(BigInt(roundDownToCent(pm.usdtReceived)), 18) : "?"}{" "}
+                USDT.
               </p>
               <div className="flex justify-center mt-2">
                 <Button onClick={cancel}>Done</Button>
@@ -132,7 +136,7 @@ function MigrateBuyStep({
 
   useEffect(() => {
     if (pm.usdtReceived && buy.phase.name === "idle") {
-      const usd = Number(formatUnits(BigInt(pm.usdtReceived), 18));
+      const usd = Number(formatUnits(BigInt(roundDownToCent(pm.usdtReceived)), 18));
       buy.start({
         ticker: pm.ticker,
         issuer: pm.to,
@@ -148,13 +152,6 @@ function MigrateBuyStep({
       onDone(buy.phase.receipt.txHash);
     }
   }, [buy.phase, onDone]);
-
-  // If the user cancels the buy modal, we abort the migration entirely
-  useEffect(() => {
-    if (buy.phase.name === "idle") {
-      // Wait, we shouldn't automatically cancel if idle because it starts out idle.
-    }
-  }, [buy.phase.name]);
 
   return (
     <div
