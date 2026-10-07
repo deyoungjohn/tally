@@ -122,7 +122,12 @@ export function ReceiptView({
   qualityOn: boolean;
 }) {
   const what = vm.kind === "sell" ? "sale" : vm.kind === "swap" ? "purchase" : "transaction";
-  const title = vm.ticker ? `${nameOf(vm.ticker)} ${what} receipt` : "Transaction receipt";
+  // The token symbol when the view model knows the issuer; the stock's name otherwise (never a bare ticker).
+  const title = vm.symbol
+    ? `${vm.symbol} ${what} receipt`
+    : vm.ticker
+      ? `${nameOf(vm.ticker)} ${what} receipt`
+      : "Transaction receipt";
   const bscscan = vm.evidence.explorerUrl;
   if (vm.state === "empty" || vm.state === "error" || vm.state === "disabled")
     return (
@@ -171,6 +176,11 @@ export function ReceiptView({
           </Tip>
         ) : null}
         <span className="mono text-[13px] text-fg3">{shortHash(vm.txHash)}</span>
+        {vm.issuerTrust === "client-hint" ? (
+          <span className="t-meta text-amber" data-testid="receipt-issuer-note">
+            Issuer {BROWSER_NOTE.toLowerCase()}
+          </span>
+        ) : null}
       </div>
       {vm.reason ? (
         <p className="t-lead mt-3 max-w-[62ch]" data-testid="receipt-reason">

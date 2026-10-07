@@ -59,6 +59,14 @@ export interface RadarCardVM {
     ageMs: number;
     source: string;
     gradeBasis: "engine" | "cleaned flow";
+    /**
+     * Additive. false when a fact the snapshot carries blocks buying (ghost market, paused or unsupported token, unknown
+     * multiplier); null when none of those blocks it but the snapshot cannot say the swap route is open. Never true by guess.
+     */
+    executable?: boolean | null;
+    executableReason?: string | null;
+    /** Additive. The flow module's own cleaned 24h volume for this token, an E18 string; null when flow has none (see flowReason). */
+    cleanedFlowUsd24h?: string | null;
   })[];
   flowPanel: FlowPanelVM | null;
 }
@@ -90,6 +98,16 @@ const empty = (ticker: string, error: string | null = null): FlowPanelVM => ({
   reason: error ? "Flow could not load its snapshots." : "Flow has no observations yet.",
   error,
 });
+
+/** A reason buying is blocked, only from facts the grade and registry already carry; null when none of them blocks it. */
+function blockedReason(grade: RadarGradeSnapshot, token: FlowToken): string | null {
+  if (grade.ghost) return "Almost no trading: a ghost market";
+  const flags = grade.integrity?.flags ?? [];
+  if (flags.includes("paused")) return "The issuer has paused this token";
+  if (flags.includes("unsupported")) return "This token is not supported";
+  if (token.multiplier <= 0n) return "The share count of this token is unknown";
+  return null;
+}
 
 /** All data comes from the shared snapshot store. No engine/network calls on the UI path. */
 export async function loadFlow(ticker = "NVDA", options: LoadOptions = {}): Promise<FlowPanelVM> {
@@ -181,16 +199,16 @@ export async function loadRadar(
       if (!snapshot) continue;
       let grade = snapshot.data;
       let gradeBasis: "engine" | "cleaned flow" = "engine";
+      let cleanedFlowUsd24h: string | null = null;
       if (flowEnabled && grade.flowActive !== false) {
         const flow = store.latest<FlowSnapshot>("flow", token.address.toLowerCase(), {
           maxAgeMs: FLOW_MAX_AGE_MS,
           now,
         });
         if (flow && grade.integrity) {
-          const integrity = extendIntegrity(
-            grade.integrity,
-            ghostInput(aggregateFlow(flow.data, now), flow.stale),
-          );
+          const aggregate = aggregateFlow(flow.data, now);
+          cleanedFlowUsd24h = aggregate.windows["24h"].realVolumeUsd?.toString() ?? null;
+          const integrity = extendIntegrity(grade.integrity, ghostInput(aggregate, flow.stale));
           grade = {
             ...grade,
             integrity,
@@ -216,8 +234,16 @@ export async function loadRadar(
       )
         continue;
       const card = cards.get(token.ticker) ?? { ticker: token.ticker, grades: [], flowPanel: null };
+      const blocked = blockedReason(grade, token);
       card.grades.push({
         ...grade,
+        ...(blocked
+          ? { executable: false, executableReason: blocked }
+          : {
+              executable: null,
+              executableReason: "Radar does not record whether this token's swap route is open",
+            }),
+        cleanedFlowUsd24h,
         gradeBasis,
         stale: snapshot.stale,
         ageMs: snapshot.ageMs,

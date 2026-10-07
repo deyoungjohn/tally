@@ -1,4 +1,5 @@
 import { formatUnits } from "@tally/core";
+import { tokenSymbol } from "../../lib/tickers";
 import { openStore, type Latest, type SnapshotStore } from "@tally/modkit";
 import {
   HINT_KIND,
@@ -11,6 +12,11 @@ import {
   type ReceiptStatus,
 } from "@tally/mod-receipts";
 
+/** What the receipts view model needs from a registry snapshot to name a token's issuer: an address and who issues it. */
+export interface RegistryToken {
+  address: string;
+  issuer: "ondo" | "bstock" | "xstocks";
+}
 export interface Freshness {
   stale: boolean;
   ageMs: number | null;
@@ -28,10 +34,18 @@ export interface ReceiptVM extends Freshness {
   user: string | null;
   kind: "swap" | "approval" | "sell" | "stock_approval" | null;
   status: ReceiptStatus | null;
+  /** Additive. The token's symbol (for example NVDAB), or null when the issuer or ticker is not known. Never guessed. */
+  symbol?: string | null;
+  /** Additive. Who issues the token: from the verified stock address against the registry snapshot, else from the browser hint. */
+  issuer?: "ondo" | "bstock" | "xstocks" | null;
+  /** Additive. "verified" when the issuer came from the registry, "client-hint" when only the browser said so, null when unknown. */
+  issuerTrust?: "verified" | "client-hint" | null;
   ladder: {
     stage: "Quoted" | "Simulated" | "Received";
     tokens: string | null;
     shares: string | null;
+    /** Additive. What the `tokens` field of this stage holds: stock tokens or USDT. Absent when the stage has no amount. */
+    unit?: "tokens" | "usdt";
     reason: string | null;
     source: string;
   }[];
@@ -77,6 +91,9 @@ const empty = (
   observedAt: null,
   intentId: null,
   ticker: null,
+  symbol: null,
+  issuer: null,
+  issuerTrust: null,
   user: null,
   kind: null,
   status: null,
@@ -104,7 +121,43 @@ const empty = (
     explorerUrl: /^0x[\da-f]{64}$/i.test(hash) ? `https://bscscan.com/tx/${hash}` : null,
   },
 });
-export function receiptVM(snapshot: Latest<StoredReceipt>): ReceiptVM {
+/** Registry snapshots the flow module writes; the address-to-issuer map never changes meaning, so a stale one still names an issuer. */
+function readRegistry(store: SnapshotStore, now: number): RegistryToken[] {
+  const week = 7 * 86_400_000;
+  for (const kind of ["radar-registry", "flow-registry"])
+    try {
+      const row = store.latest<RegistryToken[]>(kind, "bsc", { maxAgeMs: week, now });
+      if (row?.data.length) return row.data;
+    } catch {
+      /* the registry is optional: without it the issuer falls back to the browser hint */
+    }
+  return [];
+}
+function issuerOf(
+  verifiedStock: string | null | undefined,
+  hintQuote: { stock: string; issuer: "ondo" | "bstock" } | null | undefined,
+  registry: readonly RegistryToken[],
+): Pick<ReceiptVM, "issuer" | "issuerTrust"> {
+  const hit = verifiedStock
+    ? registry.find((t) => t.address.toLowerCase() === verifiedStock.toLowerCase())
+    : undefined;
+  if (hit) return { issuer: hit.issuer, issuerTrust: "verified" };
+  if (hintQuote) return { issuer: hintQuote.issuer, issuerTrust: "client-hint" };
+  return { issuer: null, issuerTrust: null };
+}
+function receiptToken(
+  ticker: string | null,
+  verifiedStock: string | null | undefined,
+  hintQuote: { stock: string; issuer: "ondo" | "bstock" } | null | undefined,
+  registry: readonly RegistryToken[],
+): Pick<ReceiptVM, "symbol" | "issuer" | "issuerTrust"> {
+  const who = issuerOf(verifiedStock, hintQuote, registry);
+  return { ...who, symbol: ticker && who.issuer ? tokenSymbol(ticker, who.issuer) : null };
+}
+export function receiptVM(
+  snapshot: Latest<StoredReceipt>,
+  registry: readonly RegistryToken[] = [],
+): ReceiptVM {
   const d = snapshot.data,
     r = d.receipt,
     result = d.result;
@@ -139,6 +192,12 @@ export function receiptVM(snapshot: Latest<StoredReceipt>): ReceiptVM {
     kind: d.kind,
     intentId: d.hint.intentId,
     ticker: r?.intent.ticker ?? null,
+    ...receiptToken(
+      r?.intent.ticker ?? null,
+      result?.guarded?.stock ?? (d.kind === "sell" ? r?.intent.spend.asset : r?.intent.asset),
+      d.hint.quote,
+      registry,
+    ),
     user: d.transaction.sender,
     stale: snapshot.stale,
     ageMs: snapshot.ageMs,
@@ -176,6 +235,7 @@ export function receiptVM(snapshot: Latest<StoredReceipt>): ReceiptVM {
           ? [
               {
                 stage: "Quoted",
+                unit: "tokens",
                 tokens:
                   d.hint.quote && "tokensIn" in d.hint.quote
                     ? formatUnits(BigInt(d.hint.quote.tokensIn), 18)
@@ -194,6 +254,7 @@ export function receiptVM(snapshot: Latest<StoredReceipt>): ReceiptVM {
               },
               {
                 stage: "Received",
+                unit: "usdt",
                 tokens:
                   receivedTokens === null || receivedTokens === undefined
                     ? null
@@ -214,6 +275,7 @@ export function receiptVM(snapshot: Latest<StoredReceipt>): ReceiptVM {
           : [
               {
                 stage: "Quoted",
+                unit: "tokens",
                 tokens: quote
                   ? formatUnits(quote.expectedOut.raw, quote.expectedOut.decimals)
                   : null,
@@ -227,6 +289,7 @@ export function receiptVM(snapshot: Latest<StoredReceipt>): ReceiptVM {
               },
               {
                 stage: "Simulated",
+                unit: "tokens",
                 tokens: r?.simulation
                   ? formatUnits(r.simulation.expectedOut.raw, r.simulation.expectedOut.decimals)
                   : null,
@@ -239,6 +302,7 @@ export function receiptVM(snapshot: Latest<StoredReceipt>): ReceiptVM {
               },
               {
                 stage: "Received",
+                unit: "tokens",
                 tokens:
                   receivedTokens === null || receivedTokens === undefined
                     ? null
@@ -265,9 +329,15 @@ export function receiptVM(snapshot: Latest<StoredReceipt>): ReceiptVM {
     },
   };
 }
-export function hintVM(snapshot: Latest<StoredHint>): ReceiptVM {
+export function hintVM(
+  snapshot: Latest<StoredHint>,
+  registry: readonly RegistryToken[] = [],
+): ReceiptVM {
+  const quote = snapshot.data.hint.quote;
   return {
     ...empty(snapshot.data.hint.txHash, "pending", snapshot.data.reason),
+    // A hint is the browser's word only: its issuer is never "verified", whatever the registry says.
+    ...receiptToken(snapshot.data.hint.ticker, null, quote, registry),
     observedAt: new Date(snapshot.observedAt).toISOString(),
     status: "PENDING",
     intentId: snapshot.data.hint.intentId,
@@ -295,12 +365,13 @@ export async function loadReceipt(
       maxAgeMs: RECEIPT_MAX_AGE_MS,
       now,
     });
-    if (snapshot) return receiptVM(snapshot);
+    const registry = readRegistry(store, now);
+    if (snapshot) return receiptVM(snapshot, registry);
     const hint = selectReceiptHints(
       store.listLatest<StoredHint>(HINT_KIND, { maxAgeMs: RECEIPT_MAX_AGE_MS, now, limit: 1000 }),
       now,
     ).find((s) => s.data.hint.txHash === key);
-    return hint ? hintVM(hint) : empty(key);
+    return hint ? hintVM(hint, registry) : empty(key);
   } catch {
     (options.onWarn ?? console.warn)("Receipt snapshot unavailable; details withheld");
     return empty(hash, "error", "Snapshot store unavailable");
@@ -332,12 +403,13 @@ export async function loadReceipts(
     const opts = { maxAgeMs: RECEIPT_MAX_AGE_MS, now, limit: 1000 };
     const receipts = store.listLatest<StoredReceipt>(RECEIPTS_KIND, opts),
       hints = store.listLatest<StoredHint>(HINT_KIND, opts);
-    const items = new Map(receipts.map((s) => [s.key, receiptVM(s)]));
+    const registry = readRegistry(store, now);
+    const items = new Map(receipts.map((s) => [s.key, receiptVM(s, registry)]));
     const walletHints = options.wallet
       ? hints.filter((h) => h.data.hint.user.toLowerCase() === options.wallet!.toLowerCase())
       : hints;
     for (const h of selectReceiptHints(walletHints, now))
-      if (!items.has(h.data.hint.txHash)) items.set(h.data.hint.txHash, hintVM(h));
+      if (!items.has(h.data.hint.txHash)) items.set(h.data.hint.txHash, hintVM(h, registry));
     const list = [...items.values()].filter(
       (r) => !options.wallet || r.user?.toLowerCase() === options.wallet.toLowerCase(),
     );
