@@ -73,7 +73,7 @@ async function main() {
         reason: "Awaiting a mined receipt; transaction hash retained",
       } satisfies StoredHint,
     });
-    for (const module of ["receipts", "quality"] as const)
+    for (const module of ["receipts", "quality", "statement"] as const)
       store.health.report(module, { ok: true, now, intervalMs: 15_000 });
   } finally {
     store.close();

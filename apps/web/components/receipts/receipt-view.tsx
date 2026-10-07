@@ -8,7 +8,7 @@ import Link from "next/link";
 import { ButtonLink } from "@/components/motion/button";
 import { Tip } from "@/components/ui/tooltip";
 import { shortHash } from "@/lib/format";
-import { tokenPair } from "@/lib/tickers";
+import { nameOf } from "@/lib/tickers";
 import type { ReceiptVM } from "@/modules/receipts/view-model";
 import { VmEmpty, VmFreshness, ageText } from "@/components/portfolio/vm-shared";
 
@@ -50,6 +50,14 @@ function fmtE18(raw: string | null): string | null {
   return `${n / 10n ** 18n}${frac ? `.${frac}` : ""}`;
 }
 
+/** A decimal string cut to at most six places (the view model sends all eighteen); never rounds up. */
+const dec = (v: string | null) => {
+  if (v === null) return null;
+  const [i, f = ""] = v.split(".");
+  const cut = f.slice(0, 6).replace(/0+$/, "");
+  return cut ? `${i}.${cut}` : (i ?? v);
+};
+
 const bps = (v: number | null) =>
   v === null ? null : `${v > 0 ? "+" : ""}${(v / 100).toFixed(2)}%`;
 
@@ -67,7 +75,7 @@ function Step({
   const fromBrowser = stage.stage === "Quoted" && stage.source === "client-reported quote";
   const unit = sell && stage.stage === "Received" ? "USDT" : sell ? "tokens offered" : "shares";
   // Sells ladder in tokens (and USDT), buys in shares.
-  const main = sell ? stage.tokens : stage.shares;
+  const main = dec(sell ? stage.tokens : stage.shares);
   return (
     <li
       className="panel list-none p-4"
@@ -90,7 +98,7 @@ function Step({
               <span className="text-fg2">{unit}</span>
             </p>
           )}
-          {!sell && stage.tokens ? <p className="t-meta">{stage.tokens} tokens</p> : null}
+          {!sell && stage.tokens ? <p className="t-meta">{dec(stage.tokens)} tokens</p> : null}
           {fromBrowser ? (
             <p className="t-meta mt-1 text-amber" data-testid="receipt-browser-note">
               {BROWSER_NOTE}
@@ -113,7 +121,8 @@ export function ReceiptView({
   fixtures: boolean;
   qualityOn: boolean;
 }) {
-  const title = vm.ticker ? `${tokenPair(vm.ticker)} receipt` : "Transaction receipt";
+  const what = vm.kind === "sell" ? "sale" : vm.kind === "swap" ? "purchase" : "transaction";
+  const title = vm.ticker ? `${nameOf(vm.ticker)} ${what} receipt` : "Transaction receipt";
   const bscscan = vm.evidence.explorerUrl;
   if (vm.state === "empty" || vm.state === "error" || vm.state === "disabled")
     return (
@@ -143,7 +152,7 @@ export function ReceiptView({
   const status = vm.status ? STATUS[vm.status] : null;
   const sell = vm.kind === "sell";
   const trusted = vm.comparisonTrust === "recorded";
-  const minimum = vm.signedMinimumShares;
+  const minimum = sell ? vm.signedMinimumShares : dec(vm.signedMinimumShares);
   const multiplier = fmtE18(vm.evidence.multiplier);
   const diffQuote = bps(vm.diffVsQuoteBps);
   const diffSim = bps(vm.diffVsSimBps);

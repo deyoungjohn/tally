@@ -20,13 +20,17 @@ export default async function Page({ params }: { params: Promise<{ txHash: strin
       <ModuleBoundary
         module="receipts"
         fallback={<VmDegraded name="Receipts" reason={null} ageMs={null} />}
-        load={async () => (
-          <ReceiptView
-            vm={await loadReceipt(txHash)}
-            fixtures={fixtures}
-            qualityOn={flags.quality}
-          />
-        )}
+        load={async () => {
+          const vm = await loadReceipt(txHash);
+          // The contract address stays out of the page (and out of its data payload); the screen does not show it.
+          return (
+            <ReceiptView
+              vm={{ ...vm, evidence: { ...vm.evidence, guard: null } }}
+              fixtures={fixtures}
+              qualityOn={flags.quality}
+            />
+          );
+        }}
       />
     </main>
   );

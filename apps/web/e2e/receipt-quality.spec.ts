@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { recordedHint } from "../../../packages/mod-receipts/src/fixtures/ingestion";
 import { startVmServer, type VmServer } from "./vm-server";
 
@@ -24,7 +24,7 @@ test.describe("receipt and quality pages: real server, signed out", () => {
     server = await startVmServer({
       port: 3105,
       seed: "receipts",
-      flags: { FEATURE_RECEIPTS: "1", FEATURE_QUALITY: "1" },
+      flags: { FEATURE_RECEIPTS: "1", FEATURE_QUALITY: "1", FEATURE_STATEMENT: "1" },
     });
   });
   test.afterAll(() => server?.stop());
@@ -33,7 +33,9 @@ test.describe("receipt and quality pages: real server, signed out", () => {
     page,
   }) => {
     await page.goto(`${server.url}/receipt/${BUY_HASH}`);
-    await expect(page.getByTestId("receipt-title")).toContainText("NVDAB", { timeout: 20_000 });
+    await expect(page.getByTestId("receipt-title")).toContainText("purchase receipt", {
+      timeout: 20_000,
+    });
     for (const s of ["Quoted", "Simulated", "Received"])
       await expect(page.getByTestId(`receipt-step-${s}`)).toBeVisible();
     await expect(page.getByTestId("receipt-status")).toBeVisible();
@@ -64,7 +66,8 @@ test.describe("receipt and quality pages: real server, signed out", () => {
       timeout: 20_000,
     });
     await expect(page.getByTestId("receipt-status")).toContainText("Pending");
-    await expect(page.getByTestId("receipt-step-reason-Received")).toContainText("Unavailable");
+    // Known only from a browser hint: no ladder and no amounts are claimed.
+    await expect(page.getByTestId("receipt-step-Received")).toHaveCount(0);
   });
 
   test("an unknown hash is an honest empty page, a bad hash is refused in words", async ({
@@ -85,12 +88,9 @@ test.describe("receipt and quality pages: real server, signed out", () => {
     page,
   }) => {
     await page.goto(`${server.url}/quality`);
-    await expect(page.getByTestId("quality-counts")).toContainText(
-      "pending attempts are excluded",
-      {
-        timeout: 20_000,
-      },
-    );
+    await expect(page.getByTestId("quality-counts")).toContainText("Pending attempts excluded", {
+      timeout: 20_000,
+    });
     await expect(page.getByTestId("quality-insufficient")).toContainText("fewer than 5");
     await expect(page.getByTestId("vm-fixture-label")).toContainText("not live");
     expect(await page.locator("body").innerText()).not.toMatch(GUARD);

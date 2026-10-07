@@ -42,9 +42,9 @@ export function QualityView({ vm, fixtures }: { vm: QualityVM; fixtures: boolean
   return (
     <>
       <p className="t-meta" data-testid="quality-counts">
-        {vm.pendingCount} pending attempts are excluded ({vm.unverifiedPendingCount} awaiting chain
-        verification). {r.unverifiedComparisonCount} comparisons reported by browsers are excluded
-        from these statistics.
+        Pending attempts excluded: {vm.pendingCount} ({vm.unverifiedPendingCount} awaiting chain
+        verification). Comparisons reported by browsers, excluded from these statistics:{" "}
+        {r.unverifiedComparisonCount}.
       </p>
       {vm.insufficient ? (
         <p
@@ -88,7 +88,9 @@ export function QualityView({ vm, fixtures }: { vm: QualityVM; fixtures: boolean
               <Row
                 key={row.routeLength ?? "unknown"}
                 label={
-                  row.routeLength === null ? "Unknown route length" : `${row.routeLength} hops`
+                  row.routeLength === null
+                    ? "Unknown route length"
+                    : `${row.routeLength} ${row.routeLength === 1 ? "hop" : "hops"}`
                 }
                 row={row}
               />
