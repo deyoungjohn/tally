@@ -151,7 +151,11 @@ export function HomeTradeCard() {
       <div className="mt-3">
         <ComingSoon
           title="Coming soon"
-          items={["Sell to USDT", "Sell to BNB", "Migrate between issuers"]}
+          items={
+            flags?.switch === true
+              ? ["Sell to USDT", "Sell to BNB"]
+              : ["Sell to USDT", "Sell to BNB", "Migrate between issuers"]
+          }
         />
       </div>
       <p className="t-meta mt-3">

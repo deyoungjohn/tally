@@ -313,7 +313,11 @@ function TradeInner({
               </p>
             ) : null}
             <ComingSoon
-              items={["Sell to USDT", "Limit price", "Recurring buys"]}
+              items={
+                flags.switch === true
+                  ? ["Sell to USDT", "Limit price", "Recurring buys"]
+                  : ["Migrate between issuers", "Sell to USDT", "Limit price"]
+              }
               title="Advanced · coming soon"
             />
           </div>

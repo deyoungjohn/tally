@@ -1,84 +1,77 @@
 import { describe, expect, it } from "vitest";
-import { loadSellSheet, loadSwitch, loadSwitchSheet } from "./view-model";
+import { loadMigrate, loadMigrateSheet } from "./view-model";
 
-describe("switch module view models", () => {
-  it("empty switch view model explains missing observations and never claims a live source", async () => {
-    expect(await loadSwitch()).toEqual({
-      state: "empty",
-      stale: false,
-      ageMs: null,
-      source: null,
-      reason: "Switch has no observations yet.",
-      error: null,
+describe("migrate module view models", () => {
+  it("empty migrate view model explains missing observations", async () => {
+    expect(await loadMigrate()).toEqual({
+      reason: "Migrate has no observations yet.",
     });
   });
 
-  it("empty sell sheet returns honest empty state without invented numbers", async () => {
-    const vm = await loadSellSheet();
+  it("empty migrate sheet returns honest empty state", async () => {
+    const vm = await loadMigrateSheet();
     expect(vm.state).toBe("empty");
-    expect(vm.availabilityReason).toBe(
-      "A sell plan needs a live quote; open a sell from the Portfolio.",
-    );
-    expect(vm.sharesIn).toBe("0");
-    expect(vm.quotedUsdtOut).toBe("0");
-    expect(vm.minUsdtFloor).toBe("0");
-    expect(vm.source).toBeNull();
+    expect(vm.eligible).toBe(true);
+    expect(vm.availabilityReason).toBeNull();
+    expect(vm.sharesIn).toBeNull();
   });
 
-  it("sell sheet with params preserves honest empty state", async () => {
-    const vm = await loadSellSheet({
+  it("migrate sheet with ineligible xstocks source is blocked", async () => {
+    const vm = await loadMigrateSheet({
       ticker: "NVDA",
-      issuer: "bstock",
-      shares: 0.025,
-      user: "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
+      fromIssuer: "xstocks",
+      user: "0x123",
     });
 
     expect(vm.state).toBe("empty");
-    expect(vm.ticker).toBe("NVDA");
-    expect(vm.issuer).toBe("bstock");
-    expect(vm.symbol).toBe("NVDAB");
-    expect(vm.minUsdtFloor).toBe("0");
-    expect(vm.quotedUsdtOut).toBe("0");
-    expect(vm.source).toBeNull();
-    expect(vm.error).toBeNull();
+    expect(vm.eligible).toBe(false);
+    expect(vm.availabilityReason).toBe("No market to exit this token on BNB Chain");
   });
 
-  it("max sell sheet retains raw token balance in honest empty state", async () => {
-    const vm = await loadSellSheet({
-      ticker: "NVDA",
-      issuer: "bstock",
-      max: true,
-      rawBalance: "49999999999999999",
-      user: "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
+  it("migrate sheet with unbuyable destination is blocked", async () => {
+    const vm = await loadMigrateSheet({
+      ticker: "NFLX", // Netflix is in COMPARE_ONLY_TICKERS
+      fromIssuer: "ondo",
+      toIssuer: "bstock",
+      user: "0x123",
     });
 
     expect(vm.state).toBe("empty");
-    expect(vm.isMax).toBe(true);
-    expect(vm.tokensIn).toBe("49999999999999999");
-    expect(vm.source).toBeNull();
+    expect(vm.eligible).toBe(false);
+    expect(vm.availabilityReason).toBe("NFLX can't be bought through Tally yet.");
   });
 
-  it("switch sheet returns honest empty state explaining upstream pair limitation without claiming false atomicity", async () => {
-    const emptyVm = await loadSwitchSheet();
-    expect(emptyVm.state).toBe("empty");
-    expect(emptyVm.availabilityReason).toContain("code 40368");
-    expect(emptyVm.sharesIn).toBe("0");
-    expect(emptyVm.sharesOut).toBe("0");
-    expect(emptyVm.source).toBeNull();
-
-    const vm = await loadSwitchSheet({
+  it("migrate sheet under 6 USDT is blocked", async () => {
+    const vm = await loadMigrateSheet({
       ticker: "NVDA",
       fromIssuer: "ondo",
       toIssuer: "bstock",
-      shares: 0.026,
-      user: "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
+      sellQuotedUsdt: "5999999999999999999",
+      user: "0x123",
     });
 
     expect(vm.state).toBe("empty");
-    expect(vm.twoStepRequired).toBe(false);
-    expect(vm.directRoute).toBe(false);
-    expect(vm.availabilityReason).toContain("code 40368");
-    expect(vm.destinationFloorShares).toBe("0");
-    expect(vm.source).toBeNull();
+    expect(vm.eligible).toBe(false);
+    expect(vm.availabilityReason).toBe(
+      "Too small to migrate: the buy needs at least 6 USDT. You can sell to USDT instead.",
+    );
+  });
+
+  it("migrate sheet ready with valid params", async () => {
+    const vm = await loadMigrateSheet({
+      ticker: "NVDA",
+      fromIssuer: "ondo",
+      toIssuer: "bstock",
+      sellQuotedUsdt: "6500000000000000000",
+      user: "0x123",
+      shares: 10,
+    });
+
+    expect(vm.state).toBe("ready");
+    expect(vm.eligible).toBe(true);
+    expect(vm.availabilityReason).toBeNull();
+    expect(vm.fromSymbol).toBe("NVDAon");
+    expect(vm.toSymbol).toBe("NVDAB");
+    expect(vm.sharesIn).toBe("10");
   });
 });

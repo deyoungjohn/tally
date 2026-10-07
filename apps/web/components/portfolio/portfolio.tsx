@@ -9,6 +9,8 @@ import { ComingSoon } from "@/components/trade/coming-soon";
 import { GradeBadge, TokenLogo } from "@/components/trade/badges";
 import { SellSheet } from "@/components/trade/sell-sheet";
 import { useSellFlow } from "@/components/trade/use-sell-flow";
+import { MigrateSheet } from "@/components/trade/migrate-sheet";
+import { useMigrateFlow } from "@/components/trade/use-migrate-flow";
 import { useModuleFlagsState } from "@/lib/hooks/use-flags";
 import { PortfolioVmPanel } from "./portfolio-vm";
 import { useTallyWallet } from "@/components/wallet/wallet-context";
@@ -27,11 +29,13 @@ export function HoldingGroup({
   g,
   example,
   onSell,
+  onMigrate,
 }: {
   g: Group;
   example?: boolean;
   /** Present only when selling is switched on and this is the signed-in wallet's own portfolio. xStocks tokens get no Sell action. */
   onSell?: (p: Part) => void;
+  onMigrate?: (p: Part) => void;
 }) {
   return (
     <li className="panel list-none p-5" data-testid={`group-${g.ticker}`}>
@@ -96,23 +100,46 @@ export function HoldingGroup({
                       variant="glassy"
                       className="!h-9 !px-4 text-[14.5px]"
                       disabled
-                      aria-label={`Sell ${p.symbol} (below the $${MIN_SELL_USDT} minimum sale)`}
+                      aria-label={`Sell ${p.symbol} (below the ${MIN_SELL_USDT} minimum sale)`}
                       data-testid={`sell-${p.symbol}`}
                     >
                       Sell
                     </Button>
+                    {onMigrate && p.issuer !== "xstocks" ? (
+                      <Button
+                        variant="glassy"
+                        className="!h-9 !px-4 text-[14.5px] ml-2"
+                        disabled
+                        aria-label="Migrate (disabled)"
+                      >
+                        Migrate
+                      </Button>
+                    ) : null}
                   </span>
                 </Tip>
               ) : (
-                <Button
-                  variant="glassy"
-                  className="!h-9 !px-4 text-[14.5px]"
-                  onClick={() => onSell(p)}
-                  aria-label={`Sell ${p.symbol}`}
-                  data-testid={`sell-${p.symbol}`}
-                >
-                  Sell
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="glassy"
+                    className="!h-9 !px-4 text-[14.5px]"
+                    onClick={() => onSell(p)}
+                    aria-label={`Sell ${p.symbol}`}
+                    data-testid={`sell-${p.symbol}`}
+                  >
+                    Sell
+                  </Button>
+                  {onMigrate && p.issuer !== "xstocks" ? (
+                    <Button
+                      variant="glassy"
+                      className="!h-9 !px-4 text-[14.5px]"
+                      onClick={() => onMigrate(p)}
+                      aria-label={`Migrate ${p.symbol}`}
+                      data-testid={`migrate-${p.symbol}`}
+                    >
+                      Migrate
+                    </Button>
+                  ) : null}
+                </div>
               )
             ) : null}
           </li>
@@ -186,11 +213,13 @@ export function PortfolioPage() {
 
   // Selling: behind FEATURE_SELL (read through /api/modules/health), and only on the signed-in wallet's own holdings.
   const sell = useSellFlow();
+  const migrate = useMigrateFlow();
   const own =
     wallet.authenticated &&
     !!wallet.address &&
     address?.toLowerCase() === wallet.address.toLowerCase();
   const canSell = flags.sell === true && own;
+  const canMigrate = flags.switch === true && own;
   const [confirmedSales, setConfirmedSales] = useState(0);
   useEffect(() => {
     if (sell.phase.name === "confirmed") {
@@ -262,6 +291,21 @@ export function PortfolioPage() {
         <PortfolioVmPanel
           address={address}
           refreshKey={confirmedSales}
+          onMigrate={
+            canMigrate
+              ? (p) =>
+                  void migrate.open(
+                    {
+                      ticker: p.ticker,
+                      issuer: p.issuer as "ondo" | "bstock",
+                      symbol: p.symbol,
+                      probeShares: p.shares,
+                      probeUsd: p.valueUsd,
+                    },
+                    p.issuer === "ondo" ? "bstock" : "ondo",
+                  )
+              : undefined
+          }
           onSell={canSell ? (t) => void sell.open(t) : undefined}
         />
       ) : (
@@ -345,6 +389,7 @@ export function PortfolioPage() {
         </div>
       )}
       {flags.sell === true ? <SellSheet flow={sell} /> : null}
+      {flags.switch === true ? <MigrateSheet flow={migrate} /> : null}
     </main>
   );
 }

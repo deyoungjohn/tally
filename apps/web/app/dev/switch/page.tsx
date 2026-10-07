@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { SwitchPlain } from "../../../modules/switch/plain";
+import { MigratePlain } from "../../../modules/switch/plain";
 
 export const dynamic = "force-dynamic";
 
@@ -13,8 +13,8 @@ export default async function SwitchPreview() {
 
   return (
     <main id="main">
-      <h1>Sell & Switch preview</h1>
-      <SwitchPlain />
+      <h1>Migrate preview</h1>
+      <MigratePlain />
     </main>
   );
 }
