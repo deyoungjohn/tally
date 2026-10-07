@@ -66,10 +66,12 @@ function TabBody<T extends { state: string; reason?: string | null; error: strin
 export function PortfolioVmPanel({
   address,
   onSell,
+  onMigrate,
   refreshKey,
 }: {
   address: string;
   onSell?: (t: SellTarget) => void;
+  onMigrate?: (t: SellTarget, toIssuer: "ondo" | "bstock") => void;
   /** Changes when something happened that may have moved the holdings (a sale confirmed): refetch. */
   refreshKey?: number;
 }) {
@@ -129,7 +131,7 @@ export function PortfolioVmPanel({
           >
             {(v) => (
               <>
-                <HoldingsVm vm={v} onSell={onSell} />
+                <HoldingsVm vm={v} onSell={onSell} onMigrate={onMigrate} />
               </>
             )}
           </TabBody>

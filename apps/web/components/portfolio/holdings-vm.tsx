@@ -8,7 +8,7 @@ import { TokenLogo } from "@/components/trade/badges";
 import type { SellTarget } from "@/components/trade/use-sell-flow";
 import { Tip } from "@/components/ui/tooltip";
 import { ISSUER_LABEL } from "@/lib/format";
-import { nameOf } from "@/lib/tickers";
+import { isBuyable, nameOf } from "@/lib/tickers";
 import type {
   HeadlineHoldingVM,
   IssuerHoldingVM,
@@ -23,10 +23,12 @@ function IssuerRow({
   h,
   ticker,
   onSell,
+  onMigrate,
 }: {
   h: IssuerHoldingVM;
   ticker: string;
   onSell?: (t: SellTarget) => void;
+  onMigrate?: (t: SellTarget, toIssuer: "ondo" | "bstock") => void;
 }) {
   const sharesKnown = h.balanceShares !== "unavailable";
   const worth = Number.parseFloat(h.valueUsd);
@@ -37,7 +39,8 @@ function IssuerRow({
   const tooSmall = Number.isFinite(worth) && worth < MIN_SELL_USDT;
   // The view model's own row-action metadata says what a row action acts on (token, issuer, balance, ticker).
   const action = h.rowActionsSlot;
-  const open = () =>
+  
+  const openSell = () =>
     onSell?.({
       ticker: action.ticker ?? ticker,
       issuer: action.issuer as "ondo" | "bstock",
@@ -46,6 +49,19 @@ function IssuerRow({
       probeShares: Number.parseFloat(action.balanceShares ?? "0"),
       probeUsd: Number.isFinite(worth) ? worth : null,
     });
+    
+  const openMigrate = () =>
+    onMigrate?.(
+      {
+        ticker: action.ticker ?? ticker,
+        issuer: action.issuer as "ondo" | "bstock",
+        symbol: h.tokenSymbol,
+        probeShares: Number.parseFloat(action.balanceShares ?? "0"),
+        probeUsd: Number.isFinite(worth) ? worth : null,
+      },
+      action.issuer === "ondo" ? "bstock" : "ondo"
+    );
+
   return (
     <li
       className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-[14px] bg-white/[0.03] px-3 py-2 text-[14.5px]"
@@ -83,40 +99,93 @@ function IssuerRow({
       {h.convertedAtTodaysRatio ? (
         <span className="t-meta w-full">Converted at today&apos;s share ratio.</span>
       ) : null}
-      {sellable ? (
-        tooSmall ? (
-          <Tip
-            text={`This holding is worth ${usd(h.valueUsd)}, below the $${MIN_SELL_USDT} minimum sale.`}
-          >
-            <span className="inline-flex">
+      
+      {onSell || onMigrate ? (
+        <div className="flex gap-2">
+          {sellable ? (
+            tooSmall ? (
+              <Tip
+                text={`This holding is worth ${usd(h.valueUsd)}, below the $${MIN_SELL_USDT} minimum sale.`}
+              >
+                <span className="inline-flex">
+                  <Button
+                    variant="glassy"
+                    className="!h-9 !px-4 text-[14.5px]"
+                    disabled
+                    aria-label={`Sell ${h.tokenSymbol} (below the $${MIN_SELL_USDT} minimum sale)`}
+                    data-testid={`sell-${h.tokenSymbol}`}
+                  >
+                    Sell
+                  </Button>
+                </span>
+              </Tip>
+            ) : (
               <Button
                 variant="glassy"
                 className="!h-9 !px-4 text-[14.5px]"
-                disabled
-                aria-label={`Sell ${h.tokenSymbol} (below the $${MIN_SELL_USDT} minimum sale)`}
+                onClick={openSell}
+                aria-label={`Sell ${h.tokenSymbol}`}
                 data-testid={`sell-${h.tokenSymbol}`}
               >
                 Sell
               </Button>
-            </span>
-          </Tip>
-        ) : (
-          <Button
-            variant="glassy"
-            className="!h-9 !px-4 text-[14.5px]"
-            onClick={open}
-            aria-label={`Sell ${h.tokenSymbol}`}
-            data-testid={`sell-${h.tokenSymbol}`}
-          >
-            Sell
-          </Button>
-        )
+            )
+          ) : null}
+          
+          {onMigrate ? (() => {
+            let reason: string | null = null;
+            if (action.issuer === "xstocks") {
+              reason = "No market to exit this token on BNB Chain";
+            } else if (!isBuyable(action.ticker ?? ticker)) {
+              reason = `${action.ticker ?? ticker} can't be bought through Tally yet.`;
+            } else if (tooSmall) {
+              reason = "Too small to migrate: the buy needs at least 6 USDT. You can sell to USDT instead.";
+            }
+
+            if (reason) {
+              return (
+                <Tip text={reason}>
+                  <span className="inline-flex">
+                    <Button
+                      variant="glassy"
+                      className="!h-9 !px-4 text-[14.5px]"
+                      disabled
+                      aria-label="Migrate (disabled)"
+                      data-testid={`migrate-${h.tokenSymbol}`}
+                    >
+                      Migrate
+                    </Button>
+                  </span>
+                </Tip>
+              );
+            }
+            return (
+              <Button
+                variant="glassy"
+                className="!h-9 !px-4 text-[14.5px]"
+                onClick={openMigrate}
+                aria-label={`Migrate ${h.tokenSymbol}`}
+                data-testid={`migrate-${h.tokenSymbol}`}
+              >
+                Migrate
+              </Button>
+            );
+          })() : null}
+        </div>
       ) : null}
     </li>
   );
 }
 
-function Group({ g, onSell }: { g: HeadlineHoldingVM; onSell?: (t: SellTarget) => void }) {
+function Group({ 
+  g, 
+  onSell,
+  onMigrate,
+}: { 
+  g: HeadlineHoldingVM; 
+  onSell?: (t: SellTarget) => void;
+  onMigrate?: (t: SellTarget, toIssuer: "ondo" | "bstock") => void;
+}) {
   const known = g.issuers.some((i) => i.balanceShares !== "unavailable");
   return (
     <li className="panel list-none p-5" data-testid={`group-${g.ticker}`}>
@@ -151,7 +220,7 @@ function Group({ g, onSell }: { g: HeadlineHoldingVM; onSell?: (t: SellTarget) =
       </dl>
       <ul className="m-0 mt-3 grid list-none gap-2 p-0">
         {g.issuers.map((h) => (
-          <IssuerRow key={h.tokenSymbol} h={h} ticker={g.ticker} onSell={onSell} />
+          <IssuerRow key={h.tokenSymbol} h={h} ticker={g.ticker} onSell={onSell} onMigrate={onMigrate} />
         ))}
       </ul>
       <Link
@@ -164,11 +233,19 @@ function Group({ g, onSell }: { g: HeadlineHoldingVM; onSell?: (t: SellTarget) =
   );
 }
 
-export function HoldingsVm({ vm, onSell }: { vm: PortfolioVM; onSell?: (t: SellTarget) => void }) {
+export function HoldingsVm({ 
+  vm, 
+  onSell,
+  onMigrate,
+}: { 
+  vm: PortfolioVM; 
+  onSell?: (t: SellTarget) => void;
+  onMigrate?: (t: SellTarget, toIssuer: "ondo" | "bstock") => void;
+}) {
   return (
     <ul className="m-0 grid list-none gap-3 p-0" data-testid="vm-holdings">
       {vm.holdings.map((g) => (
-        <Group key={g.ticker} g={g} onSell={onSell} />
+        <Group key={g.ticker} g={g} onSell={onSell} onMigrate={onMigrate} />
       ))}
     </ul>
   );

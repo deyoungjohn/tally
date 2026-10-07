@@ -17,7 +17,6 @@ export type MigrateStep = 1 | 2 | "interstitial" | "done" | "idle";
 
 export function useMigrateFlow() {
   const sell = useSellFlow();
-  const buy = useTradeFlow();
   const wallet = useTallyWallet();
   const [pm, setPm] = useState<PendingMigrate | null>(null);
   const [step, setStep] = useState<MigrateStep>("idle");
@@ -39,7 +38,7 @@ export function useMigrateFlow() {
         if (saved.buyHash) {
           setStep("done");
         } else {
-          setStep(2);
+          setStep("interstitial");
         }
       }
     }
@@ -83,8 +82,7 @@ export function useMigrateFlow() {
     setStep("idle");
     setWaitingReceipt(false);
     sell.close();
-    buy.cancel();
-  }, [sell, buy]);
+  }, [sell]);
 
   useEffect(() => {
     if (pm && step === 1 && sell.phase.name === "idle") {
@@ -118,41 +116,25 @@ export function useMigrateFlow() {
             signal: controller.signal,
           });
           if (res.status === 404) {
-            if (wallet.address) {
-              const pRes = await fetch(`/api/portfolio?address=${wallet.address}`, {
-                signal: controller.signal,
-              });
-              if (pRes.ok) {
-                const pData = await pRes.json();
-                const usdtAfter = pData.wallet?.usdt ?? 0;
-                const before = Number(pm.usdtBefore ?? 0);
-                const diff = Math.max(0, usdtAfter - before);
-                const raw = BigInt(Math.floor(diff * 1e18)).toString();
-                const updated = { ...pm, usdtReceived: raw, step: 2 as const };
-                writePendingMigrate(updated);
-                setPm(updated);
-                setWaitingReceipt(false);
-                setSource("wallet");
-                setStep("interstitial");
-              } else {
-                timer = setTimeout(poll, 3000);
-              }
-            } else {
-              timer = setTimeout(poll, 3000);
-            }
+            setWaitingReceipt(false);
+            setSource("wallet");
+            setStep("interstitial");
             return;
           }
 
           if (res.ok) {
             const data = await res.json();
             if (data.state === "reconciled" && data.usdtReceivedRaw) {
-              const updated = { ...pm, usdtReceived: data.usdtReceivedRaw, step: 2 as const };
-              writePendingMigrate(updated);
-              setPm(updated);
-              setWaitingReceipt(false);
-              setSource("receipt");
-              setStep("interstitial");
-              return;
+              const raw = BigInt(data.usdtReceivedRaw);
+              if (raw >= 6000000000000000000n) {
+                const updated = { ...pm, usdtReceived: data.usdtReceivedRaw, step: 2 as const };
+                writePendingMigrate(updated);
+                setPm(updated);
+                setWaitingReceipt(false);
+                setSource("receipt");
+                setStep("interstitial");
+                return;
+              }
             }
           }
 
@@ -170,29 +152,36 @@ export function useMigrateFlow() {
     }
   }, [step, pm, waitingReceipt, wallet.address]);
 
-  const resumeStep2 = useCallback(() => {
-    if (pm && pm.usdtReceived) {
-      const rawDown = roundDownToCent(pm.usdtReceived);
-      const usd = Number(formatUnits(BigInt(rawDown), 18));
-      buy.start({
-        ticker: pm.ticker,
-        issuer: pm.to,
-        symbol: pm.to === "ondo" ? `${pm.ticker}on` : `${pm.ticker}B`,
-        usd,
-        tolerancePct: 1,
-      });
+  const resumeStep2 = useCallback((manualUsdt?: string) => {
+    let raw = pm?.usdtReceived;
+    if (manualUsdt && !raw) {
+      try {
+        const parts = manualUsdt.split(".");
+        let intPart = parts[0] || "0";
+        let decPart = parts[1] || "";
+        decPart = decPart.padEnd(18, "0").slice(0, 18);
+        raw = intPart + decPart;
+      } catch {
+        return;
+      }
+    }
+    
+    if (pm && raw) {
+      const updated = { ...pm, usdtReceived: raw };
+      writePendingMigrate(updated);
+      setPm(updated);
       setStep(2);
     }
-  }, [pm, buy]);
+  }, [pm]);
 
-  useEffect(() => {
-    if (pm && step === 2 && buy.phase.name === "done") {
-      const updated = { ...pm, buyHash: buy.phase.receipt.txHash };
+  const onBuyDone = useCallback((hash: string) => {
+    if (pm && step === 2) {
+      const updated = { ...pm, buyHash: hash };
       writePendingMigrate(updated);
       setPm(updated);
       setStep("done");
     }
-  }, [pm, step, buy.phase.name, buy.phase]);
+  }, [pm, step]);
 
-  return { pm, step, sell, buy, open, cancel, resumeStep2, waitingReceipt, source };
+  return { pm, step, sell, open, cancel, resumeStep2, waitingReceipt, source, onBuyDone };
 }

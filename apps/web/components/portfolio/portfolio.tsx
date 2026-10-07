@@ -18,7 +18,7 @@ import { useJson } from "@/lib/hooks/use-json";
 import { MIN_SELL_USDT } from "@tally/config";
 import { Tip } from "@/components/ui/tooltip";
 import { ISSUER_LABEL, fmtUsd } from "@/lib/format";
-import { nameOf, tokenPair } from "@/lib/tickers";
+import { isBuyable, nameOf, tokenPair } from "@/lib/tickers";
 import { LiveNumber, LiveShares, LiveUsd } from "@/components/motion/live";
 import { LearnMore } from "@/components/learn-more";
 
@@ -89,46 +89,67 @@ export function HoldingGroup({
                 <LiveShares value={p.shares} />
               </b>
             </span>
-            {onSell ? (
-              p.valueUsd !== null && p.valueUsd < MIN_SELL_USDT ? (
-                // Worth less than the smallest sale: unclickable, and the tooltip says why.
-                <Tip
-                  text={`This holding is worth ${fmtUsd(p.valueUsd)}, below the $${MIN_SELL_USDT} minimum sale.`}
-                >
-                  <span className="inline-flex">
+            {onSell || onMigrate ? (
+              <div className="flex gap-2">
+                {onSell && p.issuer !== "xstocks" ? (
+                  p.valueUsd !== null && p.valueUsd < MIN_SELL_USDT ? (
+                    // Worth less than the smallest sale: unclickable, and the tooltip says why.
+                    <Tip
+                      text={`This holding is worth ${fmtUsd(p.valueUsd)}, below the $${MIN_SELL_USDT} minimum sale.`}
+                    >
+                      <span className="inline-flex">
+                        <Button
+                          variant="glassy"
+                          className="!h-9 !px-4 text-[14.5px]"
+                          disabled
+                          aria-label={`Sell ${p.symbol} (below the ${MIN_SELL_USDT} minimum sale)`}
+                          data-testid={`sell-${p.symbol}`}
+                        >
+                          Sell
+                        </Button>
+                      </span>
+                    </Tip>
+                  ) : (
                     <Button
                       variant="glassy"
                       className="!h-9 !px-4 text-[14.5px]"
-                      disabled
-                      aria-label={`Sell ${p.symbol} (below the ${MIN_SELL_USDT} minimum sale)`}
+                      onClick={() => onSell(p)}
+                      aria-label={`Sell ${p.symbol}`}
                       data-testid={`sell-${p.symbol}`}
                     >
                       Sell
                     </Button>
-                    {onMigrate ? (
-                      <Button
-                        variant="glassy"
-                        className="!h-9 !px-4 text-[14.5px] ml-2"
-                        disabled
-                        aria-label="Migrate (disabled)"
-                      >
-                        Migrate
-                      </Button>
-                    ) : null}
-                  </span>
-                </Tip>
-              ) : (
-                <div className="flex gap-2">
-                  <Button
-                    variant="glassy"
-                    className="!h-9 !px-4 text-[14.5px]"
-                    onClick={() => onSell(p)}
-                    aria-label={`Sell ${p.symbol}`}
-                    data-testid={`sell-${p.symbol}`}
-                  >
-                    Sell
-                  </Button>
-                  {onMigrate ? (
+                  )
+                ) : null}
+
+                {onMigrate ? (() => {
+                  let reason: string | null = null;
+                  if (p.issuer === "xstocks") {
+                    reason = "No market to exit this token on BNB Chain";
+                  } else if (!isBuyable(p.ticker)) {
+                    reason = `${p.ticker} can't be bought through Tally yet.`;
+                  } else if (p.valueUsd !== null && p.valueUsd < MIN_SELL_USDT) {
+                    reason = "Too small to migrate: the buy needs at least 6 USDT. You can sell to USDT instead.";
+                  }
+
+                  if (reason) {
+                    return (
+                      <Tip text={reason}>
+                        <span className="inline-flex">
+                          <Button
+                            variant="glassy"
+                            className="!h-9 !px-4 text-[14.5px]"
+                            disabled
+                            aria-label="Migrate (disabled)"
+                            data-testid={`migrate-${p.symbol}`}
+                          >
+                            Migrate
+                          </Button>
+                        </span>
+                      </Tip>
+                    );
+                  }
+                  return (
                     <Button
                       variant="glassy"
                       className="!h-9 !px-4 text-[14.5px]"
@@ -138,9 +159,9 @@ export function HoldingGroup({
                     >
                       Migrate
                     </Button>
-                  ) : null}
-                </div>
-              )
+                  );
+                })() : null}
+              </div>
             ) : null}
           </li>
         ))}

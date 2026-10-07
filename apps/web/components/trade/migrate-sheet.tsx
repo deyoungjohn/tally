@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { Modal } from "@/components/motion/modal";
 import { Button } from "@/components/motion/button";
 import { useMigrateFlow } from "./use-migrate-flow";
+import { useTradeFlow } from "./use-trade-flow";
 import { SellSheet } from "./sell-sheet";
 import { TradeFlowLayer } from "./flow-host";
 import { formatUnits } from "viem";
@@ -10,20 +12,21 @@ import { ReceiptLink } from "@/components/receipts/receipt-link";
 import { Loader2, ArrowRight } from "lucide-react";
 
 export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
-  const { pm, step, sell, buy, cancel, resumeStep2, waitingReceipt, source } = flow;
+  const { pm, step, sell, cancel, resumeStep2, waitingReceipt, source, onBuyDone } = flow;
 
   const open = step !== "idle";
 
   if (!pm) return null;
 
   if (step === 1) {
-    return <SellSheet flow={sell} />;
+    return <SellSheet flow={sell} isMigrate={true} />;
   }
 
   if (step === 2) {
-    return <TradeFlowLayer flow={buy} />;
+    return <MigrateBuyStep pm={pm} cancel={cancel} onDone={onBuyDone} />;
   }
 
+  const [typedProceeds, setTypedProceeds] = useState("");
   // Interstitial or Done
   if (step === "interstitial" || step === "done") {
     return (
@@ -51,11 +54,25 @@ export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow>
                   bought yet. Your USDT is in your wallet.
                 </p>
                 {source === "wallet" ? (
-                  <p className="text-neutral-500">(from your wallet balance)</p>
+                  <div className="mt-4">
+                    <p className="text-neutral-500 mb-2">Check your wallet for the exact USDT received, and enter it below:</p>
+                    <input
+                      type="text"
+                      className="input num w-full"
+                      value={typedProceeds}
+                      onChange={(e) => setTypedProceeds(e.target.value.replace(/[^0-9.]/g, ""))}
+                      placeholder="e.g. 6.0"
+                    />
+                  </div>
                 ) : null}
               </div>
               <div className="flex justify-end">
-                <Button onClick={resumeStep2}>Buy now</Button>
+                <Button 
+                  disabled={source === "wallet" && (!typedProceeds || Number(typedProceeds) < 6)}
+                  onClick={() => resumeStep2(source === "wallet" ? typedProceeds : undefined)}
+                >
+                  Buy now
+                </Button>
               </div>
             </div>
           ) : step === "done" ? (
@@ -72,7 +89,7 @@ export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow>
                 </div>
               </div>
               <p className="text-sm text-neutral-500 text-center">
-                Your shares have been migrated.
+                Your {pm.ticker} shares have been migrated to {pm.to === "ondo" ? "Ondo" : "bStock"} ({pm.to === "ondo" ? `${pm.ticker}on` : `${pm.ticker}B`}) using {pm.usdtReceived ? formatUnits(BigInt(pm.usdtReceived), 18) : "?"} USDT.
               </p>
               <div className="flex justify-center mt-2">
                 <Button onClick={cancel}>Done</Button>
@@ -85,4 +102,50 @@ export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow>
   }
 
   return null;
+}
+
+function MigrateBuyStep({
+  pm,
+  cancel,
+  onDone,
+}: {
+  pm: NonNullable<ReturnType<typeof useMigrateFlow>["pm"]>;
+  cancel: () => void;
+  onDone: (hash: string) => void;
+}) {
+  const buy = useTradeFlow();
+
+  useEffect(() => {
+    if (pm.usdtReceived && buy.phase.name === "idle") {
+      const usd = Number(formatUnits(BigInt(pm.usdtReceived), 18));
+      buy.start({
+        ticker: pm.ticker,
+        issuer: pm.to,
+        symbol: pm.to === "ondo" ? `${pm.ticker}on` : `${pm.ticker}B`,
+        usd,
+        tolerancePct: 1,
+      });
+    }
+  }, [pm, buy]);
+
+  useEffect(() => {
+    if (buy.phase.name === "done" && buy.phase.receipt.txHash) {
+      onDone(buy.phase.receipt.txHash);
+    }
+  }, [buy.phase, onDone]);
+
+  // If the user cancels the buy modal, we abort the migration entirely
+  useEffect(() => {
+    if (buy.phase.name === "idle") {
+       // Wait, we shouldn't automatically cancel if idle because it starts out idle.
+    }
+  }, [buy.phase.name]);
+
+  return (
+    <div onKeyDown={(e) => {
+      if (e.key === "Escape" && buy.phase.name === "idle") cancel();
+    }}>
+      <TradeFlowLayer flow={buy} />
+    </div>
+  );
 }

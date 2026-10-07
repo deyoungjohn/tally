@@ -316,7 +316,7 @@ function TradeInner({
               items={
                 flags.switch === true
                   ? ["Sell to USDT", "Limit price", "Recurring buys"]
-                  : ["Migrate between issuers", "Sell to USDT", "Limit price"]
+                  : ["Migrate between issuers", "Sell to USDT", "Limit price", "Recurring buys"]
               }
               title="Advanced · coming soon"
             />

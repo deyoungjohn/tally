@@ -202,13 +202,19 @@ test("blocks ineligible cases", async ({ page }) => {
   await mockWallet(page);
   await page.goto("/portfolio");
 
-  // Try xStocks (not buyable) - assuming there's an AAPLx in portfolio
-  // Actually the button is hidden for xStocks per portfolio.tsx logic
+  // xStocks (AAPL) are completely hidden for migration in portfolio view
   await expect(page.getByTestId("migrate-AAPLx")).not.toBeVisible();
 
-  // Check tooltip or disabled state for too small?
-  // The spec says "the ineligible cases (xStocks, too small, destination not buyable)"
-  // The button might be disabled with a tooltip if too small.
+  // TSLAB is too small (< 6 USDT) so it is shown but disabled
+  const migrateDustBtn = page.getByTestId("migrate-TSLAB");
+  await expect(migrateDustBtn).toBeVisible();
+  await expect(migrateDustBtn).toBeDisabled();
+
+  // Hover over the TSLAB disabled button to check the tooltip reason
+  await migrateDustBtn.hover();
+  await expect(page.getByRole("tooltip")).toContainText(
+    "Too small to migrate: the buy needs at least 6 USDT. You can sell to USDT instead.",
+  );
 });
 
 test("resumes after reload", async ({ page }) => {

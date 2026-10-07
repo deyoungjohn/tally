@@ -85,6 +85,20 @@ async function main() {
         sharesUnavailableReason: "No multiplier observation",
         tokenBalanceUsdE18: 0n,
       });
+      const aaplx = holding({
+        tokenContractAddress: "0x3333333333333333333333333333333333333333",
+        tokenSymbol: "AAPLx",
+        ticker: "AAPL",
+        issuer: "xstocks",
+        balanceTokens: parseDecimal("1", 18),
+        multiplier: parseDecimal("1", 18),
+        balanceShares: parseDecimal("1", 18),
+        tokenBalanceUsdE18: parseDecimal("150", 18),
+        costBasisUsdE18: parseDecimal("150", 18),
+        avgCostPerShareUsdE18: parseDecimal("150", 18),
+        pricePerShareUsdE18: parseDecimal("150", 18),
+        unrealizedPnlUsdE18: parseDecimal("0", 18),
+      });
       const trades: Trade[] = [
         {
           txHash: `0x${"a1".repeat(32)}`,
@@ -124,7 +138,7 @@ async function main() {
       ];
       const stmt = statement({
         walletAddress: WALLET,
-        holdings: [nvdaOn, nvdaB, dust, unknown],
+        holdings: [nvdaOn, nvdaB, dust, unknown, aaplx],
         trades,
         asOf: now,
       });
