@@ -20,3 +20,10 @@ Tools list and a `get_consolidated_quote` call over HTTP; a plan tool is refused
 
 ## Done means
 `pnpm typecheck && pnpm lint && pnpm format:check && pnpm test` green, `FULL=1 bash scripts/review-pack.sh mod/WO-05-agent-layer` green, the PR lists every changed file, and the README "Hosting" section gives the user-run commands: start with `TALLY_FIXTURES=1 TALLY_ALLOW_MISSING_GEO=1 TALLY_MCP_HTTP=1`, then `curl` the tool list and one quote against localhost, plus the exact environment variables for production. The tunnel, DNS and exposure are the chief engineer's. If anything is ambiguous, stop and ask; don't guess.
+
+## Follow-up from the review (2026-10-07): global request cap, then it is ready to merge
+Add the one change from review finding 1, on the same branch:
+- A **global** limit across all clients, `TALLY_MCP_HTTP_GLOBAL_LIMIT` (default 300 requests per minute, integer 1 to 100000, validated like the other settings). When it is exceeded answer `503` with `Retry-After` and the plain `busy`-style error, before any engine work. Keep the per-client limit; both apply. The count must not grow without bound and must reset each minute.
+- Tests: the global cap trips with many distinct client IPs each under their own limit; `Retry-After` is present; it recovers after a minute; invalid values are rejected at startup; `/healthz` is not counted against the cap.
+- In `packages/mcp/README.md` list the new variable, and for the hosting steps link to `docs/deployment.md` instead of repeating them. Do not edit `docs/deployment.md` (the orchestrator maintains it).
+- Rerun `FULL=1 bash scripts/review-pack.sh mod/WO-05-agent-layer`, push, and report. Nothing else changes.
