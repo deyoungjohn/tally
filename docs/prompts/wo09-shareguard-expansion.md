@@ -32,3 +32,26 @@ The chief engineer wants tokens that trade **constantly**, so a single 24 h figu
 
 **Output** (a table the chief engineer will choose a cutoff from, not a decision made for them): per token, age in days, median daily USD volume over 7, 30 and 90 days, the share of days at or above $1,000 in each window, for Ondo the best stable-pair pool's TVL, the exclusion reasons, and a column for "is this a US-listed stock or ETF" (exclude what you cannot confirm; SPCX, BNC, USDE, SKHY and SECZ looked unusual). Keep the 10 already-enabled tokens out of the "new" count. Show the table in chat and stop, as in step 1. The live $6 capture on the EC2 is still the final test of depth: this filter only decides which tokens are worth a capture.
 
+
+## Batch 1 (decided 2026-10-07 by the chief engineer): what to build now
+The cutoff is chosen. Use the sustained-volume file `spike/tally-wo09-sustained-volume.json` (all 189 tokens are confirmed US-listed stocks or ETFs there). **Do not re-run the discovery for other tokens.** Batch 1 is exactly this list, 43 tokens:
+
+- **bStock, 23 tokens** (median daily volume of at least $10,000 and at least $1,000 on 90% of days over both the last 7 and 30 days, not already enabled, no exclusion reason): SPCXB, GMEB, BABAB, GOOGLB, SKHYB, MSTRB, CRCLB, SNDKB, SOXLB, DJTB, HOODB, MSFTB, INTCB, METAB, MRNAB, SOXSB, AMZNB, BMNRB, FLNCB, TSMB, TQQQB, NFLXB, SQQQB.
+- **Ondo twins, 20 tokens** (the Ondo token of the same ticker, which has no usable volume history, so it is judged by the live capture below): SPCXon, GMEon, GOOGLon, SKHYon, MSTRon, CRCLon, SNDKon, SOXLon, HOODon, MSFTon, INTCon, METAon, MRNAon, SOXSon, AMZNon, BMNRon, TSMon, TQQQon, NFLXon, SQQQon. BABA, DJT and FLNC have no eligible Ondo twin.
+- **Held for the chief engineer's decision (capture them last, enable nothing until told):** the leveraged and inverse ETFs SOXL, SOXS, TQQQ and SQQQ (8 tokens in total). They are US-listed, but they are complex products; the chief engineer decides whether Tally offers them.
+
+Read the 10 tokens already enabled (AAPL, NVDA, QQQ, SPY, TSLA, each as bStock and Ondo) as the control group: the same checks must pass for them.
+
+### What each token must pass (in this order; record the reason for any drop)
+1. **On-chain facts** (you can run these from the PC with the public RPC): the multiplier reads on chain for bStock (`uiMultiplier()`), the accepted API reading and a second source for Ondo, and the pause source resolves (the shared bStock manager; Ondo's manager from the token). Anything unreadable is dropped.
+2. **Live depth capture** (the chief engineer runs it on the EC2): `contracts/script/capture_batch.sh` (new; you write it; it loops `./script/capture.sh` over a list file, one asset at a time, paced to the API limit, and keeps going after a failure) captures a **$6** quote for every token, and a **$100** quote for the bStock tokens. A token passes if a route exists (`executionMode SWAP`), its quoted price is within **1.5%** of the reference price per share (`referencePrice` divided by the recorded ratio; that threshold is a judgement call, print the actual premium for every token so it can be changed), and the integrity grade is not Not Tradable. Ondo twins are decided here, not by volume.
+3. **Fork tests A to I** on every captured token (`./script/fork.sh`; needs `BSC_RPC`, the archive RPC). A failing token is dropped with the test name.
+
+### Deliverables, in order
+1. Show the on-chain results table (step 1) in chat, then stop and wait for me. Do not generate seeds yet.
+2. After the captures are pushed: fork test results; the final list of tokens that passed every check, with the reason for every drop; `AddAssets.s.sol` with its dry run for exactly that list (batches of about 10, owner script, no key); the generated `buyable.generated.ts` for exactly that list; `list_enabled.py`.
+3. Seeds for the Ondo tokens only right before the owner step (they expire after 2 hours); the chief engineer will tell you when.
+4. The exact commands for the chief engineer: the capture loop on the EC2, the dry run, each owner batch, the rollback (`setAsset` with `enabled=false`) and `list_enabled.py`. Put them in the PR; the orchestrator moves them into `docs/deployment.md`.
+5. A short note on cost: how long `/api/radar` and `/api/portfolio` take with 53 tickers in fixture mode, and any list that will not scale (the stock picker needs search; that is the UI agent's job, only report it).
+
+Owns, added for this batch: `contracts/script/capture_batch.sh` (new) and its list file under `contracts/deploy/`. Timing is unchanged: step 1 tonight, captures tomorrow morning, owner transactions Friday morning, freeze Saturday 23:59. If time runs short, ship the bStock tokens that passed and the Ondo twins that passed, however many that is.

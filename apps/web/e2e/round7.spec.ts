@@ -202,12 +202,17 @@ test.describe("round 7", () => {
     expect(await gapOffset()).toBeLessThan(2);
     await page.getByTestId("flip-button").click();
     await expect(page.getByTestId("sell-button")).toBeVisible();
-    await page.waitForTimeout(500);
-    expect(await gapOffset()).toBeLessThan(2);
+    // Poll instead of a fixed wait: the layout and the arrow settle on CSS transitions, which a busy machine delays.
+    await expect.poll(gapOffset, { timeout: 5_000, intervals: [100, 200, 400] }).toBeLessThan(2);
     // The arrow turns 180 degrees, smoothly (a transition is set on it).
     const icon = page.getByTestId("flip-button").locator("svg");
     expect(await icon.evaluate((e) => getComputedStyle(e).transitionDuration)).not.toBe("0s");
-    expect(await icon.evaluate((e) => getComputedStyle(e).rotate)).toBe("180deg");
+    await expect
+      .poll(() => icon.evaluate((e) => getComputedStyle(e).rotate), {
+        timeout: 5_000,
+        intervals: [100, 200, 400],
+      })
+      .toBe("180deg");
   });
 
   test("Home: issuer, price per share and fee sit on one line below the button", async ({

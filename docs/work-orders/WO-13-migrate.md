@@ -37,3 +37,6 @@ A **Migrate** action on a Portfolio row (Ondo or bStock holding, where the other
 
 ## Timing
 The ShareGuard expansion is Agent 09's (`docs/prompts/wo09-shareguard-expansion.md`) and runs in parallel on different files; Agent 07 does Migrate only. Target merge **Thursday 8 Oct, midday UTC**, flag `FEATURE_SWITCH`. If it is not ready by the cut line (Thursday 23:59) it ships off. The UI agent restyles the sheet afterwards; build it with the existing components and tokens so it is usable now.
+
+Extra approvals (2026-10-07): see the last paragraph of `docs/work-orders/WO-07-switch.md` (holdings-vm, portfolio-vm, sell-sheet `isMigrate`, vm-seed).
+
