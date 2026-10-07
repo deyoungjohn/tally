@@ -1386,10 +1386,8 @@ describe("Guardian Worker (worker.ts)", () => {
     let currentTime = 1_000_000;
     const warnings: string[] = [];
 
-    let sentMessages = 0;
     const mockSender = {
       sendMessage: async () => {
-        sentMessages++;
         return {};
       },
     };
