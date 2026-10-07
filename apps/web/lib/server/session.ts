@@ -65,7 +65,7 @@ export function createSessionVerifier(options?: {
     const token = authHeader.slice(7).trim();
     if (!token) return null;
 
-    const client = (options?.client ?? getDefaultPrivyClient()) as MinimalPrivyClient | null;
+    const client = options?.client ?? getDefaultPrivyClient();
     if (!client) {
       console.warn("session: no_client");
       return null;
@@ -86,6 +86,7 @@ export function createSessionVerifier(options?: {
           return null;
         }
         const userId = claims.user_id;
+        if (!userId) return null;
 
         const nowMs = now();
         let wallets: string[] = [];

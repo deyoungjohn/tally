@@ -79,6 +79,13 @@ describe("session verification", () => {
     expect(res).toBeNull();
   });
 
+  it("missing user_id returns null", async () => {
+    const client = mockPrivyClient({ verifyResult: { app_id: mockAppId, user_id: "" } });
+    const verify = createSessionVerifier({ client, appId: mockAppId });
+    const res = await verify(makeReq("Bearer valid-token"));
+    expect(res).toBeNull();
+  });
+
   it("expired or invalid token throws, returning null", async () => {
     const client = mockPrivyClient({ verifyThrows: true });
     const verify = createSessionVerifier({ client, appId: mockAppId });
