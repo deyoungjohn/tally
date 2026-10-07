@@ -320,6 +320,92 @@ describe("opt-in loopback HTTP MCP", () => {
     clock += 60_000;
     expect((await send(server, {}, headers, "/healthz", "GET")).status).toBe(200);
   });
+  it("validates the global limit at startup, including its integer bounds", () => {
+    for (const value of ["", "0", "-1", "1.5", "100001", "Infinity", "1e2", " 300", "many"]) {
+      expect(() =>
+        createHttpServer({ env: { ...env, TALLY_MCP_HTTP_GLOBAL_LIMIT: value } }),
+      ).toThrow("HTTP configuration is invalid.");
+    }
+    for (const value of ["1", "100000"]) {
+      expect(() =>
+        createHttpServer({ env: { ...env, TALLY_MCP_HTTP_GLOBAL_LIMIT: value } }),
+      ).not.toThrow();
+    }
+  });
+  it("global cap trips across distinct clients before engine work, includes Retry-After and recovers after a minute", async () => {
+    let clock = 1000;
+    const runtime = rt();
+    const quote = vi.spyOn(runtime.engine, "quote");
+    const server = await start({
+      runtime,
+      env: { TALLY_MCP_HTTP_GLOBAL_LIMIT: "3", TALLY_MCP_HTTP_RATE_LIMIT: "2" },
+      now: () => clock,
+    });
+    for (let client = 1; client <= 3; client++) {
+      expect(
+        (await send(server, rpc("tools/list"), { "cf-connecting-ip": `192.0.2.${client}` })).status,
+      ).toBe(200);
+    }
+    clock += 10_000;
+    for (let client = 4; client <= 12; client++) {
+      const reply = await call(
+        server,
+        "get_consolidated_quote",
+        { ticker: "NVDA", usd: 6 },
+        {
+          "cf-connecting-ip": `192.0.2.${client}`,
+        },
+      );
+      expect(reply).toMatchObject({
+        status: 503,
+        body: { kind: "busy", message: "The service is busy. Retry later.", fixtures: true },
+      });
+      expect(reply.headers["retry-after"]).toBe("50");
+    }
+    expect(quote).not.toHaveBeenCalled();
+    clock += 50_000;
+    for (let client = 1; client <= 3; client++) {
+      expect(
+        (await send(server, rpc("tools/list"), { "cf-connecting-ip": `192.0.2.${client}` })).status,
+      ).toBe(200);
+    }
+    expect(
+      (await send(server, rpc("tools/list"), { "cf-connecting-ip": "192.0.2.4" })).status,
+    ).toBe(503);
+  });
+  it("health never consumes the global budget and works while it is exhausted; per-client limits still apply", async () => {
+    const server = await start({
+      env: { TALLY_MCP_HTTP_GLOBAL_LIMIT: "1", TALLY_MCP_HTTP_RATE_LIMIT: "2" },
+    });
+    for (let client = 1; client <= 4; client++) {
+      expect(
+        (await send(server, {}, { "cf-connecting-ip": `192.0.2.${client}` }, "/healthz", "GET"))
+          .status,
+      ).toBe(200);
+    }
+    const headers = { "cf-connecting-ip": "192.0.2.5" };
+    expect((await send(server, rpc("tools/list"), headers)).status).toBe(200);
+    expect(
+      (await send(server, rpc("tools/list"), { "cf-connecting-ip": "192.0.2.6" })).status,
+    ).toBe(503);
+    expect((await send(server, {}, headers, "/healthz", "GET")).status).toBe(200);
+    expect((await send(server, {}, headers, "/healthz", "GET")).status).toBe(429);
+  });
+  it("defaults to 300 MCP requests per minute across clients", async () => {
+    const server = await start({ now: () => 1000 });
+    for (let client = 0; client < 300; client++) {
+      expect(
+        (
+          await send(server, rpc("tools/list"), {
+            "cf-connecting-ip": `198.18.${Math.floor(client / 250)}.${(client % 250) + 1}`,
+          })
+        ).status,
+      ).toBe(200);
+    }
+    const reply = await send(server, rpc("tools/list"), { "cf-connecting-ip": "198.18.2.1" });
+    expect(reply.status).toBe(503);
+    expect(Number(reply.headers["retry-after"])).toBeGreaterThan(0);
+  }, 15_000);
   it.each([{}, { "transfer-encoding": "chunked" }])(
     "rejects oversized bodies %j before tool access",
     async (headers) => {

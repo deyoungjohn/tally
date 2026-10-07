@@ -36,27 +36,9 @@ The default fixture wallet needs approval, so the last command returns `needs_ap
 
 Slice C adds an opt-in Streamable HTTP transport for a remote MCP client. Stdio remains the default. HTTP requires **both** `TALLY_MCP_HTTP=1` and `--http`; it always binds to **127.0.0.1**, never a public interface. Each request gets a fresh MCP server and transport, with no shared MCP session. The existing engine and tool registry provide the same read tools and unsigned plans. Nothing signs or sends. This section supersedes the earlier stdio-only statements about an HTTP listener; configuring a tunnel, DNS and public exposure remains the chief engineer's work.
 
-Run this offline, from the repository root, in one terminal:
+For startup, fixture checks, health/tool curl commands and production hosting steps, see the orchestrator-maintained [deployment guide](../../docs/deployment.md).
 
-```bash
-TALLY_FIXTURES=1 TALLY_ALLOW_MISSING_GEO=1 TALLY_MCP_HTTP=1 pnpm --silent --filter @tally/mcp start --http
-```
-
-In another terminal, inspect health, list tools and request the recorded 6 USDT NVDA quote:
-
-```bash
-curl --fail-with-body http://127.0.0.1:3300/healthz
-curl --fail-with-body http://127.0.0.1:3300/mcp \
-  -H 'Content-Type: application/json' \
-  -H 'Accept: application/json, text/event-stream' \
-  --data '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
-curl --fail-with-body http://127.0.0.1:3300/mcp \
-  -H 'Content-Type: application/json' \
-  -H 'Accept: application/json, text/event-stream' \
-  --data '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_consolidated_quote","arguments":{"ticker":"NVDA","usd":6}}}'
-```
-
-Health and every HTTP result, including tool content and errors, identify `fixtures: true` in this mode. Fixture calldata must never be sent to a wallet. These stateless curl requests need no initialization or session identifier; an MCP client can use its normal initialization sequence. Only `POST /mcp` and `GET /healthz` are served. Other paths return 404; other methods, including OPTIONS, return 405. This transport is intended for remote agent clients, rather than a browser requiring preflight.
+In fixture mode, health and every HTTP result, including tool content and errors, identify `fixtures: true`. Fixture calldata must never be sent to a wallet. Stateless curl requests need no initialization or session identifier; an MCP client can use its normal initialization sequence. Only `POST /mcp` and `GET /healthz` are served. Other paths return 404; other methods, including OPTIONS, return 405. This transport is intended for remote agent clients, rather than a browser requiring preflight.
 
 Production environment (loaded by the chief engineer into the server's protected shell; the repository does not load `.env`):
 
@@ -65,9 +47,10 @@ Production environment (loaded by the chief engineer into the server's protected
 | `TALLY_MCP_HTTP` | `1`, together with `--http`. |
 | `TALLY_MCP_HTTP_PORT` | Optional loopback port; default `3300`. |
 | `TALLY_FIXTURES` | Unset or `0` for live reads. Every result then carries `fixtures: false`. |
-| `TALLY_ALLOW_MISSING_GEO` | Unset or `0`. The `1` override above is for local fixture checks. |
+| `TALLY_ALLOW_MISSING_GEO` | Unset or `0`. The `1` override is for local fixture checks. |
 | `TALLY_MCP_HTTP_PLANS` | Set `0` for read tools only; otherwise existing unsigned plan tools are available. |
 | `TALLY_MCP_HTTP_RATE_LIMIT` | Requests per verified client per minute; default `60`, range `1–100000`. Health requests also count. |
+| `TALLY_MCP_HTTP_GLOBAL_LIMIT` | MCP requests across all clients per minute; default `300`, range `1–100000`. Health requests do not count against this cap. |
 | `TALLY_MCP_HTTP_CONCURRENCY` | Concurrent requests; default `8`, range `1–128`. |
 | `TALLY_MCP_HTTP_ORIGINS` | Optional comma-separated exact origins. Empty denies every supplied Origin; a missing Origin is allowed. |
 | `TALLY_MCP_HTTP_KEY` | Optional existing shared credential, supplied through protected environment only. When set, every request, including health, requires `Authorization: Bearer <key>`; comparison is constant-time. Never put its value in chat, logs or committed configuration. |
@@ -76,16 +59,9 @@ Production environment (loaded by the chief engineer into the server's protected
 | `FEATURE_SELL`, `FEATURE_RECEIPTS` | Existing optional tool flags, default off. HTTP preserves their registration rules; `TALLY_MCP_HTTP_PLANS=0` also suppresses sell plans. |
 | `TALLY_DATA_DIR` | Optional existing snapshot-store directory for tools that use it. |
 
-After loading the existing protected API/RPC environment, the user can start a production process with read tools only:
-
-```bash
-unset TALLY_FIXTURES TALLY_ALLOW_MISSING_GEO
-TALLY_MCP_HTTP=1 TALLY_MCP_HTTP_PLANS=0 pnpm --silent --filter @tally/mcp start --http
-```
-
 The chief engineer's Cloudflare tunnel must target `127.0.0.1:<TALLY_MCP_HTTP_PORT>` and supply trusted `cf-ipcountry`, `cf-region-code` and `cf-connecting-ip` headers. The shared web region policy runs before tool access: blocked or missing geography returns 451, as does missing verified client information. Socket-IP fallback is permitted only by the explicit local override. Keep the loopback listener behind that trusted tunnel; do not route untrusted, client-supplied geography directly to it. A production shell or tunnel smoke test must supply verified allowed-region headers and the Bearer header if enabled. Setting a host variable cannot change the bind address.
 
-Requests accept one JSON-RPC message, at most **64 KiB**, and have a **15-second** deadline. Rate limits return 429 with `Retry-After`; the concurrency bound returns 503. Timed-out engine work retains its slot until it finishes, so retries cannot accumulate unbounded work. Errors use plain mapped messages; request logs contain method, known tool name and status only, with no arguments, wallet addresses or credentials. The HTTP engine reuses `unsignedEnv`, excluding `FEED_SIGNER_PK` before reading its value. Stale Ondo feeds still direct the user to the web app.
+Requests accept one JSON-RPC message, at most **64 KiB**, and have a **15-second** deadline. The global and per-client rate limits both apply: the global cap returns 503 with `Retry-After`, and the per-client cap returns 429 with `Retry-After`. The global counter stops at its limit and resets after a minute; health remains subject to the per-client cap. The concurrency bound returns 503. Timed-out engine work retains its slot until it finishes, so retries cannot accumulate unbounded work. Errors use plain mapped messages; request logs contain method, known tool name and status only, with no arguments, wallet addresses or credentials. The HTTP engine reuses `unsignedEnv`, excluding `FEED_SIGNER_PK` before reading its value. Stale Ondo feeds still direct the user to the web app.
 
 ## Tool contract
 
