@@ -186,7 +186,8 @@ test.describe("Migrate", () => {
       await page.getByRole("button", { name: "Buy now" }).click();
 
       // Check buy sheet title
-      await expect(page.getByRole("dialog").filter({ hasText: "Review your buy" })).toBeVisible();
+      await page.getByRole("button", { name: "Buy now" }).click();
+  await expect(page.getByRole("dialog").filter({ hasText: "Review your buy" })).toBeVisible();
 
       // Confirm buy
       await page.getByTestId("confirm-buy").click();
@@ -307,4 +308,75 @@ test("resumes after reload", async ({ page }) => {
   await expect(
     page.getByRole("dialog").filter({ hasText: "Waiting for the sale to confirm..." }),
   ).toBeVisible();
+});
+
+test("rounds down to cent when passing USDT to buy step", async ({ page }) => {
+  await flags(page, true);
+  await mockWallet(page);
+
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "tally.pendingMigrate",
+      JSON.stringify({
+        id: "test",
+        ticker: "NVDA",
+        from: "ondo",
+        to: "bstock",
+        step: 2,
+        usdtReceived: "6126000000000000000",
+        saleHash: "0xabc",
+        createdAt: Date.now(),
+      }),
+    );
+  });
+
+  let requestedUsd: number | undefined;
+  await page.route("**/api/trade/plan*", async (route) => {
+    const postData = JSON.parse(route.request().postData() || "{}");
+    requestedUsd = postData.usd;
+
+    const p = {
+      status: "ready",
+      builtAt: Date.now(),
+      expiresAt: Date.now() + 10000,
+      ticker: "NVDA",
+      issuer: "bstock",
+      symbol: "NVDAB",
+      stock: "0xstock",
+      guard: "0xguard",
+      tolerancePct: 1,
+      amountInUsdt: "6120000000000000000",
+      tokensOut: "20000000000000000",
+      quotedShares: "20000000000000000",
+      minShares: "19900000000000000",
+      multiplier: "1000000000000000000",
+      usdPerShare: 350.0,
+      referencePrice: 350.0,
+      premium: 0,
+      routeText: "USDT -> NVDAB",
+      hops: 1,
+      vendor: "LiquidMesh",
+      feedUpdate: true,
+      warnings: [],
+      balances: { usdt: "10000000000000000000", bnb: "10000000000000000000" },
+      tx: {
+        to: "0xrouter",
+        data: "0x",
+        value: "0x0",
+        gasEstimate: "300000",
+        gasLimit: "375000",
+        gasPriceWei: "1000000000",
+        feeUsd: 0.1,
+        deadline: Date.now() + 10000,
+        chainId: 56,
+      },
+    };
+    await route.fulfill({ json: p });
+  });
+
+  await page.goto("/portfolio");
+  await page.getByRole("button", { name: "Buy now" }).click();
+  await expect(page.getByRole("dialog").filter({ hasText: "Review your buy" })).toBeVisible();
+  
+  expect(requestedUsd).toBe(6.12);
 });
