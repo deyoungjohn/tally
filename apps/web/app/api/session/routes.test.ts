@@ -84,9 +84,8 @@ describe("session routes", () => {
       headers: {
         cookie: `walletAddress=${VICTIM}`,
       },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
-    // @ts-expect-error NextRequest allows body on GET in test but let's just test query and cookie for GET
     const res = await feedGET(req);
     expect(res.status).toBe(200);
     const data = await res.json();

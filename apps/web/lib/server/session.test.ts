@@ -31,7 +31,7 @@ describe("session verification", () => {
     verifyResult?: { appId: string; userId: string } | null;
     verifyThrows?: boolean;
     verifyDelay?: number;
-    userResult?: { linked_accounts: Array<{ address: string } | null | string> } | null;
+    userResult?: { id?: string; linked_accounts: Array<{ address: string; type?: string } | null | string> } | null;
     userThrows?: boolean;
     userDelay?: number;
   }) {
