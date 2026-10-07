@@ -62,7 +62,7 @@ describe("Guardian settings validation", () => {
 
   it("rejects over 20 tickers", () => {
     const manyTickers = new Set<string>();
-    const priceThresholds: Record<string, any> = {};
+    const priceThresholds: Record<string, unknown> = {};
     for (let i = 0; i < 21; i++) {
       manyTickers.add(`TICKER${i}`);
       priceThresholds[`TICKER${i}`] = { minPriceUsd: 100 };

@@ -47,7 +47,7 @@ export async function PUT(req: NextRequest) {
     });
     const validTickers = new Set((registrySnap?.data || []).map((r) => r.ticker.toUpperCase()));
 
-    let body: any;
+    let body: unknown;
     try {
       body = await req.json();
     } catch {

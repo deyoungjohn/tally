@@ -31,7 +31,7 @@ vi.mock("@tally/modkit", async (importOriginal) => {
         mockStore = {
           close: vi.fn(),
           latest: vi.fn().mockReturnValue(null),
-          history: vi.fn().mockImplementation((kind, key) => {
+          history: vi.fn().mockImplementation((kind: string, key: string) => {
             return snapshots.filter((s) => s.kind === kind && s.key === key);
           }),
           put: vi.fn().mockImplementation((s) => {
@@ -74,12 +74,12 @@ describe("session routes", () => {
   });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function makeReq(url: string, method: string, headers?: Record<string, string>, body?: any) {
+  function makeReq(url: string, method: string, headers?: Record<string, string>, body?: unknown) {
     const init: RequestInit = { method };
     if (headers) init.headers = new Headers(headers);
     if (body) init.body = JSON.stringify(body);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return new NextRequest("http://localhost" + url, init as any);
+    return new NextRequest("http://localhost" + url, init as unknown as Request);
   }
 
   it("spoof test: ignores query, cookie, body, and relies on verified wallet", async () => {
@@ -174,16 +174,16 @@ describe("Guardian settings write route", () => {
     vi.restoreAllMocks();
   });
 
-  function makeReq(url: string, method: string, headers?: Record<string, string>, body?: any) {
+  function makeReq(url: string, method: string, headers?: Record<string, string>, body?: unknown) {
     const init: RequestInit = { method };
     if (headers) init.headers = new Headers(headers);
     if (body) init.body = JSON.stringify(body);
-    return new NextRequest("http://localhost" + url, init as any);
+    return new NextRequest("http://localhost" + url, init as unknown as Request);
   }
 
   it("spoof test: PUT ignores query/cookie and relies on verified wallet", async () => {
     const store = modkit.openStore();
-    store.latest.mockReturnValueOnce({ data: [{ ticker: "NVDA" }] }); // mock registry
+    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({ data: [{ ticker: "NVDA" }] }); // mock registry
 
     const req = makeReq(
       `/api/session/guardian/settings?address=0x999`,
@@ -213,7 +213,7 @@ describe("Guardian settings write route", () => {
 
   it("rejects unknown fields in PUT", async () => {
     const store = modkit.openStore();
-    store.latest.mockReturnValueOnce({ data: [{ ticker: "NVDA" }] }); // mock registry
+    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({ data: [{ ticker: "NVDA" }] }); // mock registry
 
     const req = makeReq(
       "/api/session/guardian/settings",
@@ -229,7 +229,7 @@ describe("Guardian settings write route", () => {
 
   it("rejects earnings: true", async () => {
     const store = modkit.openStore();
-    store.latest.mockReturnValueOnce({ data: [{ ticker: "NVDA" }] }); // mock registry
+    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({ data: [{ ticker: "NVDA" }] }); // mock registry
 
     const body = {
       ...DEFAULT_GUARDIAN_SETTINGS,
@@ -244,7 +244,7 @@ describe("Guardian settings write route", () => {
 
   it("rejects bad thresholds and hours", async () => {
     const store = modkit.openStore();
-    store.latest.mockReturnValueOnce({ data: [{ ticker: "NVDA" }] }); // mock registry
+    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({ data: [{ ticker: "NVDA" }] }); // mock registry
 
     // bad threshold (min > max)
     const body1 = {
@@ -255,7 +255,7 @@ describe("Guardian settings write route", () => {
     expect(res1.status).toBe(400);
 
     // bad hours
-    store.latest.mockReturnValueOnce({ data: [{ ticker: "NVDA" }] });
+    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({ data: [{ ticker: "NVDA" }] });
     const body2 = {
       ...DEFAULT_GUARDIAN_SETTINGS,
       quietHours: { enabled: true, startHourUtc: 24, endHourUtc: -1 },
@@ -268,13 +268,13 @@ describe("Guardian settings write route", () => {
     const store = modkit.openStore();
 
     // too small
-    store.latest.mockReturnValueOnce({ data: [{ ticker: "NVDA" }] });
+    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({ data: [{ ticker: "NVDA" }] });
     const body1 = { ...DEFAULT_GUARDIAN_SETTINGS, cooldownMs: 0 };
     const res1 = await settingsPUT(makeReq("/api/session/guardian/settings", "PUT", {}, body1));
     expect(res1.status).toBe(400);
 
     // too big
-    store.latest.mockReturnValueOnce({ data: [{ ticker: "NVDA" }] });
+    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({ data: [{ ticker: "NVDA" }] });
     const body2 = { ...DEFAULT_GUARDIAN_SETTINGS, cooldownMs: 700_000_000 };
     const res2 = await settingsPUT(makeReq("/api/session/guardian/settings", "PUT", {}, body2));
     expect(res2.status).toBe(400);
@@ -284,7 +284,7 @@ describe("Guardian settings write route", () => {
     let res;
     const store = modkit.openStore();
     for (let i = 0; i < 30; i++) {
-      store.latest.mockReturnValue({ data: [{ ticker: "NVDA" }] });
+      (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValue({ data: [{ ticker: "NVDA" }] });
       const req = makeReq("/api/session/guardian/settings", "PUT", {}, DEFAULT_GUARDIAN_SETTINGS);
       res = await settingsPUT(req);
       expect(res.status).toBe(200);
@@ -298,7 +298,7 @@ describe("Guardian settings write route", () => {
   it("returns saved setting on GET", async () => {
     const store = modkit.openStore();
     // Simulate that store.latest("guardian-settings") will return our saved data
-    store.latest.mockImplementation((kind, key) => {
+    (store.latest as unknown as ReturnType<typeof vi.fn>).mockImplementation((kind: string, key: string) => {
       if (kind === "guardian-settings" && key === MY_WALLET.toLowerCase()) {
         return { data: { ...DEFAULT_GUARDIAN_SETTINGS, cooldownMs: 999999 } };
       }
