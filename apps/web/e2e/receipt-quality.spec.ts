@@ -33,9 +33,11 @@ test.describe("receipt and quality pages: real server, signed out", () => {
     page,
   }) => {
     await page.goto(`${server.url}/receipt/${BUY_HASH}`);
-    await expect(page.getByTestId("receipt-title")).toContainText("purchase receipt", {
+    await expect(page.getByTestId("receipt-title")).toContainText("NVDAB purchase receipt", {
       timeout: 20_000,
     });
+    // No registry snapshot is seeded, so the issuer is the browser's word and the page says so.
+    await expect(page.getByTestId("receipt-issuer-note")).toContainText("not verified");
     for (const s of ["Quoted", "Simulated", "Received"])
       await expect(page.getByTestId(`receipt-step-${s}`)).toBeVisible();
     await expect(page.getByTestId("receipt-status")).toBeVisible();
