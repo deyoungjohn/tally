@@ -19,7 +19,7 @@ export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow>
   if (!pm) return null;
 
   if (step === 1) {
-    return <SellSheet flow={sell} isMigrate={true} />;
+    return null;
   }
 
   if (step === 2) {

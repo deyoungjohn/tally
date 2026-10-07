@@ -8,7 +8,6 @@ import { Button, ButtonLink } from "@/components/motion/button";
 import { ComingSoon } from "@/components/trade/coming-soon";
 import { GradeBadge, TokenLogo } from "@/components/trade/badges";
 import { SellSheet } from "@/components/trade/sell-sheet";
-import { useSellFlow } from "@/components/trade/use-sell-flow";
 import { MigrateSheet } from "@/components/trade/migrate-sheet";
 import { useMigrateFlow } from "@/components/trade/use-migrate-flow";
 import { useModuleFlagsState } from "@/lib/hooks/use-flags";
@@ -412,7 +411,9 @@ export function PortfolioPage() {
           </aside>
         </div>
       )}
-      {flags.sell === true ? <SellSheet flow={sell} /> : null}
+      {flags.sell === true || flags.switch === true ? (
+        <SellSheet flow={sell} isMigrate={migrate.step === 1} />
+      ) : null}
       {flags.switch === true ? <MigrateSheet flow={migrate} /> : null}
     </main>
   );

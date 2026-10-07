@@ -190,7 +190,9 @@ test.describe("Migrate", () => {
       await page.getByTestId("confirm-buy").click();
 
       // Check combined done view
-      await expect(page.getByRole("dialog")).toContainText(/Your .* shares have been migrated to .* using .* USDT/);
+      await expect(page.getByRole("dialog")).toContainText(
+        /Your .* shares have been migrated to .* using .* USDT/,
+      );
       await expect(page.getByRole("dialog")).toContainText("Step 1: Sold to USDT");
       await expect(page.getByRole("dialog")).toContainText("Step 2: Bought destination");
     });
@@ -230,8 +232,8 @@ test("blocks ineligible cases", async ({ page }) => {
                 shares: 10,
                 valueUsd: 1500,
                 multiplier: 1,
-              }
-            ]
+              },
+            ],
           },
           {
             ticker: "TSLA",
@@ -248,14 +250,14 @@ test("blocks ineligible cases", async ({ page }) => {
                 shares: 0.01,
                 valueUsd: 2,
                 multiplier: 1,
-              }
-            ]
-          }
+              },
+            ],
+          },
         ],
         totalValueUsd: 1502,
         wallet: { usdt: 10, bnb: 1 },
-        failed: []
-      }
+        failed: [],
+      },
     });
   });
   await page.goto("/portfolio");
@@ -269,7 +271,7 @@ test("blocks ineligible cases", async ({ page }) => {
   await expect(migrateDustBtn).toBeDisabled();
 
   // Hover over the TSLAB disabled button to check the tooltip reason
-  await migrateDustBtn.hover();
+  await migrateDustBtn.hover({ force: true });
   await expect(page.getByRole("tooltip")).toContainText(
     "Too small to migrate: the buy needs at least 6 USDT. You can sell to USDT instead.",
   );
