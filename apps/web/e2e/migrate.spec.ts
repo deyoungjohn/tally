@@ -186,7 +186,6 @@ test.describe("Migrate", () => {
       await page.getByRole("button", { name: "Buy now" }).click();
 
       // Check buy sheet title
-      await page.getByRole("button", { name: "Buy now" }).click();
       await expect(page.getByRole("dialog").filter({ hasText: "Review your buy" })).toBeVisible();
 
       // Confirm buy
