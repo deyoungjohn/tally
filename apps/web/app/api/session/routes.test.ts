@@ -8,7 +8,6 @@ import { GET as feedGET } from "./guardian/feed/route";
 import { POST as linkCodePOST } from "./guardian/link-code/route";
 import { POST as activeWalletPOST } from "./active-wallet/route";
 import { clearUserRateLimits } from "../../../lib/server/session";
-import { clearRateLimits } from "../../../lib/server/http";
 
 import * as modkit from "@tally/modkit";
 
@@ -61,7 +60,6 @@ describe("session routes", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     clearUserRateLimits();
-    clearRateLimits();
     process.env.TALLY_TEST_SESSION_WALLET = MY_WALLET;
     process.env.TALLY_FIXTURES = "1";
     process.env.TEST_FLAG_GUARDIAN = "1";
@@ -169,7 +167,6 @@ describe("Guardian settings write route", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     clearUserRateLimits();
-    clearRateLimits();
     process.env.TALLY_TEST_SESSION_WALLET = MY_WALLET;
     process.env.TALLY_FIXTURES = "1";
     process.env.TEST_FLAG_GUARDIAN = "1";
