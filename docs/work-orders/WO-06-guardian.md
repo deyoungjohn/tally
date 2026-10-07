@@ -19,6 +19,8 @@
 - `apps/web/lib/server/session.ts`
 - `apps/web/lib/server/session.test.ts`
 - `apps/web/app/api/session/**`
+- `apps/web/package.json`
+- `docs/work-orders/WO-06-guardian.md`
 
 ## Tasks
 
