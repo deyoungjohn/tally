@@ -2,13 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useSellFlow, type SellTarget } from "./use-sell-flow";
-import {   } from "./use-trade-flow";
+import {} from "./use-trade-flow";
 import {
   type PendingMigrate,
   readPendingMigrate,
   writePendingMigrate,
   clearPendingMigrate,
-
 } from "../../lib/migrate/state";
 
 import { useTallyWallet } from "@/components/wallet/wallet-context";
@@ -152,36 +151,42 @@ export function useMigrateFlow() {
     }
   }, [step, pm, waitingReceipt, wallet.address]);
 
-  const resumeStep2 = useCallback((manualUsdt?: string) => {
-    let raw = pm?.usdtReceived;
-    if (manualUsdt && !raw) {
-      try {
-        const parts = manualUsdt.split(".");
-        const intPart = parts[0] || "0";
-        let decPart = parts[1] || "";
-        decPart = decPart.padEnd(18, "0").slice(0, 18);
-        raw = intPart + decPart;
-      } catch {
-        return;
+  const resumeStep2 = useCallback(
+    (manualUsdt?: string) => {
+      let raw = pm?.usdtReceived;
+      if (manualUsdt && !raw) {
+        try {
+          const parts = manualUsdt.split(".");
+          const intPart = parts[0] || "0";
+          let decPart = parts[1] || "";
+          decPart = decPart.padEnd(18, "0").slice(0, 18);
+          raw = intPart + decPart;
+        } catch {
+          return;
+        }
       }
-    }
-    
-    if (pm && raw) {
-      const updated = { ...pm, usdtReceived: raw };
-      writePendingMigrate(updated);
-      setPm(updated);
-      setStep(2);
-    }
-  }, [pm]);
 
-  const onBuyDone = useCallback((hash: string) => {
-    if (pm && step === 2) {
-      const updated = { ...pm, buyHash: hash };
-      writePendingMigrate(updated);
-      setPm(updated);
-      setStep("done");
-    }
-  }, [pm, step]);
+      if (pm && raw) {
+        const updated = { ...pm, usdtReceived: raw };
+        writePendingMigrate(updated);
+        setPm(updated);
+        setStep(2);
+      }
+    },
+    [pm],
+  );
+
+  const onBuyDone = useCallback(
+    (hash: string) => {
+      if (pm && step === 2) {
+        const updated = { ...pm, buyHash: hash };
+        writePendingMigrate(updated);
+        setPm(updated);
+        setStep("done");
+      }
+    },
+    [pm, step],
+  );
 
   return { pm, step, sell, open, cancel, resumeStep2, waitingReceipt, source, onBuyDone };
 }

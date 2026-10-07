@@ -236,8 +236,8 @@ export function PortfolioPage() {
   );
 
   // Selling: behind FEATURE_SELL (read through /api/modules/health), and only on the signed-in wallet's own holdings.
-  const sell = useSellFlow();
   const migrate = useMigrateFlow();
+  const sell = migrate.sell;
   const own =
     wallet.authenticated &&
     !!wallet.address &&

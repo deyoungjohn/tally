@@ -190,7 +190,7 @@ test.describe("Migrate", () => {
       await page.getByTestId("confirm-buy").click();
 
       // Check combined done view
-      await expect(page.getByRole("dialog")).toContainText("Your shares have been migrated.");
+      await expect(page.getByRole("dialog")).toContainText(/Your .* shares have been migrated to .* using .* USDT/);
       await expect(page.getByRole("dialog")).toContainText("Step 1: Sold to USDT");
       await expect(page.getByRole("dialog")).toContainText("Step 2: Bought destination");
     });
@@ -209,6 +209,55 @@ test("hides when flag is off", async ({ page }) => {
 test("blocks ineligible cases", async ({ page }) => {
   await flags(page, true);
   await mockWallet(page);
+  await page.route("**/api/portfolio*", (route) => {
+    route.fulfill({
+      json: {
+        address: "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
+        asOf: new Date().toISOString(),
+        groups: [
+          {
+            ticker: "AAPL",
+            shares: 10,
+            valueUsd: 1500,
+            referencePrice: 150,
+            parts: [
+              {
+                ticker: "AAPL",
+                symbol: "AAPLx",
+                issuer: "xstocks",
+                address: "0x123",
+                tokens: 10,
+                shares: 10,
+                valueUsd: 1500,
+                multiplier: 1,
+              }
+            ]
+          },
+          {
+            ticker: "TSLA",
+            shares: 0.01,
+            valueUsd: 2,
+            referencePrice: 200,
+            parts: [
+              {
+                ticker: "TSLA",
+                symbol: "TSLAB",
+                issuer: "bstock",
+                address: "0x456",
+                tokens: 0.01,
+                shares: 0.01,
+                valueUsd: 2,
+                multiplier: 1,
+              }
+            ]
+          }
+        ],
+        totalValueUsd: 1502,
+        wallet: { usdt: 10, bnb: 1 },
+        failed: []
+      }
+    });
+  });
   await page.goto("/portfolio");
 
   // xStocks (AAPL) are completely hidden for migration in portfolio view
