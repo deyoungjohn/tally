@@ -62,8 +62,10 @@ export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow>
               <div className="rounded-lg border border-neutral-200 p-4 space-y-2 text-sm">
                 <p>
                   Sold {fromSymbol} for{" "}
-                  {pm.usdtReceived ? formatUnits(BigInt(roundDownToCent(pm.usdtReceived)), 18) : "?"} USDT. Not
-                  bought yet. Your USDT is in your wallet.
+                  {pm.usdtReceived
+                    ? formatUnits(BigInt(roundDownToCent(pm.usdtReceived)), 18)
+                    : "?"}{" "}
+                  USDT. Not bought yet. Your USDT is in your wallet.
                 </p>
                 {source === "wallet" ? (
                   <div className="mt-4">
@@ -105,7 +107,8 @@ export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow>
               <p className="text-sm text-neutral-500 text-center">
                 Your {fromSymbol} shares have been migrated to{" "}
                 {pm.to === "ondo" ? "Ondo" : "bStock"} ({toSymbol}) using{" "}
-                {pm.usdtReceived ? formatUnits(BigInt(roundDownToCent(pm.usdtReceived)), 18) : "?"} USDT.
+                {pm.usdtReceived ? formatUnits(BigInt(roundDownToCent(pm.usdtReceived)), 18) : "?"}{" "}
+                USDT.
               </p>
               <div className="flex justify-center mt-2">
                 <Button onClick={cancel}>Done</Button>

@@ -187,7 +187,7 @@ test.describe("Migrate", () => {
 
       // Check buy sheet title
       await page.getByRole("button", { name: "Buy now" }).click();
-  await expect(page.getByRole("dialog").filter({ hasText: "Review your buy" })).toBeVisible();
+      await expect(page.getByRole("dialog").filter({ hasText: "Review your buy" })).toBeVisible();
 
       // Confirm buy
       await page.getByTestId("confirm-buy").click();
@@ -377,6 +377,6 @@ test("rounds down to cent when passing USDT to buy step", async ({ page }) => {
   await page.goto("/portfolio");
   await page.getByRole("button", { name: "Buy now" }).click();
   await expect(page.getByRole("dialog").filter({ hasText: "Review your buy" })).toBeVisible();
-  
+
   expect(requestedUsd).toBe(6.12);
 });
