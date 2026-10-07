@@ -250,12 +250,22 @@ function FormView({ flow, isMigrate }: { flow: Flow; isMigrate?: boolean }) {
       ) : null}
 
       {view?.next === "approve" ? (
-        <Button big disabled={busy || !!isMigrateBlocked} onClick={() => void flow.approve()} data-testid="sell-approve">
+        <Button
+          big
+          disabled={busy || !!isMigrateBlocked}
+          onClick={() => void flow.approve()}
+          data-testid="sell-approve"
+        >
           <ShieldCheck size={18} aria-hidden /> Approve {view.symbol}
         </Button>
       ) : null}
       {view?.next === "confirm" ? (
-        <Button big disabled={busy || !!isMigrateBlocked} onClick={() => void flow.confirm()} data-testid="sell-confirm">
+        <Button
+          big
+          disabled={busy || !!isMigrateBlocked}
+          onClick={() => void flow.confirm()}
+          data-testid="sell-confirm"
+        >
           Confirm sale
         </Button>
       ) : null}

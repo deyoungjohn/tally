@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Modal } from "@/components/motion/modal";
 import { Button } from "@/components/motion/button";
 import { useMigrateFlow } from "./use-migrate-flow";
@@ -55,7 +55,9 @@ export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow>
                 </p>
                 {source === "wallet" ? (
                   <div className="mt-4">
-                    <p className="text-neutral-500 mb-2">Check your wallet for the exact USDT received, and enter it below:</p>
+                    <p className="text-neutral-500 mb-2">
+                      Check your wallet for the exact USDT received, and enter it below:
+                    </p>
                     <input
                       type="text"
                       className="input num w-full"
@@ -67,7 +69,7 @@ export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow>
                 ) : null}
               </div>
               <div className="flex justify-end">
-                <Button 
+                <Button
                   disabled={source === "wallet" && (!typedProceeds || Number(typedProceeds) < 6)}
                   onClick={() => resumeStep2(source === "wallet" ? typedProceeds : undefined)}
                 >
@@ -89,7 +91,9 @@ export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow>
                 </div>
               </div>
               <p className="text-sm text-neutral-500 text-center">
-                Your {pm.ticker} shares have been migrated to {pm.to === "ondo" ? "Ondo" : "bStock"} ({pm.to === "ondo" ? `${pm.ticker}on` : `${pm.ticker}B`}) using {pm.usdtReceived ? formatUnits(BigInt(pm.usdtReceived), 18) : "?"} USDT.
+                Your {pm.ticker} shares have been migrated to {pm.to === "ondo" ? "Ondo" : "bStock"}{" "}
+                ({pm.to === "ondo" ? `${pm.ticker}on` : `${pm.ticker}B`}) using{" "}
+                {pm.usdtReceived ? formatUnits(BigInt(pm.usdtReceived), 18) : "?"} USDT.
               </p>
               <div className="flex justify-center mt-2">
                 <Button onClick={cancel}>Done</Button>
@@ -137,14 +141,16 @@ function MigrateBuyStep({
   // If the user cancels the buy modal, we abort the migration entirely
   useEffect(() => {
     if (buy.phase.name === "idle") {
-       // Wait, we shouldn't automatically cancel if idle because it starts out idle.
+      // Wait, we shouldn't automatically cancel if idle because it starts out idle.
     }
   }, [buy.phase.name]);
 
   return (
-    <div onKeyDown={(e) => {
-      if (e.key === "Escape" && buy.phase.name === "idle") cancel();
-    }}>
+    <div
+      onKeyDown={(e) => {
+        if (e.key === "Escape" && buy.phase.name === "idle") cancel();
+      }}
+    >
       <TradeFlowLayer flow={buy} />
     </div>
   );

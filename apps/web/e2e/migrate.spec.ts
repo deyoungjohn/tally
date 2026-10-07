@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { expect, test, type Page } from "@playwright/test";
 
-
 const USER = "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7";
 const STOCK = "0x02fca66c1d1afb4e2a7884261eb00f63598a7436"; // NVDAB
 const ROUTER = "0xb44446b0c8e56988c34f7ff73ae904982b5fdda5";
@@ -72,7 +71,17 @@ function plan(status: "ready" | "needs_approval" | "needs_funds" = "ready") {
     balances: { tokens: RAW_BALANCE, bnb: "50000000000000000" },
     warnings: [],
     shortfall: status === "needs_funds" ? { bnb: "10", bnbNeeded: "20" } : undefined,
-    tx: status === "ready" ? { to: ROUTER, data: "0x123", value: "0x0", chainId: 56, gasLimit: "375000", gasEstimate: "300000" } : undefined,
+    tx:
+      status === "ready"
+        ? {
+            to: ROUTER,
+            data: "0x123",
+            value: "0x0",
+            chainId: 56,
+            gasLimit: "375000",
+            gasEstimate: "300000",
+          }
+        : undefined,
     fee: { limit: "150000", usd: 0.1 },
     approveTarget: ROUTER,
   };

@@ -2,15 +2,15 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useSellFlow, type SellTarget } from "./use-sell-flow";
-import { useTradeFlow } from "./use-trade-flow";
+import {   } from "./use-trade-flow";
 import {
   type PendingMigrate,
   readPendingMigrate,
   writePendingMigrate,
   clearPendingMigrate,
-  roundDownToCent,
+
 } from "../../lib/migrate/state";
-import { formatUnits } from "viem";
+
 import { useTallyWallet } from "@/components/wallet/wallet-context";
 
 export type MigrateStep = 1 | 2 | "interstitial" | "done" | "idle";
@@ -157,7 +157,7 @@ export function useMigrateFlow() {
     if (manualUsdt && !raw) {
       try {
         const parts = manualUsdt.split(".");
-        let intPart = parts[0] || "0";
+        const intPart = parts[0] || "0";
         let decPart = parts[1] || "";
         decPart = decPart.padEnd(18, "0").slice(0, 18);
         raw = intPart + decPart;

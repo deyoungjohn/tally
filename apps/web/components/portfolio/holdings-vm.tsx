@@ -39,7 +39,7 @@ function IssuerRow({
   const tooSmall = Number.isFinite(worth) && worth < MIN_SELL_USDT;
   // The view model's own row-action metadata says what a row action acts on (token, issuer, balance, ticker).
   const action = h.rowActionsSlot;
-  
+
   const openSell = () =>
     onSell?.({
       ticker: action.ticker ?? ticker,
@@ -49,7 +49,7 @@ function IssuerRow({
       probeShares: Number.parseFloat(action.balanceShares ?? "0"),
       probeUsd: Number.isFinite(worth) ? worth : null,
     });
-    
+
   const openMigrate = () =>
     onMigrate?.(
       {
@@ -59,7 +59,7 @@ function IssuerRow({
         probeShares: Number.parseFloat(action.balanceShares ?? "0"),
         probeUsd: Number.isFinite(worth) ? worth : null,
       },
-      action.issuer === "ondo" ? "bstock" : "ondo"
+      action.issuer === "ondo" ? "bstock" : "ondo",
     );
 
   return (
@@ -99,7 +99,7 @@ function IssuerRow({
       {h.convertedAtTodaysRatio ? (
         <span className="t-meta w-full">Converted at today&apos;s share ratio.</span>
       ) : null}
-      
+
       {onSell || onMigrate ? (
         <div className="flex gap-2">
           {sellable ? (
@@ -131,58 +131,61 @@ function IssuerRow({
               </Button>
             )
           ) : null}
-          
-          {onMigrate ? (() => {
-            let reason: string | null = null;
-            if (action.issuer === "xstocks") {
-              reason = "No market to exit this token on BNB Chain";
-            } else if (!isBuyable(action.ticker ?? ticker)) {
-              reason = `${action.ticker ?? ticker} can't be bought through Tally yet.`;
-            } else if (tooSmall) {
-              reason = "Too small to migrate: the buy needs at least 6 USDT. You can sell to USDT instead.";
-            }
 
-            if (reason) {
-              return (
-                <Tip text={reason}>
-                  <span className="inline-flex">
-                    <Button
-                      variant="glassy"
-                      className="!h-9 !px-4 text-[14.5px]"
-                      disabled
-                      aria-label="Migrate (disabled)"
-                      data-testid={`migrate-${h.tokenSymbol}`}
-                    >
-                      Migrate
-                    </Button>
-                  </span>
-                </Tip>
-              );
-            }
-            return (
-              <Button
-                variant="glassy"
-                className="!h-9 !px-4 text-[14.5px]"
-                onClick={openMigrate}
-                aria-label={`Migrate ${h.tokenSymbol}`}
-                data-testid={`migrate-${h.tokenSymbol}`}
-              >
-                Migrate
-              </Button>
-            );
-          })() : null}
+          {onMigrate
+            ? (() => {
+                let reason: string | null = null;
+                if (action.issuer === "xstocks") {
+                  reason = "No market to exit this token on BNB Chain";
+                } else if (!isBuyable(action.ticker ?? ticker)) {
+                  reason = `${action.ticker ?? ticker} can't be bought through Tally yet.`;
+                } else if (tooSmall) {
+                  reason =
+                    "Too small to migrate: the buy needs at least 6 USDT. You can sell to USDT instead.";
+                }
+
+                if (reason) {
+                  return (
+                    <Tip text={reason}>
+                      <span className="inline-flex">
+                        <Button
+                          variant="glassy"
+                          className="!h-9 !px-4 text-[14.5px]"
+                          disabled
+                          aria-label="Migrate (disabled)"
+                          data-testid={`migrate-${h.tokenSymbol}`}
+                        >
+                          Migrate
+                        </Button>
+                      </span>
+                    </Tip>
+                  );
+                }
+                return (
+                  <Button
+                    variant="glassy"
+                    className="!h-9 !px-4 text-[14.5px]"
+                    onClick={openMigrate}
+                    aria-label={`Migrate ${h.tokenSymbol}`}
+                    data-testid={`migrate-${h.tokenSymbol}`}
+                  >
+                    Migrate
+                  </Button>
+                );
+              })()
+            : null}
         </div>
       ) : null}
     </li>
   );
 }
 
-function Group({ 
-  g, 
+function Group({
+  g,
   onSell,
   onMigrate,
-}: { 
-  g: HeadlineHoldingVM; 
+}: {
+  g: HeadlineHoldingVM;
   onSell?: (t: SellTarget) => void;
   onMigrate?: (t: SellTarget, toIssuer: "ondo" | "bstock") => void;
 }) {
@@ -220,7 +223,13 @@ function Group({
       </dl>
       <ul className="m-0 mt-3 grid list-none gap-2 p-0">
         {g.issuers.map((h) => (
-          <IssuerRow key={h.tokenSymbol} h={h} ticker={g.ticker} onSell={onSell} onMigrate={onMigrate} />
+          <IssuerRow
+            key={h.tokenSymbol}
+            h={h}
+            ticker={g.ticker}
+            onSell={onSell}
+            onMigrate={onMigrate}
+          />
         ))}
       </ul>
       <Link
@@ -233,12 +242,12 @@ function Group({
   );
 }
 
-export function HoldingsVm({ 
-  vm, 
+export function HoldingsVm({
+  vm,
   onSell,
   onMigrate,
-}: { 
-  vm: PortfolioVM; 
+}: {
+  vm: PortfolioVM;
   onSell?: (t: SellTarget) => void;
   onMigrate?: (t: SellTarget, toIssuer: "ondo" | "bstock") => void;
 }) {
