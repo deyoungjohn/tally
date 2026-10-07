@@ -6,7 +6,11 @@ const MAX_CACHE_ENTRIES = 500;
 
 let _defaultPrivyClient: PrivyClient | null = null;
 function getDefaultPrivyClient() {
-  if (!_defaultPrivyClient && process.env.NEXT_PUBLIC_PRIVY_APP_ID && process.env.PRIVY_APP_SECRET) {
+  if (
+    !_defaultPrivyClient &&
+    process.env.NEXT_PUBLIC_PRIVY_APP_ID &&
+    process.env.PRIVY_APP_SECRET
+  ) {
     _defaultPrivyClient = new PrivyClient({
       appId: process.env.NEXT_PUBLIC_PRIVY_APP_ID,
       appSecret: process.env.PRIVY_APP_SECRET,
@@ -22,13 +26,17 @@ export function clearSessionCache() {
 }
 
 export function createSessionVerifier(options?: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- allow mock injection
   client?: any; // any here to allow mock injection
   appId?: string;
   now?: () => number;
 }) {
   const now = options?.now ?? Date.now;
 
-  return async function verifiedWallet(req: Request, chosen?: string | null): Promise<string | null> {
+  return async function verifiedWallet(
+    req: Request,
+    chosen?: string | null,
+  ): Promise<string | null> {
     if (process.env.NODE_ENV !== "production") {
       const testWallet = process.env.TALLY_TEST_SESSION_WALLET;
       if (testWallet) {
@@ -81,7 +89,12 @@ export function createSessionVerifier(options?: {
 
           const found = new Set<string>();
           for (const acc of user.linked_accounts || []) {
-            if (acc && typeof acc === "object" && "address" in acc && typeof acc.address === "string") {
+            if (
+              acc &&
+              typeof acc === "object" &&
+              "address" in acc &&
+              typeof acc.address === "string"
+            ) {
               const addr = acc.address.toLowerCase();
               if (/^0x[a-fA-F0-9]{40}$/.test(addr)) {
                 found.add(addr);
@@ -128,7 +141,7 @@ export function createSessionVerifier(options?: {
       const result = await Promise.race([verifyPromise, timeoutPromise]);
       if (timer) clearTimeout(timer);
       return result;
-    } catch (err) {
+    } catch {
       console.warn("session: error");
       return null;
     }
@@ -142,7 +155,12 @@ export function verifiedWallet(req: Request, chosen?: string | null) {
 
 // Rate limiting for session endpoints (link-code, active-wallet)
 const userHits = new Map<string, number[]>();
-export function rateLimitedUser(userKey: string, bucket: string, max: number, windowMs = 3_600_000) {
+export function rateLimitedUser(
+  userKey: string,
+  bucket: string,
+  max: number,
+  windowMs = 3_600_000,
+) {
   const key = `${bucket}:${userKey.toLowerCase()}`;
   const now = Date.now();
   const recent = (userHits.get(key) ?? []).filter((t) => now - t < windowMs);

@@ -8,7 +8,8 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   if (!moduleFlags().statement) return new Response(null, { status: 404 });
-  if (rateLimited(req, "active-wallet-ip", 60)) return fail(429, "rate_limited", "Too many requests.");
+  if (rateLimited(req, "active-wallet-ip", 60))
+    return fail(429, "rate_limited", "Too many requests.");
 
   const chosen = req.headers.get("x-tally-wallet");
   const walletAddress = await verifiedWallet(req as unknown as Request, chosen);
@@ -24,7 +25,12 @@ export async function POST(req: NextRequest) {
     const now = Date.now();
     const recent = store.history("wallet:active", "bsc", 0, 50);
     const alreadyRegistered = recent.some(
-      (s) => s.data && typeof s.data === "object" && "address" in s.data && s.data.address === walletAddress && now - s.observedAt < 86_400_000
+      (s) =>
+        s.data &&
+        typeof s.data === "object" &&
+        "address" in s.data &&
+        s.data.address === walletAddress &&
+        now - s.observedAt < 86_400_000,
     );
 
     if (!alreadyRegistered) {

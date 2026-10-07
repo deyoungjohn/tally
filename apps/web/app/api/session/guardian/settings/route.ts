@@ -9,7 +9,8 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   if (!moduleFlags().guardian) return new Response(null, { status: 404 });
-  if (rateLimited(req, "guardian-settings", 60)) return fail(429, "rate_limited", "Too many requests.");
+  if (rateLimited(req, "guardian-settings", 60))
+    return fail(429, "rate_limited", "Too many requests.");
 
   const chosen = req.headers.get("x-tally-wallet");
   const walletAddress = await verifiedWallet(req as unknown as Request, chosen);

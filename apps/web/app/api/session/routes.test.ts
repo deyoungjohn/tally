@@ -21,17 +21,18 @@ vi.mock("../../../lib/flags", () => ({
 
 vi.mock("@tally/modkit", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tally/modkit")>();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let mockStore: any;
   return {
     ...actual,
     openStore: () => {
       if (!mockStore) {
-        const snapshots: any[] = [];
+        const snapshots: Array<{ kind: string; key: string; data: unknown; source: string }> = [];
         mockStore = {
           close: vi.fn(),
           latest: vi.fn().mockReturnValue(null),
           history: vi.fn().mockImplementation((kind, key) => {
-            return snapshots.filter(s => s.kind === kind && s.key === key);
+            return snapshots.filter((s) => s.kind === kind && s.key === key);
           }),
           put: vi.fn().mockImplementation((s) => {
             snapshots.push(s);
@@ -40,7 +41,9 @@ vi.mock("@tally/modkit", async (importOriginal) => {
       }
       return mockStore;
     },
-    __resetMockStore: () => { mockStore = null; },
+    __resetMockStore: () => {
+      mockStore = null;
+    },
   };
 });
 
@@ -54,7 +57,7 @@ describe("session routes", () => {
     process.env.TALLY_TEST_SESSION_WALLET = MY_WALLET;
     process.env.TEST_FLAG_GUARDIAN = "1";
     process.env.TEST_FLAG_STATEMENT = "1";
-    // @ts-ignore
+    // @ts-expect-error -- mock function
     modkit.__resetMockStore();
   });
 
@@ -65,10 +68,12 @@ describe("session routes", () => {
     delete process.env.TEST_FLAG_STATEMENT;
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function makeReq(url: string, method: string, headers?: Record<string, string>, body?: any) {
     const init: RequestInit = { method };
     if (headers) init.headers = new Headers(headers);
     if (body) init.body = JSON.stringify(body);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return new NextRequest("http://localhost" + url, init as any);
   }
 
@@ -79,8 +84,9 @@ describe("session routes", () => {
       headers: {
         cookie: `walletAddress=${VICTIM}`,
       },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
-    // @ts-ignore NextRequest allows body on GET in test but let's just test query and cookie for GET
+    // @ts-expect-error NextRequest allows body on GET in test but let's just test query and cookie for GET
     const res = await feedGET(req);
     expect(res.status).toBe(200);
     const data = await res.json();
@@ -135,12 +141,12 @@ describe("session routes", () => {
 
     // Advance 25 hours
     await vi.advanceTimersByTimeAsync(25 * 3600 * 1000);
-    
+
     // rate limit of 60_000ms is passed too
     req = makeReq("/api/session/active-wallet", "POST");
     res = await activeWalletPOST(req);
     expect(res.status).toBe(204);
-    
+
     // Now it should be 2
     expect(store.put).toHaveBeenCalledTimes(2);
   });
