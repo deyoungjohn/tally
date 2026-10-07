@@ -94,4 +94,19 @@ export function rateLimited(req: NextRequest, bucket: string, max: number, windo
     for (const [k, v] of hits) if (!v.some((t) => now - t < windowMs)) hits.delete(k);
   return recent.length > max * (Number(process.env.TALLY_RATE_LIMIT_MULT) || 1);
 }
+export function rateLimitedUser(userId: string, bucket: string, max: number, windowMs = 60_000) {
+  const key = `${bucket}:user:${userId}`;
+  const now = Date.now();
+  const recent = (hits.get(key) ?? []).filter((t) => now - t < windowMs);
+  recent.push(now);
+  hits.set(key, recent);
+  if (hits.size > 5_000)
+    for (const [k, v] of hits) if (!v.some((t) => now - t < windowMs)) hits.delete(k);
+  return recent.length > max * (Number(process.env.TALLY_RATE_LIMIT_MULT) || 1);
+}
+
+export function clearRateLimits() {
+  hits.clear();
+}
+
 export const tooMany = () => fail(429, "rate_limited", "Too many requests. Slow down a little.");

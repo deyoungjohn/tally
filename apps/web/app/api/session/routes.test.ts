@@ -8,6 +8,7 @@ import { GET as feedGET } from "./guardian/feed/route";
 import { POST as linkCodePOST } from "./guardian/link-code/route";
 import { POST as activeWalletPOST } from "./active-wallet/route";
 import { clearUserRateLimits } from "../../../lib/server/session";
+import { clearRateLimits } from "../../../lib/server/http";
 
 import * as modkit from "@tally/modkit";
 
@@ -30,7 +31,10 @@ vi.mock("@tally/modkit", async (importOriginal) => {
         const snapshots: Array<{ kind: string; key: string; data: unknown; source: string }> = [];
         mockStore = {
           close: vi.fn(),
-          latest: vi.fn().mockReturnValue(null),
+          latest: vi.fn().mockImplementation((kind: string, key: string) => {
+            const hist = snapshots.filter((s) => s.kind === kind && s.key === key);
+            return hist.length > 0 ? hist[hist.length - 1] : null;
+          }),
           history: vi.fn().mockImplementation((kind: string, key: string) => {
             return snapshots.filter((s) => s.kind === kind && s.key === key);
           }),
@@ -57,6 +61,7 @@ describe("session routes", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     clearUserRateLimits();
+    clearRateLimits();
     process.env.TALLY_TEST_SESSION_WALLET = MY_WALLET;
     process.env.TALLY_FIXTURES = "1";
     process.env.TEST_FLAG_GUARDIAN = "1";
@@ -164,9 +169,12 @@ describe("Guardian settings write route", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     clearUserRateLimits();
+    clearRateLimits();
     process.env.TALLY_TEST_SESSION_WALLET = MY_WALLET;
     process.env.TALLY_FIXTURES = "1";
     process.env.TEST_FLAG_GUARDIAN = "1";
+    // @ts-expect-error -- mock function
+    modkit.__resetMockStore();
   });
 
   afterEach(() => {
@@ -182,9 +190,22 @@ describe("Guardian settings write route", () => {
 
   it("spoof test: PUT ignores query/cookie and relies on verified wallet", async () => {
     const store = modkit.openStore();
-    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({
-      data: [{ ticker: "NVDA" }],
-    }); // mock registry
+    store.put({
+      kind: "registry",
+      key: "bsc",
+      data: [
+        {
+          ticker: "NVDA",
+          underlyingTicker: "NVDA",
+          address: "0x0000000000000000000000000000000000000000",
+          decimals: 18,
+          name: "NVDA Stock",
+          provider: "test",
+        },
+      ],
+      source: "test",
+      observedAt: Date.now(),
+    });
 
     const req = makeReq(
       `/api/session/guardian/settings?address=0x999`,
@@ -214,9 +235,22 @@ describe("Guardian settings write route", () => {
 
   it("rejects unknown fields in PUT", async () => {
     const store = modkit.openStore();
-    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({
-      data: [{ ticker: "NVDA" }],
-    }); // mock registry
+    store.put({
+      kind: "registry",
+      key: "bsc",
+      data: [
+        {
+          ticker: "NVDA",
+          underlyingTicker: "NVDA",
+          address: "0x0000000000000000000000000000000000000000",
+          decimals: 18,
+          name: "NVDA Stock",
+          provider: "test",
+        },
+      ],
+      source: "test",
+      observedAt: Date.now(),
+    });
 
     const req = makeReq(
       "/api/session/guardian/settings",
@@ -232,9 +266,22 @@ describe("Guardian settings write route", () => {
 
   it("rejects earnings: true", async () => {
     const store = modkit.openStore();
-    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({
-      data: [{ ticker: "NVDA" }],
-    }); // mock registry
+    store.put({
+      kind: "registry",
+      key: "bsc",
+      data: [
+        {
+          ticker: "NVDA",
+          underlyingTicker: "NVDA",
+          address: "0x0000000000000000000000000000000000000000",
+          decimals: 18,
+          name: "NVDA Stock",
+          provider: "test",
+        },
+      ],
+      source: "test",
+      observedAt: Date.now(),
+    });
 
     const body = {
       ...DEFAULT_GUARDIAN_SETTINGS,
@@ -249,9 +296,22 @@ describe("Guardian settings write route", () => {
 
   it("rejects bad thresholds and hours", async () => {
     const store = modkit.openStore();
-    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({
-      data: [{ ticker: "NVDA" }],
-    }); // mock registry
+    store.put({
+      kind: "registry",
+      key: "bsc",
+      data: [
+        {
+          ticker: "NVDA",
+          underlyingTicker: "NVDA",
+          address: "0x0000000000000000000000000000000000000000",
+          decimals: 18,
+          name: "NVDA Stock",
+          provider: "test",
+        },
+      ],
+      source: "test",
+      observedAt: Date.now(),
+    });
 
     // bad threshold (min > max)
     const body1 = {
@@ -262,8 +322,21 @@ describe("Guardian settings write route", () => {
     expect(res1.status).toBe(400);
 
     // bad hours
-    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({
-      data: [{ ticker: "NVDA" }],
+    store.put({
+      kind: "registry",
+      key: "bsc",
+      data: [
+        {
+          ticker: "NVDA",
+          underlyingTicker: "NVDA",
+          address: "0x0000000000000000000000000000000000000000",
+          decimals: 18,
+          name: "NVDA Stock",
+          provider: "test",
+        },
+      ],
+      source: "test",
+      observedAt: Date.now(),
     });
     const body2 = {
       ...DEFAULT_GUARDIAN_SETTINGS,
@@ -277,16 +350,42 @@ describe("Guardian settings write route", () => {
     const store = modkit.openStore();
 
     // too small
-    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({
-      data: [{ ticker: "NVDA" }],
+    store.put({
+      kind: "registry",
+      key: "bsc",
+      data: [
+        {
+          ticker: "NVDA",
+          underlyingTicker: "NVDA",
+          address: "0x0000000000000000000000000000000000000000",
+          decimals: 18,
+          name: "NVDA Stock",
+          provider: "test",
+        },
+      ],
+      source: "test",
+      observedAt: Date.now(),
     });
     const body1 = { ...DEFAULT_GUARDIAN_SETTINGS, cooldownMs: 0 };
     const res1 = await settingsPUT(makeReq("/api/session/guardian/settings", "PUT", {}, body1));
     expect(res1.status).toBe(400);
 
     // too big
-    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({
-      data: [{ ticker: "NVDA" }],
+    store.put({
+      kind: "registry",
+      key: "bsc",
+      data: [
+        {
+          ticker: "NVDA",
+          underlyingTicker: "NVDA",
+          address: "0x0000000000000000000000000000000000000000",
+          decimals: 18,
+          name: "NVDA Stock",
+          provider: "test",
+        },
+      ],
+      source: "test",
+      observedAt: Date.now(),
     });
     const body2 = { ...DEFAULT_GUARDIAN_SETTINGS, cooldownMs: 700_000_000 };
     const res2 = await settingsPUT(makeReq("/api/session/guardian/settings", "PUT", {}, body2));
@@ -297,8 +396,21 @@ describe("Guardian settings write route", () => {
     let res;
     const store = modkit.openStore();
     for (let i = 0; i < 30; i++) {
-      (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
-        data: [{ ticker: "NVDA" }],
+      store.put({
+        kind: "registry",
+        key: "bsc",
+        data: [
+          {
+            ticker: "NVDA",
+            underlyingTicker: "NVDA",
+            address: "0x0000000000000000000000000000000000000000",
+            decimals: 18,
+            name: "NVDA Stock",
+            provider: "test",
+          },
+        ],
+        source: "test",
+        observedAt: Date.now(),
       });
       const req = makeReq(
         "/api/session/guardian/settings",

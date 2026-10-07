@@ -1,6 +1,6 @@
 import { type NextRequest } from "next/server";
 import { verifiedWallet } from "../../../../../lib/server/session";
-import { fail, json, rateLimited } from "../../../../../lib/server/http";
+import { fail, json, rateLimited, rateLimitedUser } from "../../../../../lib/server/http";
 import { moduleFlags } from "../../../../../lib/flags";
 import { openStore, moduleHealthState } from "@tally/modkit";
 import { loadGuardianSettings } from "../../../../../modules/guardian/view-model";
@@ -32,20 +32,36 @@ export async function GET(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   if (!moduleFlags().guardian) return new Response(null, { status: 404 });
-  if (rateLimited(req, "guardian-settings", 30))
-    return fail(429, "rate_limited", "Too many requests.");
-
   const chosen = req.headers.get("x-tally-wallet");
   const walletAddress = await verifiedWallet(req as unknown as Request, chosen);
   if (!walletAddress) return fail(401, "session_required", "Session required");
 
+  if (
+    rateLimited(req, "guardian-settings-put", 30, 3_600_000) ||
+    rateLimitedUser(walletAddress, "guardian-settings-put", 30, 3_600_000)
+  ) {
+    return fail(429, "rate_limited", "Too many requests.");
+  }
+
   let store;
   try {
     store = openStore();
-    const registrySnap = store.latest<{ ticker: string }[]>("registry", "bsc", {
-      maxAgeMs: Infinity,
-    });
-    const validTickers = new Set((registrySnap?.data || []).map((r) => r.ticker.toUpperCase()));
+    const registrySnap = store.latest<{ ticker?: string; underlyingTicker?: string }[]>(
+      "registry",
+      "bsc",
+      {
+        maxAgeMs: Infinity,
+      },
+    );
+    if (!registrySnap) {
+      return fail(503, "not_ready", "ticker list not loaded yet");
+    }
+    const validTickers = new Set(
+      registrySnap.data
+        .map((r) => r.underlyingTicker || r.ticker)
+        .filter(Boolean)
+        .map((t) => String(t).toUpperCase()),
+    );
 
     let body: unknown;
     try {
