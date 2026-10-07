@@ -106,8 +106,13 @@ failure after one staged row, a commit failure, and late work after runner timeo
 
 ## A2 producers and session contract
 
-At the start of the existing job, only wallets with a current stored policy are
-collected (at most 20 wallets, 10 allow-listed tokens each; truncation warns).
+At the start of the existing job, only wallets with a current stored policy and
+an alert absent from the decision log are collected (at most 20 such wallets,
+10 allow-listed tokens each; truncation warns). Quiet or already-decided wallets
+do no engine work and retain their last collection time. Ticker facts, including
+failed reads, are cached across wallets and tokens for that run only; chain share
+reports are cached per wallet and ticker, so balances are never shared across
+wallets. A later run reads fresh facts. Pause reads are shared per token per run.
 `engine.sharesOf` provides the raw **chain** balance and accepted multiplier;
 shares are calculated with bigint. Registry metadata decimals are accepted only
 when exactly 18; otherwise decimals and shares are null, a warning is emitted,
@@ -130,7 +135,8 @@ append-only decision log stays unchanged and failed worker health is visible.
 `GET /api/session/autopilot/policy` returns the latest policy, ceilings/defaults,
 positions and their age, collector status, and the additive `AutopilotVM`.
 `PUT /api/session/autopilot/policy` accepts decimal USD strings (at most 18 decimal
-places), rejects caps outside $6–$100 per trade / $6–$250 per day, validates the
+places), rejects caps outside $6–$100 per trade / $6–$250 per day and a per-trade
+cap above the daily cap (including omitted fields' $25/$50 defaults), validates the
 three rule IDs and bounds, and accepts only up to 10 registry-listed executable
 Ondo/bStock tokens. Unknown fields, xStocks and unknown addresses are rejected.
 Missing kill switch defaults to **on**, and unset policy is also safe by default.
@@ -166,9 +172,10 @@ With the deployed app and existing workers ready, sign in to your wallet, open t
 flag-gated `/dev/autopilot` preview, and click **Load verified shadow observations**.
 In its separate verified-session section, save an allowed registry token and a
 rule with the kill switch off, caps $6 or higher within the ceilings. Wait a minute,
-then click **Load verified shadow observations** again. Positions should show
-chain-derived shares, USD, grade, pause and age. If Guardian has emitted a fresh
-matching alert, its row should say `mode: shadow` and **would have sold; nothing was
+then click **Load verified shadow observations** again. When Guardian has emitted
+an undecided alert, positions should show chain-derived shares, USD, grade, pause
+and age. If the alert is fresh and matches the rule, its row should say
+`mode: shadow` and **would have sold; nothing was
 executed** (or explain its refusal); `spentToday` remains zero. Quiet wallets do
 not fabricate alerts. The preview section above remains constructed data.
 Session stop rules still refuse `session unknown`, because no regular-session

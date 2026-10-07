@@ -180,10 +180,138 @@ it("only policy wallets are collected; empty opt-in runs are distinguished from 
     source: "constructed",
     observedAt: now,
   });
+  store.put({
+    kind: "alerts",
+    key: wallet,
+    data: [constructedAlert()],
+    source: "constructed",
+    observedAt: now,
+  });
   await collectAutopilotPositions(ctx);
   expect(store.latest("autopilot-collector", wallet, { maxAgeMs: 60_000, now })?.data).toEqual({
     positionKeys: [],
   });
+});
+it("quiet and already-decided wallets do no engine work or refresh last good collection", async () => {
+  vi.stubEnv("FEATURE_AUTOPILOT", "1");
+  const { store, ctx } = setup();
+  await job.run(ctx);
+  expect(readDecisionLog(store)).toHaveLength(1);
+  const before = store.history("autopilot-position", positionKey(wallet, token), 0);
+  vi.mocked(ctx.engine.sharesOf).mockClear();
+  vi.mocked(ctx.engine.facts).mockClear();
+  vi.mocked(ctx.engine.pauseState).mockClear();
+  ctx.now = () => now + 60_000;
+  await job.run(ctx);
+  // No alerts is also a quiet wallet, even with a current stored policy.
+  store.put({ kind: "alerts", key: wallet, data: [], source: "constructed", observedAt: now });
+  await job.run(ctx);
+  expect(ctx.engine.sharesOf).not.toHaveBeenCalled();
+  expect(ctx.engine.facts).not.toHaveBeenCalled();
+  expect(ctx.engine.pauseState).not.toHaveBeenCalled();
+  expect(store.history("autopilot-position", positionKey(wallet, token), 0)).toEqual(before);
+  expect(store.history("autopilot-collector", wallet, 0)).toHaveLength(1);
+  expect(readDecisionLog(store)).toHaveLength(1);
+});
+it("ticker facts are shared across wallets and tokens per run, balances stay wallet-specific, and caches refresh next run", async () => {
+  const { store, ctx } = setup();
+  const otherWallet = `0x${"5".repeat(40)}`;
+  const otherToken = `0x${"6".repeat(40)}` as `0x${string}`;
+  store.put({
+    kind: "registry",
+    key: "bsc",
+    data: [
+      registryRow,
+      {
+        ...registryRow,
+        tokenContractAddress: otherToken,
+        platformId: "bstock",
+        tokenToShareRatio: "1",
+      },
+    ],
+    source: "constructed",
+    observedAt: now,
+  });
+  for (const address of [wallet, otherWallet]) {
+    store.put({
+      kind: "autopilot-policy",
+      key: address,
+      data: constructedPolicy({ tokenAllowList: [token, otherToken] }),
+      source: "constructed",
+      observedAt: now,
+    });
+    store.put({
+      kind: "alerts",
+      key: address,
+      data: [constructedAlert({ id: `alert-${address}`, walletAddress: address })],
+      source: "constructed",
+      observedAt: now,
+    });
+  }
+  const report = await ctx.engine.sharesOf(wallet);
+  const facts = await ctx.engine.facts("NFLX");
+  const read = vi
+    .spyOn(ctx.engine, "sharesOf")
+    .mockImplementation(async (address) => ({
+      ...report,
+      address,
+      rows: [
+        { ...report.rows[0]!, balance: address === wallet ? E18 : 2n * E18 },
+        {
+          ...report.rows[0]!,
+          address: otherToken,
+          issuer: "bstock",
+          multiplier: E18,
+          balance: address === wallet ? 3n * E18 : 4n * E18,
+        },
+      ],
+    }))
+    .mockClear();
+  const factRead = vi
+    .spyOn(ctx.engine, "facts")
+    .mockResolvedValue([
+      facts[0]!,
+      { ...facts[0]!, address: otherToken, integrity: { ...facts[0]!.integrity, grade: "F" } },
+    ])
+    .mockClear();
+  await collectAutopilotPositions(ctx);
+  expect(factRead).toHaveBeenCalledTimes(1);
+  expect(factRead).toHaveBeenCalledWith("NFLX");
+  expect(read).toHaveBeenCalledTimes(2);
+  for (const [address, expectedShares] of [
+    [wallet, 10n * E18],
+    [otherWallet, 20n * E18],
+  ] as const)
+    expect(
+      store.latest<Position>("autopilot-position", positionKey(address, token), {
+        maxAgeMs: 60_000,
+        now,
+      })?.data.shares,
+    ).toBe(expectedShares);
+  for (const [address, expectedShares] of [
+    [wallet, 3n * E18],
+    [otherWallet, 4n * E18],
+  ] as const)
+    expect(
+      store.latest<Position>("autopilot-position", positionKey(address, otherToken), {
+        maxAgeMs: 60_000,
+        now,
+      })?.data,
+    ).toMatchObject({ shares: expectedShares, grade: "F" });
+  factRead.mockRejectedValue(new Error("unavailable"));
+  await collectAutopilotPositions(ctx);
+  expect(factRead).toHaveBeenCalledTimes(2);
+  expect(read).toHaveBeenCalledTimes(4);
+  expect(
+    store
+      .listLatest<Position>("autopilot-position", { maxAgeMs: 60_000, now })
+      .every((p) => p.data.grade === null),
+  ).toBe(true);
+  expect(ctx.onWarn).toHaveBeenCalledWith("Autopilot: grade unknown; engine facts unavailable");
+  factRead.mockResolvedValue(facts);
+  await collectAutopilotPositions(ctx);
+  expect(factRead).toHaveBeenCalledTimes(3);
+  expect(position(store).grade).toBe("D");
 });
 it("20 wallets and 10 tokens per wallet bound work and emit truncation warnings", async () => {
   const { store, ctx } = setup();
@@ -198,19 +326,32 @@ it("20 wallets and 10 tokens per wallet bound work and emit truncation warnings"
     source: "constructed",
     observedAt: now,
   });
-  for (let i = 0; i < 21; i++)
+  // This quiet policy must not consume a wallet slot ahead of wallets with pending alerts.
+  store.put({ kind: "alerts", key: wallet, data: [], source: "constructed", observedAt: now });
+  for (let i = 0; i < 21; i++) {
+    const address = `0x${(i + 1000).toString(16).padStart(40, "0")}`;
     store.put({
       kind: "autopilot-policy",
-      key: `0x${(i + 1000).toString(16).padStart(40, "0")}`,
+      key: address,
       data: constructedPolicy({ tokenAllowList: addresses }),
       source: "constructed",
       observedAt: now,
     });
+    store.put({
+      kind: "alerts",
+      key: address,
+      data: [constructedAlert({ id: `alert-${i}`, walletAddress: address })],
+      source: "constructed",
+      observedAt: now,
+    });
+  }
   const report = await ctx.engine.sharesOf(wallet);
   report.rows = addresses.map((a) => ({ ...report.rows[0]!, address: a as `0x${string}` }));
-  const read = vi.spyOn(ctx.engine, "sharesOf").mockResolvedValue(report);
+  const read = vi.spyOn(ctx.engine, "sharesOf").mockResolvedValue(report).mockClear();
   await collectAutopilotPositions(ctx);
-  expect(read).toHaveBeenCalledTimes(200);
+  expect(read).toHaveBeenCalledTimes(20);
+  expect(ctx.engine.facts).toHaveBeenCalledTimes(1);
+  expect(ctx.engine.facts).toHaveBeenCalledWith("NFLX");
   expect(
     store.listLatest("autopilot-position", { maxAgeMs: 60_000, now, limit: 1000 }),
   ).toHaveLength(200);

@@ -1,6 +1,11 @@
 import { z } from "zod";
 import { parseDecimal } from "@tally/core";
-import { DAILY_CEILING, MIN_SELL_USD, PER_TRADE_CEILING } from "@tally/mod-autopilot";
+import {
+  DAILY_CEILING,
+  MIN_SELL_USD,
+  PER_TRADE_CEILING,
+  effectiveCaps,
+} from "@tally/mod-autopilot";
 
 const usd = z
   .string()
@@ -45,4 +50,11 @@ export const policySchema = z
       .refine((values) => new Set(values).size === values.length, "Duplicate token addresses")
       .default([]),
   })
-  .strict();
+  .strict()
+  .refine(
+    (policy) => {
+      const caps = effectiveCaps(policy);
+      return caps.perTrade <= caps.daily;
+    },
+    { message: "Per-trade cap cannot exceed the daily cap", path: ["perTradeCap"] },
+  );

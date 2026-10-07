@@ -141,6 +141,33 @@ it.each([
   expect(response.status).toBe(400);
   expect(store.history("autopilot-policy", wallet, 0)).toHaveLength(0);
 });
+it.each([
+  { perTradeCap: "25", dailyCap: "6" },
+  { perTradeCap: "25.000000000000000001", dailyCap: "25" },
+  { perTradeCap: "50.000000000000000001", dailyCap: undefined },
+  { perTradeCap: undefined, dailyCap: "24.999999999999999999" },
+])("rejects per-trade cap above the effective daily cap, preserving policy: %j", async (caps) => {
+  expect((await PUT(request("PUT", valid))).status).toBe(200);
+  const response = await PUT(request("PUT", { ...valid, ...caps }));
+  expect(response.status).toBe(400);
+  expect((await response.json()).error).toMatchObject({
+    kind: "invalid_policy",
+    message: "Per-trade cap cannot exceed the daily cap",
+  });
+  expect(store.history("autopilot-policy", wallet, 0)).toHaveLength(1);
+  expect(
+    store.latest<PolicySettings>("autopilot-policy", wallet, { maxAgeMs: 60_000, now })?.data,
+  ).toMatchObject({ perTradeCap: 25n * E18, dailyCap: 50n * E18 });
+});
+it.each([
+  { perTradeCap: "25.000000000000000001", dailyCap: "25.000000000000000001" },
+  { perTradeCap: "50", dailyCap: undefined },
+  { perTradeCap: undefined, dailyCap: "25" },
+  { perTradeCap: undefined, dailyCap: undefined },
+])("accepts cap equality and valid omitted-cap defaults: %j", async (caps) => {
+  expect((await PUT(request("PUT", { ...valid, ...caps }))).status).toBe(200);
+  expect(store.history("autopilot-policy", wallet, 0)).toHaveLength(1);
+});
 it.each(["unknown", "xstocks", "unknown-issuer"])(
   "rejects %s allow-list tokens with a reason",
   async (kind) => {
