@@ -384,7 +384,7 @@ export function SelectContent({ className, children }: SelectContentProps) {
         animate={open ? "show" : "hidden"}
         className="p-1"
       >
-        <Glide pillClassName="!rounded-lg bg-muted">{children}</Glide>
+        <Glide pillClassName="!rounded-lg">{children}</Glide>
       </motion.div>
     </motion.div>
   );

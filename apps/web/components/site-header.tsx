@@ -91,7 +91,7 @@ function AccountButton({
     }
   };
   const ROW =
-    "flex min-h-[44px] w-full items-center gap-2 rounded-[14px] px-3 text-left text-[15px] text-fg no-underline hover:bg-white/[0.07] focus-visible:bg-white/[0.07]";
+    "flex min-h-[44px] w-full items-center gap-2 rounded-[14px] px-3 text-left text-[15px] text-fg no-underline hover:bg-[var(--hl)] focus-visible:bg-[var(--hl)]";
   if (!big) {
     const rows = wallet.embedded ? 5 : 4;
     return (
@@ -208,7 +208,7 @@ function AccountButton({
           <button
             role="menuitem"
             type="button"
-            className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-left text-sm hover:bg-white/[0.06]"
+            className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-left text-sm hover:bg-[var(--hl)]"
             onClick={async () => {
               try {
                 await navigator.clipboard.writeText(address);
@@ -225,7 +225,7 @@ function AccountButton({
           <button
             role="menuitem"
             type="button"
-            className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-left text-sm hover:bg-white/[0.06]"
+            className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-left text-sm hover:bg-[var(--hl)]"
             onClick={() => {
               setOpen(false);
               onNavigate?.();
@@ -239,7 +239,7 @@ function AccountButton({
             <button
               role="menuitem"
               type="button"
-              className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-left text-sm hover:bg-white/[0.06]"
+              className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-left text-sm hover:bg-[var(--hl)]"
               onClick={() => {
                 setOpen(false);
                 wallet.exportWallet();
@@ -256,14 +256,14 @@ function AccountButton({
               setOpen(false);
               onNavigate?.();
             }}
-            className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-sm text-fg no-underline hover:bg-white/[0.06]"
+            className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-sm text-fg no-underline hover:bg-[var(--hl)]"
           >
             Portfolio
           </Link>
           <button
             role="menuitem"
             type="button"
-            className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-left text-sm hover:bg-white/[0.06]"
+            className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-left text-sm hover:bg-[var(--hl)]"
             onClick={() => {
               setOpen(false);
               wallet.logout();
@@ -357,7 +357,7 @@ export function SiteHeader() {
         </div>
       </div>
       <BottomSheet open={open} onOpenChange={setOpen} snapPoints={["auto"]} title="Menu">
-        <Glide as="ul" className="mt-2 grid gap-2" pillClassName="!rounded-[18px] bg-white/[0.12]">
+        <Glide as="ul" className="mt-2 grid gap-2" pillClassName="!rounded-[18px]">
           {links.map((l) => (
             <li key={l.href}>
               <Link

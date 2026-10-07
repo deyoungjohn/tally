@@ -203,7 +203,7 @@ export function TradeCard(p: TradeCardProps) {
             }
             title={!p.flipEnabled ? "Selling is not switched on yet" : undefined}
             data-testid="flip-button"
-            className="absolute left-1/2 top-1/2 grid h-10 w-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-[var(--edge)] bg-[var(--g3)] transition-colors hover:bg-[var(--g4)] enabled:cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
+            className="absolute left-1/2 top-1/2 grid h-10 w-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-[var(--edge)] bg-black/60 transition-colors hover:bg-[var(--hl)] enabled:cursor-pointer disabled:cursor-not-allowed disabled:opacity-60"
           >
             <ArrowUpDown
               size={17}

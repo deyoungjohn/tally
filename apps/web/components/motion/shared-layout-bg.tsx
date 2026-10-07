@@ -82,7 +82,7 @@ export function SharedLayoutBg({
                     layoutId={`shared-bg-${uid}`}
                     transition={reduce ? { duration: 0 } : SPRING_LAYOUT}
                     className={cn(
-                      "pointer-events-none h-full w-full rounded-full bg-white/[0.06]",
+                      "pointer-events-none h-full w-full rounded-full bg-[var(--hl)]",
                       pillClassName,
                     )}
                   />

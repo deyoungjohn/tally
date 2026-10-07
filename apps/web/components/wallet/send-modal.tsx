@@ -217,7 +217,7 @@ export function SendModal({ open, onClose }: { open: boolean; onClose: () => voi
                     data-testid={`send-token-${t.symbol}`}
                     className={cn(
                       "panel flex min-h-[48px] items-center justify-between gap-3 px-4 text-left",
-                      t.address === tokenAddr && "!bg-white/[0.12]",
+                      t.address === tokenAddr && "!bg-[var(--hl)]",
                     )}
                   >
                     <span className="min-w-0">
