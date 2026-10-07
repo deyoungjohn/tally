@@ -11,6 +11,7 @@
 - `packages/mod-autopilot/**`
 - `apps/worker/src/jobs/autopilot.ts`
 - `apps/web/modules/autopilot/**`, `apps/web/app/dev/autopilot/**`
+- WO-13 Move, hosted on this branch (no new branch): `apps/web/modules/switch/**`, `apps/web/app/dev/switch/**`, `apps/web/lib/move/**`, `apps/web/components/trade/use-move-flow.ts`, `apps/web/components/trade/move-sheet.tsx`, `apps/web/e2e/move.spec.ts`; additive hunks in `apps/web/components/portfolio/portfolio.tsx` and `apps/web/components/trade/trade-client.tsx`. Spec: `docs/work-orders/WO-13-move.md`.
 - `packages/modkit/src/index.ts` (the `prune` function only) and `packages/modkit/src/index.test.ts` (the one evidence-protection test only). Approved 2026-10-06, tightening only: see the approval at the end of this file.
 
 ## Tasks
