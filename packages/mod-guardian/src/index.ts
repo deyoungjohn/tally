@@ -6,3 +6,4 @@ export * from "./evaluator";
 export * from "./link";
 export * from "./delivery";
 export * from "./worker";
+export * from "./settings";

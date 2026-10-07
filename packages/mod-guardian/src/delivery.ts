@@ -97,7 +97,15 @@ export async function deliverPendingAlerts(
       continue; // Wallet is not linked or user turned alerts off
     }
 
-    const { chatId, quietHours } = link;
+    const { chatId } = link;
+
+    const settingsSnap = store.latest<import("./types").GuardianSettings>(
+      "guardian-settings",
+      wallet,
+      { maxAgeMs: 365 * 86_400_000, now },
+    );
+    const settings = settingsSnap?.data;
+    const quietHours = settings?.quietHours ?? link.quietHours;
 
     // Check quiet hours:
     // Critical alerts bypass quiet hours; warnings and infos are suppressed.

@@ -396,6 +396,9 @@ importers:
       '@tally/modkit':
         specifier: workspace:*
         version: link:../modkit
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
     devDependencies:
       typescript:
         specifier: ^5.6.0

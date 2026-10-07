@@ -40,6 +40,8 @@ export interface AlertFeedVM {
   source: string | null;
   reason?: string | null;
   error: string | null;
+  moduleDegraded?: boolean;
+  moduleReason?: string | null;
 }
 
 export interface TelegramLinkVM {
@@ -64,6 +66,8 @@ export interface GuardianSettingsVM {
   source: string | null;
   reason?: string | null;
   error: string | null;
+  moduleDegraded?: boolean;
+  moduleReason?: string | null;
 }
 
 export interface GuardianViewModel {
