@@ -28,7 +28,7 @@ describe("session verification", () => {
   }
 
   function mockPrivyClient(opts: {
-    verifyResult?: { appId: string; userId: string } | null;
+    verifyResult?: { app_id: string; user_id: string } | null;
     verifyThrows?: boolean;
     verifyDelay?: number;
     userResult?: {
@@ -44,7 +44,7 @@ describe("session verification", () => {
           verifyAccessToken: async (_token: string) => {
             if (opts.verifyDelay) await new Promise((r) => setTimeout(r, opts.verifyDelay));
             if (opts.verifyThrows) throw new Error("verify failed");
-            return opts.verifyResult ?? { appId: mockAppId, userId: "user-123" };
+            return opts.verifyResult ?? { app_id: mockAppId, user_id: "user-123" };
           },
         }),
       }),
@@ -73,7 +73,7 @@ describe("session verification", () => {
   });
 
   it("wrong app id returns null", async () => {
-    const client = mockPrivyClient({ verifyResult: { appId: "wrong-app", userId: "user-123" } });
+    const client = mockPrivyClient({ verifyResult: { app_id: "wrong-app", user_id: "user-123" } });
     const verify = createSessionVerifier({ client, appId: mockAppId });
     const res = await verify(makeReq("Bearer valid-token"));
     expect(res).toBeNull();
@@ -155,7 +155,7 @@ describe("session verification", () => {
     const client = {
       utils: () => ({
         auth: () => ({
-          verifyAccessToken: async () => ({ appId: mockAppId, userId: "user-123" }),
+          verifyAccessToken: async () => ({ app_id: mockAppId, user_id: "user-123" }),
         }),
       }),
       users: () => ({
@@ -191,7 +191,7 @@ describe("session verification", () => {
     const client = {
       utils: () => ({
         auth: () => ({
-          verifyAccessToken: async (token: string) => ({ appId: mockAppId, userId: token }),
+          verifyAccessToken: async (token: string) => ({ app_id: mockAppId, user_id: token }),
         }),
       }),
       users: () => ({
@@ -234,6 +234,7 @@ describe("session verification", () => {
 
   it("test-session override cannot be switched on when NODE_ENV=production", async () => {
     process.env.TALLY_TEST_SESSION_WALLET = "0x9999999999999999999999999999999999999999";
+    process.env.TALLY_FIXTURES = "1";
 
     const client = mockPrivyClient({});
     const verify = createSessionVerifier({ client, appId: mockAppId });
@@ -252,6 +253,7 @@ describe("session verification", () => {
 
     vi.unstubAllEnvs();
     delete process.env.TALLY_TEST_SESSION_WALLET;
+    delete process.env.TALLY_FIXTURES;
   });
 
   it("rate limit trips after max hits", () => {

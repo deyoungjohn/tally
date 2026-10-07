@@ -55,6 +55,7 @@ describe("session routes", () => {
     vi.useFakeTimers();
     clearUserRateLimits();
     process.env.TALLY_TEST_SESSION_WALLET = MY_WALLET;
+    process.env.TALLY_FIXTURES = "1";
     process.env.TEST_FLAG_GUARDIAN = "1";
     process.env.TEST_FLAG_STATEMENT = "1";
     // @ts-expect-error -- mock function
@@ -64,6 +65,7 @@ describe("session routes", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     delete process.env.TALLY_TEST_SESSION_WALLET;
+    delete process.env.TALLY_FIXTURES;
     delete process.env.TEST_FLAG_GUARDIAN;
     delete process.env.TEST_FLAG_STATEMENT;
   });

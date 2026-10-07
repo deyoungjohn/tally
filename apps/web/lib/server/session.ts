@@ -25,9 +25,19 @@ export function clearSessionCache() {
   userWalletsCache.clear();
 }
 
+export interface MinimalPrivyClient {
+  utils: () => {
+    auth: () => {
+      verifyAccessToken: (token: string) => Promise<{ app_id: string; user_id: string }>;
+    };
+  };
+  users: () => {
+    _get: (userId: string) => Promise<{ linked_accounts?: Array<{ address?: string } | any> }>;
+  };
+}
+
 export function createSessionVerifier(options?: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- allow mock injection
-  client?: any; // any here to allow mock injection
+  client?: MinimalPrivyClient;
   appId?: string;
   now?: () => number;
 }) {
@@ -37,7 +47,7 @@ export function createSessionVerifier(options?: {
     req: Request,
     chosen?: string | null,
   ): Promise<string | null> {
-    if (process.env.NODE_ENV !== "production") {
+    if (process.env.NODE_ENV !== "production" && process.env.TALLY_FIXTURES === "1") {
       const testWallet = process.env.TALLY_TEST_SESSION_WALLET;
       if (testWallet) {
         const normTest = testWallet.toLowerCase();
@@ -55,7 +65,7 @@ export function createSessionVerifier(options?: {
     const token = authHeader.slice(7).trim();
     if (!token) return null;
 
-    const client = options?.client ?? getDefaultPrivyClient();
+    const client = (options?.client ?? getDefaultPrivyClient()) as MinimalPrivyClient | null;
     if (!client) {
       console.warn("session: no_client");
       return null;
@@ -71,11 +81,11 @@ export function createSessionVerifier(options?: {
       let timer: NodeJS.Timeout | undefined;
       const verifyPromise = (async () => {
         const claims = await client.utils().auth().verifyAccessToken(token);
-        if (claims.appId !== expectedAppId) {
+        if (claims.app_id !== expectedAppId) {
           console.warn("session: wrong_appid");
           return null;
         }
-        const userId = claims.userId;
+        const userId = claims.user_id;
 
         const nowMs = now();
         let wallets: string[] = [];
