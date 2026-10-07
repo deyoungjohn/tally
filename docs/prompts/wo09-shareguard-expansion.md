@@ -55,3 +55,11 @@ Read the 10 tokens already enabled (AAPL, NVDA, QQQ, SPY, TSLA, each as bStock a
 5. A short note on cost: how long `/api/radar` and `/api/portfolio` take with 53 tickers in fixture mode, and any list that will not scale (the stock picker needs search; that is the UI agent's job, only report it).
 
 Owns, added for this batch: `contracts/script/capture_batch.sh` (new) and its list file under `contracts/deploy/`. Timing is unchanged: step 1 tonight, captures tomorrow morning, owner transactions Friday morning, freeze Saturday 23:59. If time runs short, ship the bStock tokens that passed and the Ondo twins that passed, however many that is.
+
+### Decision on the capture tooling (2026-10-07, Agent 09's question)
+**Do not edit `spike/w3api.py`, `spike/capture_route.py` or `contracts/script/capture.sh`.** They are the proven capture path behind the five deployed assets and the existing fork tests, and `spike/` is historical. Wrap them instead, in new files you own:
+- `contracts/tools/capture_batch.py` (new): put `../spike` on `sys.path`, `import w3api as w` and `import capture_route as cr` (it is import-safe), extend `w.TOKENS` **at runtime** from the Batch 1 list file (address and multiplier source per token), and call `cr.leg(...)` so the **$6** capture is written in exactly the existing schema to `contracts/captures/` and the fork tests read it unchanged. Write the **$100** depth quote and the extra evidence to a separate file per token (for example `contracts/captures/depth/<TOKEN>.json`), never into the file the fork tests read.
+- The authenticated reference price and `tokenToShareRatio` come from the authenticated RWA list (`w.Client()._request("GET", "/api/v1/dex/market/rwa/tokens", {"chainId": "56"})` or the equivalent; read-only). The integrity grade comes from the repo CLI on the EC2: `pnpm --silent tally facts <TICKER> --json` (read-only). Record both in the depth file with the premium you computed.
+- `contracts/script/capture_batch.sh` (new) loops over the list file and calls `capture_batch.py`; it keeps going after a failure and prints a one-line result per token.
+If importing the spike modules turns out to be impossible without editing them, stop and tell me what blocks it. Owns added: `contracts/tools/capture_batch.py` and `contracts/captures/depth/**`.
+
