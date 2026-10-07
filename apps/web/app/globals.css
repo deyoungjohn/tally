@@ -252,7 +252,7 @@ body {
 :root {
   --pop-bg:
     linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02)),
-    rgba(0, 0, 0, 0.5);
+    rgba(0, 0, 0, 0.58);
   --pop-bg-fallback: rgba(0, 0, 0, 0.88);
 }
 .glass-pop {
