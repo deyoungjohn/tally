@@ -178,7 +178,9 @@ test.describe("Migrate", () => {
       await page.getByTestId("sell-confirm").click();
       // In mock wallet it auto-signs tx, then we wait for status
       // Then it moves to interstitial
-      await expect(page.getByRole("dialog").filter({ hasText: "Sold NVDA for 6.99 USDT" })).toBeVisible();
+      await expect(
+        page.getByRole("dialog").filter({ hasText: "Sold NVDA for 6.99 USDT" }),
+      ).toBeVisible();
 
       // Resume step 2
       await page.getByRole("button", { name: "Buy now" }).click();
@@ -302,5 +304,7 @@ test("resumes after reload", async ({ page }) => {
   await page.goto("/portfolio");
 
   // Should auto open interstitial
-  await expect(page.getByRole("dialog").filter({ hasText: "Waiting for the sale to confirm..." })).toBeVisible();
+  await expect(
+    page.getByRole("dialog").filter({ hasText: "Waiting for the sale to confirm..." }),
+  ).toBeVisible();
 });
