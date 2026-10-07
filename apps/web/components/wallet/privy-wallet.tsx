@@ -28,7 +28,7 @@ export function PrivyWallet({ onChange }: { onChange: (w: TallyWallet) => void }
           ethereum: { createOnLogin: "users-without-wallets" },
           showWalletUIs: false,
         },
-        appearance: { theme: "dark", accentColor: "#e8ebef", showWalletLoginFirst: false },
+        appearance: { theme: "dark", accentColor: "#ffffff", showWalletLoginFirst: false },
       }}
     >
       <Bridge onChange={onChange} />

@@ -154,7 +154,7 @@ export function SignInSheet({ open, onClose }: { open: boolean; onClose: () => v
           type="checkbox"
           checked={agree}
           onChange={(e) => setAgree(e.target.checked)}
-          className="mt-0.5 h-5 w-5 flex-none accent-[#e8ebef]"
+          className="mt-0.5 h-5 w-5 flex-none accent-[#ff7a3d]"
           data-testid="declaration"
         />
         <span>{DECLARATION_TEXT}</span>
@@ -201,7 +201,7 @@ function Qr({ text }: { text: string }) {
     let live = true;
     void import("qrcode").then((q) =>
       q
-        .toDataURL(text, { margin: 1, width: 168, color: { dark: "#0b0c0e", light: "#f4f5f6" } })
+        .toDataURL(text, { margin: 1, width: 168, color: { dark: "#000000", light: "#ffffff" } })
         .then((u) => live && setSrc(u)),
     );
     return () => {

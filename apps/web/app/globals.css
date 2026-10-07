@@ -2,34 +2,38 @@
 
 /* Tally design tokens: DESIGN.md §2. Dark only. Do not hard-code values that are not defined here. */
 :root {
-  /* graphite scale */
-  --g0: #0c0d0f;
-  --g1: #131417;
-  --g2: #1a1b1f;
-  --g3: #23252a;
-  --g4: #2e3036;
+  /* black, white, faint white and orange only: there are no greys. Text steps are white at lower opacity. */
+  --black: #000000;
+  --white: #ffffff;
+  --g0: #000000;
+  --g1: #000000;
 
-  /* text */
-  --fg: #eef0f2;
-  --fg2: #a3a8b0;
-  --fg3: #8b9098;
-  --fg-disabled: #6c717a;
+  /* text: white, then faint white */
+  --fg: #ffffff;
+  --fg2: rgba(255, 255, 255, 0.76);
+  --fg3: rgba(255, 255, 255, 0.58);
+  --fg-disabled: rgba(255, 255, 255, 0.4);
 
   /* edges */
-  --edge: rgba(255, 255, 255, 0.12);
-  --edge2: rgba(255, 255, 255, 0.2);
+  --edge: rgba(255, 255, 255, 0.14);
+  --edge2: rgba(255, 255, 255, 0.24);
+
+  /* highlight for hover, selected and pressed items: orange glass (never a grey fill) */
+  --hl: rgba(240, 78, 19, 0.26);
+  --hl-edge: rgba(255, 131, 80, 0.5);
+  --hl-strong: rgba(240, 78, 19, 0.46);
 
   /* orange accent (buttons, pills, important words); white text on it */
   --orange: #f04e13;
   --orange-hi: #ff7a3d;
   --orange-text: #ff8350;
   --orange-glow: rgba(255, 106, 40, 0.38);
-  /* silver accent */
-  --silver-1: #e8ebef;
-  --silver-2: #b4bac3;
-  --silver-ink: #0b0c0e;
-  --silver-glow: rgba(225, 230, 238, 0.22);
-  --silver: linear-gradient(180deg, #ffffff 0%, #d9dde3 40%, #9aa1aa 100%);
+  /* white accent (kept under the old silver names): primary buttons, kickers, slider fill */
+  --silver-1: #ffffff;
+  --silver-2: rgba(255, 255, 255, 0.76);
+  --silver-ink: #000000;
+  --silver-glow: rgba(255, 255, 255, 0.22);
+  --silver: #ffffff;
 
   /* semantic */
   --amber: #f2c14e;
@@ -47,17 +51,17 @@
   /* shadcn / BeUI variable mapping (DESIGN.md §2.1) */
   --background: var(--g0);
   --foreground: var(--fg);
-  --card: var(--g2);
+  --card: rgba(255, 255, 255, 0.05);
   --card-foreground: var(--fg);
-  --popover: var(--g2);
+  --popover: rgba(0, 0, 0, 0.58);
   --popover-foreground: var(--fg);
   --primary: var(--silver-1);
   --primary-foreground: var(--silver-ink);
-  --secondary: var(--g3);
+  --secondary: rgba(255, 255, 255, 0.1);
   --secondary-foreground: var(--fg);
-  --muted: var(--g3);
+  --muted: rgba(255, 255, 255, 0.1);
   --muted-foreground: var(--fg2);
-  --accent: var(--g3);
+  --accent: rgba(255, 255, 255, 0.1);
   --accent-foreground: var(--fg);
   --border: var(--edge);
   --input: var(--edge);
@@ -128,7 +132,7 @@ body {
   box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.18);
 }
 ::selection {
-  background: rgba(232, 235, 239, 0.25);
+  background: rgba(255, 255, 255, 0.25);
 }
 .num,
 .tabular {
@@ -184,7 +188,7 @@ body {
   color: var(--fg3);
 }
 .fade-text {
-  background: linear-gradient(180deg, #ffffff 0%, #cfd4da 45%, #7e858e 100%);
+  background: linear-gradient(180deg, #ffffff 0%, rgba(255, 255, 255, 0.62) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -193,7 +197,7 @@ body {
   color: var(--orange-text);
 }
 .dim-text {
-  color: #8b9098;
+  color: var(--fg3);
 }
 
 /* ---------- Page background ---------- */
@@ -245,16 +249,33 @@ body {
   transition: background 0.2s;
 }
 .panel:hover {
-  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+/* Pop-up surfaces (modals, sheets, menus, dropdowns, tooltips, the search panel): the same liquid glass as the nav bar, with a
+   faint transparent black underneath so the text on them stays legible over the bright background. One token, one place. */
+:root {
+  --pop-bg:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02)),
+    rgba(0, 0, 0, 0.58);
+  --pop-bg-fallback: rgba(0, 0, 0, 0.88);
+}
+.glass-pop {
+  background: var(--pop-bg);
 }
 .overlay-backdrop {
-  background: rgba(5, 6, 7, 0.72);
+  background: rgba(0, 0, 0, 0.72);
   backdrop-filter: blur(8px);
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .glass,
   .gcard {
-    background: rgba(35, 37, 42, 0.92);
+    background: rgba(0, 0, 0, 0.9);
+  }
+  .glass-pop,
+  .select-panel,
+  .tip,
+  .glass-solid {
+    background: var(--pop-bg-fallback);
   }
 }
 
@@ -311,11 +332,12 @@ body {
   backdrop-filter: blur(14px);
 }
 .btn-glassy:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--hl);
+  border-color: var(--hl-edge);
 }
 .btn-light {
-  background: #f4f5f6;
-  color: #0b0c0d;
+  background: #ffffff;
+  color: #000000;
   box-shadow:
     inset 0 1px 0 #fff,
     0 10px 30px -12px rgba(255, 255, 255, 0.3);
@@ -326,7 +348,7 @@ body {
 }
 .btn-ghost:hover {
   color: var(--fg);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--hl);
 }
 .btn-icon {
   width: 44px;
@@ -450,7 +472,12 @@ body {
 /* Hero chrome shapes: our own CSS, decorative (DESIGN.md §2.4) */
 .sphere {
   border-radius: 50%;
-  background: radial-gradient(circle at 32% 28%, #ffffff 0%, #c9ced5 38%, #5d636c 100%);
+  background: radial-gradient(
+    circle at 32% 28%,
+    #ffffff 0%,
+    rgba(255, 255, 255, 0.72) 45%,
+    rgba(255, 255, 255, 0.3) 100%
+  );
   box-shadow:
     0 30px 50px -20px rgba(0, 0, 0, 0.8),
     inset 0 -8px 16px rgba(0, 0, 0, 0.25);
@@ -459,8 +486,16 @@ body {
   border-radius: 50%;
   border: 14px solid transparent;
   background:
-    linear-gradient(var(--g1), var(--g1)) padding-box,
-    conic-gradient(from 210deg, #ffffff, #8b9098, #e8ebef, #5d636c, #ffffff) border-box;
+    linear-gradient(#000, #000) padding-box,
+    conic-gradient(
+        from 210deg,
+        #ffffff,
+        rgba(255, 255, 255, 0.4),
+        #ffffff,
+        rgba(255, 255, 255, 0.4),
+        #ffffff
+      )
+      border-box;
   box-shadow: 0 30px 60px -25px rgba(0, 0, 0, 0.85);
 }
 
@@ -602,7 +637,12 @@ body {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: radial-gradient(circle at 32% 28%, #fff 0%, #c9ced5 45%, #5d636c 100%);
+  background: radial-gradient(
+    circle at 32% 28%,
+    #fff 0%,
+    rgba(255, 255, 255, 0.72) 45%,
+    rgba(255, 255, 255, 0.3) 100%
+  );
   color: var(--silver-ink);
   font-size: 9px;
   font-weight: 800;
@@ -795,11 +835,11 @@ body {
   font-weight: 600;
 }
 .select-trigger:hover {
-  background: rgba(255, 255, 255, 0.11);
+  background: var(--hl);
   border-color: var(--edge2);
 }
 .select-panel {
-  background: linear-gradient(180deg, rgba(44, 46, 53, 0.86), rgba(27, 28, 33, 0.82));
+  background: var(--pop-bg);
   border: 1px solid var(--edge);
   backdrop-filter: blur(26px) saturate(160%);
   box-shadow:
@@ -810,23 +850,29 @@ body {
   min-height: 44px;
   font-size: 15.5px;
 }
-.select-panel [role="option"][aria-selected="true"] {
-  background: rgba(255, 255, 255, 0.12);
-  color: var(--fg);
-}
+.select-panel [role="option"][aria-selected="true"],
 .select-panel [role="option"]:hover {
-  background: rgba(255, 255, 255, 0.09);
+  color: var(--fg);
 }
 
 /* ---------- Progress island: translucent glass pill (DESIGN §3.2) ---------- */
 .island-glass {
-  background: linear-gradient(180deg, rgba(48, 50, 57, 0.72), rgba(28, 29, 34, 0.66)) !important;
+  background: var(--pop-bg) !important;
   border: 1px solid rgba(255, 255, 255, 0.18);
   backdrop-filter: blur(28px) saturate(170%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.28),
     inset 0 -1px 0 rgba(0, 0, 0, 0.2),
     0 22px 50px -22px rgba(0, 0, 0, 0.9);
+}
+
+/* The gliding highlight (components/motion/glide.tsx): orange glass for hover, the selected item and the pressed item. */
+.glide-pill {
+  background: var(--hl);
+  box-shadow: inset 0 0 0 1px var(--hl-edge);
+}
+[data-glide-root]:has([data-glide]:active) > .glide-pill {
+  background: var(--hl-strong);
 }
 
 /* Tooltips on tags and "Learn more" links (Round 3). */
@@ -837,7 +883,7 @@ body {
   padding: 8px 12px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(24, 26, 30, 0.88);
+  background: var(--pop-bg);
   backdrop-filter: blur(14px) saturate(140%);
   color: var(--fg);
   font-size: 14.5px;
@@ -883,7 +929,7 @@ body {
 
 /* Opaque-ish glass for the search field and its surface (they morph into each other, so they must match). */
 .glass-solid {
-  background: rgba(30, 32, 37, 0.9);
+  background: var(--pop-bg);
   border: 1px solid var(--edge);
   backdrop-filter: blur(20px) saturate(150%);
   box-shadow:
@@ -908,12 +954,12 @@ body {
 .pct-slider::-webkit-slider-runnable-track {
   height: 6px;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--silver-1) var(--p), var(--g4) var(--p));
+  background: linear-gradient(90deg, var(--silver-1) var(--p), rgba(255, 255, 255, 0.2) var(--p));
 }
 .pct-slider::-moz-range-track {
   height: 6px;
   border-radius: 999px;
-  background: var(--g4);
+  background: rgba(255, 255, 255, 0.2);
 }
 .pct-slider::-moz-range-progress {
   height: 6px;

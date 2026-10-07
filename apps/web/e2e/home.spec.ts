@@ -32,7 +32,7 @@ for (const width of WIDTHS) {
       );
       expect(overflow).toBeLessThanOrEqual(0);
       const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-      expect(bg).toBe("rgb(12, 13, 15)");
+      expect(bg).toBe("rgb(0, 0, 0)");
       await page.evaluate(async () => {
         for (let y = 0; y < document.body.scrollHeight; y += 400) {
           window.scrollTo(0, y);

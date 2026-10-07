@@ -173,6 +173,7 @@ export function Glide({
     <Tag
       {...props}
       ref={ref}
+      data-glide-root=""
       className={cn("relative isolate", className)}
       onPointerOver={(e: React.PointerEvent<HTMLElement>) => {
         if (e.pointerType !== "touch") over(e.target);
@@ -201,7 +202,7 @@ export function Glide({
         data-glide-pill
         style={{ opacity: 0, ...pillStyle }}
         className={cn(
-          "pointer-events-none absolute left-0 top-0 -z-10 rounded-full bg-white/[0.09]",
+          "glide-pill pointer-events-none absolute left-0 top-0 -z-10 rounded-full",
           pillClassName,
         )}
       />

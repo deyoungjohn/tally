@@ -61,7 +61,7 @@ function Row({ r, selected, onSelect }: { r: RowDto; selected: boolean; onSelect
       className={cn(
         "panel min-w-0 list-none p-0",
         r.isBest && "row-best",
-        selected && pickable && "!bg-white/[0.07]",
+        selected && pickable && "!bg-[var(--hl)]",
       )}
       data-testid={`row-${r.symbol}`}
     >

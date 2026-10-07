@@ -142,7 +142,7 @@ export function MorphMenu({
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.25, ease: EASE_OUT }}
                 onClick={() => closeRef.current()}
-                className="absolute inset-0 bg-[rgba(5,6,7,0.38)] [backdrop-filter:blur(14px)_saturate(140%)]"
+                className="absolute inset-0 bg-black/40 [backdrop-filter:blur(14px)_saturate(140%)]"
               />
               <motion.div
                 ref={panelRef}
@@ -157,7 +157,7 @@ export function MorphMenu({
                 }
                 transition={reduce ? { duration: 0.15 } : SPRING_PANEL}
                 style={{ top: box.top, right: box.right, transformOrigin: "top right" }}
-                className="glass !fixed overflow-hidden !bg-[var(--g2)]"
+                className="glass glass-pop !fixed overflow-hidden"
               >
                 <button
                   type="button"

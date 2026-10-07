@@ -116,8 +116,7 @@ export function Modal({
                 exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.97, y: 8 }}
                 transition={reduce ? { duration: 0.15 } : SPRING_PANEL}
                 className={cn(
-                  "glass relative z-10 flex max-h-[calc(100svh-32px)] w-full max-w-[520px] flex-col overflow-hidden outline-none",
-                  "!bg-[var(--g2)]",
+                  "glass glass-pop relative z-10 flex max-h-[calc(100svh-32px)] w-full max-w-[520px] flex-col overflow-hidden outline-none",
                   className,
                 )}
               >
@@ -126,7 +125,7 @@ export function Modal({
                     type="button"
                     aria-label="Close"
                     onClick={() => changeRef.current(false)}
-                    className="absolute right-3 top-3 z-20 grid h-9 w-9 place-items-center rounded-full bg-white/[0.08] text-fg2 transition-colors hover:bg-white/[0.14] hover:text-fg"
+                    className="absolute right-3 top-3 z-20 grid h-9 w-9 place-items-center rounded-full bg-white/[0.08] text-fg2 transition-colors hover:bg-[var(--hl)] hover:text-fg"
                     data-testid="modal-close"
                   >
                     <X size={16} aria-hidden />

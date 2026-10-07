@@ -57,7 +57,7 @@ export default function Docs() {
           <ul className="m-0 grid list-none gap-1 p-0">
             {NAV.map(([id, label]) => (
               <li key={id}>
-                <a href={`#${id}`} className="nav-link block hover:bg-white/[0.06]">
+                <a href={`#${id}`} className="nav-link block hover:bg-[var(--hl)]">
                   {label}
                 </a>
               </li>

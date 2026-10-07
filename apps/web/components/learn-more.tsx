@@ -30,12 +30,7 @@ export function LearnMore({
       >
         {label}
       </button>
-      <Modal
-        open={open}
-        onOpenChange={setOpen}
-        title={c.title}
-        className="max-w-[480px] !bg-[rgba(26,28,33,0.74)]"
-      >
+      <Modal open={open} onOpenChange={setOpen} title={c.title} className="max-w-[480px]">
         <div className="grid gap-3 text-fg2 leading-7">
           {c.paragraphs.map((p) => (
             <p key={p}>{p}</p>
