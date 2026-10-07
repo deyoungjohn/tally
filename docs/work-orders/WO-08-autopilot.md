@@ -12,7 +12,6 @@
 - `apps/worker/src/jobs/autopilot.ts`
 - `apps/web/modules/autopilot/**`, `apps/web/app/dev/autopilot/**`
 - Slice A2 (2026-10-07): new `apps/web/app/api/session/autopilot/**` (policy routes) and the position collector inside `apps/worker/src/jobs/autopilot.ts`; spec `docs/prompts/wo08-autopilot-producers.md`. WO-13 comes after it.
-- WO-13 Move, hosted on this branch (no new branch): `apps/web/modules/switch/**`, `apps/web/app/dev/switch/**`, `apps/web/lib/move/**`, `apps/web/components/trade/use-move-flow.ts`, `apps/web/components/trade/move-sheet.tsx`, `apps/web/e2e/move.spec.ts`; additive hunks in `apps/web/components/portfolio/portfolio.tsx` and `apps/web/components/trade/trade-client.tsx`. Spec: `docs/work-orders/WO-13-move.md`.
 - `packages/modkit/src/index.ts` (the `prune` function only) and `packages/modkit/src/index.test.ts` (the one evidence-protection test only). Approved 2026-10-06, tightening only: see the approval at the end of this file.
 
 ## Tasks
@@ -44,4 +43,4 @@ Approved 2026-10-06 (Agent 08's finding), tightening only: in `packages/modkit/s
 
 ## Slice A2 (2026-10-07): positions and policy producers
 
-Autopilot's shadow log had no inputs, so this slice adds the position collector (chain balance, accepted multiplier, price, grade, continuous pause start, only for wallets that have a policy, inside the existing `autopilot` job) and a verified-session policy writer (`/api/session/autopilot/policy`, kill switch on by default, caps rejected above the code ceilings, allow-list limited to registry-listed executable bStock and Ondo tokens). Still shadow mode: nothing is executed. Full instructions: `docs/prompts/wo08-autopilot-producers.md`. Order: A2 first, then WO-13 (Move).
+Autopilot's shadow log had no inputs, so this slice adds the position collector (chain balance, accepted multiplier, price, grade, continuous pause start, only for wallets that have a policy, inside the existing `autopilot` job) and a verified-session policy writer (`/api/session/autopilot/policy`, kill switch on by default, caps rejected above the code ceilings, allow-list limited to registry-listed executable bStock and Ondo tokens). Still shadow mode: nothing is executed. Full instructions: `docs/prompts/wo08-autopilot-producers.md`. Move (WO-13) is Agent 07's, not this work order's.

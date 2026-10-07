@@ -17,6 +17,8 @@ Let the **already deployed** ShareGuard (`0x28F6…970a`) buy every bStock and O
 6. **Live proof (chief engineer).** One live $6 guarded buy on three of the new assets (one Ondo, one bStock, one index fund) with `tools/guarded_buy.py`; hashes go into `IDEAS.md` §F11 by the chief engineer.
 
 ## Order and timing
+**Move first.** Before this expansion you build WO-13 Move (`docs/work-orders/WO-13-move.md`) on the same branch, as its own PR. While the chief engineer runs the EC2 captures you may run step 1 (the candidate list) and show it in chat without committing; the Foundry and wiring steps follow once Move is merged (fast-forward the branch to main between the two PRs).
+
 Thursday morning: steps 1 and 2 and the EC2 captures. Thursday afternoon: step 3 fork tests, step 4 dry run, step 5. Friday morning: the chief engineer runs the owner transactions and the live proofs. Code freeze Saturday 23:59. If something is late, ship fewer assets: the batch can be any size.
 
 ## Done means

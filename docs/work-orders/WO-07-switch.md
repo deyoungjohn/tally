@@ -68,7 +68,7 @@ New file `packages/engine/src/guard-router.ts` (+ test) and one accessor line in
 
 ## ShareGuard expansion (2026-10-07)
 
-`apps/web/modules/switch/**` and `apps/web/app/dev/switch/**` moved to WO-13 (Move). New work for Agent 07, on the existing branch `mod/WO-07-switch`: enable more tokens on the **deployed** ShareGuard without changing `contracts/src/ShareGuard.sol`. Full instructions: `docs/prompts/wo07-shareguard-expansion.md`. Approved, additive, Owns:
+`apps/web/modules/switch/**` and `apps/web/app/dev/switch/**` are the Move module (WO-13, spec `docs/work-orders/WO-13-move.md`), built by Agent 07 on this branch **before** the expansion. Move Owns, approved 2026-10-07: `apps/web/modules/switch/**`, `apps/web/app/dev/switch/**`, `apps/web/lib/move/**`, `apps/web/components/trade/use-move-flow.ts`, `apps/web/components/trade/move-sheet.tsx`, `apps/web/e2e/move.spec.ts`; additive hunks in `apps/web/components/portfolio/portfolio.tsx` and `apps/web/components/trade/trade-client.tsx`. New work for Agent 07, on the existing branch `mod/WO-07-switch`: enable more tokens on the **deployed** ShareGuard without changing `contracts/src/ShareGuard.sol`. Full instructions: `docs/prompts/wo07-shareguard-expansion.md`. Approved, additive, Owns:
 - `contracts/tools/list_candidates.py`, `contracts/tools/list_enabled.py`, `contracts/tools/gen_buyable.py`
 - `contracts/script/AddAssets.s.sol` and its Foundry test under `contracts/test/`
 - `contracts/deploy/assets.json`, `contracts/deploy/seeds.json`, new files in `contracts/captures/`

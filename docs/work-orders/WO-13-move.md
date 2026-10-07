@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Agent | 08 (Codex #2), on its existing worktree and branch `mod/WO-08-autopilot` (fast-forward it to main; no new branch, so the review pack checks this file's Owns through the lines added to WO-08) |
+| Agent | 07 (Codex #2), the agent that built Sell, on its existing worktree and branch `mod/WO-07-switch` (fast-forward it to main; no new branch, so the review pack checks WO-07's Owns, which list this work's paths) |
 | Flag | `FEATURE_SWITCH` (the existing `switch` flag; it now means "Move") |
 | Read first | `README.md` (Roadmap: atomic migration), `MODULES.md` §5 (gates V-B1, V-B2), `docs/work-orders/WO-07-switch.md`, `apps/web/components/trade/use-sell-flow.ts`, `sell-sheet.tsx`, `use-trade-flow.ts`, `apps/web/modules/switch/view-model.ts` |
 
@@ -36,4 +36,4 @@ A **Move** action on a Portfolio row (Ondo or bStock holding, where the other is
 - [ ] User-run: one live Move of a position worth about $7 or more (commands and the expected reading in the PR).
 
 ## Timing
-Target merge **Thursday 8 Oct, midday UTC**, flag `FEATURE_SWITCH`. If it is not ready by the cut line (Thursday 23:59) it ships off. The UI agent restyles the sheet afterwards; build it with the existing components and tokens so it is usable now.
+Agent 07 also owns the ShareGuard expansion (`docs/prompts/wo07-shareguard-expansion.md`). **Order: Move first** (this is code-heavy and the cut line is Thursday 23:59), the expansion's short candidate-list step can run alongside while the chief engineer does the EC2 captures; the expansion's Foundry and wiring steps follow once Move is merged. Two PRs, one after the other, on the same branch. Target merge **Thursday 8 Oct, midday UTC**, flag `FEATURE_SWITCH`. If it is not ready by the cut line (Thursday 23:59) it ships off. The UI agent restyles the sheet afterwards; build it with the existing components and tokens so it is usable now.
