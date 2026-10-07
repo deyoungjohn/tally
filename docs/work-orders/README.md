@@ -80,3 +80,8 @@ When done, open a PR with .github/pull_request_template.md filled in, with evide
 | 12 | UI: every page and visual component | A (backup D) | `mod/WO-12-ui`, then `mod/WO-12-ui-<screen>` |
 
 (The Radar page is part of WO-04; WO-05 is the agent layer.)
+
+## Added 2026-10-07
+- **WO-13 Migrate** (guided two-step migration between issuers): Agent 07 (Codex #2), spec `docs/work-orders/WO-13-migrate.md`, flag `FEATURE_SWITCH`, target merge Thursday 8 Oct midday. It replaces the cancelled Switch.
+- **ShareGuard expansion**: Agent 09 (Codex #1, moved from Agent 07 on 2026-10-07), `docs/prompts/wo09-shareguard-expansion.md`, Thursday to Friday; the owner transactions are the chief engineer's.
+

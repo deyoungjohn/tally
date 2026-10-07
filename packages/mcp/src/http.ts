@@ -96,6 +96,7 @@ export function createHttpServer(options: HttpOptions = {}) {
   const allowMissing = env.TALLY_ALLOW_MISSING_GEO === "1";
   const plans = env.TALLY_MCP_HTTP_PLANS !== "0";
   const limit = integer(env.TALLY_MCP_HTTP_RATE_LIMIT, 60, 1, 100_000);
+  const globalLimit = integer(env.TALLY_MCP_HTTP_GLOBAL_LIMIT, 300, 1, 100_000);
   const maxConcurrent = integer(env.TALLY_MCP_HTTP_CONCURRENCY, 8, 1, 128);
   const now = options.now ?? Date.now;
   const log = options.log ?? ((line: string) => process.stderr.write(`${line}\n`));
@@ -110,6 +111,7 @@ export function createHttpServer(options: HttpOptions = {}) {
   const digest = (value: string) => createHash("sha256").update(value).digest();
   const keyDigest = key === undefined ? undefined : digest(key);
   const clients = new Map<string, { count: number; resetAt: number }>();
+  const global = { count: 0, resetAt: 0 };
   let active = 0;
   let runtime = options.runtime;
 
@@ -166,6 +168,20 @@ export function createHttpServer(options: HttpOptions = {}) {
           : undefined;
     if (!ip) return fail(451, "missing_client", "Verified client information is missing.");
     const timestamp = now();
+    if (path === "/mcp") {
+      if (global.resetAt <= timestamp) {
+        global.count = 0;
+        global.resetAt = timestamp + WINDOW_MS;
+      }
+      if (global.count >= globalLimit) {
+        res.setHeader(
+          "Retry-After",
+          String(Math.max(1, Math.ceil((global.resetAt - timestamp) / 1000))),
+        );
+        return fail(503, "busy", "The service is busy. Retry later.");
+      }
+      global.count++;
+    }
     // Both the clock window and the number of remembered clients are bounded.
     for (const [client, bucket] of clients) if (bucket.resetAt <= timestamp) clients.delete(client);
     let bucket = clients.get(ip);

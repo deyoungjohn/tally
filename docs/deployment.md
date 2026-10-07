@@ -45,11 +45,11 @@ Set `FEATURE_<NAME>=1` in `/etc/tally/tally.env` (only `1` turns a flag on; the 
 | `FEATURE_STATEMENT` | `statement` |
 | `FEATURE_FLOW` | `collect-flow`, `flow` |
 | `FEATURE_GUARDIAN` | `guardian`, and `bot` when `TELEGRAM_BOT_TOKEN` is set |
-| `FEATURE_AUTOPILOT` | `autopilot` (shadow mode: executes nothing) |
+| `FEATURE_AUTOPILOT` | `autopilot` (collects positions for wallets that saved a policy, then records shadow decisions; executes nothing) |
 | any worker above | `prune` (deletes old snapshots; without it the store grows forever) |
 | `--mcp` | `mcp` |
 
-`FEATURE_SELL` has no worker: it only enables the sell screens and route. `FEATURE_PIES`, `FEATURE_SWITCH` and `FEATURE_REWARDS` have none either.
+`FEATURE_SELL` has no worker: it only enables the sell screens and route. `FEATURE_SWITCH` enables the Migrate entry (guided two-step migration between issuers, WO-13) and has no worker. `FEATURE_PIES` and `FEATURE_REWARDS` have none either.
 
 ## Memory (the EC2 has 1.9 GB of RAM and 4 GB of swap)
 

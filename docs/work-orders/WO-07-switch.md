@@ -66,3 +66,6 @@ Approved files: new `packages/mod-receipts/src/verification-sell.ts` (+ test); a
 
 New file `packages/engine/src/guard-router.ts` (+ test) and one accessor line in `packages/engine/src/engine.ts`: `engine.trade.guardRouter(stock: Address): Promise<{ routerAllowed: boolean; approveTarget: Address }>`, built on `tradeChain.readGuard(stock, LIQUIDMESH_ROUTER)`. Used by the receipts route and worker for the stock-approval spender check; a failed read leaves the hint pending, never a fallback.
 
+## Migrate and the ShareGuard expansion (2026-10-07)
+
+`apps/web/modules/switch/**` and `apps/web/app/dev/switch/**` are the Migrate module (WO-13, spec `docs/work-orders/WO-13-migrate.md`), built by Agent 07 on this branch. Migrate Owns, approved 2026-10-07: `apps/web/modules/switch/**`, `apps/web/app/dev/switch/**`, `apps/web/lib/migrate/**`, `apps/web/components/trade/use-migrate-flow.ts`, `apps/web/components/trade/migrate-sheet.tsx`, `apps/web/e2e/migrate.spec.ts`; additive hunks in `apps/web/components/portfolio/portfolio.tsx` and `apps/web/components/trade/trade-client.tsx`. The ShareGuard expansion was first planned here and moved to Agent 09 the same day (see `docs/work-orders/WO-09-pies.md`).

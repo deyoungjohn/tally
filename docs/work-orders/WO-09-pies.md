@@ -37,3 +37,13 @@ Ships first, on `mod/WO-09-pies` from fresh `main`. No execution, no worker job,
 Approved 2026-10-05, **additive only**: edit `apps/web/app/dev/guardian/page.tsx` to remove its unused optional `_props` argument (`export default async function GuardianDevPreview()`), because Next's generated route types reject it once another dev page is added. No other change to that file; it already ignores query parameters and must keep doing so.
 
 Approved 2026-10-06, **additive only**: the one-line test change in `apps/web/modules/guardian/view-model.test.ts` that calls the zero-argument Guardian page through `Reflect.apply` with the same query-ignore assertion (needed because of the `_props` removal above). No other edit to that file.
+
+## ShareGuard expansion (2026-10-07, moved from Agent 07)
+
+Slice B (Pies execution) stays on hold. New work for Agent 09, on the existing branch `mod/WO-09-pies`: enable more tokens on the **deployed** ShareGuard without changing `contracts/src/ShareGuard.sol`. Full instructions: `docs/prompts/wo09-shareguard-expansion.md`. Approved, additive, Owns:
+- `contracts/tools/list_candidates.py`, `contracts/tools/list_enabled.py`, `contracts/tools/gen_buyable.py`
+- `contracts/script/AddAssets.s.sol` and its Foundry test under `contracts/test/`
+- `contracts/deploy/assets.json`, `contracts/deploy/seeds.json`, new files in `contracts/captures/`
+- `contracts/README.md` (the "Expanding the asset list" section)
+- `apps/web/lib/buyable.generated.ts` (new) and, in `apps/web/lib/tickers.ts`, only the definition of `BUYABLE_TICKERS` (same exported shape)
+
