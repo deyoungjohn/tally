@@ -1,7 +1,9 @@
 "use client";
 
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, FileText } from "lucide-react";
+import Link from "next/link";
 import { shortHash } from "@/lib/format";
+import { useModuleFlags } from "@/lib/hooks/use-flags";
 import { tokenPair } from "@/lib/tickers";
 import type { ActivityVM, ReceiptVM } from "@/modules/receipts/view-model";
 
@@ -39,23 +41,33 @@ function Item({ r }: { r: ReceiptVM }) {
         </p>
       ) : null}
       <p className="t-meta mt-1">{r.provenance}</p>
-      {r.evidence.explorerUrl ? (
-        <a
-          className="btn btn-glassy mt-3 !h-9 !px-4 text-[14px]"
-          href={r.evidence.explorerUrl}
-          target="_blank"
-          rel="noreferrer"
-          aria-label="View transaction on BscScan (opens in a new tab)"
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <Link
+          href={`/receipt/${r.txHash}`}
+          className="btn btn-glassy !h-9 !px-4 text-[14px]"
+          data-testid={`activity-receipt-${r.txHash}`}
         >
-          <ExternalLink size={14} aria-hidden /> BscScan{" "}
-          <span className="mono text-[12.5px] text-fg2">{shortHash(r.txHash)}</span>
-        </a>
-      ) : null}
+          <FileText size={14} aria-hidden /> Receipt
+        </Link>
+        {r.evidence.explorerUrl ? (
+          <a
+            className="btn btn-glassy !h-9 !px-4 text-[14px]"
+            href={r.evidence.explorerUrl}
+            target="_blank"
+            rel="noreferrer"
+            aria-label="View transaction on BscScan (opens in a new tab)"
+          >
+            <ExternalLink size={14} aria-hidden /> BscScan{" "}
+            <span className="mono text-[12.5px] text-fg2">{shortHash(r.txHash)}</span>
+          </a>
+        ) : null}
+      </div>
     </li>
   );
 }
 
 export function ActivityVmView({ vm }: { vm: ActivityVM }) {
+  const flags = useModuleFlags();
   return (
     <div className="grid gap-3" data-testid="vm-activity">
       {vm.pendingCount > 0 ? (
@@ -69,6 +81,11 @@ export function ActivityVmView({ vm }: { vm: ActivityVM }) {
         ))}
       </ul>
       {vm.truncated ? <p className="t-meta">Showing up to 1000 latest transactions.</p> : null}
+      {flags.quality ? (
+        <Link href="/quality" className="inline-flex min-h-[44px] items-center text-blue">
+          How Tally&apos;s fills compare with their quotes
+        </Link>
+      ) : null}
     </div>
   );
 }

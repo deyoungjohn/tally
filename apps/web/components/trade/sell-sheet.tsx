@@ -10,6 +10,7 @@ import { PercentSlider } from "@/components/ui/percent-slider";
 import { fmtShares, fmtUsd, shortHash } from "@/lib/format";
 import { bnbText, sharesText, toSellSheet, tokensText, usdtText } from "@/lib/sell/view";
 import { SELL_TOLERANCES, parseShares, type useSellFlow } from "./use-sell-flow";
+import { ReceiptLink } from "@/components/receipts/receipt-link";
 
 type Flow = ReturnType<typeof useSellFlow>;
 
@@ -128,6 +129,7 @@ export function SellSheet({ flow }: { flow: Flow }) {
               </dl>
             </div>
             <HashLink hash={phase.hash} href={phase.bscscan} />
+            <ReceiptLink hash={phase.hash} />
             <Button onClick={flow.close}>Done</Button>
           </>
         ) : null}
