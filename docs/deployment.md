@@ -45,7 +45,7 @@ Set `FEATURE_<NAME>=1` in `/etc/tally/tally.env` (only `1` turns a flag on; the 
 | `FEATURE_STATEMENT` | `statement` |
 | `FEATURE_FLOW` | `collect-flow`, `flow` |
 | `FEATURE_GUARDIAN` | `guardian`, and `bot` when `TELEGRAM_BOT_TOKEN` is set |
-| `FEATURE_AUTOPILOT` | `autopilot` (shadow mode: executes nothing) |
+| `FEATURE_AUTOPILOT` | `autopilot` (collects positions for wallets that saved a policy, then records shadow decisions; executes nothing) |
 | any worker above | `prune` (deletes old snapshots; without it the store grows forever) |
 | `--mcp` | `mcp` |
 
