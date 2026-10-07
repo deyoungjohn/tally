@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useSellFlow, type SellTarget } from "./use-sell-flow";
-import {} from "./use-trade-flow";
 import {
   type PendingMigrate,
   readPendingMigrate,
@@ -11,10 +10,12 @@ import {
 } from "../../lib/migrate/state";
 
 import { useTallyWallet } from "@/components/wallet/wallet-context";
+import { useModuleFlags } from "@/lib/hooks/use-flags";
 
 export type MigrateStep = 1 | 2 | "interstitial" | "done" | "idle";
 
 export function useMigrateFlow() {
+  const flags = useModuleFlags();
   const sell = useSellFlow();
   const wallet = useTallyWallet();
   const [pm, setPm] = useState<PendingMigrate | null>(null);
@@ -108,13 +109,17 @@ export function useMigrateFlow() {
       const controller = new AbortController();
       let timer: ReturnType<typeof setTimeout> | undefined;
 
-      const poll = async () => {
+      const poll = async (retries = 0) => {
         if (!pm.saleHash) return;
         try {
           const res = await fetch(`/api/receipts?hash=${pm.saleHash}`, {
             signal: controller.signal,
           });
           if (res.status === 404) {
+            if (flags.receipts && retries < 24) {
+              timer = setTimeout(() => poll(retries + 1), 5000);
+              return;
+            }
             setWaitingReceipt(false);
             setSource("wallet");
             setStep("interstitial");
@@ -137,19 +142,19 @@ export function useMigrateFlow() {
             }
           }
 
-          timer = setTimeout(poll, 3000);
+          timer = setTimeout(() => poll(retries + 1), 5000);
         } catch {
-          timer = setTimeout(poll, 3000);
+          timer = setTimeout(() => poll(retries + 1), 5000);
         }
       };
-      poll();
+      poll(0);
 
       return () => {
         controller.abort();
         clearTimeout(timer);
       };
     }
-  }, [step, pm, waitingReceipt, wallet.address]);
+  }, [step, pm, waitingReceipt, wallet.address, flags.receipts]);
 
   const resumeStep2 = useCallback(
     (manualUsdt?: string) => {

@@ -6,7 +6,7 @@ import { Button } from "@/components/motion/button";
 import { useMigrateFlow } from "./use-migrate-flow";
 import { useTradeFlow } from "./use-trade-flow";
 import { TradeFlowLayer } from "./flow-host";
-import { formatUnits } from "viem";
+import { formatUnits, parseUnits } from "viem";
 import { ReceiptLink } from "@/components/receipts/receipt-link";
 import { Loader2, ArrowRight } from "lucide-react";
 
@@ -14,6 +14,16 @@ export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow>
   const { pm, step, cancel, resumeStep2, waitingReceipt, source, onBuyDone } = flow;
 
   const open = step !== "idle";
+  const [typedProceeds, setTypedProceeds] = useState("");
+
+  const isTypedProceedsValid = () => {
+    if (!/^\d+(\.\d{1,18})?$/.test(typedProceeds)) return false;
+    try {
+      return parseUnits(typedProceeds, 18) >= 6000000000000000000n;
+    } catch {
+      return false;
+    }
+  };
 
   if (!pm) return null;
 
@@ -25,7 +35,9 @@ export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow>
     return <MigrateBuyStep pm={pm} cancel={cancel} onDone={onBuyDone} />;
   }
 
-  const [typedProceeds, setTypedProceeds] = useState("");
+  const fromSymbol = pm.from === "ondo" ? `${pm.ticker}on` : `${pm.ticker}B`;
+  const toSymbol = pm.to === "ondo" ? `${pm.ticker}on` : `${pm.ticker}B`;
+
   // Interstitial or Done
   if (step === "interstitial" || step === "done") {
     return (
@@ -48,7 +60,7 @@ export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow>
             <div className="grid gap-4">
               <div className="rounded-lg border border-neutral-200 p-4 space-y-2 text-sm">
                 <p>
-                  Sold {pm.ticker} for{" "}
+                  Sold {fromSymbol} for{" "}
                   {pm.usdtReceived ? formatUnits(BigInt(pm.usdtReceived), 18) : "?"} USDT. Not
                   bought yet. Your USDT is in your wallet.
                 </p>
@@ -69,7 +81,7 @@ export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow>
               </div>
               <div className="flex justify-end">
                 <Button
-                  disabled={source === "wallet" && (!typedProceeds || Number(typedProceeds) < 6)}
+                  disabled={source === "wallet" && !isTypedProceedsValid()}
                   onClick={() => resumeStep2(source === "wallet" ? typedProceeds : undefined)}
                 >
                   Buy now
@@ -90,8 +102,8 @@ export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow>
                 </div>
               </div>
               <p className="text-sm text-neutral-500 text-center">
-                Your {pm.ticker} shares have been migrated to {pm.to === "ondo" ? "Ondo" : "bStock"}{" "}
-                ({pm.to === "ondo" ? `${pm.ticker}on` : `${pm.ticker}B`}) using{" "}
+                Your {fromSymbol} shares have been migrated to {pm.to === "ondo" ? "Ondo" : "bStock"}{" "}
+                ({toSymbol}) using{" "}
                 {pm.usdtReceived ? formatUnits(BigInt(pm.usdtReceived), 18) : "?"} USDT.
               </p>
               <div className="flex justify-center mt-2">
