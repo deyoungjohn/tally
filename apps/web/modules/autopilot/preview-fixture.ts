@@ -2,6 +2,8 @@ import { openStore } from "@tally/modkit";
 import { appendDecisionRows } from "@tally/mod-autopilot";
 import {
   constructedPolicy,
+  constructedPosition,
+  CONSTRUCTED_TOKEN,
   constructedRow,
   CONSTRUCTED_NOW,
   CONSTRUCTED_WALLET,
@@ -16,6 +18,20 @@ export async function previewAutopilot() {
       kind: "autopilot-policy",
       key: CONSTRUCTED_WALLET,
       data: constructedPolicy(),
+      source: "constructed preview",
+      observedAt: CONSTRUCTED_NOW,
+    });
+    store.put({
+      kind: "autopilot-position",
+      key: `${CONSTRUCTED_WALLET}:${CONSTRUCTED_TOKEN}`,
+      data: constructedPosition(),
+      source: "constructed preview",
+      observedAt: CONSTRUCTED_NOW,
+    });
+    store.put({
+      kind: "autopilot-collector",
+      key: CONSTRUCTED_WALLET,
+      data: { positionKeys: [`${CONSTRUCTED_WALLET}:${CONSTRUCTED_TOKEN}`] },
       source: "constructed preview",
       observedAt: CONSTRUCTED_NOW,
     });

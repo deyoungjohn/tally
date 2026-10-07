@@ -6,7 +6,7 @@ import type { Alert, DecisionRow, Policy, PolicySettings, Position } from "./typ
 export const DEFAULT_POLICY: PolicySettings = {
   armedRules: {},
   tokenAllowList: [],
-  killSwitch: false,
+  killSwitch: true,
 };
 export const POLICY_MAX_AGE_MS = 86_400_000;
 export const positionKey = (wallet: string, token: string) =>
