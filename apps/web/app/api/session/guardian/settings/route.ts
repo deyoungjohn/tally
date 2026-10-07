@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
   try {
     store = openStore();
     const data = await loadGuardianSettings({ walletAddress, store });
-    const health = moduleHealthState(store.health.get("guardian"));
+    const health = moduleHealthState(store.health.get("guardian") ?? null);
     data.moduleDegraded = health.degraded;
     data.moduleReason = health.reason;
     return json(data);
@@ -64,7 +64,7 @@ export async function PUT(req: NextRequest) {
     saveGuardianSettings(store, walletAddress, result.data);
 
     const data = await loadGuardianSettings({ walletAddress, store });
-    const health = moduleHealthState(store.health.get("guardian"));
+    const health = moduleHealthState(store.health.get("guardian") ?? null);
     data.moduleDegraded = health.degraded;
     data.moduleReason = health.reason;
     return json(data);

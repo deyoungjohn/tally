@@ -73,12 +73,11 @@ describe("session routes", () => {
     delete process.env.TEST_FLAG_STATEMENT;
   });
 
-   
   function makeReq(url: string, method: string, headers?: Record<string, string>, body?: unknown) {
     const init: RequestInit = { method };
     if (headers) init.headers = new Headers(headers);
     if (body) init.body = JSON.stringify(body);
-     
+
     return new NextRequest("http://localhost" + url, init as unknown as Request);
   }
 
@@ -183,7 +182,9 @@ describe("Guardian settings write route", () => {
 
   it("spoof test: PUT ignores query/cookie and relies on verified wallet", async () => {
     const store = modkit.openStore();
-    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({ data: [{ ticker: "NVDA" }] }); // mock registry
+    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+      data: [{ ticker: "NVDA" }],
+    }); // mock registry
 
     const req = makeReq(
       `/api/session/guardian/settings?address=0x999`,
@@ -213,7 +214,9 @@ describe("Guardian settings write route", () => {
 
   it("rejects unknown fields in PUT", async () => {
     const store = modkit.openStore();
-    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({ data: [{ ticker: "NVDA" }] }); // mock registry
+    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+      data: [{ ticker: "NVDA" }],
+    }); // mock registry
 
     const req = makeReq(
       "/api/session/guardian/settings",
@@ -229,7 +232,9 @@ describe("Guardian settings write route", () => {
 
   it("rejects earnings: true", async () => {
     const store = modkit.openStore();
-    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({ data: [{ ticker: "NVDA" }] }); // mock registry
+    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+      data: [{ ticker: "NVDA" }],
+    }); // mock registry
 
     const body = {
       ...DEFAULT_GUARDIAN_SETTINGS,
@@ -244,7 +249,9 @@ describe("Guardian settings write route", () => {
 
   it("rejects bad thresholds and hours", async () => {
     const store = modkit.openStore();
-    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({ data: [{ ticker: "NVDA" }] }); // mock registry
+    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+      data: [{ ticker: "NVDA" }],
+    }); // mock registry
 
     // bad threshold (min > max)
     const body1 = {
@@ -255,7 +262,9 @@ describe("Guardian settings write route", () => {
     expect(res1.status).toBe(400);
 
     // bad hours
-    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({ data: [{ ticker: "NVDA" }] });
+    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+      data: [{ ticker: "NVDA" }],
+    });
     const body2 = {
       ...DEFAULT_GUARDIAN_SETTINGS,
       quietHours: { enabled: true, startHourUtc: 24, endHourUtc: -1 },
@@ -268,13 +277,17 @@ describe("Guardian settings write route", () => {
     const store = modkit.openStore();
 
     // too small
-    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({ data: [{ ticker: "NVDA" }] });
+    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+      data: [{ ticker: "NVDA" }],
+    });
     const body1 = { ...DEFAULT_GUARDIAN_SETTINGS, cooldownMs: 0 };
     const res1 = await settingsPUT(makeReq("/api/session/guardian/settings", "PUT", {}, body1));
     expect(res1.status).toBe(400);
 
     // too big
-    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({ data: [{ ticker: "NVDA" }] });
+    (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+      data: [{ ticker: "NVDA" }],
+    });
     const body2 = { ...DEFAULT_GUARDIAN_SETTINGS, cooldownMs: 700_000_000 };
     const res2 = await settingsPUT(makeReq("/api/session/guardian/settings", "PUT", {}, body2));
     expect(res2.status).toBe(400);
@@ -284,13 +297,25 @@ describe("Guardian settings write route", () => {
     let res;
     const store = modkit.openStore();
     for (let i = 0; i < 30; i++) {
-      (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValue({ data: [{ ticker: "NVDA" }] });
-      const req = makeReq("/api/session/guardian/settings", "PUT", {}, DEFAULT_GUARDIAN_SETTINGS);
+      (store.latest as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+        data: [{ ticker: "NVDA" }],
+      });
+      const req = makeReq(
+        "/api/session/guardian/settings",
+        "PUT",
+        { "x-forwarded-for": "rate-limit-test" },
+        DEFAULT_GUARDIAN_SETTINGS,
+      );
       res = await settingsPUT(req);
       expect(res.status).toBe(200);
     }
     // 31st should fail
-    const req = makeReq("/api/session/guardian/settings", "PUT", {}, DEFAULT_GUARDIAN_SETTINGS);
+    const req = makeReq(
+      "/api/session/guardian/settings",
+      "PUT",
+      { "x-forwarded-for": "rate-limit-test" },
+      DEFAULT_GUARDIAN_SETTINGS,
+    );
     res = await settingsPUT(req);
     expect(res.status).toBe(429);
   });
@@ -298,12 +323,14 @@ describe("Guardian settings write route", () => {
   it("returns saved setting on GET", async () => {
     const store = modkit.openStore();
     // Simulate that store.latest("guardian-settings") will return our saved data
-    (store.latest as unknown as ReturnType<typeof vi.fn>).mockImplementation((kind: string, key: string) => {
-      if (kind === "guardian-settings" && key === MY_WALLET.toLowerCase()) {
-        return { data: { ...DEFAULT_GUARDIAN_SETTINGS, cooldownMs: 999999 } };
-      }
-      return null;
-    });
+    (store.latest as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+      (kind: string, key: string) => {
+        if (kind === "guardian-settings" && key === MY_WALLET.toLowerCase()) {
+          return { data: { ...DEFAULT_GUARDIAN_SETTINGS, cooldownMs: 999999 } };
+        }
+        return null;
+      },
+    );
 
     const req = makeReq("/api/session/guardian/settings", "GET");
     const res = await settingsGET(req);

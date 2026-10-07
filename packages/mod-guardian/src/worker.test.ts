@@ -1385,7 +1385,7 @@ describe("Guardian Worker (worker.ts)", () => {
     const store = openStore(":memory:");
     let currentTime = 1_000_000;
     const warnings: string[] = [];
-    
+
     let sentMessages = 0;
     const mockSender = {
       sendMessage: async () => {
@@ -1486,7 +1486,7 @@ describe("Guardian Worker (worker.ts)", () => {
 
     // Advance time. The grade is still B, so no drop yet.
     currentTime += 60_000;
-    
+
     // Since gradeDrop is false anyway, it wouldn't generate an alert, but let's just run it
     const run2 = await runGuardianEvaluation(ctx);
     expect(run2.generatedAlerts).toBe(0);
