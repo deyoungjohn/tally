@@ -55,7 +55,9 @@ export function useMigrateFlow() {
             const data = await res.json();
             usdtBefore = data.wallet?.usdt?.toString() ?? "0";
           }
-        } catch {}
+        } catch {
+          // ignore
+        }
       }
 
       const newPm: PendingMigrate = {
@@ -107,8 +109,7 @@ export function useMigrateFlow() {
   useEffect(() => {
     if (step === "interstitial" && pm && pm.saleHash && !pm.usdtReceived && waitingReceipt) {
       const controller = new AbortController();
-      let timer: any;
-      let attempts = 0;
+      let timer: ReturnType<typeof setTimeout> | undefined;
 
       const poll = async () => {
         if (!pm.saleHash) return;
@@ -155,7 +156,6 @@ export function useMigrateFlow() {
             }
           }
 
-          attempts++;
           timer = setTimeout(poll, 3000);
         } catch {
           timer = setTimeout(poll, 3000);

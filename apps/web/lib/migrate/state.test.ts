@@ -1,6 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 import {
-  MIGRATE_STORAGE_KEY,
   readPendingMigrate,
   writePendingMigrate,
   clearPendingMigrate,

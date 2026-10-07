@@ -89,7 +89,7 @@ export function HoldingGroup({
                 <LiveShares value={p.shares} />
               </b>
             </span>
-            {onSell && p.issuer !== "xstocks" ? (
+            {onSell ? (
               p.valueUsd !== null && p.valueUsd < MIN_SELL_USDT ? (
                 // Worth less than the smallest sale: unclickable, and the tooltip says why.
                 <Tip
@@ -105,7 +105,7 @@ export function HoldingGroup({
                     >
                       Sell
                     </Button>
-                    {onMigrate && p.issuer !== "xstocks" ? (
+                    {onMigrate ? (
                       <Button
                         variant="glassy"
                         className="!h-9 !px-4 text-[14.5px] ml-2"
@@ -128,7 +128,7 @@ export function HoldingGroup({
                   >
                     Sell
                   </Button>
-                  {onMigrate && p.issuer !== "xstocks" ? (
+                  {onMigrate ? (
                     <Button
                       variant="glassy"
                       className="!h-9 !px-4 text-[14.5px]"
@@ -291,21 +291,6 @@ export function PortfolioPage() {
         <PortfolioVmPanel
           address={address}
           refreshKey={confirmedSales}
-          onMigrate={
-            canMigrate
-              ? (p) =>
-                  void migrate.open(
-                    {
-                      ticker: p.ticker,
-                      issuer: p.issuer as "ondo" | "bstock",
-                      symbol: p.symbol,
-                      probeShares: p.shares,
-                      probeUsd: p.valueUsd,
-                    },
-                    p.issuer === "ondo" ? "bstock" : "ondo",
-                  )
-              : undefined
-          }
           onSell={canSell ? (t) => void sell.open(t) : undefined}
         />
       ) : (
@@ -347,6 +332,21 @@ export function PortfolioPage() {
                               probeShares: p.shares,
                               probeUsd: p.valueUsd,
                             })
+                        : undefined
+                    }
+                    onMigrate={
+                      canMigrate
+                        ? (p) =>
+                            void migrate.open(
+                              {
+                                ticker: p.ticker,
+                                issuer: p.issuer as "ondo" | "bstock",
+                                symbol: p.symbol,
+                                probeShares: p.shares,
+                                probeUsd: p.valueUsd,
+                              },
+                              p.issuer === "ondo" ? "bstock" : "ondo",
+                            )
                         : undefined
                     }
                   />

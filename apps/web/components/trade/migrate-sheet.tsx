@@ -6,10 +6,8 @@ import { useMigrateFlow } from "./use-migrate-flow";
 import { SellSheet } from "./sell-sheet";
 import { TradeFlowLayer } from "./flow-host";
 import { formatUnits } from "viem";
-import { roundDownToCent } from "../../lib/migrate/state";
 import { ReceiptLink } from "@/components/receipts/receipt-link";
 import { Loader2, ArrowRight } from "lucide-react";
-import { fmtShares } from "@/lib/format";
 
 export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
   const { pm, step, sell, buy, cancel, resumeStep2, waitingReceipt, source } = flow;
