@@ -567,11 +567,11 @@ All visual rules live in `DESIGN.md`. This section covers structure.
 ## 14. Infrastructure and operations
 - **Host:** AWS EC2 Seoul (KR), Ubuntu 24.04, 2 GB RAM, 30 GB disk.
   - Add a **4 GB swap file**. A Next.js build can run out of memory at 2 GB. Prefer building in CI and deploying the `output: "standalone"` bundle.
-  - Processes: `systemd` units for `web`, `bot`, `mcp`.
+  - How the processes are started, supervised and restarted: `docs/deployment.md` (the only place deployment instructions live).
 - **Ingress:** **Cloudflare Tunnel** (`cloudflared`). No open inbound ports, HTTPS, and it provides the `cf-ipcountry` header.
   - Before the domain exists, a quick tunnel gives a temporary `*.trycloudflare.com` URL. It changes on restart, so update the wallet provider's allowed origins accordingly.
   - Once the domain is bought, move DNS to Cloudflare and use a named tunnel.
-- **Secrets** in `/etc/tally/tally.env` (mode 600), loaded by systemd, never in git:
+- **Secrets** in `/etc/tally/tally.env` (mode 600), read by `deploy/restart.sh`, never in git:
   - `BINANCE_W3_API_KEY`, `BINANCE_W3_API_SECRET`
   - `BSC_RPC_PRIMARY`, `BSC_RPC_FALLBACKS`
   - `PRIVY_APP_ID`, `PRIVY_APP_SECRET` (or Dynamic equivalents)
