@@ -66,12 +66,6 @@ Approved files: new `packages/mod-receipts/src/verification-sell.ts` (+ test); a
 
 New file `packages/engine/src/guard-router.ts` (+ test) and one accessor line in `packages/engine/src/engine.ts`: `engine.trade.guardRouter(stock: Address): Promise<{ routerAllowed: boolean; approveTarget: Address }>`, built on `tradeChain.readGuard(stock, LIQUIDMESH_ROUTER)`. Used by the receipts route and worker for the stock-approval spender check; a failed read leaves the hint pending, never a fallback.
 
-## ShareGuard expansion (2026-10-07)
+## Migrate and the ShareGuard expansion (2026-10-07)
 
-`apps/web/modules/switch/**` and `apps/web/app/dev/switch/**` are the Migrate module (WO-13, spec `docs/work-orders/WO-13-migrate.md`), built by Agent 07 on this branch **before** the expansion. Migrate Owns, approved 2026-10-07: `apps/web/modules/switch/**`, `apps/web/app/dev/switch/**`, `apps/web/lib/migrate/**`, `apps/web/components/trade/use-migrate-flow.ts`, `apps/web/components/trade/migrate-sheet.tsx`, `apps/web/e2e/migrate.spec.ts`; additive hunks in `apps/web/components/portfolio/portfolio.tsx` and `apps/web/components/trade/trade-client.tsx`. New work for Agent 07, on the existing branch `mod/WO-07-switch`: enable more tokens on the **deployed** ShareGuard without changing `contracts/src/ShareGuard.sol`. Full instructions: `docs/prompts/wo07-shareguard-expansion.md`. Approved, additive, Owns:
-- `contracts/tools/list_candidates.py`, `contracts/tools/list_enabled.py`, `contracts/tools/gen_buyable.py`
-- `contracts/script/AddAssets.s.sol` and its Foundry test under `contracts/test/`
-- `contracts/deploy/assets.json`, `contracts/deploy/seeds.json`, new files in `contracts/captures/`
-- `contracts/README.md` (the "Expanding the asset list" section)
-- `apps/web/lib/buyable.generated.ts` (new) and, in `apps/web/lib/tickers.ts`, only the definition of `BUYABLE_TICKERS` (same exported shape)
-
+`apps/web/modules/switch/**` and `apps/web/app/dev/switch/**` are the Migrate module (WO-13, spec `docs/work-orders/WO-13-migrate.md`), built by Agent 07 on this branch. Migrate Owns, approved 2026-10-07: `apps/web/modules/switch/**`, `apps/web/app/dev/switch/**`, `apps/web/lib/migrate/**`, `apps/web/components/trade/use-migrate-flow.ts`, `apps/web/components/trade/migrate-sheet.tsx`, `apps/web/e2e/migrate.spec.ts`; additive hunks in `apps/web/components/portfolio/portfolio.tsx` and `apps/web/components/trade/trade-client.tsx`. The ShareGuard expansion was first planned here and moved to Agent 09 the same day (see `docs/work-orders/WO-09-pies.md`).
