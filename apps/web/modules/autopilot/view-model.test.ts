@@ -165,3 +165,84 @@ it("another wallet's newer batch does not refresh this wallet's log age", async 
     ageMs: 180_001,
   });
 });
+
+it("policy is editable only with explicit verified-session proof, never an address alone", async () => {
+  const store = seeded();
+  const readOnly = await loadAutopilot({ walletAddress: wallet, store, now });
+  expect(readOnly.policyEditable).toBe(false);
+  expect(readOnly.policy).toMatchObject({ perTradeCap: "25", dailyCap: "50", killSwitch: false });
+  expect(
+    (await loadAutopilot({ walletAddress: wallet, store, now, verifiedSession: true }))
+      .policyEditable,
+  ).toBe(true);
+  expect((await loadAutopilot({ store, now, verifiedSession: true })).policyEditable).toBe(false);
+});
+it("collector distinguishes never collected, empty, current and stale, preserving positions and age", async () => {
+  const store = seeded();
+  expect((await loadAutopilot({ walletAddress: wallet, store, now })).collector).toEqual({
+    state: "never collected",
+    ageMs: null,
+  });
+  store.put({
+    kind: "autopilot-policy",
+    key: wallet,
+    data: constructedPolicy({ tokenAllowList: [] }),
+    source: "constructed",
+    observedAt: now,
+  });
+  store.put({
+    kind: "autopilot-collector",
+    key: wallet,
+    data: { positionKeys: [] },
+    source: "constructed",
+    observedAt: now,
+  });
+  expect((await loadAutopilot({ walletAddress: wallet, store, now })).collector).toEqual({
+    state: "empty",
+    ageMs: 0,
+  });
+  const token = "0x0000000000000000000000000000000000000002";
+  store.put({
+    kind: "autopilot-policy",
+    key: wallet,
+    data: constructedPolicy(),
+    source: "constructed",
+    observedAt: now,
+  });
+  store.put({
+    kind: "autopilot-position",
+    key: `${wallet}:${token}`,
+    data: constructedRow().inputs.position,
+    source: "constructed",
+    observedAt: now,
+  });
+  store.put({
+    kind: "autopilot-collector",
+    key: wallet,
+    data: { positionKeys: [`${wallet}:${token}`] },
+    source: "constructed",
+    observedAt: now,
+  });
+  expect(await loadAutopilot({ walletAddress: wallet, store, now })).toMatchObject({
+    collector: { state: "ok", ageMs: 0 },
+    positions: [{ token, shares: "100", usdValue: "100", ageMs: 0, stale: false }],
+  });
+  expect(await loadAutopilot({ walletAddress: wallet, store, now: now + 60_001 })).toMatchObject({
+    collector: { state: "stale", ageMs: 60_001 },
+    positions: [{ shares: "100", stale: true, ageMs: 60_001 }],
+  });
+});
+it("unknown position facts carry their warnings without invented amounts", async () => {
+  const store = seeded();
+  const p = constructedRow().inputs.position!;
+  store.put({
+    kind: "autopilot-position",
+    key: `${wallet}:${p.tokenAddress}`,
+    data: { ...p, shares: null, usdPerShare: null, warnings: ["unknown multiplier"] },
+    source: "constructed",
+    observedAt: now,
+  });
+  expect((await loadAutopilot({ walletAddress: wallet, store, now })).positions).toMatchObject([
+    { shares: null, usdValue: null, warnings: ["unknown multiplier"] },
+  ]);
+});

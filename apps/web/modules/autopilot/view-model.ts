@@ -6,6 +6,9 @@ import {
   PER_TRADE_CEILING,
   POLICY_MAX_AGE_MS,
   readDecisionLog,
+  loadPositionStatus,
+  type CollectorStatus,
+  type PositionStatus,
   spentToday,
   type PolicySettings,
 } from "@tally/mod-autopilot";
@@ -28,6 +31,21 @@ export interface DecisionRowVM {
   usdCap: string | null;
   receiptId: string | null;
 }
+export interface PolicyFormValues {
+  armedRules: {
+    paused?: { longerThanHours: number };
+    "grade-drop"?: { atOrBelow: "D" | "F" };
+    "price-threshold"?: { stopUsdPerShare: string };
+  };
+  tokenAllowList: readonly string[];
+  perTradeCap: string;
+  dailyCap: string;
+  killSwitch: boolean;
+}
+export type PositionVM = Omit<PositionStatus, "shares" | "usdValue"> & {
+  shares: string | null;
+  usdValue: string | null;
+};
 export interface AutopilotVM {
   state: "ready" | "empty" | "stale" | "error";
   stale: boolean;
@@ -45,12 +63,18 @@ export interface AutopilotVM {
   spentToday: string;
   killSwitch: boolean;
   rows: DecisionRowVM[];
+  policy?: PolicyFormValues;
+  policyEditable?: boolean;
+  positions?: PositionVM[];
+  collector?: CollectorStatus;
 }
 export type AutopilotViewModel = AutopilotVM;
 
 export interface AutopilotLoadOptions {
   /** Must be supplied by a verified wallet session in production. */
   walletAddress?: string;
+  /** Set only by the verified-session route, never from a supplied address alone. */
+  verifiedSession?: boolean;
   store?: SnapshotStore;
   now?: number;
   health?: ModuleHealthState;
@@ -84,7 +108,10 @@ export async function loadAutopilot(opts: AutopilotLoadOptions = {}): Promise<Au
       dailyCeiling: formatUnits(DAILY_CEILING, 18),
     },
     spentToday: "0",
-    killSwitch: false,
+    killSwitch: true,
+    policyEditable: Boolean(wallet && opts.verifiedSession),
+    positions: [],
+    collector: { state: "never collected", ageMs: null },
     rows: [],
   };
   if (!wallet || !opts.store) return vm;
@@ -98,6 +125,35 @@ export async function loadAutopilot(opts: AutopilotLoadOptions = {}): Promise<Au
     );
     const policy = policySnap?.data ?? DEFAULT_POLICY;
     const caps = effectiveCaps(policy);
+    const status = loadPositionStatus(opts.store, wallet, policy, now);
+    vm.positions = status.positions.map((p) => ({
+      ...p,
+      shares: p.shares === null ? null : formatUnits(p.shares, 18),
+      usdValue: p.usdValue === null ? null : formatUnits(p.usdValue, 18),
+    }));
+    vm.collector = status.collector;
+    vm.policy = {
+      armedRules: {
+        ...(policy.armedRules.paused ? { paused: policy.armedRules.paused } : {}),
+        ...(policy.armedRules["grade-drop"]
+          ? { "grade-drop": policy.armedRules["grade-drop"] }
+          : {}),
+        ...(policy.armedRules["price-threshold"]
+          ? {
+              "price-threshold": {
+                stopUsdPerShare: formatUnits(
+                  policy.armedRules["price-threshold"].stopUsdPerShare,
+                  18,
+                ),
+              },
+            }
+          : {}),
+      },
+      tokenAllowList: policy.tokenAllowList,
+      killSwitch: policy.killSwitch,
+      perTradeCap: formatUnits(caps.perTrade, 18),
+      dailyCap: formatUnits(caps.daily, 18),
+    };
     vm.armedRules = policy.armedRules;
     vm.tokenAllowList = policy.tokenAllowList;
     vm.killSwitch = policy.killSwitch;
@@ -124,7 +180,7 @@ export async function loadAutopilot(opts: AutopilotLoadOptions = {}): Promise<Au
               : row.receiptId
                 ? "executed sale"
                 : "execution not verified",
-        tokens: row.leg ? formatUnits(row.leg.tokens, row.inputs.position!.tokenDecimals) : null,
+        tokens: row.leg ? formatUnits(row.leg.tokens, row.inputs.position!.tokenDecimals!) : null,
         usdCap: row.leg ? formatUnits(row.leg.usdCap, 18) : null,
         receiptId: row.receiptId ?? null,
       }))
