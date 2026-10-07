@@ -17,6 +17,7 @@ import { RadarRowCard, RadarStats, useRadar } from "@/components/radar/radar";
 import type { QuoteDto } from "@/lib/dto";
 import { ISSUER_LABEL, fmtShares, fmtUsd } from "@/lib/format";
 import { useJson } from "@/lib/hooks/use-json";
+import { useModuleFlagsState } from "@/lib/hooks/use-flags";
 import { useLiveQuote } from "@/lib/hooks/use-live-quote";
 import { BUYABLE_TICKERS, isBuyable, tokenPair, tokenSymbol } from "@/lib/tickers";
 import type { PortfolioReport } from "@tally/engine";
@@ -26,6 +27,7 @@ import { LiveUsd } from "@/components/motion/live";
 
 /** The minimalist trade card on Home: pick a stock, type dollars, see the best live price. The real flow lives on /trade. */
 export function HomeTradeCard() {
+  const { flags } = useModuleFlagsState();
   const wallet = useTallyWallet();
   const flow = useTradeFlow();
   const { phase } = flow;
@@ -151,7 +153,11 @@ export function HomeTradeCard() {
       <div className="mt-3">
         <ComingSoon
           title="Coming soon"
-          items={["Sell to USDT", "Sell to BNB", "Migrate between issuers"]}
+          items={
+            flags?.switch === true
+              ? ["Sell to USDT", "Sell to BNB"]
+              : ["Sell to USDT", "Sell to BNB", "Migrate between issuers"]
+          }
         />
       </div>
       <p className="t-meta mt-3">

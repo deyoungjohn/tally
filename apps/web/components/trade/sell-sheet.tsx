@@ -20,7 +20,7 @@ const STATUS_LINE: Record<string, string> = {
 };
 
 /** The sell sheet: a centered modal that follows the plan's own status (needs funds, needs approval, ready) and then the transaction. */
-export function SellSheet({ flow }: { flow: Flow }) {
+export function SellSheet({ flow, isMigrate }: { flow: Flow; isMigrate?: boolean }) {
   const { phase, target } = flow;
   const open = phase.name !== "idle";
   // While a wallet prompt is open or a sent sale is being watched, the sheet stays: closing then would lose the hash.
@@ -59,7 +59,7 @@ export function SellSheet({ flow }: { flow: Flow }) {
           </>
         ) : null}
 
-        {phase.name === "form" ? <FormView flow={flow} /> : null}
+        {phase.name === "form" ? <FormView flow={flow} isMigrate={isMigrate} /> : null}
 
         {phase.name === "approve" ? (
           <Progress testId="sell-approving">
@@ -150,7 +150,7 @@ export function SellSheet({ flow }: { flow: Flow }) {
   );
 }
 
-function FormView({ flow }: { flow: Flow }) {
+function FormView({ flow, isMigrate }: { flow: Flow; isMigrate?: boolean }) {
   const { phase, inputs, target } = flow;
   const plan = phase.name === "form" ? phase.plan : null;
   if (phase.name !== "form" || !target) return null;
@@ -170,6 +170,8 @@ function FormView({ flow }: { flow: Flow }) {
     if (p <= 0) return flow.setInputs({ all: false, text: "" });
     flow.setInputs({ all: false, text: String(Math.floor(((heldShares * p) / 100) * 1e8) / 1e8) });
   };
+
+  const isMigrateBlocked = isMigrate && plan && BigInt(plan.minUsdtOut) < 6000000000000000000n;
 
   return (
     <>
@@ -241,14 +243,29 @@ function FormView({ flow }: { flow: Flow }) {
           {phase.failure.message}
         </Notice>
       ) : null}
+      {isMigrateBlocked ? (
+        <Notice tone="red" testId="migrate-error">
+          Too small to migrate: the guaranteed proceeds are below the 6 USDT buy minimum.
+        </Notice>
+      ) : null}
 
       {view?.next === "approve" ? (
-        <Button big disabled={busy} onClick={() => void flow.approve()} data-testid="sell-approve">
+        <Button
+          big
+          disabled={busy || !!isMigrateBlocked}
+          onClick={() => void flow.approve()}
+          data-testid="sell-approve"
+        >
           <ShieldCheck size={18} aria-hidden /> Approve {view.symbol}
         </Button>
       ) : null}
       {view?.next === "confirm" ? (
-        <Button big disabled={busy} onClick={() => void flow.confirm()} data-testid="sell-confirm">
+        <Button
+          big
+          disabled={busy || !!isMigrateBlocked}
+          onClick={() => void flow.confirm()}
+          data-testid="sell-confirm"
+        >
           Confirm sale
         </Button>
       ) : null}

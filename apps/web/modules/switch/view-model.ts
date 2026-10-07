@@ -1,131 +1,78 @@
 import type { Address } from "@tally/core";
+import { isBuyable } from "../../lib/tickers";
 
-export interface SellSheetVM {
-  state: "ready" | "needs_approval" | "needs_funds" | "empty" | "error";
+export interface MigrateVM {
+  state: "ready" | "needs_funds" | "empty" | "error";
   ticker: string;
-  issuer: "ondo" | "bstock";
-  symbol: string;
-  stock: string;
-  tokensIn: string;
-  sharesIn: string;
-  quotedUsdtOut: string;
-  minUsdtFloor: string;
-  usdPerShare: number;
-  referencePrice: number | null;
-  costPct: number | null;
-  feeEstimateUsd: number | null;
-  integrityGrade: "A" | "B" | "C" | "D" | "F" | null;
-  availabilityReason: string | null;
-  isMax?: boolean;
-  stale: boolean;
-  ageMs: number | null;
-  source: string | null;
-  error: string | null;
-}
-
-export interface SwitchSheetVM {
-  state: "ready" | "two_step" | "empty" | "error";
-  ticker: string;
-  fromIssuer: "ondo" | "bstock";
+  fromIssuer: "ondo" | "bstock" | "xstocks";
   toIssuer: "ondo" | "bstock";
   fromSymbol: string;
   toSymbol: string;
-  sharesIn: string;
-  sharesOut: string;
-  costPct: number | null;
-  feeEstimateUsd: number | null;
-  fromGrade: "A" | "B" | "C" | "D" | "F" | null;
-  toGrade: "A" | "B" | "C" | "D" | "F" | null;
-  destinationFloorShares: string;
+  sharesIn: string | null;
+  tokensIn: string | null;
+
+  // Eligibility
   availabilityReason: string | null;
-  directRoute: boolean;
-  twoStepRequired: boolean;
+  eligible: boolean;
+
+  // Expected
+  usdtExpected: string | null;
+
+  // Metadata
   stale: boolean;
   ageMs: number | null;
   source: string | null;
   error: string | null;
 }
 
-export interface SwitchViewModel {
-  state: "empty" | "ready" | "error";
-  stale: boolean;
-  ageMs: number | null;
-  source: string | null;
-  reason: string;
-  error: string | null;
-  sellSheet?: SellSheetVM;
-  switchSheet?: SwitchSheetVM;
-}
-
-export async function loadSellSheet(params?: {
+export async function loadMigrateSheet(params?: {
   ticker?: string;
-  issuer?: "ondo" | "bstock";
-  shares?: number;
-  tokens?: string;
-  max?: boolean;
-  rawBalance?: string;
-  user?: Address;
-}): Promise<SellSheetVM> {
-  const ticker = params?.ticker?.toUpperCase() ?? "NVDA";
-  const issuer = params?.issuer ?? "bstock";
-  const isMax = Boolean(params?.max);
-  const rawTokens = params?.tokens ?? (isMax ? params?.rawBalance : undefined);
-
-  return {
-    state: "empty",
-    ticker,
-    issuer,
-    symbol: issuer === "bstock" ? `${ticker}B` : `${ticker}on`,
-    stock: "",
-    tokensIn: rawTokens ?? "0",
-    sharesIn: "0",
-    quotedUsdtOut: "0",
-    minUsdtFloor: "0",
-    usdPerShare: 0,
-    referencePrice: null,
-    costPct: null,
-    feeEstimateUsd: null,
-    integrityGrade: null,
-    availabilityReason: "A sell plan needs a live quote; open a sell from the Portfolio.",
-    isMax,
-    stale: false,
-    ageMs: null,
-    source: null,
-    error: null,
-  };
-}
-
-export async function loadSwitchSheet(params?: {
-  ticker?: string;
-  fromIssuer?: "ondo" | "bstock";
+  fromIssuer?: "ondo" | "bstock" | "xstocks";
   toIssuer?: "ondo" | "bstock";
   shares?: number;
+  tokens?: string;
+  rawBalance?: string;
   user?: Address;
-}): Promise<SwitchSheetVM> {
+  sellMinUsdt?: string;
+  sellQuotedUsdt?: string;
+}): Promise<MigrateVM> {
   const ticker = params?.ticker?.toUpperCase() ?? "NVDA";
   const fromIssuer = params?.fromIssuer ?? "ondo";
-  const toIssuer = params?.toIssuer ?? "bstock";
-  const fromSymbol = fromIssuer === "ondo" ? `${ticker}on` : `${ticker}B`;
+  const toIssuer = params?.toIssuer ?? (fromIssuer === "ondo" ? "bstock" : "ondo");
+  const fromSymbol =
+    fromIssuer === "ondo" ? `${ticker}on` : fromIssuer === "xstocks" ? `${ticker}x` : `${ticker}B`;
   const toSymbol = toIssuer === "ondo" ? `${ticker}on` : `${ticker}B`;
 
+  const tokensIn = params?.tokens ?? params?.rawBalance ?? null;
+  const usdtExpected = params?.sellQuotedUsdt ?? null;
+
+  let eligible = true;
+  let availabilityReason: string | null = null;
+
+  if (fromIssuer === "xstocks") {
+    eligible = false;
+    availabilityReason = "No market to exit this token on BNB Chain";
+  } else if (!isBuyable(ticker)) {
+    eligible = false;
+    availabilityReason = `${ticker} can't be bought through Tally yet.`;
+  } else if (usdtExpected && BigInt(usdtExpected) < 6000000000000000000n) {
+    eligible = false;
+    availabilityReason =
+      "Too small to migrate: the buy needs at least 6 USDT. You can sell to USDT instead.";
+  }
+
   return {
-    state: "empty",
+    state: params?.user && eligible ? "ready" : "empty",
     ticker,
     fromIssuer,
     toIssuer,
     fromSymbol,
     toSymbol,
-    sharesIn: "0",
-    sharesOut: "0",
-    costPct: null,
-    feeEstimateUsd: null,
-    fromGrade: null,
-    toGrade: null,
-    destinationFloorShares: "0",
-    availabilityReason:
-      "Single-route switch is unavailable: upstream Binance DEX aggregator forbids stock-to-stock pairing on BNB Chain (code 40368: Ondo asset on chain 56 can only pair with allowed stablecoins). Use Sell then Buy as two separate steps.",
-    directRoute: false,
-    twoStepRequired: false,
+    sharesIn: params?.shares?.toString() ?? null,
+    tokensIn,
+    availabilityReason,
+    eligible,
+    usdtExpected,
     stale: false,
     ageMs: null,
     source: null,
@@ -133,13 +80,6 @@ export async function loadSwitchSheet(params?: {
   };
 }
 
-export async function loadSwitch(): Promise<SwitchViewModel> {
-  return {
-    state: "empty",
-    stale: false,
-    ageMs: null,
-    source: null,
-    reason: "Switch has no observations yet.",
-    error: null,
-  };
+export async function loadMigrate(): Promise<{ reason: string }> {
+  return { reason: "Migrate has no observations yet." };
 }
