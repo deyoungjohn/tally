@@ -428,5 +428,3 @@ test.describe("Migrate stocks tab on the Trade page", () => {
     await expect(page.getByRole("radio", { name: "Migrate stocks" })).toHaveCount(0);
   });
 });
-
-

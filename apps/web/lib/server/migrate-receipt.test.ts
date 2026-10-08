@@ -35,11 +35,12 @@ import { loadMigrateReceipt } from "./migrate-receipt";
 describe("loadMigrateReceipt", () => {
   const USDT = "0x55d398326f99059fF775485246999027B3197955".toLowerCase();
   const NVDAB = "0x02fca66c1d1afb4e2a7884261eb00f63598a7436".toLowerCase();
-  const NVDAon = "0x456".toLowerCase(); // dummy
+  const NVDAon = "0x4560000000000000000000000000000000000000".toLowerCase(); // dummy
 
   const h1 = "0x" + "1".repeat(64);
   const h2 = "0x" + "2".repeat(64);
-  const SENDER = "0x123";
+  const SENDER = "0x1230000000000000000000000000000000000000";
+  const ROUTER = "0x9990000000000000000000000000000000000000";
 
   beforeEach(() => {
     vi.resetAllMocks();
@@ -141,8 +142,8 @@ describe("loadMigrateReceipt", () => {
       sender: SENDER,
       blockNumber: 100n,
       logs: [
-        makeTransferLog(NVDAB, SENDER, "0xrouter", 100n),
-        makeTransferLog(USDT, "0xrouter", SENDER, 500n),
+        makeTransferLog(NVDAB, SENDER, ROUTER, 100n),
+        makeTransferLog(USDT, ROUTER, SENDER, 500n),
       ],
       gasUsed: 21000n,
     });
@@ -168,8 +169,8 @@ describe("loadMigrateReceipt", () => {
       sender: SENDER,
       blockNumber: 100n,
       logs: [
-        makeTransferLog(NVDAB, SENDER, "0xrouter", 100n),
-        makeTransferLog(USDT, "0xrouter", SENDER, 500n),
+        makeTransferLog(NVDAB, SENDER, ROUTER, 100n),
+        makeTransferLog(USDT, ROUTER, SENDER, 500n),
       ],
       gasUsed: 21000n,
     });

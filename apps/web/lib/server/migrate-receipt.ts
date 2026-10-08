@@ -65,8 +65,14 @@ export async function loadMigrateReceipt(
 
   // They must be different issuers but same ticker
   const tokens = (await engine.ports.registry.all?.()) ?? [];
-  const sellDef = tokens.find((t: { address: string; ticker: string; issuer: string }) => t.address.toLowerCase() === sellStockToken);
-  const buyDef = tokens.find((t: { address: string; ticker: string; issuer: string }) => t.address.toLowerCase() === buyStockToken);
+  const sellDef = tokens.find(
+    (t: { address: string; ticker: string; issuer: string }) =>
+      t.address.toLowerCase() === sellStockToken,
+  );
+  const buyDef = tokens.find(
+    (t: { address: string; ticker: string; issuer: string }) =>
+      t.address.toLowerCase() === buyStockToken,
+  );
 
   if (!sellDef || !buyDef) return { state: "not_a_migrate", sellHash, buyHash };
   if (sellDef.ticker !== buyDef.ticker || sellDef.issuer === buyDef.issuer)
