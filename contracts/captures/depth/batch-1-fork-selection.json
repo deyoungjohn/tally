@@ -1,0 +1,2596 @@
+{
+  "schema": 1,
+  "selectionRule": "Latest passing recorded depth run per token. Later failed captures are retained and reported; a historical pass does not mean current tradability.",
+  "runIds": [
+    "batch1-20261007T233708Z",
+    "batch1-20261008T000326Z"
+  ],
+  "forkStatus": "blocked",
+  "forkReason": "BSC_RPC is not set; fork.sh requires an archive-capable RPC supplied by the chief engineer.",
+  "enablement": "not approved",
+  "tokens": [
+    {
+      "token": "NVDAB",
+      "ticker": "NVDA",
+      "kind": "bstock",
+      "role": "control",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/NVDAB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.0896122474694455980460101073808384995245695269726919413188376116722788258877400",
+            "$6/guard": "0.0896122474694455980460101073808384995245695269726919413188376116722788258877400",
+            "$100/eoa": "0.0893115687231103516804523540366558744272779110920756915972271468920162057098500",
+            "$100/guard": "0.0893115687231103516804523540366558744272779110920756915972271468920162057098500"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/NVDAB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.0938833865814720113981499630514934772471662617492130751596541704699231372810100",
+            "$6/guard": "0.0938833865814720113981499630514934772471662617492130751596541704699231372810100",
+            "$100/eoa": "0.0938833865814697870140367803095720764930636786748118095435955798705462944886200",
+            "$100/guard": "0.0938833865814697870140367803095720764930636786748118095435955798705462944886200"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/NVDAB.json",
+      "sourceCapture": "contracts/captures/NVDAB.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/NVDAB.json",
+      "sha256": "1a1f0b382649f0ca519ec35b96b22088e1a47695ff39a744961209d4ee2e8b55",
+      "blockAtCapture": "126344681",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "NVDAon",
+      "ticker": "NVDA",
+      "kind": "ondo",
+      "role": "control",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/NVDAon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "-0.03523763375255124070608609044831135096788728179847906001736837549175986018607000",
+            "$6/guard": "-0.03520647482680394387346593894017536821588093535423346003336291550826050367849300"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/NVDAon.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null
+          },
+          "reasons": [
+            "Paused: Paused for session transition",
+            "$6/eoa: ApiError (http=200, code=40367)",
+            "$6/eoa: executionMode is not SWAP",
+            "$6/eoa: no quoted route",
+            "$6/eoa: $6 swap calldata is not replayable SWAP",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: ApiError (http=200, code=40367)",
+            "$6/guard: executionMode is not SWAP",
+            "$6/guard: no quoted route",
+            "$6/guard: $6 swap calldata is not replayable SWAP",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      ],
+      "selectedRunId": "batch1-20261007T233708Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261007T233708Z/NVDAon.json",
+      "sourceCapture": "contracts/captures/NVDAon.batch1-20261007T233708Z.json",
+      "canonicalCapture": "contracts/captures/NVDAon.json",
+      "sha256": "eb3fd0c0832afd29a06097aef3c7659afda721d6b0aaab1788c4508132d47417",
+      "blockAtCapture": "126341198",
+      "latestAttemptDepth": "failed"
+    },
+    {
+      "token": "AAPLB",
+      "ticker": "AAPL",
+      "kind": "bstock",
+      "role": "control",
+      "held": false,
+      "depth": "failed",
+      "fork": "not run: depth failed",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/AAPLB.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null,
+            "$100/eoa": null,
+            "$100/guard": null
+          },
+          "reasons": [
+            "reference: authenticated list must contain exactly one matching BSC token",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+            "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/AAPLB.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null,
+            "$100/eoa": null,
+            "$100/guard": null
+          },
+          "reasons": [
+            "reference: authenticated list must contain exactly one matching BSC token",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+            "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      ],
+      "dropReasons": [
+        "reference: authenticated list must contain exactly one matching BSC token",
+        "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+        "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+      ]
+    },
+    {
+      "token": "AAPLon",
+      "ticker": "AAPL",
+      "kind": "ondo",
+      "role": "control",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/AAPLon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "-0.04735044700804188627588665632974366857010883879143068902992709026060904399361800",
+            "$6/guard": "-0.04735044700804188627588665632974366857010883879143068902992709026060904399361800"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/AAPLon.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null
+          },
+          "reasons": [
+            "Paused: Paused for session transition",
+            "$6/eoa: ApiError (http=200, code=40367)",
+            "$6/eoa: executionMode is not SWAP",
+            "$6/eoa: no quoted route",
+            "$6/eoa: $6 swap calldata is not replayable SWAP",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: ApiError (http=200, code=40367)",
+            "$6/guard: executionMode is not SWAP",
+            "$6/guard: no quoted route",
+            "$6/guard: $6 swap calldata is not replayable SWAP",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      ],
+      "selectedRunId": "batch1-20261007T233708Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261007T233708Z/AAPLon.json",
+      "sourceCapture": "contracts/captures/AAPLon.batch1-20261007T233708Z.json",
+      "canonicalCapture": "contracts/captures/AAPLon.json",
+      "sha256": "1ab85708d391daec0cd89821f422758c04e69bee5152eb42f26520c9f82a5d46",
+      "blockAtCapture": "126341227",
+      "latestAttemptDepth": "failed"
+    },
+    {
+      "token": "TSLAB",
+      "ticker": "TSLA",
+      "kind": "bstock",
+      "role": "control",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/TSLAB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "-0.01560978275992946681371610333453316359449580499436692037918890026930060895771100",
+            "$6/guard": "-0.01560978275992946681371610333453316359449580499436692037918890026930060895771100",
+            "$100/eoa": "-0.00212022225143381217336381481483653538733293676536703983300544300353198335061000",
+            "$100/guard": "-0.00212022225143381217336381481483653538733293676536703983300544300353198335061000"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/TSLAB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "-0.03742681030776763677975594913197599497192078097899014353747396832109036348838300",
+            "$6/guard": "-0.03742681030776763677975594913197599497192078097899014353747396832109036348838300",
+            "$100/eoa": "-0.01863722387654876213482151991673132155797197833964528093867671917267594470981400",
+            "$100/guard": "-0.01863722387654876213482151991673132155797197833964528093867671917267594470981400"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/TSLAB.json",
+      "sourceCapture": "contracts/captures/TSLAB.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/TSLAB.json",
+      "sha256": "02c581a5cf7e10939bb2d08a7d0d199186045132699ccffa69e99b8a17fcb8be",
+      "blockAtCapture": "126344734",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "TSLAon",
+      "ticker": "TSLA",
+      "kind": "ondo",
+      "role": "control",
+      "held": false,
+      "depth": "failed",
+      "fork": "not run: depth failed",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/TSLAon.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null
+          },
+          "reasons": [
+            "$6/eoa: ApiError (http=200, code=40374)",
+            "$6/eoa: executionMode is not SWAP",
+            "$6/eoa: no quoted route",
+            "$6/eoa: $6 swap calldata is not replayable SWAP",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: ApiError (http=200, code=40374)",
+            "$6/guard: executionMode is not SWAP",
+            "$6/guard: no quoted route",
+            "$6/guard: $6 swap calldata is not replayable SWAP",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/TSLAon.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null
+          },
+          "reasons": [
+            "Paused: Paused for session transition",
+            "$6/eoa: ApiError (http=200, code=40367)",
+            "$6/eoa: executionMode is not SWAP",
+            "$6/eoa: no quoted route",
+            "$6/eoa: $6 swap calldata is not replayable SWAP",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: ApiError (http=200, code=40367)",
+            "$6/guard: executionMode is not SWAP",
+            "$6/guard: no quoted route",
+            "$6/guard: $6 swap calldata is not replayable SWAP",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      ],
+      "dropReasons": [
+        "Paused: Paused for session transition",
+        "$6/eoa: ApiError (http=200, code=40367)",
+        "$6/eoa: executionMode is not SWAP",
+        "$6/eoa: no quoted route",
+        "$6/eoa: $6 swap calldata is not replayable SWAP",
+        "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$6/guard: ApiError (http=200, code=40367)",
+        "$6/guard: executionMode is not SWAP",
+        "$6/guard: no quoted route",
+        "$6/guard: $6 swap calldata is not replayable SWAP",
+        "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+      ]
+    },
+    {
+      "token": "QQQB",
+      "ticker": "QQQ",
+      "kind": "bstock",
+      "role": "control",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/QQQB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.0726770484764480684926373824050275404395808737002912048920479429930351965811900",
+            "$6/guard": "0.0729156820621394984004257666712646013932583423744126106568510668840327307037900",
+            "$100/eoa": "0.0729156820621394984004257666712646013932583423744126106568510668840327307037900",
+            "$100/guard": "0.0729156820621394984004257666712646013932583423744126106568510668840327307037900"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/QQQB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.0638585649686168107538134007931139161997876664707526029804378582672991226167600",
+            "$6/guard": "0.0638585649686168107538134007931139161997876664707526029804378582672991226167600",
+            "$100/eoa": "0.0642750017845698345558688562599736726199588271283983492343790396814249439796300",
+            "$100/guard": "0.0642750017845698345558688562599736726199588271283983492343790396814249439796300"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/QQQB.json",
+      "sourceCapture": "contracts/captures/QQQB.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/QQQB.json",
+      "sha256": "52efeff9bcd482139a895442a8c39292231737f9ade08a225c116311d6bd038c",
+      "blockAtCapture": "126344762",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "QQQon",
+      "ticker": "QQQ",
+      "kind": "ondo",
+      "role": "control",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/QQQon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.3899903160842830304389324978774190451022509337264608226750173434358707165354400",
+            "$6/guard": "0.3899903160842830304389324978774190451022509337264608226750173434358707165354400"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/QQQon.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null
+          },
+          "reasons": [
+            "Paused: Paused for session transition",
+            "$6/eoa: ApiError (http=200, code=40367)",
+            "$6/eoa: executionMode is not SWAP",
+            "$6/eoa: no quoted route",
+            "$6/eoa: $6 swap calldata is not replayable SWAP",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: ApiError (http=200, code=40367)",
+            "$6/guard: executionMode is not SWAP",
+            "$6/guard: no quoted route",
+            "$6/guard: $6 swap calldata is not replayable SWAP",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      ],
+      "selectedRunId": "batch1-20261007T233708Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261007T233708Z/QQQon.json",
+      "sourceCapture": "contracts/captures/QQQon.batch1-20261007T233708Z.json",
+      "canonicalCapture": "contracts/captures/QQQon.json",
+      "sha256": "1743524ce4f4de79d84e0d0911107333c5bb0a87b8176e79c3d6d8dbabed2490",
+      "blockAtCapture": "126341282",
+      "latestAttemptDepth": "failed"
+    },
+    {
+      "token": "SPYB",
+      "ticker": "SPY",
+      "kind": "bstock",
+      "role": "control",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/SPYB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.1532339971614551480878919302418598889436118207887174913656972601337171244607500",
+            "$6/guard": "0.1532339971614551480878919302418598889436118207887174913656972601337171244607500",
+            "$100/eoa": "0.1540679416304180414502355466757307174069663709714086668281217157577558353330900",
+            "$100/guard": "0.1540679416304180414502355466757307174069663709714086668281217157577558353330900"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/SPYB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.1728754708226199158820803424161792979061849669290988210089096665629111158941100",
+            "$6/guard": "0.1728754708226199158820803424161792979061849669290988210089096665629111158941100",
+            "$100/eoa": "0.1728754708226173150462642353951088617659719708109512800602994891230873544054600",
+            "$100/guard": "0.1727650878320483779621230951995315981172101842460810314360306709647196272198400"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/SPYB.json",
+      "sourceCapture": "contracts/captures/SPYB.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/SPYB.json",
+      "sha256": "86baf48bf592bef71c95a2a007578a265c3b12d4c1f56a646f51abd9445f7d14",
+      "blockAtCapture": "126344789",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "SPYon",
+      "ticker": "SPY",
+      "kind": "ondo",
+      "role": "control",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/SPYon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.0615477209938230483108351693598828768725685201732537847565047881466835454130800",
+            "$6/guard": "0.0615477209938230483108351693598828768725685201732537847565047881466835454130800"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/SPYon.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null
+          },
+          "reasons": [
+            "Paused: Paused for session transition",
+            "$6/eoa: ApiError (http=200, code=40367)",
+            "$6/eoa: executionMode is not SWAP",
+            "$6/eoa: no quoted route",
+            "$6/eoa: $6 swap calldata is not replayable SWAP",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: ApiError (http=200, code=40367)",
+            "$6/guard: executionMode is not SWAP",
+            "$6/guard: no quoted route",
+            "$6/guard: $6 swap calldata is not replayable SWAP",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      ],
+      "selectedRunId": "batch1-20261007T233708Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261007T233708Z/SPYon.json",
+      "sourceCapture": "contracts/captures/SPYon.batch1-20261007T233708Z.json",
+      "canonicalCapture": "contracts/captures/SPYon.json",
+      "sha256": "01904b8357e20d3ebf51b961c194667904235b3880a197efa4def249f5379234",
+      "blockAtCapture": "126341311",
+      "latestAttemptDepth": "failed"
+    },
+    {
+      "token": "SPCXB",
+      "ticker": "SPCX",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/SPCXB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.0152602038089569160325214810953716306625159168490911100012410001413052868131000",
+            "$6/guard": "0.0152602038089569160325214810953716306625159168490911100012410001413052868131000",
+            "$100/eoa": "0.0110306395107180164105204144177456002776348586045492429421235457885476338060000",
+            "$100/guard": "0.0110306395107180164105204144177456002776348586045492429421235457885476338060000"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/SPCXB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.0163757705326925464801388109146743221504312272597254392143715196405789482765200",
+            "$6/guard": "0.0163757705326925464801388109146743221504312272597254392143715196405789482765200",
+            "$100/eoa": "0.0163757705326920411446743039798941323172389082787636341000043842531281372528200",
+            "$100/guard": "0.0163757705326920411446743039798941323172389082787636341000043842531281372528200"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/SPCXB.json",
+      "sourceCapture": "contracts/captures/SPCXB.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/SPCXB.json",
+      "sha256": "b240ee773fce4a67ab8588d3bfadbc1bbc39bcb13b99f4d60ab23410487c80ff",
+      "blockAtCapture": "126344815",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "GMEB",
+      "ticker": "GME",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": false,
+      "depth": "failed",
+      "fork": "not run: depth failed",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/GMEB.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null,
+            "$100/eoa": null,
+            "$100/guard": null
+          },
+          "reasons": [
+            "reference: authenticated list must contain exactly one matching BSC token",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+            "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/GMEB.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null,
+            "$100/eoa": null,
+            "$100/guard": null
+          },
+          "reasons": [
+            "reference: authenticated list must contain exactly one matching BSC token",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+            "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      ],
+      "dropReasons": [
+        "reference: authenticated list must contain exactly one matching BSC token",
+        "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+        "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+      ]
+    },
+    {
+      "token": "BABAB",
+      "ticker": "BABA",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/BABAB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "-0.10619866870006925389136114852948385667970447631554580030359852553103408342509100",
+            "$6/guard": "-0.10619866870006925389136114852948385667970447631554580030359852553103408342509100",
+            "$100/eoa": "-0.06870894244277040385541905847670008572352622396941524320794414201341453546131000",
+            "$100/guard": "-0.06870894244277040385541905847670008572352622396941524320794414201341453546131000"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/BABAB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "-0.09407754079521548512676393867344871060649972463283970935648316912290411461567100",
+            "$6/guard": "-0.09407754079521548512676393867344871060649972463283970935648316912290411461567100",
+            "$100/eoa": "-0.05659602673401314998384399854745721927242324038050756678346416538774163728343400",
+            "$100/guard": "-0.05659602673401314998384399854745721927242324038050756678346416538774163728343400"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/BABAB.json",
+      "sourceCapture": "contracts/captures/BABAB.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/BABAB.json",
+      "sha256": "a79cf635dc85a1954db3e0f2f59a4abc079a5094077e07be71225f978996dc1d",
+      "blockAtCapture": "126344848",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "GOOGLB",
+      "ticker": "GOOGL",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/GOOGLB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.0048222692268333417510101072198578109379524312783746517814341549583996558223600",
+            "$6/guard": "0.0048222692268333417510101072198578109379524312783746517814341549583996558223600",
+            "$100/eoa": "0.0081728342971203783120812340950623346441026613862444696936505708537289601432600",
+            "$100/guard": "0.0081728342971203783120812340950623346441026613862444696936505708537289601432600"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/GOOGLB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "-0.00940495132644404858722628738768130149486461806690295551113909698207655979045800",
+            "$6/guard": "-0.00940495132644404858722628738768130149486461806690295551113909698207655979045800",
+            "$100/eoa": "0.0012936917028935292484619694109488486456886941751546830769023903627602757114100",
+            "$100/guard": "0.0012936917028935292484619694109488486456886941751546830769023903627602757114100"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/GOOGLB.json",
+      "sourceCapture": "contracts/captures/GOOGLB.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/GOOGLB.json",
+      "sha256": "2cced344929f133cbe46e60a41fa52c7ea4fab172acd0d2a59f0e376e99d2669",
+      "blockAtCapture": "126344863",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "SKHYB",
+      "ticker": "SKHY",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/SKHYB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.0028842456237871094671252397819803345465743332123936016573711696891957577889200",
+            "$6/guard": "0.0028842456237871094671252397819803345465743332123936016573711696891957577889200",
+            "$100/eoa": "0.0028842456237844700482105108761994618142586078279189190073250399386596466721500",
+            "$100/guard": "0.0028842456237844700482105108761994618142586078279189190073250399386596466721500"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/SKHYB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "-0.09394669840039728407969102941999088229775761715856423120307798438079102113672400",
+            "$6/guard": "-0.10225029058504282528027822368319355925102646001354357809300642397329465058289700",
+            "$100/eoa": "-0.11332174683123911764309706027662519857220336665058307313228198832491233723396200",
+            "$100/guard": "-0.11332174683123911764309706027662519857220336665058307313228198832491233723396200"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/SKHYB.json",
+      "sourceCapture": "contracts/captures/SKHYB.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/SKHYB.json",
+      "sha256": "99e3ff820bab708d9cf33665ddbd800e029024f05cbadc6f0f8bef4fb4fee441",
+      "blockAtCapture": "126344879",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "MSTRB",
+      "ticker": "MSTR",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/MSTRB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.0815938243849496893291012932316413256600830426441944267747380523988860119255000",
+            "$6/guard": "0.0826977084532779590336683691398757028004346849866592978253841254398170412696800",
+            "$100/eoa": "0.0887359593279592588283037356595696140745933482820478706660074728964989624719900",
+            "$100/guard": "0.0887631754939237129682472228932691723352881854790684763579738447481191553335700"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/MSTRB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.0815489857148210149754756186673795133905606400199981684381587034507488679376500",
+            "$6/guard": "0.0805186109465543446130573803146261490242938092528516373434359014871224933259400",
+            "$100/eoa": "0.0804786365657470746978738526614592679221008818506126955363810989678708983949800",
+            "$100/guard": "0.0794216800411531240469875999873206031311082444983884844125185177051825933648700"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/MSTRB.json",
+      "sourceCapture": "contracts/captures/MSTRB.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/MSTRB.json",
+      "sha256": "e47466753706e65bd1d32248e8e0177ece5a6553dfdb5d78382d77490d82abbc",
+      "blockAtCapture": "126344895",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "CRCLB",
+      "ticker": "CRCL",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/CRCLB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.0988140257115494869215431795386590862619785798849463632933752705930374936866600",
+            "$6/guard": "0.0988140257115494869215431795386590862619785798849463632933752705930374936866600",
+            "$100/eoa": "0.1010536958366320700235355185924695913683033978282981101286140977778799157348100",
+            "$100/guard": "0.1010536958366320700235355185924695913683033978282981101286140977778799157348100"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/CRCLB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.0899136853607249858248398506212038598226244581275039923322871691099775043953900",
+            "$6/guard": "0.1024384705408068087148668901328569591061491437204306672717897745836697401802900",
+            "$100/eoa": "0.1129043145746092856039239591189099739011821099667150783019485020673867117991300",
+            "$100/guard": "0.1134421591478432300225556075022959934015056949342648399451581963771273365485000"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/CRCLB.json",
+      "sourceCapture": "contracts/captures/CRCLB.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/CRCLB.json",
+      "sha256": "f4acabfdf0e9665a7ef9b5a8467922a0cf20706d1f7342426749f1a4d7277134",
+      "blockAtCapture": "126344910",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "SNDKB",
+      "ticker": "SNDK",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/SNDKB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.0247907048745002554658994017690181192263719049224785680202495768537535378078700",
+            "$6/guard": "0.0247907048745002554658994017690181192263719049224785680202495768537535378078700",
+            "$100/eoa": "0.0672557653312079646668711524639968058094952032907250657493218303662010428702200",
+            "$100/guard": "0.0247907048744883116762014852892538361493692097895350924086241948978692116238600"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/SNDKB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.0090058511482277109710453271245227880151055280614022684198288840656666578505000",
+            "$6/guard": "0.0090058511482277109710453271245227880151055280614022684198288840656666578505000",
+            "$100/eoa": "0.0090058511481999028730100291684993414648961462112657352923744957942960396897200",
+            "$100/guard": "0.0090058511481999028730100291684993414648961462112657352923744957942960396897200"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/SNDKB.json",
+      "sourceCapture": "contracts/captures/SNDKB.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/SNDKB.json",
+      "sha256": "9883cbd6951baf787dc61a4c3619c6d9096a9998f398abd3207d2b7f82525e50",
+      "blockAtCapture": "126344925",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "DJTB",
+      "ticker": "DJT",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": false,
+      "depth": "failed",
+      "fork": "not run: depth failed",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/DJTB.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null,
+            "$100/eoa": null,
+            "$100/guard": null
+          },
+          "reasons": [
+            "reference: authenticated list must contain exactly one matching BSC token",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+            "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/DJTB.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null,
+            "$100/eoa": null,
+            "$100/guard": null
+          },
+          "reasons": [
+            "reference: authenticated list must contain exactly one matching BSC token",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+            "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      ],
+      "dropReasons": [
+        "reference: authenticated list must contain exactly one matching BSC token",
+        "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+        "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+      ]
+    },
+    {
+      "token": "HOODB",
+      "ticker": "HOOD",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/HOODB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "-0.04801848372089182305420774287946444180321034044662731719957840907863543969805200",
+            "$6/guard": "-0.04801848372089182305420774287946444180321034044662731719957840907863543969805200",
+            "$100/eoa": "0.0508289642625500300272191654785427169452665655407807196074169906279000935541300",
+            "$100/guard": "0.0508289642625500300272191654785427169452665655407807196074169906279000935541300"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/HOODB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "-0.02071417261646300093338845889008531171082367417648889814581759458466675515234900",
+            "$6/guard": "-0.02071417261646300093338845889008531171082367417648889814581759458466675515234900",
+            "$100/eoa": "0.1260580090103977536394508365286807457933124757697851255607375512021300365706200",
+            "$100/guard": "0.1268342619624647460787909047566442951344578358463946852863654802601391660410200"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/HOODB.json",
+      "sourceCapture": "contracts/captures/HOODB.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/HOODB.json",
+      "sha256": "044717f27454252fdd6e491b8bd7b9b7ad10262d6106bb2af31e426f026c7315",
+      "blockAtCapture": "126344957",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "MSFTB",
+      "ticker": "MSFT",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/MSFTB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.1530641865940306750633567658635363091539158028811654925880145511625661455197500",
+            "$6/guard": "0.1530742242254400906521550897953094220934883828368277702819999593655457938047200",
+            "$100/eoa": "0.1530652465969910076444057872594932687416188694627604038683500952639719160199000",
+            "$100/guard": "0.1530652465969910076444057872594932687416188694627604038683500952639719160199000"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/MSFTB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.2307441652725966568860523391749265351778090666703245239178563131270801670731700",
+            "$6/guard": "0.2312702664579057717928932144013555222216923994598248512510466404943286192723000",
+            "$100/eoa": "0.2306349301832388747268348594821914420322812385126061248948274117819302582344700",
+            "$100/guard": "0.2306362159722727338838710829606924261281319264576429397800074985823075524565400"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/MSFTB.json",
+      "sourceCapture": "contracts/captures/MSFTB.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/MSFTB.json",
+      "sha256": "49ccbe0b0bb23c8381cdba8ce7e18aef7bc87c2ef27381313607de28896af3cb",
+      "blockAtCapture": "126344973",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "INTCB",
+      "ticker": "INTC",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/INTCB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "-0.02622784905083200951975140122876459364282330843228580264345522338305565572160900",
+            "$6/guard": "-0.02622784905083200951975140122876459364282330843228580264345522338305565572160900",
+            "$100/eoa": "-0.01720236419874848617086129971250963690226621686325857410625856318107510580605200",
+            "$100/guard": "-0.01720236419874848617086129971250963690226621686325857410625856318107510580605200"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/INTCB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.1003558960431134627679857546165393622366991558619734677185173390977612988756300",
+            "$6/guard": "0.1002257067402517246326942946341730413926351474909344636716909574542825475784400",
+            "$100/eoa": "0.0991736864943484247913423656958111194509233695225201939654528180560387945645500",
+            "$100/guard": "0.1033983178273950803292314322791218354837675125226250234844291957948660807985700"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/INTCB.json",
+      "sourceCapture": "contracts/captures/INTCB.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/INTCB.json",
+      "sha256": "08c0d7fb1fa3b8175f8de5e46fcf530c9bc7ecfe325e7a8c3571d41f5e7a7225",
+      "blockAtCapture": "126344988",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "METAB",
+      "ticker": "META",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/METAB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.1422216301558674391327001718011390449467050815749277774490598646347040248179000",
+            "$6/guard": "0.1419435220154454121032393888576217679648759139544300617628872555548704718537300",
+            "$100/eoa": "0.1419435220154379130396109485087258594565880313548328227173245674115314144086700",
+            "$100/guard": "0.1422521959544566652015358313739540328923190129870736737534533585403385756211600"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/METAB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.1237192049813923021705610797768542808028632233818971204966734332490859630153500",
+            "$6/guard": "0.1237500976951303302794782383455682983777118314336271403405686904235027613752600",
+            "$100/eoa": "0.1255708914139807149866674645866562409564419566002411452173225283625149364295300",
+            "$100/guard": "0.1248703383203212145505861181465096505076461809802201842647851392621645945783900"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/METAB.json",
+      "sourceCapture": "contracts/captures/METAB.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/METAB.json",
+      "sha256": "c2c7675bc34e9ce7fce965743c0d202c3e7f748f2b3888acbd0b1c4fc88764b8",
+      "blockAtCapture": "126345004",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "MRNAB",
+      "ticker": "MRNA",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": false,
+      "depth": "failed",
+      "fork": "not run: depth failed",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/MRNAB.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null,
+            "$100/eoa": null,
+            "$100/guard": null
+          },
+          "reasons": [
+            "reference: authenticated list must contain exactly one matching BSC token",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+            "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/MRNAB.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null,
+            "$100/eoa": null,
+            "$100/guard": null
+          },
+          "reasons": [
+            "reference: authenticated list must contain exactly one matching BSC token",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+            "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      ],
+      "dropReasons": [
+        "reference: authenticated list must contain exactly one matching BSC token",
+        "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+        "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+      ]
+    },
+    {
+      "token": "AMZNB",
+      "ticker": "AMZN",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": false,
+      "depth": "failed",
+      "fork": "not run: depth failed",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/AMZNB.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null,
+            "$100/eoa": null,
+            "$100/guard": null
+          },
+          "reasons": [
+            "reference: authenticated list must contain exactly one matching BSC token",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+            "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/AMZNB.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null,
+            "$100/eoa": null,
+            "$100/guard": null
+          },
+          "reasons": [
+            "reference: authenticated list must contain exactly one matching BSC token",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+            "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      ],
+      "dropReasons": [
+        "reference: authenticated list must contain exactly one matching BSC token",
+        "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+        "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+      ]
+    },
+    {
+      "token": "BMNRB",
+      "ticker": "BMNR",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": false,
+      "depth": "failed",
+      "fork": "not run: depth failed",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/BMNRB.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null,
+            "$100/eoa": null,
+            "$100/guard": null
+          },
+          "reasons": [
+            "reference: authenticated list must contain exactly one matching BSC token",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+            "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/BMNRB.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null,
+            "$100/eoa": null,
+            "$100/guard": null
+          },
+          "reasons": [
+            "reference: authenticated list must contain exactly one matching BSC token",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+            "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      ],
+      "dropReasons": [
+        "reference: authenticated list must contain exactly one matching BSC token",
+        "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+        "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+      ]
+    },
+    {
+      "token": "FLNCB",
+      "ticker": "FLNC",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": false,
+      "depth": "failed",
+      "fork": "not run: depth failed",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/FLNCB.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null,
+            "$100/eoa": null,
+            "$100/guard": null
+          },
+          "reasons": [
+            "reference: authenticated list must contain exactly one matching BSC token",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+            "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/FLNCB.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null,
+            "$100/eoa": null,
+            "$100/guard": null
+          },
+          "reasons": [
+            "reference: authenticated list must contain exactly one matching BSC token",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+            "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      ],
+      "dropReasons": [
+        "reference: authenticated list must contain exactly one matching BSC token",
+        "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+        "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+      ]
+    },
+    {
+      "token": "TSMB",
+      "ticker": "TSM",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/TSMB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.2273454889493788826427905316965042470582063081963778826399449992844859315792700",
+            "$6/guard": "0.2273454889493788826427905316965042470582063081963778826399449992844859315792700",
+            "$100/eoa": "0.2392416657957926593580242446222418166991378865064823979019879818872992049296600",
+            "$100/guard": "0.2392416657957926593580242446222418166991378865064823979019879818872992049296600"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/TSMB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.1248672642284748530466986907572302646209826349378428145618692955556580838826700",
+            "$6/guard": "0.1248672642284748530466986907572302646209826349378428145618692955556580838826700",
+            "$100/eoa": "0.1367547269946987728509999162414238580748601460053852121318190462495607684345000",
+            "$100/guard": "0.1367547269946987728509999162414238580748601460053852121318190462495607684345000"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/TSMB.json",
+      "sourceCapture": "contracts/captures/TSMB.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/TSMB.json",
+      "sha256": "864570198ba1304ebb17a79c36e53b19253c373c31912d3190ac77750170ca81",
+      "blockAtCapture": "126345084",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "NFLXB",
+      "ticker": "NFLX",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": false,
+      "depth": "failed",
+      "fork": "not run: depth failed",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/NFLXB.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null,
+            "$100/eoa": null,
+            "$100/guard": null
+          },
+          "reasons": [
+            "reference: authenticated list must contain exactly one matching BSC token",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+            "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/NFLXB.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null,
+            "$100/eoa": null,
+            "$100/guard": null
+          },
+          "reasons": [
+            "reference: authenticated list must contain exactly one matching BSC token",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+            "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      ],
+      "dropReasons": [
+        "reference: authenticated list must contain exactly one matching BSC token",
+        "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+        "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+      ]
+    },
+    {
+      "token": "SPCXon",
+      "ticker": "SPCX",
+      "kind": "ondo",
+      "role": "candidate",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/SPCXon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.0075334074421581239862331956035430237844989979311419343415960250758518232283300",
+            "$6/guard": "0.0075334074421581239862331956035430237844989979311419343415960250758518232283300"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/SPCXon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "-0.03073162509549978478021823667241239712217954568296601907954800572826344100011900",
+            "$6/guard": "-0.03073162509549978478021823667241239712217954568296601907954800572826344100011900"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/SPCXon.json",
+      "sourceCapture": "contracts/captures/SPCXon.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/SPCXon.json",
+      "sha256": "a027f6e1cb1bb48f454dac39720f8140f35f4e277d7a88cb0700166eb8d7b837",
+      "blockAtCapture": "126345115",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "GMEon",
+      "ticker": "GME",
+      "kind": "ondo",
+      "role": "candidate",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/GMEon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.2295611161633968955782097464574727529041743918479747682629324042501118696001900",
+            "$6/guard": "0.2295611161633968955782097464574727529041743918479747682629324042501118696001900"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/GMEon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.3263877582840980301316262766320568702398234354485038003322319622736584719819800",
+            "$6/guard": "0.3263877582840980301316262766320568702398234354485038003322319622736584719819800"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/GMEon.json",
+      "sourceCapture": "contracts/captures/GMEon.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/GMEon.json",
+      "sha256": "1f1ff49f7496157343beffe8d8a5886e596d9d12fe64ff0961bcbce36e1b3d54",
+      "blockAtCapture": "126345128",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "GOOGLon",
+      "ticker": "GOOGL",
+      "kind": "ondo",
+      "role": "candidate",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/GOOGLon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "-0.00752051742989627391165544786109551543883121932161322872893320561803199089057900",
+            "$6/guard": "-0.00752051742989627391165544786109551543883121932161322872893320561803199089057900"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/GOOGLon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "-0.03089953360343687303281817037670127248383241148892810452336587706915594781404900",
+            "$6/guard": "-0.03089953360343687303281817037670127248383241148892810452336587706915594781404900"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/GOOGLon.json",
+      "sourceCapture": "contracts/captures/GOOGLon.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/GOOGLon.json",
+      "sha256": "07e0628c154501c6ded0410ec8ccae4cd3a8ed695bffb6d623beba422585f7f4",
+      "blockAtCapture": "126345142",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "SKHYon",
+      "ticker": "SKHY",
+      "kind": "ondo",
+      "role": "candidate",
+      "held": false,
+      "depth": "failed",
+      "fork": "not run: depth failed",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/SKHYon.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null
+          },
+          "reasons": [
+            "$6/eoa: ApiError (http=200, code=40374)",
+            "$6/eoa: executionMode is not SWAP",
+            "$6/eoa: no quoted route",
+            "$6/eoa: $6 swap calldata is not replayable SWAP",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: ApiError (http=200, code=40374)",
+            "$6/guard: executionMode is not SWAP",
+            "$6/guard: no quoted route",
+            "$6/guard: $6 swap calldata is not replayable SWAP",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/SKHYon.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null
+          },
+          "reasons": [
+            "$6/eoa: ApiError (http=200, code=40374)",
+            "$6/eoa: executionMode is not SWAP",
+            "$6/eoa: no quoted route",
+            "$6/eoa: $6 swap calldata is not replayable SWAP",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: ApiError (http=200, code=40374)",
+            "$6/guard: executionMode is not SWAP",
+            "$6/guard: no quoted route",
+            "$6/guard: $6 swap calldata is not replayable SWAP",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      ],
+      "dropReasons": [
+        "$6/eoa: ApiError (http=200, code=40374)",
+        "$6/eoa: executionMode is not SWAP",
+        "$6/eoa: no quoted route",
+        "$6/eoa: $6 swap calldata is not replayable SWAP",
+        "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$6/guard: ApiError (http=200, code=40374)",
+        "$6/guard: executionMode is not SWAP",
+        "$6/guard: no quoted route",
+        "$6/guard: $6 swap calldata is not replayable SWAP",
+        "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+      ]
+    },
+    {
+      "token": "MSTRon",
+      "ticker": "MSTR",
+      "kind": "ondo",
+      "role": "candidate",
+      "held": false,
+      "depth": "failed",
+      "fork": "not run: depth failed",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/MSTRon.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null
+          },
+          "reasons": [
+            "$6/eoa: ApiError (http=200, code=40374)",
+            "$6/eoa: executionMode is not SWAP",
+            "$6/eoa: no quoted route",
+            "$6/eoa: $6 swap calldata is not replayable SWAP",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: ApiError (http=200, code=40374)",
+            "$6/guard: executionMode is not SWAP",
+            "$6/guard: no quoted route",
+            "$6/guard: $6 swap calldata is not replayable SWAP",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/MSTRon.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null
+          },
+          "reasons": [
+            "$6/eoa: ApiError (http=200, code=40374)",
+            "$6/eoa: executionMode is not SWAP",
+            "$6/eoa: no quoted route",
+            "$6/eoa: $6 swap calldata is not replayable SWAP",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: ApiError (http=200, code=40374)",
+            "$6/guard: executionMode is not SWAP",
+            "$6/guard: no quoted route",
+            "$6/guard: $6 swap calldata is not replayable SWAP",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      ],
+      "dropReasons": [
+        "$6/eoa: ApiError (http=200, code=40374)",
+        "$6/eoa: executionMode is not SWAP",
+        "$6/eoa: no quoted route",
+        "$6/eoa: $6 swap calldata is not replayable SWAP",
+        "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$6/guard: ApiError (http=200, code=40374)",
+        "$6/guard: executionMode is not SWAP",
+        "$6/guard: no quoted route",
+        "$6/guard: $6 swap calldata is not replayable SWAP",
+        "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+      ]
+    },
+    {
+      "token": "CRCLon",
+      "ticker": "CRCL",
+      "kind": "ondo",
+      "role": "candidate",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/CRCLon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.2238427813379991356270389584982330276757962163443898293913425412845559609120600",
+            "$6/guard": "0.2238427813379991356270389584982330276757962163443898293913425412845559609120600"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/CRCLon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.3451881102845766462604168025378173015575368920191262219235172324458349427859100",
+            "$6/guard": "0.3451881102845766462604168025378173015575368920191262219235172324458349427859100"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/CRCLon.json",
+      "sourceCapture": "contracts/captures/CRCLon.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/CRCLon.json",
+      "sha256": "d45b2af53992710e2cd6d3df9de98a2747a85de73dbf4a8595026173d572aa4d",
+      "blockAtCapture": "126345179",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "SNDKon",
+      "ticker": "SNDK",
+      "kind": "ondo",
+      "role": "candidate",
+      "held": false,
+      "depth": "failed",
+      "fork": "not run: depth failed",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/SNDKon.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": "816.25475744920613128139246855094102613901437459165535098229737675455396945584133",
+            "$6/guard": "816.25475744920613128139246855094102613901437459165535098229737675455396945584133"
+          },
+          "reasons": [
+            "$6/eoa: absolute premium exceeds 1.5%",
+            "$6/guard: absolute premium exceeds 1.5%"
+          ]
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/SNDKon.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": "818.30501854759631921891158840316066703672072748547955492245698526240781701081355",
+            "$6/guard": "818.30501854759631921891158840316066703672072748547955492245698526240781701081355"
+          },
+          "reasons": [
+            "$6/eoa: absolute premium exceeds 1.5%",
+            "$6/guard: absolute premium exceeds 1.5%"
+          ]
+        }
+      ],
+      "dropReasons": [
+        "$6/eoa: absolute premium exceeds 1.5%",
+        "$6/guard: absolute premium exceeds 1.5%"
+      ]
+    },
+    {
+      "token": "HOODon",
+      "ticker": "HOOD",
+      "kind": "ondo",
+      "role": "candidate",
+      "held": false,
+      "depth": "failed",
+      "fork": "not run: depth failed",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/HOODon.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null
+          },
+          "reasons": [
+            "$6/eoa: ApiError (http=200, code=40374)",
+            "$6/eoa: executionMode is not SWAP",
+            "$6/eoa: no quoted route",
+            "$6/eoa: $6 swap calldata is not replayable SWAP",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: ApiError (http=200, code=40374)",
+            "$6/guard: executionMode is not SWAP",
+            "$6/guard: no quoted route",
+            "$6/guard: $6 swap calldata is not replayable SWAP",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/HOODon.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null
+          },
+          "reasons": [
+            "$6/eoa: ApiError (http=200, code=40374)",
+            "$6/eoa: executionMode is not SWAP",
+            "$6/eoa: no quoted route",
+            "$6/eoa: $6 swap calldata is not replayable SWAP",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: ApiError (http=200, code=40374)",
+            "$6/guard: executionMode is not SWAP",
+            "$6/guard: no quoted route",
+            "$6/guard: $6 swap calldata is not replayable SWAP",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      ],
+      "dropReasons": [
+        "$6/eoa: ApiError (http=200, code=40374)",
+        "$6/eoa: executionMode is not SWAP",
+        "$6/eoa: no quoted route",
+        "$6/eoa: $6 swap calldata is not replayable SWAP",
+        "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$6/guard: ApiError (http=200, code=40374)",
+        "$6/guard: executionMode is not SWAP",
+        "$6/guard: no quoted route",
+        "$6/guard: $6 swap calldata is not replayable SWAP",
+        "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+      ]
+    },
+    {
+      "token": "MSFTon",
+      "ticker": "MSFT",
+      "kind": "ondo",
+      "role": "candidate",
+      "held": false,
+      "depth": "failed",
+      "fork": "not run: depth failed",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/MSFTon.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": "296701325.20815097919700125655486378131307929070274042494821160097045813257409908",
+            "$6/guard": "296693347.05082198478281406017269551005895532264113923438281822834646374333625144"
+          },
+          "reasons": [
+            "$6/eoa: absolute premium exceeds 1.5%",
+            "$6/guard: absolute premium exceeds 1.5%"
+          ]
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/MSFTon.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": "296951903.63399687143191724801378318568788100067701656343328444718223516126132191",
+            "$6/guard": "297000924.53326621867239131800744378565888126771088216326066729894998484937538566"
+          },
+          "reasons": [
+            "$6/eoa: absolute premium exceeds 1.5%",
+            "$6/guard: absolute premium exceeds 1.5%"
+          ]
+        }
+      ],
+      "dropReasons": [
+        "$6/eoa: absolute premium exceeds 1.5%",
+        "$6/guard: absolute premium exceeds 1.5%"
+      ]
+    },
+    {
+      "token": "INTCon",
+      "ticker": "INTC",
+      "kind": "ondo",
+      "role": "candidate",
+      "held": false,
+      "depth": "failed",
+      "fork": "not run: depth failed",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/INTCon.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null
+          },
+          "reasons": [
+            "$6/eoa: ApiError (http=200, code=40374)",
+            "$6/eoa: executionMode is not SWAP",
+            "$6/eoa: no quoted route",
+            "$6/eoa: $6 swap calldata is not replayable SWAP",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: ApiError (http=200, code=40374)",
+            "$6/guard: executionMode is not SWAP",
+            "$6/guard: no quoted route",
+            "$6/guard: $6 swap calldata is not replayable SWAP",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/INTCon.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null
+          },
+          "reasons": [
+            "$6/eoa: ApiError (http=200, code=40374)",
+            "$6/eoa: executionMode is not SWAP",
+            "$6/eoa: no quoted route",
+            "$6/eoa: $6 swap calldata is not replayable SWAP",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: ApiError (http=200, code=40374)",
+            "$6/guard: executionMode is not SWAP",
+            "$6/guard: no quoted route",
+            "$6/guard: $6 swap calldata is not replayable SWAP",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      ],
+      "dropReasons": [
+        "$6/eoa: ApiError (http=200, code=40374)",
+        "$6/eoa: executionMode is not SWAP",
+        "$6/eoa: no quoted route",
+        "$6/eoa: $6 swap calldata is not replayable SWAP",
+        "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$6/guard: ApiError (http=200, code=40374)",
+        "$6/guard: executionMode is not SWAP",
+        "$6/guard: no quoted route",
+        "$6/guard: $6 swap calldata is not replayable SWAP",
+        "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+      ]
+    },
+    {
+      "token": "METAon",
+      "ticker": "META",
+      "kind": "ondo",
+      "role": "candidate",
+      "held": false,
+      "depth": "failed",
+      "fork": "not run: depth failed",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/METAon.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null
+          },
+          "reasons": [
+            "$6/eoa: ApiError (http=200, code=40374)",
+            "$6/eoa: executionMode is not SWAP",
+            "$6/eoa: no quoted route",
+            "$6/eoa: $6 swap calldata is not replayable SWAP",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: ApiError (http=200, code=40374)",
+            "$6/guard: executionMode is not SWAP",
+            "$6/guard: no quoted route",
+            "$6/guard: $6 swap calldata is not replayable SWAP",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/METAon.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null
+          },
+          "reasons": [
+            "$6/eoa: ApiError (http=200, code=40374)",
+            "$6/eoa: executionMode is not SWAP",
+            "$6/eoa: no quoted route",
+            "$6/eoa: $6 swap calldata is not replayable SWAP",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: ApiError (http=200, code=40374)",
+            "$6/guard: executionMode is not SWAP",
+            "$6/guard: no quoted route",
+            "$6/guard: $6 swap calldata is not replayable SWAP",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      ],
+      "dropReasons": [
+        "$6/eoa: ApiError (http=200, code=40374)",
+        "$6/eoa: executionMode is not SWAP",
+        "$6/eoa: no quoted route",
+        "$6/eoa: $6 swap calldata is not replayable SWAP",
+        "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$6/guard: ApiError (http=200, code=40374)",
+        "$6/guard: executionMode is not SWAP",
+        "$6/guard: no quoted route",
+        "$6/guard: $6 swap calldata is not replayable SWAP",
+        "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+      ]
+    },
+    {
+      "token": "MRNAon",
+      "ticker": "MRNA",
+      "kind": "ondo",
+      "role": "candidate",
+      "held": false,
+      "depth": "failed",
+      "fork": "not run: depth failed",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/MRNAon.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null
+          },
+          "reasons": [
+            "reference: ApiError (http=429, code=42900)",
+            "$6/eoa: ApiError (http=200, code=40374)",
+            "$6/eoa: executionMode is not SWAP",
+            "$6/eoa: no quoted route",
+            "$6/eoa: $6 swap calldata is not replayable SWAP",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: ApiError (http=200, code=40374)",
+            "$6/guard: executionMode is not SWAP",
+            "$6/guard: no quoted route",
+            "$6/guard: $6 swap calldata is not replayable SWAP",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/MRNAon.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null
+          },
+          "reasons": [
+            "Paused: Paused for session transition",
+            "$6/eoa: ApiError (http=200, code=40367)",
+            "$6/eoa: executionMode is not SWAP",
+            "$6/eoa: no quoted route",
+            "$6/eoa: $6 swap calldata is not replayable SWAP",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: ApiError (http=200, code=40367)",
+            "$6/guard: executionMode is not SWAP",
+            "$6/guard: no quoted route",
+            "$6/guard: $6 swap calldata is not replayable SWAP",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      ],
+      "dropReasons": [
+        "Paused: Paused for session transition",
+        "$6/eoa: ApiError (http=200, code=40367)",
+        "$6/eoa: executionMode is not SWAP",
+        "$6/eoa: no quoted route",
+        "$6/eoa: $6 swap calldata is not replayable SWAP",
+        "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$6/guard: ApiError (http=200, code=40367)",
+        "$6/guard: executionMode is not SWAP",
+        "$6/guard: no quoted route",
+        "$6/guard: $6 swap calldata is not replayable SWAP",
+        "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+      ]
+    },
+    {
+      "token": "AMZNon",
+      "ticker": "AMZN",
+      "kind": "ondo",
+      "role": "candidate",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/AMZNon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.3890287928489168291919191604487343593142823555630757356973787208940144532400200",
+            "$6/guard": "0.3890287928489168291919191604487343593142823555630757356973787208940144532400200"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/AMZNon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.3967832108377277273798028267624669252920003451210952480240385092729164050298200",
+            "$6/guard": "0.3967415434437733526251237936150732111231782088082202229699025710623727724156100"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/AMZNon.json",
+      "sourceCapture": "contracts/captures/AMZNon.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/AMZNon.json",
+      "sha256": "58aa87d29f54b124f1a9e56d9989ef08de7f38657d9c20bb60921cde95789bec",
+      "blockAtCapture": "126345260",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "BMNRon",
+      "ticker": "BMNR",
+      "kind": "ondo",
+      "role": "candidate",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/BMNRon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.0942573059089302589331657294914810951031655235032838000864140285533136429124200",
+            "$6/guard": "0.0942573059089302589331657294914810951031655235032838000864140285533136429124200"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/BMNRon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.2621140570046815019118943906953392960346184035021161404914584097615898827400700",
+            "$6/guard": "0.2621140570046815019118943906953392960346184035021161404914584097615898827400700"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/BMNRon.json",
+      "sourceCapture": "contracts/captures/BMNRon.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/BMNRon.json",
+      "sha256": "2646d80b10a52e3c39fe3dc849de162450bd1108358c5672f839fdd9785aa0ed",
+      "blockAtCapture": "126345273",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "TSMon",
+      "ticker": "TSM",
+      "kind": "ondo",
+      "role": "candidate",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/TSMon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.0803836379910063474831282659809715979740886129298622802302787710795365724792200",
+            "$6/guard": "0.0803836379910063474831282659809715979740886129298622802302787710795365724792200"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/TSMon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.0613454613515096607345282352014949097466037229186766908298648794854054077736200",
+            "$6/guard": "0.0613454613515096607345282352014949097466037229186766908298648794854054077736200"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/TSMon.json",
+      "sourceCapture": "contracts/captures/TSMon.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/TSMon.json",
+      "sha256": "65c91fa99d66935e57c1b22429d377376746abbfc42a7af8c4f42b5ec0d353e5",
+      "blockAtCapture": "126345288",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "NFLXon",
+      "ticker": "NFLX",
+      "kind": "ondo",
+      "role": "candidate",
+      "held": false,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/NFLXon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "-0.02467731318739642860839018258227611195023914377110206849060971653213310040086300",
+            "$6/guard": "-0.02467731318739642860839018258227611195023914377110206849060971653213310040086300"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/NFLXon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "-0.00636777301954866225673758913395415772556058702170035789635389592501748258966100",
+            "$6/guard": "-0.00636777301954866225673758913395415772556058702170035789635389592501748258966100"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/NFLXon.json",
+      "sourceCapture": "contracts/captures/NFLXon.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/NFLXon.json",
+      "sha256": "a2df3a9f4b2c899bbe0f8024d31cb0c632ce2cdfae24f08a40bd6b7eab9e8747",
+      "blockAtCapture": "126345302",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "SOXLB",
+      "ticker": "SOXL",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": true,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/SOXLB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.0899275202741113957790338593995337781610971031570624095155192730702283998823000",
+            "$6/guard": "0.0899275202741113957790338593995337781610971031570624095155192730702283998823000",
+            "$100/eoa": "0.1198509387414121574238244734770976123073693508141343444826628224413306617499900",
+            "$100/guard": "0.1196160550602131555493287895146917217005350055762220205982134793821559617592900"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/SOXLB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.2060068708346460886765057639821542175644095481722774931287826595702358786053500",
+            "$6/guard": "0.2035316259876839281050987512666078350865904396477536641363260996785383093886900",
+            "$100/eoa": "0.1968094897314767476101864839069186949032992328926034204885079115702312483761300",
+            "$100/guard": "0.1896154763842583124904996355172885663261163347351754429344468321569063875868200"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/SOXLB.json",
+      "sourceCapture": "contracts/captures/SOXLB.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/SOXLB.json",
+      "sha256": "d5ce5e4527f9250ab881913e03ab87f04605aeac51915f30f2260d46a3e4e8c4",
+      "blockAtCapture": "126345316",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "SOXSB",
+      "ticker": "SOXS",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": true,
+      "depth": "failed",
+      "fork": "not run: depth failed",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/SOXSB.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null,
+            "$100/eoa": null,
+            "$100/guard": null
+          },
+          "reasons": [
+            "reference: authenticated list must contain exactly one matching BSC token",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+            "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/SOXSB.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null,
+            "$100/eoa": null,
+            "$100/guard": null
+          },
+          "reasons": [
+            "reference: authenticated list must contain exactly one matching BSC token",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+            "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      ],
+      "dropReasons": [
+        "reference: authenticated list must contain exactly one matching BSC token",
+        "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+        "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+      ]
+    },
+    {
+      "token": "TQQQB",
+      "ticker": "TQQQ",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": true,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/TQQQB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.0427910724141088825873003861482958659778285926029863040545461837811473812069800",
+            "$6/guard": "0.0427910724141088825873003861482958659778285926029863040545461837811473812069800",
+            "$100/eoa": "0.1084521205901171034300111120892603625590517602402247192469937405487235331709300",
+            "$100/guard": "0.1084521205901171034300111120892603625590517602402247192469937405487235331709300"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/TQQQB.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.0769996732250041384052459969672910985420887973355190213853808142608830566609000",
+            "$6/guard": "0.0771511633982257876465062476467737930616778263115709565634409683067549706888800",
+            "$100/eoa": "0.0752909615038910593727531468758609490440453961236343684741368407471751201214200",
+            "$100/guard": "0.0745867618265474286564043146920488276601656968139614607953241259837455445004600"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/TQQQB.json",
+      "sourceCapture": "contracts/captures/TQQQB.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/TQQQB.json",
+      "sha256": "fb999b982024f603570b6a829328f7a8fffeeb16d64816c8dacad8383532bd90",
+      "blockAtCapture": "126345348",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "SQQQB",
+      "ticker": "SQQQ",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": true,
+      "depth": "failed",
+      "fork": "not run: depth failed",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/SQQQB.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null,
+            "$100/eoa": null,
+            "$100/guard": null
+          },
+          "reasons": [
+            "reference: authenticated list must contain exactly one matching BSC token",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+            "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/SQQQB.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null,
+            "$100/eoa": null,
+            "$100/guard": null
+          },
+          "reasons": [
+            "reference: authenticated list must contain exactly one matching BSC token",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+            "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      ],
+      "dropReasons": [
+        "reference: authenticated list must contain exactly one matching BSC token",
+        "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$6/guard: cannot compute share price from recorded reference, output and multiplier",
+        "$100/eoa: cannot compute share price from recorded reference, output and multiplier",
+        "$100/guard: cannot compute share price from recorded reference, output and multiplier"
+      ]
+    },
+    {
+      "token": "SOXLon",
+      "ticker": "SOXL",
+      "kind": "ondo",
+      "role": "candidate",
+      "held": true,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/SOXLon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "-0.01073986485223519637571512850096755626154507608270479185911237589942650808884200",
+            "$6/guard": "-0.01073986485223519637571512850096755626154507608270479185911237589942650808884200"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/SOXLon.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null
+          },
+          "reasons": [
+            "Binance doesn't support trading this token right now",
+            "$6/eoa: ApiError (http=200, code=40367)",
+            "$6/eoa: executionMode is not SWAP",
+            "$6/eoa: no quoted route",
+            "$6/eoa: $6 swap calldata is not replayable SWAP",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: ApiError (http=200, code=40367)",
+            "$6/guard: executionMode is not SWAP",
+            "$6/guard: no quoted route",
+            "$6/guard: $6 swap calldata is not replayable SWAP",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      ],
+      "selectedRunId": "batch1-20261007T233708Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261007T233708Z/SOXLon.json",
+      "sourceCapture": "contracts/captures/SOXLon.batch1-20261007T233708Z.json",
+      "canonicalCapture": "contracts/captures/SOXLon.json",
+      "sha256": "1f81c10002e3981f664984be307548c6c74a9cfd69ce79966d2c1aac058d0197",
+      "blockAtCapture": "126341891",
+      "latestAttemptDepth": "failed"
+    },
+    {
+      "token": "SOXSon",
+      "ticker": "SOXS",
+      "kind": "ondo",
+      "role": "candidate",
+      "held": true,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/SOXSon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "-0.00907373324812670710879361463581174099494434030176779310632127051942799393873400",
+            "$6/guard": "-0.00907373324812670710879361463581174099494434030176779310632127051942799393873400"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/SOXSon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.1051696780336723199335046795680588541008920466800229799006763942343005041589300",
+            "$6/guard": "0.1051696780336723199335046795680588541008920466800229799006763942343005041589300"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/SOXSon.json",
+      "sourceCapture": "contracts/captures/SOXSon.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/SOXSon.json",
+      "sha256": "730ba820f7970c497be72951f8e686d506936fa976b61073e65408b16672abe8",
+      "blockAtCapture": "126345389",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "TQQQon",
+      "ticker": "TQQQ",
+      "kind": "ondo",
+      "role": "candidate",
+      "held": true,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/TQQQon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "-0.03836006921978935623232010599698834672150049157761715047055972420602832798320000",
+            "$6/guard": "-0.03836006921978935623232010599698834672150049157761715047055972420602832798320000"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/TQQQon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.0203924477796080520938423681652460936769478278822565802739373073643004420159900",
+            "$6/guard": "0.0203924477796080520938423681652460936769478278822565802739373073643004420159900"
+          },
+          "reasons": []
+        }
+      ],
+      "selectedRunId": "batch1-20261008T000326Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261008T000326Z/TQQQon.json",
+      "sourceCapture": "contracts/captures/TQQQon.batch1-20261008T000326Z.json",
+      "canonicalCapture": "contracts/captures/TQQQon.json",
+      "sha256": "cec4296800199e8ca83033f094f73bf60f632caf6f9550139b8b9beb2298d69f",
+      "blockAtCapture": "126345402",
+      "latestAttemptDepth": "passed"
+    },
+    {
+      "token": "SQQQon",
+      "ticker": "SQQQ",
+      "kind": "ondo",
+      "role": "candidate",
+      "held": true,
+      "depth": "passed",
+      "fork": "blocked",
+      "enablement": "not approved",
+      "attempts": [
+        {
+          "runId": "batch1-20261007T233708Z",
+          "evidence": "contracts/captures/depth/batch1-20261007T233708Z/SQQQon.json",
+          "depth": "passed",
+          "premiumPct": {
+            "$6/eoa": "0.6190881609504948630328575449444864786310758948958051749450803270816552238988100",
+            "$6/guard": "0.6190881609504948630328575449444864786310758948958051749450803270816552238988100"
+          },
+          "reasons": []
+        },
+        {
+          "runId": "batch1-20261008T000326Z",
+          "evidence": "contracts/captures/depth/batch1-20261008T000326Z/SQQQon.json",
+          "depth": "failed",
+          "premiumPct": {
+            "$6/eoa": null,
+            "$6/guard": null
+          },
+          "reasons": [
+            "Paused: Paused for session transition",
+            "$6/eoa: ApiError (http=200, code=40367)",
+            "$6/eoa: executionMode is not SWAP",
+            "$6/eoa: no quoted route",
+            "$6/eoa: $6 swap calldata is not replayable SWAP",
+            "$6/eoa: cannot compute share price from recorded reference, output and multiplier",
+            "$6/guard: ApiError (http=200, code=40367)",
+            "$6/guard: executionMode is not SWAP",
+            "$6/guard: no quoted route",
+            "$6/guard: $6 swap calldata is not replayable SWAP",
+            "$6/guard: cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      ],
+      "selectedRunId": "batch1-20261007T233708Z",
+      "selectedEvidence": "contracts/captures/depth/batch1-20261007T233708Z/SQQQon.json",
+      "sourceCapture": "contracts/captures/SQQQon.batch1-20261007T233708Z.json",
+      "canonicalCapture": "contracts/captures/SQQQon.json",
+      "sha256": "b9bdd7d85790cf888a158c43fc0672e2d758121168a7afea704795c2621dd037",
+      "blockAtCapture": "126341931",
+      "latestAttemptDepth": "failed"
+    }
+  ],
+  "counts": {
+    "total": 53,
+    "depthPassed": 34,
+    "depthFailed": 19,
+    "selectedByRun": {
+      "batch1-20261008T000326Z": 28,
+      "batch1-20261007T233708Z": 6
+    },
+    "forkPassed": 0,
+    "forkFailed": 0,
+    "forkBlocked": 34
+  }
+}
