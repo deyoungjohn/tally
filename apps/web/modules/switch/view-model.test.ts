@@ -30,7 +30,7 @@ describe("migrate module view models", () => {
 
   it("migrate sheet with unbuyable destination is blocked", async () => {
     const vm = await loadMigrateSheet({
-      ticker: "NFLX", // Netflix is in COMPARE_ONLY_TICKERS
+      ticker: "DJT", // Not in the enabled manifest.
       fromIssuer: "ondo",
       toIssuer: "bstock",
       user: "0x123",
@@ -38,7 +38,7 @@ describe("migrate module view models", () => {
 
     expect(vm.state).toBe("empty");
     expect(vm.eligible).toBe(false);
-    expect(vm.availabilityReason).toBe("NFLX can't be bought through Tally yet.");
+    expect(vm.availabilityReason).toBe("DJT can't be bought through Tally yet.");
   });
 
   it("migrate sheet under 6 USDT is blocked", async () => {

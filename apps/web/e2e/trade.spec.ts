@@ -108,11 +108,22 @@ test.describe("amount rules and errors", () => {
     await expect(page.getByTestId("buy-button")).toBeDisabled();
   });
 
-  test("a stock ShareGuard isn't set up for can be compared but not bought", async ({ page }) => {
+  test("newly enabled NFLX offers a buy from its recorded quote", async ({ page }) => {
     await mockWallet(page);
     await page.goto("/trade/NFLX");
-    await expect(page.getByTestId("buy-button")).toContainText("Quotes only for now");
-    await expect(page.getByTestId("buy-button")).toBeDisabled();
+    await expect(page.getByTestId("row-NFLXB")).toBeVisible();
+    await expect(page.getByTestId("buy-button")).toContainText(/Buy \$6\.00 of NFLX(on|B)/);
+    await expect(page.getByTestId("buy-button")).toBeEnabled();
+  });
+
+  test("an unenabled ticker is still refused by the trade-plan route", async ({ request }) => {
+    const response = await request.post("/api/trade/plan", {
+      data: { ticker: "DJT", issuer: "bstock", usd: 6, user: USER },
+    });
+    expect(response.status()).toBe(409);
+    expect(await response.json()).toMatchObject({
+      error: { kind: "not_buyable", message: "DJT can't be bought through Tally yet." },
+    });
   });
 
   test("'price moved' from the plan shows the plain message and offers a new quote", async ({

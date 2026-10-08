@@ -130,9 +130,14 @@ products and failed captures are excluded from the owner additions. The existing
   `enabled=false`, and is restricted to these 20 additions.
 - `tools/gen_buyable.py` generates the planned list offline, using company names
   from the recorded registry. The target is 30 tokens across 21 tickers, including
-  the existing five tickers. It is deliberately not connected to the product
-  until the owner steps and enabled-list comparison pass; the product still uses
-  its existing five-ticker list.
+  the existing five tickers. The recorded after-owner comparison passes for
+  that full set. `BUYABLE_TICKERS` now imports the generated list while
+  retaining its `{ ticker, name }` entry shape. NFLX is no longer a
+  comparison-only entry, so the picker contains each ticker once.
+  Recorded fixture quotes remain limited to AAPL, NFLX and NVDA; the other
+  18 enabled tickers return an explicit missing-recording error offline.
+  Fixture guard readings remain limited to NVDA. No fixture quotes, guard
+  configuration or transaction results were invented for the expanded list.
   Its explicit seeds-only mode records only the eight approved Ondo additions,
   cross-checks the public list multiplier against the dynamic shares multiplier
   within 0.1%, and atomically replaces only `deploy/seeds.json` after all eight

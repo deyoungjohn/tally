@@ -3,8 +3,8 @@ import { GENERATED_BUYABLE_TICKERS } from "./buyable.generated";
 /** Manifest tickers verified enabled by the recorded after-owner comparison. */
 export const BUYABLE_TICKERS = GENERATED_BUYABLE_TICKERS;
 
-/** Shown in pickers for comparison only (the unit-trap example): ShareGuard isn't set up for it, so it can't be bought. */
-export const COMPARE_ONLY_TICKERS = [{ ticker: "NFLX", name: "Netflix" }] as const;
+/** No comparison-only tickers remain: NFLX is now in the enabled manifest. */
+export const COMPARE_ONLY_TICKERS: readonly { ticker: string; name: string }[] = [];
 export const PICKER_TICKERS = [...BUYABLE_TICKERS, ...COMPARE_ONLY_TICKERS] as const;
 
 export const isBuyable = (t: string) => BUYABLE_TICKERS.some((b) => b.ticker === t.toUpperCase());
