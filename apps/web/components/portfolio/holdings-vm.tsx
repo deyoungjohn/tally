@@ -185,6 +185,13 @@ function IssuerRow({
   );
 }
 
+const worthOf = (s: string) => Number.parseFloat(s) || 0;
+/** Tokens actually held (a zero balance, such as the source of a migration, is not a holding), largest value first. */
+const heldIssuers = (g: HeadlineHoldingVM) =>
+  g.issuers
+    .filter((i) => !(Number.parseFloat(i.balanceTokens) === 0))
+    .sort((a, b) => worthOf(b.valueUsd) - worthOf(a.valueUsd));
+
 function Group({
   g,
   onSell,
@@ -195,11 +202,9 @@ function Group({
   onMigrate?: (t: SellTarget, toIssuer: "ondo" | "bstock") => void;
 }) {
   const known = g.issuers.some((i) => i.balanceShares !== "unavailable");
+  const held = heldIssuers(g);
   // "Buy more" names the token held in the largest amount (by value), not the company.
-  const biggestSymbol =
-    [...g.issuers].sort(
-      (a, b) => (Number.parseFloat(b.valueUsd) || 0) - (Number.parseFloat(a.valueUsd) || 0),
-    )[0]?.tokenSymbol ?? g.ticker;
+  const biggestSymbol = held[0]?.tokenSymbol ?? g.ticker;
   return (
     <li className="panel list-none p-5" data-testid={`group-${g.ticker}`}>
       <div className="flex items-center gap-3">
@@ -209,7 +214,7 @@ function Group({
             className="mono text-[19px] font-bold leading-tight"
             data-testid={`symbols-${g.ticker}`}
           >
-            {g.issuers.map((i) => i.tokenSymbol).join(" · ")}
+            {held.map((i) => i.tokenSymbol).join(" · ")}
           </p>
           <p className="text-[13.5px] font-light text-fg2">{companyName(g.ticker)}</p>
         </div>
@@ -237,7 +242,7 @@ function Group({
         </div>
       </dl>
       <ul className="m-0 mt-3 grid list-none gap-2 p-0">
-        {g.issuers.map((h) => (
+        {held.map((h) => (
           <IssuerRow
             key={h.tokenSymbol}
             h={h}
@@ -268,9 +273,12 @@ export function HoldingsVm({
 }) {
   return (
     <ul className="m-0 grid list-none gap-3 p-0" data-testid="vm-holdings">
-      {vm.holdings.map((g) => (
-        <Group key={g.ticker} g={g} onSell={onSell} onMigrate={onMigrate} />
-      ))}
+      {[...vm.holdings]
+        .filter((g) => heldIssuers(g).length > 0)
+        .sort((a, b) => worthOf(b.totalValueUsd) - worthOf(a.totalValueUsd))
+        .map((g) => (
+          <Group key={g.ticker} g={g} onSell={onSell} onMigrate={onMigrate} />
+        ))}
     </ul>
   );
 }

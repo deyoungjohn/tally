@@ -47,7 +47,10 @@ export function HoldingGroup({
             className="mono text-[19px] font-bold leading-tight"
             data-testid={`symbols-${g.ticker}`}
           >
-            {g.parts.map((x) => x.symbol).join(" · ")}
+            {[...g.parts]
+              .sort((a, b) => (b.valueUsd ?? 0) - (a.valueUsd ?? 0))
+              .map((x) => x.symbol)
+              .join(" · ")}
           </p>
           <p className="text-[13.5px] font-light text-fg2">{companyName(g.ticker)}</p>
         </div>
@@ -68,116 +71,118 @@ export function HoldingGroup({
         </div>
       </div>
       <ul className="m-0 mt-4 grid list-none gap-2 p-0">
-        {g.parts.map((p) => (
-          <li
-            key={p.address}
-            className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-[14px] bg-white/[0.03] px-3 py-2 text-[14.5px]"
-          >
-            <span className="flex items-center gap-2">
-              <GradeBadge grade={p.grade} className="!h-6 !w-6 !text-[12px]" />
-              <span
-                className="text-[16px] font-bold text-fg"
-                data-testid={`holding-symbol-${p.symbol}`}
-              >
-                {p.symbol}
+        {[...g.parts]
+          .sort((a, b) => (b.valueUsd ?? 0) - (a.valueUsd ?? 0))
+          .map((p) => (
+            <li
+              key={p.address}
+              className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 rounded-[14px] bg-white/[0.03] px-3 py-2 text-[14.5px]"
+            >
+              <span className="flex items-center gap-2">
+                <GradeBadge grade={p.grade} className="!h-6 !w-6 !text-[12px]" />
+                <span
+                  className="text-[16px] font-bold text-fg"
+                  data-testid={`holding-symbol-${p.symbol}`}
+                >
+                  {p.symbol}
+                </span>
+                <span
+                  className="text-[12.5px] font-light text-fg3"
+                  data-testid={`holding-issuer-${p.symbol}`}
+                >
+                  {ISSUER_LABEL[p.issuer]}
+                </span>
               </span>
-              <span
-                className="text-[12.5px] font-light text-fg3"
-                data-testid={`holding-issuer-${p.symbol}`}
-              >
-                {ISSUER_LABEL[p.issuer]}
+              <span className="num text-fg2">
+                <LiveNumber value={p.tokens} decimals={6} /> tokens ×{" "}
+                {Number(p.multiplier.toFixed(6))} ={" "}
+                <b className="text-fg">
+                  <LiveShares value={p.shares} />
+                </b>
               </span>
-            </span>
-            <span className="num text-fg2">
-              <LiveNumber value={p.tokens} decimals={6} /> tokens ×{" "}
-              {Number(p.multiplier.toFixed(6))} ={" "}
-              <b className="text-fg">
-                <LiveShares value={p.shares} />
-              </b>
-            </span>
-            {onSell || onMigrate ? (
-              <div className="flex gap-2">
-                {onSell && p.issuer !== "xstocks" ? (
-                  p.valueUsd !== null && p.valueUsd < MIN_SELL_USDT ? (
-                    // Worth less than the smallest sale: unclickable, and the tooltip says why.
-                    <Tip
-                      text={`This holding is worth ${fmtUsd(p.valueUsd)}, below the $${MIN_SELL_USDT} minimum sale.`}
-                    >
-                      <span className="inline-flex">
-                        <Button
-                          variant="glassy"
-                          className="!h-9 !px-4 text-[14.5px]"
-                          disabled
-                          aria-label={`Sell ${p.symbol} (below the ${MIN_SELL_USDT} minimum sale)`}
-                          data-testid={`sell-${p.symbol}`}
-                        >
-                          Sell
-                        </Button>
-                      </span>
-                    </Tip>
-                  ) : (
-                    <Button
-                      variant="glassy"
-                      className="!h-9 !px-4 text-[14.5px]"
-                      onClick={() => onSell(p)}
-                      aria-label={`Sell ${p.symbol}`}
-                      data-testid={`sell-${p.symbol}`}
-                    >
-                      Sell
-                    </Button>
-                  )
-                ) : null}
+              {onSell || onMigrate ? (
+                <div className="flex gap-2">
+                  {onSell && p.issuer !== "xstocks" ? (
+                    p.valueUsd !== null && p.valueUsd < MIN_SELL_USDT ? (
+                      // Worth less than the smallest sale: unclickable, and the tooltip says why.
+                      <Tip
+                        text={`This holding is worth ${fmtUsd(p.valueUsd)}, below the $${MIN_SELL_USDT} minimum sale.`}
+                      >
+                        <span className="inline-flex">
+                          <Button
+                            variant="glassy"
+                            className="!h-9 !px-4 text-[14.5px]"
+                            disabled
+                            aria-label={`Sell ${p.symbol} (below the ${MIN_SELL_USDT} minimum sale)`}
+                            data-testid={`sell-${p.symbol}`}
+                          >
+                            Sell
+                          </Button>
+                        </span>
+                      </Tip>
+                    ) : (
+                      <Button
+                        variant="glassy"
+                        className="!h-9 !px-4 text-[14.5px]"
+                        onClick={() => onSell(p)}
+                        aria-label={`Sell ${p.symbol}`}
+                        data-testid={`sell-${p.symbol}`}
+                      >
+                        Sell
+                      </Button>
+                    )
+                  ) : null}
 
-                {onMigrate ? (
-                  <OndoGate ticker={p.ticker} issuer={p.issuer}>
-                    {(ondoClosed) => {
-                      let reason: string | null = null;
-                      if (p.issuer === "xstocks") {
-                        reason = "No market to exit this token on BNB Chain";
-                      } else if (ondoClosed) {
-                        reason = ondoClosed;
-                      } else if (!isBuyable(p.ticker)) {
-                        reason = `${p.ticker} can't be bought through Tally yet.`;
-                      } else if (p.valueUsd !== null && p.valueUsd < MIN_SELL_USDT) {
-                        reason =
-                          "Too small to migrate: the buy needs at least 6 USDT. You can sell to USDT instead.";
-                      }
+                  {onMigrate ? (
+                    <OndoGate ticker={p.ticker} issuer={p.issuer}>
+                      {(ondoClosed) => {
+                        let reason: string | null = null;
+                        if (p.issuer === "xstocks") {
+                          reason = "No market to exit this token on BNB Chain";
+                        } else if (ondoClosed) {
+                          reason = ondoClosed;
+                        } else if (!isBuyable(p.ticker)) {
+                          reason = `${p.ticker} can't be bought through Tally yet.`;
+                        } else if (p.valueUsd !== null && p.valueUsd < MIN_SELL_USDT) {
+                          reason =
+                            "Too small to migrate: the buy needs at least 6 USDT. You can sell to USDT instead.";
+                        }
 
-                      if (reason) {
+                        if (reason) {
+                          return (
+                            <Tip text={reason}>
+                              <span className="inline-flex">
+                                <Button
+                                  variant="glassy"
+                                  className="!h-9 !px-4 text-[14.5px]"
+                                  disabled
+                                  aria-label="Migrate (disabled)"
+                                  data-testid={`migrate-${p.symbol}`}
+                                >
+                                  Migrate
+                                </Button>
+                              </span>
+                            </Tip>
+                          );
+                        }
                         return (
-                          <Tip text={reason}>
-                            <span className="inline-flex">
-                              <Button
-                                variant="glassy"
-                                className="!h-9 !px-4 text-[14.5px]"
-                                disabled
-                                aria-label="Migrate (disabled)"
-                                data-testid={`migrate-${p.symbol}`}
-                              >
-                                Migrate
-                              </Button>
-                            </span>
-                          </Tip>
+                          <Button
+                            variant="glassy"
+                            className="!h-9 !px-4 text-[14.5px]"
+                            onClick={() => onMigrate(p)}
+                            aria-label={`Migrate ${p.symbol}`}
+                            data-testid={`migrate-${p.symbol}`}
+                          >
+                            Migrate
+                          </Button>
                         );
-                      }
-                      return (
-                        <Button
-                          variant="glassy"
-                          className="!h-9 !px-4 text-[14.5px]"
-                          onClick={() => onMigrate(p)}
-                          aria-label={`Migrate ${p.symbol}`}
-                          data-testid={`migrate-${p.symbol}`}
-                        >
-                          Migrate
-                        </Button>
-                      );
-                    }}
-                  </OndoGate>
-                ) : null}
-              </div>
-            ) : null}
-          </li>
-        ))}
+                      }}
+                    </OndoGate>
+                  ) : null}
+                </div>
+              ) : null}
+            </li>
+          ))}
       </ul>
       {example ? null : (
         <Link
@@ -356,39 +361,41 @@ export function PortfolioPage() {
               </div>
             ) : (
               <ul className="m-0 grid list-none gap-3 p-0">
-                {data.groups.map((g) => (
-                  <HoldingGroup
-                    key={g.ticker}
-                    g={g}
-                    onSell={
-                      canSell
-                        ? (p) =>
-                            void sell.open({
-                              ticker: p.ticker,
-                              issuer: p.issuer as "ondo" | "bstock",
-                              symbol: p.symbol,
-                              probeShares: p.shares,
-                              probeUsd: p.valueUsd,
-                            })
-                        : undefined
-                    }
-                    onMigrate={
-                      canMigrate
-                        ? (p) =>
-                            void migrate.open(
-                              {
+                {[...data.groups]
+                  .sort((a, b) => (b.valueUsd ?? 0) - (a.valueUsd ?? 0))
+                  .map((g) => (
+                    <HoldingGroup
+                      key={g.ticker}
+                      g={g}
+                      onSell={
+                        canSell
+                          ? (p) =>
+                              void sell.open({
                                 ticker: p.ticker,
                                 issuer: p.issuer as "ondo" | "bstock",
                                 symbol: p.symbol,
                                 probeShares: p.shares,
                                 probeUsd: p.valueUsd,
-                              },
-                              p.issuer === "ondo" ? "bstock" : "ondo",
-                            )
-                        : undefined
-                    }
-                  />
-                ))}
+                              })
+                          : undefined
+                      }
+                      onMigrate={
+                        canMigrate
+                          ? (p) =>
+                              void migrate.open(
+                                {
+                                  ticker: p.ticker,
+                                  issuer: p.issuer as "ondo" | "bstock",
+                                  symbol: p.symbol,
+                                  probeShares: p.shares,
+                                  probeUsd: p.valueUsd,
+                                },
+                                p.issuer === "ondo" ? "bstock" : "ondo",
+                              )
+                          : undefined
+                      }
+                    />
+                  ))}
               </ul>
             )}
             {data?.failed.length ? (

@@ -116,17 +116,11 @@ export function QualityView({ vm: initial, fixtures }: { vm: QualityVM; fixtures
         reason={vm.reason ?? "Quality has no observations yet."}
       />
     );
-  const r = vm.report;
   return (
     <>
-      <p className="t-meta" data-testid="quality-counts">
-        Pending attempts excluded: {vm.pendingCount} ({vm.unverifiedPendingCount} awaiting chain
-        verification). Comparisons reported by browsers, excluded from these statistics:{" "}
-        {r.unverifiedComparisonCount}.
-      </p>
       {vm.insufficient ? (
         <p
-          className="mt-3 rounded-xl border border-line p-4 text-fg2"
+          className="rounded-xl border border-line p-4 text-fg2"
           role="status"
           data-testid="quality-insufficient"
         >

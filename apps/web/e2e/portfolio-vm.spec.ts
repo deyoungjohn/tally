@@ -338,6 +338,30 @@ async function stubPortfolio(page: Page, body: unknown, delayMs = 0) {
 test.describe("portfolio view model: states (stubbed routes)", () => {
   test.use({ viewport: { width: 1280, height: 900 } });
 
+  test("a zero balance (the source of a migration) is not shown, and the largest holding comes first", async ({
+    page,
+  }) => {
+    await mockWallet(page);
+    const vm = holdingVm();
+    const issuers = vm.holdings[0]!.issuers as { balanceTokens: string; valueUsd: string }[];
+    issuers[0]!.balanceTokens = "0";
+    issuers[0]!.valueUsd = "0.00";
+    await stubPortfolio(page, env(vm));
+    await page.goto("/portfolio");
+    await expect(page.getByTestId("symbols-NVDA")).toHaveText("NVDAB", { timeout: 20_000 });
+    await expect(page.getByTestId("sell-NVDAon")).toHaveCount(0);
+    // With both held, the larger value is listed first.
+    const both = holdingVm();
+    const rows = both.holdings[0]!.issuers as { balanceTokens: string; valueUsd: string }[];
+    rows[1]!.valueUsd = "300.00";
+    await page.unroute("**/api/vm/portfolio*");
+    await page.route("**/api/vm/portfolio*", (route) => route.fulfill({ json: env(both) }));
+    await page.reload();
+    await expect(page.getByTestId("symbols-NVDA")).toHaveText("NVDAB · NVDAon", {
+      timeout: 20_000,
+    });
+  });
+
   test("normal: token name first (bold, bigger), then the issuer (faint, thinner); shares as strings", async ({
     page,
   }) => {

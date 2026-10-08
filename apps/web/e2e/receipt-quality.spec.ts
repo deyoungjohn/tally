@@ -86,13 +86,11 @@ test.describe("receipt and quality pages: real server, signed out", () => {
     });
   });
 
-  test("quality counts the pending attempt, excludes browser comparisons and says when data is thin", async ({
-    page,
-  }) => {
+  test("quality says when data is thin and shows the table", async ({ page }) => {
     await page.goto(`${server.url}/quality`);
-    await expect(page.getByTestId("quality-counts")).toContainText("Pending attempts excluded", {
-      timeout: 20_000,
-    });
+    await expect(page.getByTestId("quality-table")).toBeVisible({ timeout: 20_000 });
+    // The pending/excluded counts line is gone from the page.
+    await expect(page.getByText("Pending attempts excluded")).toHaveCount(0);
     await expect(page.getByTestId("quality-insufficient")).toContainText("fewer than 5");
     await expect(page.getByTestId("vm-fixture-label")).toContainText("not live");
     expect(await page.locator("body").innerText()).not.toMatch(GUARD);
@@ -147,7 +145,7 @@ test.describe("receipt and quality pages: real server, signed out", () => {
         ["stale", `/receipt/${STALE_HASH}`, "vm-stale"],
         ["pending", `/receipt/${PENDING_HASH}`, "receipt-pending"],
         ["empty", `/receipt/${UNKNOWN_HASH}`, "vm-empty"],
-        ["quality", "/quality", "quality-counts"],
+        ["quality", "/quality", "quality-table"],
       ];
       for (const [name, path, id] of shots) {
         await page.goto(`${server.url}${path}`);
