@@ -71,14 +71,20 @@ test.describe("radar view model: real route on a seeded server", () => {
     await expect(page.getByTestId("radarvm-stale-TSLAB")).toContainText(
       "Grade last updated 3 h ago",
     );
-    // Flow panel.
-    await page.getByTestId("radarvm-flow-toggle-NVDA").click();
-    await expect(page.getByTestId("radarvm-flow-NVDA")).toContainText("5.000000");
-    await expect(page.getByTestId("radarvm-flow-NVDA")).toContainText("Holder list unavailable");
     // Filter.
     await page.getByRole("radio", { name: "Not Tradable" }).click();
     await expect(page.getByTestId("radarvm-NVDAx")).toBeVisible();
     await expect(page.getByTestId("radarvm-TSLAB")).toHaveCount(0);
+    // Flow tab: nothing until a token is picked, then only that token's flow.
+    await page.getByRole("radio", { name: "Flow" }).click();
+    await expect(page.getByTestId("radarvm-flow-prompt")).toBeVisible();
+    await expect(page.getByTestId("radarvm-flow-NVDA")).toHaveCount(0);
+    await page.getByTestId("radarvm-flow-pick-NVDA").click();
+    await expect(page.getByTestId("radarvm-flow-NVDA")).toContainText("5.000000");
+    await expect(page.getByTestId("radarvm-flow-NVDA")).toContainText("Holder list unavailable");
+    await expect(page.locator('[data-testid^="radarvm-flow-"][data-testid$="-TSLA"]')).toHaveCount(
+      0,
+    );
   });
 
   for (const w of [375, 768, 1280] as const) {
@@ -90,7 +96,8 @@ test.describe("radar view model: real route on a seeded server", () => {
       const page = await ctx.newPage();
       await page.goto(`${server.url}/radar`);
       await expect(page.getByTestId("radarvm-NVDAon")).toBeVisible({ timeout: 20_000 });
-      await page.getByTestId("radarvm-flow-toggle-NVDA").click();
+      await page.getByRole("radio", { name: "Flow" }).click();
+      await page.getByTestId("radarvm-flow-pick-NVDA").click();
       await expect(page.getByTestId("radarvm-flow-NVDA")).toBeVisible();
       await page.screenshot({ path: `test-results/radar-vm-normal-${w}.png`, fullPage: true });
       expect(

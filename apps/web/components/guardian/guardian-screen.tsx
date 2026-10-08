@@ -223,26 +223,101 @@ function TelegramCard({
   );
 }
 
-function Settings({ vm }: { vm: GuardianSettingsVM }) {
+/** An on/off switch. On is orange glass, off is faint white; it is a real button with role="switch". */
+function Switch({
+  checked,
+  onChange,
+  disabled,
+  label,
+  testId,
+}: {
+  checked: boolean;
+  onChange: (next: boolean) => void;
+  disabled?: boolean;
+  label: string;
+  testId: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      disabled={disabled}
+      data-testid={testId}
+      onClick={() => onChange(!checked)}
+      className={`relative h-7 w-12 flex-none rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+        checked ? "border-[var(--hl-edge)] bg-[var(--hl-strong)]" : "border-white/20 bg-white/10"
+      }`}
+    >
+      <span
+        aria-hidden
+        className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${
+          checked ? "left-[26px]" : "left-0.5"
+        }`}
+      />
+    </button>
+  );
+}
+
+function Settings({
+  vm,
+  onSave,
+  saving,
+  saveError,
+}: {
+  vm: GuardianSettingsVM;
+  onSave: (next: GuardianSettingsVM["settings"]) => void;
+  saving: boolean;
+  saveError: string | null;
+}) {
   const s = vm.settings;
   return (
     <section className="panel p-4" aria-label="Alert rules" data-testid="guardian-settings">
-      <p className="flex items-center gap-2 font-semibold">
-        {s.enabled ? <Bell size={16} aria-hidden /> : <BellOff size={16} aria-hidden />} Alert rules
-      </p>
+      <div className="flex items-center justify-between gap-3">
+        <p className="flex items-center gap-2 font-semibold">
+          {s.enabled ? <Bell size={16} aria-hidden /> : <BellOff size={16} aria-hidden />} Alert
+          rules
+        </p>
+        <Switch
+          checked={s.enabled}
+          disabled={saving}
+          label="Guardian alerts"
+          testId="guardian-switch-enabled"
+          onChange={(enabled) => onSave({ ...s, enabled })}
+        />
+      </div>
       <p className="t-meta mt-1">
-        Guardian is {s.enabled ? "on" : "off"}. Changing these here isn&apos;t available yet.
+        Guardian is {s.enabled ? "on" : "off"}. Each switch applies as soon as you flip it.
       </p>
       <ul className="m-0 mt-3 grid list-none gap-2 p-0">
-        {RULES.map(([key, label, tip]) => (
-          <li key={key} className="flex items-center justify-between gap-3 text-[14.5px]">
-            <Tip text={tip}>{label}</Tip>
-            <span className={s.rules[key] ? "text-fg" : "text-fg3"}>
-              {s.rules[key] ? "On" : "Off"}
-            </span>
-          </li>
-        ))}
+        {RULES.map(([key, label, tip]) => {
+          const unavailable = key === "earnings";
+          return (
+            <li key={key} className="flex items-center justify-between gap-3 text-[14.5px]">
+              <Tip
+                text={
+                  unavailable ? "Not available yet: Tally has no source for earnings dates." : tip
+                }
+              >
+                {label}
+              </Tip>
+              <Switch
+                checked={s.rules[key]}
+                disabled={saving || !s.enabled || unavailable}
+                label={label}
+                testId={`guardian-switch-${key}`}
+                onChange={(next) => onSave({ ...s, rules: { ...s.rules, [key]: next } })}
+              />
+            </li>
+          );
+        })}
       </ul>
+      {saveError ? (
+        <p role="alert" className="mt-2 text-amber" data-testid="guardian-save-error">
+          {saveError}
+        </p>
+      ) : null}
       {s.quietHours?.enabled ? (
         <p className="t-meta mt-3">
           Quiet hours (UTC): {String(s.quietHours.startHourUtc).padStart(2, "0")}:00 to{" "}
@@ -272,12 +347,48 @@ export function GuardianScreen() {
   const [busy, setBusy] = useState(false);
   const [codeError, setCodeError] = useState<string | null>(null);
   const [issued, setIssued] = useState<GuardianSettingsVM | null>(null);
+  const reloadSettings = settings.reload;
+  // The answer to our last change, shown until a fresh read of the settings arrives.
+  const [saved, setSaved] = useState<GuardianSettingsVM | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   // Give the wallet provider a moment to load before saying "signed out"; if it never does, say so rather than wait forever.
   const [waited, setWaited] = useState(false);
   useEffect(() => {
     const id = window.setTimeout(() => setWaited(true), 2500);
     return () => window.clearTimeout(id);
   }, []);
+
+  const save = useCallback(
+    async (next: GuardianSettingsVM["settings"]) => {
+      setSaving(true);
+      setSaveError(null);
+      try {
+        const res = await sessionFetch("/api/session/guardian/settings", {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(next),
+        });
+        if (res === null || res.status === 401)
+          setSaveError("We couldn't verify your sign-in. Sign in again.");
+        else if (res.status === 429) setSaveError("Too many changes. Try again in a while.");
+        else if (!res.ok) {
+          const body = (await res.json().catch(() => null)) as {
+            error?: { message?: string };
+          } | null;
+          setSaveError(body?.error?.message ?? "Couldn't save that change.");
+        } else {
+          setSaved((await res.json()) as GuardianSettingsVM);
+          reloadSettings();
+        }
+      } catch {
+        setSaveError("Couldn't reach Tally.");
+      } finally {
+        setSaving(false);
+      }
+    },
+    [sessionFetch, reloadSettings],
+  );
 
   const getCode = useCallback(async () => {
     setBusy(true);
@@ -299,6 +410,11 @@ export function GuardianScreen() {
     }
   }, [sessionFetch]);
 
+  // A fresh read replaces whatever we showed after our own change.
+  const freshRead = settings.state.status === "ok" ? settings.state.data : null;
+  useEffect(() => {
+    if (freshRead) setSaved(null);
+  }, [freshRead]);
   const isLinked = polledLinked(settings.state);
   useEffect(() => {
     if (isLinked) setWatching(false);
@@ -324,7 +440,7 @@ export function GuardianScreen() {
   const polled =
     "data" in settings.state ? (settings.state.data as GuardianSettingsVM | null) : null;
   // A fresh read that says "linked" beats the code we issued earlier.
-  const settingsVm = polled?.telegram.linked ? polled : (issued ?? polled);
+  const settingsVm = saved ?? (polled?.telegram.linked ? polled : (issued ?? polled));
   return (
     <div className="grid grid-cols-1 gap-6 min-[981px]:grid-cols-[minmax(0,1fr)_340px]">
       <div className="min-w-0">
@@ -335,7 +451,7 @@ export function GuardianScreen() {
         {settingsVm ? (
           <>
             <TelegramCard vm={settingsVm} onGetCode={getCode} busy={busy} codeError={codeError} />
-            <Settings vm={settingsVm} />
+            <Settings vm={settingsVm} onSave={save} saving={saving} saveError={saveError} />
           </>
         ) : settings.state.status === "error" ? (
           <p role="alert" className="text-amber">

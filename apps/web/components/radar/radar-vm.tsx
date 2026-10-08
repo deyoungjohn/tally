@@ -2,7 +2,7 @@
 // The Radar body built from the flow module's view models (`RadarVM` for the grade cards, `FlowPanelVM` for the ticker
 // detail), reached through /api/vm/radar. Four designed states: loading, empty (with the reason), stale, degraded.
 
-import { ArrowRight, ChevronDown, Info } from "lucide-react";
+import { ArrowRight, Info } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { RadarCardDisplay, RadarDisplay, RadarGradeDisplay } from "@/app/api/vm/radar/display";
@@ -207,8 +207,90 @@ export function FlowPanel({ panel }: { panel: FlowPanelDisplay }) {
   );
 }
 
+/** The Flow tab: search for a token, pick it, and see that one token's flow. Only one is shown at a time. */
+function FlowView({ cards }: { cards: RadarCardDisplay[] }) {
+  const [q, setQ] = useState("");
+  const [picked, setPicked] = useState<string | null>(null);
+  const withFlow = useMemo(() => cards.filter((c) => c.flowPanel), [cards]);
+  const suggestions = useMemo<MorphingSearchItem[]>(
+    () =>
+      withFlow.map((c) => ({
+        id: `f-${c.ticker}`,
+        title: `${nameOf(c.ticker)} · ${c.grades.map((g) => g.symbol).join(", ")}`,
+        description: c.grades.map((g) => ISSUER_LABEL[g.issuer]).join(", "),
+        keywords: c.grades.map((g) => g.symbol),
+        value: c.ticker,
+      })),
+    [withFlow],
+  );
+  const matches = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return withFlow
+      .filter(
+        (c) =>
+          !needle ||
+          `${c.ticker} ${nameOf(c.ticker)} ${c.grades.map((g) => g.symbol).join(" ")}`
+            .toLowerCase()
+            .includes(needle),
+      )
+      .slice(0, 12);
+  }, [withFlow, q]);
+  const card = withFlow.find((c) => c.ticker === picked) ?? null;
+
+  if (withFlow.length === 0)
+    return (
+      <p className="mt-6 text-fg2" data-testid="radarvm-flow-none">
+        No flow data yet. It shows up here once Tally has collected trades for these tokens.
+      </p>
+    );
+  return (
+    <div className="mt-4" data-testid="radarvm-flow-view">
+      <MorphingSearch
+        items={suggestions}
+        value={q}
+        onValueChange={setQ}
+        placeholder="Search a token to see its flow"
+        className="w-full min-[561px]:w-[340px]"
+      />
+      <ul
+        className="m-0 mt-3 flex list-none flex-wrap gap-2 p-0"
+        aria-label="Tokens with flow data"
+      >
+        {matches.map((c) => (
+          <li key={c.ticker}>
+            <button
+              type="button"
+              aria-pressed={picked === c.ticker}
+              onClick={() => setPicked(c.ticker)}
+              data-testid={`radarvm-flow-pick-${c.ticker}`}
+              className={`btn btn-glassy !h-9 !px-4 text-[14px] ${picked === c.ticker ? "!bg-[var(--hl)]" : ""}`}
+            >
+              {nameOf(c.ticker)}
+            </button>
+          </li>
+        ))}
+        {matches.length === 0 ? <li className="text-fg2">Nothing matches that search.</li> : null}
+      </ul>
+      {card?.flowPanel ? (
+        <section className="mt-5" aria-label={`${nameOf(card.ticker)} flow`}>
+          <h2 className="t-h3 !text-[19px]">
+            {nameOf(card.ticker)} ·{" "}
+            <span className="mono">{card.grades.map((g) => g.symbol).join(" · ")}</span>
+          </h2>
+          <div className="mt-3">
+            <FlowPanel panel={card.flowPanel} />
+          </div>
+        </section>
+      ) : (
+        <p className="mt-5 text-fg2" data-testid="radarvm-flow-prompt">
+          Pick a token to see its flow.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function TickerCard({ card, grades }: { card: RadarCardDisplay; grades: RadarGradeDisplay[] }) {
-  const [open, setOpen] = useState(false);
   return (
     <li
       className="panel mb-3 block w-full break-inside-avoid list-none p-4"
@@ -223,25 +305,6 @@ function TickerCard({ card, grades }: { card: RadarCardDisplay; grades: RadarGra
           <GradeRow key={g.address} g={g} ticker={card.ticker} />
         ))}
       </ul>
-      {card.flowPanel ? (
-        <div className="mt-3 border-t border-line pt-3">
-          <button
-            type="button"
-            className="inline-flex min-h-[44px] items-center gap-1 text-[14px] text-orange-text"
-            aria-expanded={open}
-            onClick={() => setOpen((o) => !o)}
-            data-testid={`radarvm-flow-toggle-${card.ticker}`}
-          >
-            {open ? "Hide" : "Show"} {card.ticker} flow
-            <ChevronDown size={14} aria-hidden className={open ? "rotate-180" : ""} />
-          </button>
-          {open ? (
-            <div className="mt-2">
-              <FlowPanel panel={card.flowPanel} />
-            </div>
-          ) : null}
-        </div>
-      ) : null}
     </li>
   );
 }
@@ -283,6 +346,7 @@ export function RadarVmBody() {
   const { data: env, error } = useJson<VmEnvelope<RadarDisplay>>("/api/vm/radar", {
     refreshMs: 60_000,
   });
+  const [view, setView] = useState<"tokens" | "flow">("tokens");
   const [filter, setFilter] = useState<Filter>("all");
   const [q, setQ] = useState("");
   const vm = env?.vm ?? null;
@@ -373,36 +437,56 @@ export function RadarVmBody() {
         ) : null}
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+      <div className="mt-6">
         <Segmented
-          label="Filter tokens"
-          value={filter}
-          onChange={setFilter}
+          label="Radar sections"
+          value={view}
+          onChange={setView}
           options={[
-            { value: "all", label: "All" },
-            { value: "flagged", label: "Low Liquidity" },
-            { value: "ghost", label: "Not Tradable" },
-            { value: "unit", label: "Unit trap" },
+            { value: "tokens", label: "Tokens" },
+            { value: "flow", label: "Flow" },
           ]}
-        />
-        <MorphingSearch
-          items={suggestions}
-          value={q}
-          onValueChange={setQ}
-          placeholder="Search a stock or issuer"
-          className="w-full min-[561px]:w-[300px]"
         />
       </div>
 
-      <ul
-        className="m-0 mt-4 columns-1 gap-3 p-0 min-[761px]:columns-2 min-[1100px]:columns-3"
-        data-testid="radar-masonry"
-      >
-        {cards.map(({ card, grades }) => (
-          <TickerCard key={card.ticker} card={card} grades={grades} />
-        ))}
-      </ul>
-      {cards.length === 0 ? <p className="mt-6 text-fg2">Nothing matches that filter.</p> : null}
+      {view === "flow" ? (
+        <FlowView cards={vm.cards} />
+      ) : (
+        <>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <Segmented
+              label="Filter tokens"
+              value={filter}
+              onChange={setFilter}
+              options={[
+                { value: "all", label: "All" },
+                { value: "flagged", label: "Low Liquidity" },
+                { value: "ghost", label: "Not Tradable" },
+                { value: "unit", label: "Unit trap" },
+              ]}
+            />
+            <MorphingSearch
+              items={suggestions}
+              value={q}
+              onValueChange={setQ}
+              placeholder="Search a stock or issuer"
+              className="w-full min-[561px]:w-[300px]"
+            />
+          </div>
+
+          <ul
+            className="m-0 mt-4 columns-1 gap-3 p-0 min-[761px]:columns-2 min-[1100px]:columns-3"
+            data-testid="radar-masonry"
+          >
+            {cards.map(({ card, grades }) => (
+              <TickerCard key={card.ticker} card={card} grades={grades} />
+            ))}
+          </ul>
+          {cards.length === 0 ? (
+            <p className="mt-6 text-fg2">Nothing matches that filter.</p>
+          ) : null}
+        </>
+      )}
     </>
   );
 }

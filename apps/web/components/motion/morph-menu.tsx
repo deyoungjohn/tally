@@ -1,6 +1,6 @@
 "use client";
-// Desktop account menu. The panel is the trigger button, grown: it starts at the button's exact box and morphs down and
-// out into the menu (beUI morphing-modal idea, anchored to the button instead of the screen edge). It lives in a portal
+// Desktop account menu. The panel sits at its full size under the trigger and rolls down from the top edge (a clip that
+// opens downward), then rolls back up on close; it never passes through a pill or circle. It lives in a portal
 // and is position: fixed, so opening it never moves the header or the page; the page is not scroll-locked either, so there
 // is no scrollbar shift. The backdrop is the same blurred glass as the other overlays.
 
@@ -14,7 +14,7 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { EASE_OUT, SPRING_PANEL } from "@/lib/ease";
+import { EASE_OUT } from "@/lib/ease";
 import { PresenceGate } from "@/lib/presence-gate";
 
 interface Box {
@@ -124,8 +124,9 @@ export function MorphMenu({
 
   const headerH = box?.height ?? 40;
   const fullH = headerH + 8 + rows * rowHeight + (rows - 1) * 2 + 8;
-  const shut = box ? { width: box.width, height: box.height, borderRadius: 9999 } : undefined;
-  const wide = { width, height: fullH, borderRadius: 24 };
+  // Rolled up: clipped to the top edge. Rolled down: the whole panel.
+  const rolledUp = { clipPath: "inset(0px 0px 100% 0px round 24px)", y: -6, opacity: 0.6 };
+  const rolledDown = { clipPath: "inset(0px 0px 0% 0px round 24px)", y: 0, opacity: 1 };
 
   return createPortal(
     <AnimatePresence>
@@ -148,15 +149,22 @@ export function MorphMenu({
                 ref={panelRef}
                 role="menu"
                 aria-label={label}
-                initial={reduce ? { opacity: 0, ...wide } : { ...shut, opacity: 0.9 }}
-                animate={{ ...wide, opacity: 1 }}
+                initial={reduce ? { opacity: 0 } : rolledUp}
+                animate={reduce ? { opacity: 1 } : rolledDown}
                 exit={
                   reduce
                     ? { opacity: 0 }
-                    : { ...shut, opacity: 0, transition: { duration: 0.22, ease: EASE_OUT } }
+                    : { ...rolledUp, transition: { duration: 0.24, ease: EASE_OUT } }
                 }
-                transition={reduce ? { duration: 0.15 } : SPRING_PANEL}
-                style={{ top: box.top, right: box.right, transformOrigin: "top right" }}
+                transition={reduce ? { duration: 0.15 } : { duration: 0.36, ease: EASE_OUT }}
+                style={{
+                  top: box.top,
+                  right: box.right,
+                  width,
+                  height: fullH,
+                  borderRadius: 24,
+                  transformOrigin: "top right",
+                }}
                 className="glass glass-pop !fixed overflow-hidden"
               >
                 <button
