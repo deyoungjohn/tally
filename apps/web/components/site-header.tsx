@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { MODULE_NAMES, type ModuleName } from "@tally/config";
 import { BottomSheet } from "@/components/motion/bottom-sheet";
-import { Button, ButtonLink } from "@/components/motion/button";
+import { Button } from "@/components/motion/button";
 import { MorphItem, MorphMenu } from "@/components/motion/morph-menu";
 import { Glide } from "@/components/motion/glide";
 import { SendModal } from "@/components/wallet/send-modal";
@@ -41,7 +41,7 @@ export function Logo() {
 
 export const shortAddress = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`;
 
-/** "Get Started" until the user signs in, then their wallet as a short address with a small account menu. */
+/** "Sign in" (opens the sign-in modal) until the user signs in, then their wallet as a short address with a small account menu. */
 function AccountButton({
   onNavigate,
   onSend,
@@ -74,9 +74,18 @@ function AccountButton({
 
   if (!wallet.authenticated || !wallet.address) {
     return (
-      <ButtonLink href="/trade" big={big} className={cn(!big && "!h-10")} onClick={onNavigate}>
-        Get Started
-      </ButtonLink>
+      <Button
+        big={big}
+        className={cn(!big && "!h-10")}
+        onClick={() => {
+          onNavigate?.();
+          wallet.login();
+        }}
+        disabled={!wallet.ready}
+        data-testid="nav-sign-in"
+      >
+        Sign in
+      </Button>
     );
   }
   const address = wallet.address;

@@ -54,6 +54,39 @@ test.describe("radar view model: real route on a seeded server", () => {
     expect(g.vm.cards.flatMap((c: { grades: unknown[] }) => c.grades)).toHaveLength(1);
   });
 
+  test("the Home page's Radar preview counts the same tokens as the Radar page", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(`${server.url}/`);
+    const home = page.getByTestId("home-radar");
+    await expect(home).toContainText("Tokens checked", { timeout: 20_000 });
+    const homeText = await home.getByTestId("radarvm-stats").innerText();
+    await page.goto(`${server.url}/radar`);
+    const radarText = await page.getByTestId("radarvm-stats").innerText({ timeout: 20_000 });
+    expect(homeText).toBe(radarText);
+  });
+
+  test("large trades in a flow panel are a plain table", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.route("**/api/vm/radar*", async (route) => {
+      const res = await route.fetch();
+      const body = await res.json();
+      const nvda = body.vm.cards.find((c: { ticker: string }) => c.ticker === "NVDA");
+      nvda.flowPanel.issuers[0].whalePrints = [
+        { txHash: "0xabc", side: "buy", shares: "60.000000", usd: "14000.00" },
+        { txHash: "0xdef", side: "sell", shares: "55.000000", usd: "12800.00" },
+      ];
+      await route.fulfill({ response: res, json: body });
+    });
+    await page.goto(`${server.url}/radar`);
+    await page.getByRole("radio", { name: "Flow" }).click({ timeout: 20_000 });
+    const table = page.getByTestId("radarvm-whales-ondo");
+    await expect(table.getByRole("table")).toBeVisible();
+    await expect(table.getByRole("row")).toHaveCount(3);
+    await expect(table).toContainText("$14000.00");
+  });
+
   test("the page shows cards, the basis tooltip, the flow panel, stale and filters", async ({
     page,
   }) => {

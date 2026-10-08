@@ -16,10 +16,13 @@ export function StockPicker({
   value,
   onChange,
   className,
+  plain = false,
 }: {
   value: string;
   onChange: (t: string) => void;
   className?: string;
+  /** Options read just the ticker (NVDA, AAPL, ...), for a narrow block. */
+  plain?: boolean;
 }) {
   return (
     <Select value={value} onValueChange={onChange} className={cn("w-[min(100%,260px)]", className)}>
@@ -32,7 +35,7 @@ export function StockPicker({
       <SelectContent className="select-panel">
         {BUYABLE_TICKERS.map((t) => (
           <SelectItem key={t.ticker} value={t.ticker}>
-            {`${t.name} · ${tokenPair(t.ticker)}`}
+            {plain ? t.ticker : `${t.name} · ${tokenPair(t.ticker)}`}
           </SelectItem>
         ))}
       </SelectContent>

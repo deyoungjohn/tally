@@ -194,13 +194,30 @@ export function FlowPanel({ panel }: { panel: FlowPanelDisplay }) {
             </p>
           ))}
           {i.whalePrints.length ? (
-            <ul className="m-0 mt-3 grid list-none gap-1 p-0 text-[14px] text-fg2">
-              {i.whalePrints.map((p) => (
-                <li key={`${p.txHash}:${p.side}:${p.shares}`}>
-                  Large {p.side}: {p.shares} shares (${p.usd})
-                </li>
-              ))}
-            </ul>
+            <div className="mt-3 overflow-x-auto" data-testid={`radarvm-whales-${i.issuer}`}>
+              <table className="w-full min-w-[320px] border-collapse text-left text-[14px]">
+                <caption className="t-meta pb-2 text-left">Large trades</caption>
+                <thead>
+                  <tr className="text-fg3">
+                    <th className="py-1.5 pr-3 font-medium">Side</th>
+                    <th className="py-1.5 pr-3 text-right font-medium">Shares</th>
+                    <th className="py-1.5 text-right font-medium">Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {i.whalePrints.map((p) => (
+                    <tr
+                      key={`${p.txHash}:${p.side}:${p.shares}`}
+                      className="border-t border-white/[0.06]"
+                    >
+                      <td className="py-1.5 pr-3 capitalize">{p.side}</td>
+                      <td className="num py-1.5 pr-3 text-right">{p.shares}</td>
+                      <td className="num py-1.5 text-right">${p.usd}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : null}
         </section>
       ))}
@@ -346,7 +363,7 @@ const STAT_TIP: Record<string, string> = {
     "Tokens that are more than one share, so price and balance look off by that factor.",
 };
 
-function Stats({ grades }: { grades: RadarGradeDisplay[] }) {
+export function Stats({ grades }: { grades: RadarGradeDisplay[] }) {
   const stats = [
     ["Tokens checked", grades.length],
     ["Liquid", grades.filter((g) => !flagged(g)).length],
@@ -518,5 +535,52 @@ export function RadarVmBody() {
         </>
       )}
     </>
+  );
+}
+
+/** The Home page's Radar preview, from the same view model as the Radar page: every token graded, the worst few listed. */
+export function HomeRadarVm() {
+  const { data: env, error } = useJson<VmEnvelope<RadarDisplay>>("/api/vm/radar", {
+    refreshMs: 60_000,
+  });
+  const vm = env?.vm ?? null;
+  const all = useMemo(() => vm?.cards.flatMap((c) => c.grades) ?? [], [vm]);
+  const worst = useMemo(
+    () =>
+      all
+        .filter(flagged)
+        .sort((a, b) => rank(b) - rank(a) || "ABCDF".indexOf(b.grade) - "ABCDF".indexOf(a.grade))
+        .slice(0, 4),
+    [all],
+  );
+  return (
+    <div data-testid="home-radar">
+      {vm && vm.state === "ready" ? (
+        <Stats grades={all} />
+      ) : error && !env ? (
+        <p className="text-amber">{error}</p>
+      ) : env && (env.degraded || vm?.state !== "ready") ? (
+        <p className="text-fg2">Radar is catching up. Open Radar for the latest.</p>
+      ) : (
+        <div className="skeleton h-[96px]" aria-busy="true" />
+      )}
+      {vm && vm.state === "ready" ? (
+        <>
+          <p className="t-meta mb-2 mt-5">Flagged right now</p>
+          <ul className="m-0 grid list-none gap-3 p-0">
+            {worst.map((g) => (
+              <li key={g.address} className="panel radar-card p-4">
+                <ul className="m-0 list-none p-0">
+                  <GradeRow g={g} ticker={g.symbol} />
+                </ul>
+              </li>
+            ))}
+          </ul>
+          {worst.length === 0 ? (
+            <p className="text-fg2">Nothing flagged in the tokens checked.</p>
+          ) : null}
+        </>
+      ) : null}
+    </div>
   );
 }

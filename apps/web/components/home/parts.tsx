@@ -1,8 +1,7 @@
 "use client";
 
 import { ArrowRight, Check } from "lucide-react";
-import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AnimatedNumber } from "@/components/motion/animated-number";
 import { Button, ButtonLink } from "@/components/motion/button";
 import { Segmented } from "@/components/motion/segmented";
@@ -14,11 +13,12 @@ import { StockPicker } from "@/components/trade/stock-picker";
 import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { HoldingGroup, EXAMPLE_GROUP } from "@/components/portfolio/portfolio";
 import { RadarRowCard, RadarStats, useRadar } from "@/components/radar/radar";
-import type { QuoteDto } from "@/lib/dto";
+import { HomeRadarVm } from "@/components/radar/radar-vm";
+import { useModuleFlagsState } from "@/lib/hooks/use-flags";
 import { ISSUER_LABEL, fmtShares, fmtUsd } from "@/lib/format";
 import { useJson } from "@/lib/hooks/use-json";
 import { useLiveQuote } from "@/lib/hooks/use-live-quote";
-import { BUYABLE_TICKERS, isBuyable, tokenPair, tokenSymbol } from "@/lib/tickers";
+import { isBuyable, tokenSymbol } from "@/lib/tickers";
 import type { PortfolioReport } from "@tally/engine";
 import { LiveUsd } from "@/components/motion/live";
 
@@ -194,45 +194,6 @@ export function UnitTrapCard() {
   );
 }
 
-export function TickerStrip() {
-  const [prices, setPrices] = useState<Record<string, number | null>>({});
-  useEffect(() => {
-    let live = true;
-    void (async () => {
-      for (const t of BUYABLE_TICKERS) {
-        try {
-          const r = await fetch(`/api/quote?ticker=${t.ticker}&usd=6`);
-          if (!r.ok) continue;
-          const q = (await r.json()) as QuoteDto;
-          if (live) setPrices((p) => ({ ...p, [t.ticker]: q.referencePrice }));
-        } catch {
-          /* leave this one blank */
-        }
-      }
-    })();
-    return () => {
-      live = false;
-    };
-  }, []);
-  return (
-    <ul className="m-0 flex list-none flex-wrap gap-3 p-0" aria-label="Stocks you can buy">
-      {BUYABLE_TICKERS.map((t) => (
-        <li key={t.ticker}>
-          <Link
-            href={`/trade/${t.ticker}`}
-            className="panel flex min-h-[44px] items-center gap-3 px-4 text-fg no-underline"
-          >
-            <span className="font-semibold">{tokenPair(t.ticker)}</span>
-            <span className="num text-fg2">
-              {prices[t.ticker] ? <LiveUsd value={prices[t.ticker]} /> : "…"}
-            </span>
-          </Link>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 /** The live comparison for the Trade section: the same list as the trade page, for any of the five stocks. */
 export function HomeComparison() {
   const [ticker, setTicker] = useState("NVDA");
@@ -241,7 +202,7 @@ export function HomeComparison() {
     <div data-testid="home-comparison">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 className="t-h3 !text-[19px]">Live comparison</h3>
-        <StockPicker value={ticker} onChange={setTicker} className="!w-[min(100%,230px)]" />
+        <StockPicker plain value={ticker} onChange={setTicker} className="!w-[min(100%,230px)]" />
       </div>
       <IssuerList
         quote={q.data?.ticker === ticker ? q.data : null}
@@ -291,6 +252,13 @@ export function HomePortfolioPreview() {
 /* ----------------------------------------------------------------- radar part */
 
 export function HomeRadarPreview() {
+  const { flags, ready } = useModuleFlagsState();
+  if (!ready) return <div className="skeleton h-[96px]" aria-busy="true" />;
+  // With the flow module on, Radar's own page reads every graded token, so the preview must read the same data.
+  return flags.flow ? <HomeRadarVm /> : <HomeRadarLegacy />;
+}
+
+function HomeRadarLegacy() {
   const { data, error } = useRadar();
   const worst = data
     ? [...data.rows]
