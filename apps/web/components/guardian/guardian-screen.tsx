@@ -12,6 +12,7 @@ import type {
   GuardianSettingsVM,
 } from "@/modules/guardian/view-model";
 import { Button } from "@/components/motion/button";
+import { Switch } from "@/components/motion/switch";
 import { VmEmpty, VmFreshness, VmSkeleton, ageText } from "@/components/portfolio/vm-shared";
 import { Tip } from "@/components/ui/tooltip";
 import { useSessionFetch } from "@/lib/hooks/use-session-fetch";
@@ -223,43 +224,6 @@ function TelegramCard({
   );
 }
 
-/** An on/off switch. On is orange glass, off is faint white; it is a real button with role="switch". */
-function Switch({
-  checked,
-  onChange,
-  disabled,
-  label,
-  testId,
-}: {
-  checked: boolean;
-  onChange: (next: boolean) => void;
-  disabled?: boolean;
-  label: string;
-  testId: string;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      disabled={disabled}
-      data-testid={testId}
-      onClick={() => onChange(!checked)}
-      className={`relative h-7 w-12 flex-none rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-        checked ? "border-[var(--hl-edge)] bg-[var(--hl-strong)]" : "border-white/20 bg-white/10"
-      }`}
-    >
-      <span
-        aria-hidden
-        className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all ${
-          checked ? "left-[26px]" : "left-0.5"
-        }`}
-      />
-    </button>
-  );
-}
-
 function Settings({
   vm,
   onSave,
@@ -282,9 +246,9 @@ function Settings({
         <Switch
           checked={s.enabled}
           disabled={saving}
-          label="Guardian alerts"
+          ariaLabel="Guardian alerts"
           testId="guardian-switch-enabled"
-          onChange={(enabled) => onSave({ ...s, enabled })}
+          onCheckedChange={(enabled) => onSave({ ...s, enabled })}
         />
       </div>
       <p className="t-meta mt-1">
@@ -305,9 +269,9 @@ function Settings({
               <Switch
                 checked={s.rules[key]}
                 disabled={saving || !s.enabled || unavailable}
-                label={label}
+                ariaLabel={label}
                 testId={`guardian-switch-${key}`}
-                onChange={(next) => onSave({ ...s, rules: { ...s.rules, [key]: next } })}
+                onCheckedChange={(next) => onSave({ ...s, rules: { ...s.rules, [key]: next } })}
               />
             </li>
           );

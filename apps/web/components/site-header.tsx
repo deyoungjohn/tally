@@ -9,6 +9,7 @@ import { BottomSheet } from "@/components/motion/bottom-sheet";
 import { Button } from "@/components/motion/button";
 import { MorphItem, MorphMenu } from "@/components/motion/morph-menu";
 import { Glide } from "@/components/motion/glide";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { SendModal } from "@/components/wallet/send-modal";
 import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { cn } from "@/lib/utils";
@@ -348,6 +349,7 @@ export function SiteHeader() {
           </Glide>
         </nav>
         <div className="flex items-center gap-2">
+          <NotificationBell />
           <span className="hidden min-[561px]:block">
             <AccountButton onSend={() => setSending(true)} />
           </span>

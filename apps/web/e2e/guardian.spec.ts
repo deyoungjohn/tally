@@ -166,6 +166,27 @@ test.describe("guardian: real server, module running", () => {
     );
   });
 
+  test("the bell counts unread alerts, opens the latest in a dialog, and clears the count", async ({
+    page,
+  }) => {
+    await mockWallet(page);
+    await stub(page, feed(), settings());
+    await page.goto(`${server.url}/`);
+    const count = page.getByTestId("notification-count");
+    await expect(count).toHaveText("2", { timeout: 20_000 });
+    await page.getByTestId("notification-bell").click();
+    const list = page.getByTestId("notification-list");
+    await expect(list).toBeVisible();
+    await expect(list.getByTestId("notification-a1")).toBeVisible();
+    await expect(list).toContainText("Open Guardian");
+    await page.keyboard.press("Escape");
+    await expect(count).toHaveCount(0);
+    // Reloading keeps what you have seen.
+    await page.reload();
+    await expect(page.getByTestId("notification-bell")).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByTestId("notification-count")).toHaveCount(0);
+  });
+
   test("not linked: a link code can be requested and is shown with its instruction", async ({
     page,
   }) => {
