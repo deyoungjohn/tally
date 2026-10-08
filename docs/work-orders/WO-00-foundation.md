@@ -11,6 +11,7 @@
 
 - `packages/modkit/**` (new)
 - `apps/worker/**` (new) except `apps/worker/src/jobs/<module>.ts` files created later by other work orders
+- Approved 2026-10-08 (`docs/prompts/wo00-worker-resilience.md`): in `packages/binance/src/collectors.ts` only the `prices()` batch cap and its test.
 - `apps/web/components/module-boundary.tsx`, `apps/web/app/api/modules/health/route.ts`, `apps/web/lib/flags.ts`
 - `apps/web/components/site-header.tsx` (nav entries only)
 - `packages/config/src/flags.ts` (new), `packages/config/src/index.ts` (export only)
