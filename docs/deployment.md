@@ -82,15 +82,25 @@ Limits, so you know what is not covered:
 
 ## Disk (the EC2 filled up on 8 Oct 2026)
 
-Check `df -h /` after every restart. The store is `/var/lib/tally/tally.db`; it must stay well under 2 GB. The `flow` snapshots are about 1 MB each, so until the shorter flow retention is merged (`docs/prompts/wo04-flow-retention.md`) the store grows about 1 GB an hour. Until then, run this hourly (cron, as root) to drop old flow rows; readers only use the newest row per token, and the file stops growing because SQLite reuses the freed pages:
+Check `df -h /` after every restart. The store is `/var/lib/tally/tally.db`; it must stay well under 2 GB. A `flow` snapshot is about 1.6 MB, so an hour of them is about 1.5 GB, and until the shorter flow retention is merged (`docs/prompts/wo04-flow-retention.md`) nothing removes them for 7 days. Until then, install this script and run it every 15 minutes as root. It keeps 30 minutes of flow rows (readers need 15) and always the newest row per token; SQLite reuses the freed pages, so the file stops growing.
 
 ```bash
-sudo sqlite3 /var/lib/tally/tally.db "DELETE FROM snapshots WHERE kind IN ('flow','flow-traders','flow-holders','flow-pools') AND observed_at < (strftime('%s','now') - 3600) * 1000 AND id NOT IN (SELECT max(id) FROM snapshots WHERE kind IN ('flow','flow-traders','flow-holders','flow-pools') GROUP BY kind, key);"
+sudo tee /usr/local/bin/tally-flow-prune.sh >/dev/null <<'EOF'
+#!/bin/sh
+K="kind IN ('flow','flow-traders','flow-holders','flow-pools')"
+sqlite3 -cmd ".timeout 5000" /var/lib/tally/tally.db "DELETE FROM snapshots WHERE $K AND observed_at < (strftime('%s','now') - 1800) * 1000 AND id NOT IN (SELECT max(id) FROM snapshots WHERE $K GROUP BY kind, key);"
+EOF
+sudo chmod +x /usr/local/bin/tally-flow-prune.sh
+(sudo crontab -l 2>/dev/null; echo '*/15 * * * * /usr/local/bin/tally-flow-prune.sh') | sudo crontab -
 ```
 
-The query above is for the hourly cron only. A first big cleanup (gigabytes) must be done in chunks of 100 rows, each followed by `PRAGMA wal_checkpoint(TRUNCATE);`: SQLite writes every changed page to the `-wal` file first, so one big DELETE needs as much free disk as it deletes, fails when the disk is full, and leaves a huge `-wal` behind (on 8 Oct it ate 6 GB). If that happens, free a few MB and run `sudo sqlite3 /var/lib/tally/tally.db "PRAGMA wal_checkpoint(TRUNCATE);"` with the workers stopped.
+The script is a file because cron reads `%` as a newline and the query contains `strftime('%s')`. Check it: `sudo crontab -l | grep flow`, run it once by hand with `sudo /usr/local/bin/tally-flow-prune.sh` (no output means success), and look at the sizes with the query below an hour later; `flow` should stay under about 1 GB.
 
-Never delete `tally.db` itself: it also holds Telegram link codes, Guardian settings, Autopilot policies and decisions, and receipts. To see what is big: `sudo sqlite3 -readonly /var/lib/tally/tally.db "SELECT kind, count(*), round(sum(length(payload))/1048576.0,1) AS mb FROM snapshots GROUP BY kind ORDER BY mb DESC;"`. To shrink the file after a big delete, stop the workers (`./deploy/restart.sh --stop`), run `sudo sqlite3 /var/lib/tally/tally.db "VACUUM;"` (needs free space about the size of the live data), then restart. Never run workers as root or with a temporary data directory: two stray root `collect-registry` workers held 4 GB of `/tmp` copies for three days.
+To see what is big: `sudo sqlite3 -readonly /var/lib/tally/tally.db "SELECT kind, count(*), round(sum(length(payload))/1048576.0,1) AS mb FROM snapshots GROUP BY kind ORDER BY mb DESC;"`.
+
+A first big cleanup (gigabytes) must be done in chunks of 100 rows, each followed by `PRAGMA wal_checkpoint(TRUNCATE);`: SQLite writes every changed page to the `-wal` file first, so one big DELETE needs as much free disk as it deletes, fails when the disk is full, and leaves a huge `-wal` behind (on 8 Oct it ate 6 GB). If that happens, free a few MB and run `sudo sqlite3 /var/lib/tally/tally.db "PRAGMA wal_checkpoint(TRUNCATE);"` with the workers stopped.
+
+Never delete `tally.db` itself: it also holds Telegram link codes, Guardian settings, Autopilot policies and decisions, and receipts. To shrink the file after a big delete, stop the workers (`./deploy/restart.sh --stop`), run `sudo sqlite3 /var/lib/tally/tally.db "VACUUM;"` (needs free space about the size of the live data), then restart. Never run workers as root or with a temporary data directory: two stray root `collect-registry` workers held 4 GB of `/tmp` copies for three days.
 
 ## Checks after a restart
 
