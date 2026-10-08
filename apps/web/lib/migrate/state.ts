@@ -28,6 +28,7 @@ export interface PendingMigrate {
     simulation: boolean | null;
     minShares: string;
   };
+  pollStartedAt?: number;
 }
 
 export const MIGRATE_STORAGE_KEY = "tally.pendingMigrate";
