@@ -10,6 +10,7 @@ import { Tip } from "@/components/ui/tooltip";
 import { ISSUER_LABEL } from "@/lib/format";
 import { isBuyable } from "@/lib/tickers";
 import { companyName } from "./company-name";
+import { isSmallUsd, type SmallBalance } from "./small-balances";
 import { useOndoClosedReason } from "@/components/trade/ondo-gate";
 import type {
   HeadlineHoldingVM,
@@ -187,10 +188,32 @@ function IssuerRow({
 
 const worthOf = (s: string) => Number.parseFloat(s) || 0;
 /** Tokens actually held (a zero balance, such as the source of a migration, is not a holding), largest value first. */
+const isHeld = (i: IssuerHoldingVM) => !(Number.parseFloat(i.balanceTokens) === 0);
+const isSmall = (i: IssuerHoldingVM) => {
+  const n = Number.parseFloat(i.valueUsd);
+  return isSmallUsd(Number.isFinite(n) ? n : null);
+};
+/** Held and worth at least $1, largest first. */
 const heldIssuers = (g: HeadlineHoldingVM) =>
   g.issuers
-    .filter((i) => !(Number.parseFloat(i.balanceTokens) === 0))
+    .filter((i) => isHeld(i) && !isSmall(i))
     .sort((a, b) => worthOf(b.valueUsd) - worthOf(a.valueUsd));
+
+/** Held tokens worth under $1, for the "Show small token balances" dialog. */
+export function smallBalancesOf(vm: PortfolioVM): SmallBalance[] {
+  return vm.holdings.flatMap((g) =>
+    g.issuers
+      .filter((i) => isHeld(i) && isSmall(i))
+      .map((i) => ({
+        key: i.tokenContractAddress,
+        symbol: i.tokenSymbol,
+        ticker: g.ticker,
+        issuer: (i.issuer ?? "ondo") as SmallBalance["issuer"],
+        shares: sharesStr(i.balanceShares),
+        valueUsd: i.valueUsd,
+      })),
+  );
+}
 
 function Group({
   g,

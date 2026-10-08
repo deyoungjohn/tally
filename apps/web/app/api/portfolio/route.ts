@@ -33,7 +33,10 @@ export async function GET(req: NextRequest) {
     const engine = await getEngine();
     const held = await heldTickers(q.address as `0x${string}`);
     const tickers = [...new Set([...PICKER_TICKERS.map((t) => t.ticker), ...held])];
-    return json(await engine.portfolio(q.address as `0x${string}`, tickers));
+    const report = await engine.portfolio(q.address as `0x${string}`, tickers);
+    // The BNB price lets the page leave out a balance worth under $1; without it nothing is hidden.
+    const bnbUsd = await engine.ports.chain.bnbUsd().catch(() => null);
+    return json({ ...report, bnbUsd });
   } catch (e) {
     return errorResponse(e);
   }

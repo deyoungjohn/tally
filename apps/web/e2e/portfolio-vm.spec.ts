@@ -81,9 +81,10 @@ test.describe("portfolio view model: real routes on a seeded server", () => {
     await expect(nvda).toContainText("NVDAB");
     await expect(page.getByTestId("vm-fixture-label")).toContainText("not live");
     await expect(page.getByTestId("total-value")).toContainText("$");
-    // Unknown multiplier: shares are unknown, never a 1:1 guess, and there is no Sell for it.
-    const tsla = page.getByTestId("group-TSLA");
-    await expect(tsla.getByTestId("vm-issuer-TSLAon")).toContainText("unknown");
+    // Unknown multiplier: shares are unknown, never a 1:1 guess, and there is no Sell for it. Worth under $1, it sits in the
+    // small balances dialog rather than the list.
+    await page.getByTestId("show-small-balances").click();
+    await expect(page.getByTestId("small-balance-TSLAon")).toContainText("unknown");
     await expect(page.getByTestId("sell-TSLAon")).toHaveCount(0);
   });
 
@@ -360,6 +361,30 @@ test.describe("portfolio view model: states (stubbed routes)", () => {
     await expect(page.getByTestId("symbols-NVDA")).toHaveText("NVDAB · NVDAon", {
       timeout: 20_000,
     });
+  });
+
+  test("balances under $1 are left out and open in a dialog; the two columns start level", async ({
+    page,
+  }) => {
+    await mockWallet(page);
+    const vm = holdingVm();
+    const issuers = vm.holdings[0]!.issuers as { valueUsd: string }[];
+    issuers[1]!.valueUsd = "0.40";
+    await stubPortfolio(page, env(vm));
+    await page.goto("/portfolio");
+    await expect(page.getByTestId("symbols-NVDA")).toHaveText("NVDAon", { timeout: 20_000 });
+    await expect(page.getByTestId("sell-NVDAB")).toHaveCount(0);
+    await page.getByTestId("show-small-balances").click();
+    const dialog = page.getByRole("dialog", { name: "Small token balances" });
+    await expect(dialog.getByTestId("small-balance-NVDAB")).toBeVisible();
+    await page.keyboard.press("Escape");
+    // The first card on the left and the first card on the right share a top edge.
+    const left = await page.getByTestId("group-NVDA").boundingBox();
+    const right = await page
+      .getByTestId("total-value")
+      .locator("xpath=ancestor::div[1]")
+      .boundingBox();
+    expect(Math.abs(left!.y - right!.y)).toBeLessThan(3);
   });
 
   test("normal: token name first (bold, bigger), then the issuer (faint, thinner); shares as strings", async ({
@@ -692,6 +717,13 @@ test.describe("other assets: wallet.usdt and wallet.bnb only, from /api/portfoli
     await expect(extra).toContainText("TSMon");
     await expect(extra).toContainText("TSMC");
     await expect(page.getByTestId("group-NVDA")).toBeVisible();
+  });
+
+  test("other assets under $1 are not shown, with no way to show them", async ({ page }) => {
+    await run(page, { body: report({ wallet: { usdt: 0.5, bnb: 0.001 }, bnbUsd: 600 }) });
+    await page.waitForTimeout(1500);
+    await expect(page.getByTestId("wallet-balances")).toHaveCount(0);
+    await expect(page.getByText("Show small")).toHaveCount(0);
   });
 
   test("a fixture server says the balances are recorded, not live", async ({ page }) => {

@@ -13,8 +13,14 @@ import type { ActivityVM } from "@/modules/receipts/view-model";
 import type { PortfolioReport } from "@tally/engine";
 import { LiveNumber, LiveUsd } from "@/components/motion/live";
 import { ChainOnlyHoldings, chainOnlyParts } from "./chain-only-holdings";
+import {
+  SmallBalancesLink,
+  isSmallUsd,
+  otherAssetsShown,
+  type SmallBalance,
+} from "./small-balances";
 import { ActivityVmView } from "./activity-vm";
-import { HoldingsVm } from "./holdings-vm";
+import { HoldingsVm, smallBalancesOf } from "./holdings-vm";
 import { StatementVmView } from "./statement-vm";
 import { VmDegraded, VmEmpty, VmFreshness, VmSkeleton, usd, type VmEnvelope } from "./vm-shared";
 
@@ -107,115 +113,130 @@ export function PortfolioVmPanel({
 
   const env = portfolio.data;
   // A fixture server's chain read is made up, so it is never added to a wallet's holdings.
-  const extras = env?.fixtures ? [] : chainOnlyParts(balances.data ?? null, vm);
+  const allExtras = env?.fixtures ? [] : chainOnlyParts(balances.data ?? null, vm);
+  const extras = allExtras.filter((p) => !isSmallUsd(p.valueUsd));
+  // Balances under $1 stay out of the lists; the link below them opens them in a dialog.
+  const small: SmallBalance[] = [
+    ...(vm ? smallBalancesOf(vm) : []),
+    ...allExtras
+      .filter((p) => isSmallUsd(p.valueUsd))
+      .map((p) => ({
+        key: p.address,
+        symbol: p.symbol,
+        ticker: p.ticker,
+        issuer: p.issuer,
+        shares: String(Number(p.shares.toFixed(6))),
+        valueUsd: (p.valueUsd ?? 0).toFixed(2),
+      })),
+  ];
   return (
-    <div
-      className="mt-8 grid grid-cols-1 gap-6 min-[981px]:grid-cols-[1.4fr_1fr]"
-      data-testid="portfolio-vm"
-    >
-      <section aria-label="Portfolio" className="min-w-0">
-        {tabs.length > 1 ? (
-          <div className="mb-4 overflow-x-auto">
-            <Segmented
-              label="Portfolio section"
-              value={tab}
-              onChange={setTab}
-              options={tabs.map((t) => ({ value: t, label: TAB_LABEL[t] }))}
-            />
-          </div>
-        ) : null}
-
-        {tab === "holdings" ? (
-          <>
-            {extras.length > 0 && env?.vm?.state === "empty" ? null : (
-              <TabBody
-                name="Portfolio"
-                env={env}
-                error={portfolio.error}
-                emptyTitle="No tokenized shares yet"
-              >
-                {(v) => (
-                  <>
-                    <HoldingsVm vm={v} onSell={onSell} onMigrate={onMigrate} />
-                  </>
-                )}
-              </TabBody>
-            )}
-            <ChainOnlyHoldings parts={extras} onSell={onSell} />
-          </>
-        ) : null}
-        {tab === "activity" ? (
-          <TabBody
-            name="Activity"
-            env={activity.data}
-            error={activity.error}
-            emptyTitle="No activity yet"
-          >
-            {(v) => <ActivityVmView vm={v} />}
-          </TabBody>
-        ) : null}
-        {tab === "statement" ? (
-          <TabBody
-            name="Statement"
-            env={statement.data}
-            error={statement.error}
-            emptyTitle="No statement yet"
-          >
-            {(v) => <StatementVmView vm={v} />}
-          </TabBody>
-        ) : null}
-
-        {tab === "holdings" && env?.vm?.state === "empty" ? (
-          <div className="mt-4 grid gap-2" data-testid="vm-empty-help">
-            {env.vm.source === null ? (
-              <p className="t-meta">
-                No portfolio snapshot has been collected for this wallet yet. That is different from
-                an empty wallet.
-              </p>
-            ) : null}
-            <div>
-              <ButtonLink href="/trade">Open Trade</ButtonLink>
-            </div>
-          </div>
-        ) : null}
-      </section>
-
-      <aside className="grid content-start gap-4" aria-label="Summary">
-        <div className="glass p-5">
-          <p className="t-meta">Total value of tokenized stock holdings</p>
-          <p className="t-big mt-1" data-testid="total-value">
-            {vm && vm.state === "ready" ? usd(vm.totalValueUsd) : "–"}
-          </p>
-          {vm?.state === "ready" ? (
-            <dl className="mt-3">
-              <div className="detail-row">
-                <dt>Unrealized gain or loss</dt>
-                <dd>{usd(vm.totalUnrealizedPnlUsd)}</dd>
-              </div>
-              <div className="detail-row">
-                <dt>Realized gain or loss</dt>
-                <dd>{usd(vm.totalRealizedPnlUsd)}</dd>
-              </div>
-            </dl>
-          ) : null}
-          {env ? (
-            <div className="mt-3">
-              <VmFreshness
-                stale={env.stale || (vm?.stale ?? false)}
-                ageMs={vm?.ageMs ?? env.ageMs}
-                source={vm?.source ?? null}
-                fixtures={env.fixtures}
-              />
-            </div>
-          ) : null}
+    <div className="mt-8" data-testid="portfolio-vm">
+      {/* The tabs sit above both columns, so the cards on the left and the right start at the same height. */}
+      {tabs.length > 1 ? (
+        <div className="mb-4 overflow-x-auto">
+          <Segmented
+            label="Portfolio section"
+            value={tab}
+            onChange={setTab}
+            options={tabs.map((t) => ({ value: t, label: TAB_LABEL[t] }))}
+          />
         </div>
-        <WalletBalances
-          data={env ? balances.data : null}
-          failed={!!balances.error}
-          fixtures={env?.fixtures ?? false}
-        />
-        <ComingSoon items={["Price alerts"]} />
-      </aside>
+      ) : null}
+      <div className="grid grid-cols-1 gap-6 min-[981px]:grid-cols-[1.4fr_1fr]">
+        <section aria-label="Portfolio" className="min-w-0">
+          {tab === "holdings" ? (
+            <>
+              {extras.length > 0 && env?.vm?.state === "empty" ? null : (
+                <TabBody
+                  name="Portfolio"
+                  env={env}
+                  error={portfolio.error}
+                  emptyTitle="No tokenized shares yet"
+                >
+                  {(v) => (
+                    <>
+                      <HoldingsVm vm={v} onSell={onSell} onMigrate={onMigrate} />
+                    </>
+                  )}
+                </TabBody>
+              )}
+              <ChainOnlyHoldings parts={extras} onSell={onSell} />
+              <SmallBalancesLink items={small} />
+            </>
+          ) : null}
+          {tab === "activity" ? (
+            <TabBody
+              name="Activity"
+              env={activity.data}
+              error={activity.error}
+              emptyTitle="No activity yet"
+            >
+              {(v) => <ActivityVmView vm={v} />}
+            </TabBody>
+          ) : null}
+          {tab === "statement" ? (
+            <TabBody
+              name="Statement"
+              env={statement.data}
+              error={statement.error}
+              emptyTitle="No statement yet"
+            >
+              {(v) => <StatementVmView vm={v} />}
+            </TabBody>
+          ) : null}
+
+          {tab === "holdings" && env?.vm?.state === "empty" ? (
+            <div className="mt-4 grid gap-2" data-testid="vm-empty-help">
+              {env.vm.source === null ? (
+                <p className="t-meta">
+                  No portfolio snapshot has been collected for this wallet yet. That is different
+                  from an empty wallet.
+                </p>
+              ) : null}
+              <div>
+                <ButtonLink href="/trade">Open Trade</ButtonLink>
+              </div>
+            </div>
+          ) : null}
+        </section>
+
+        <aside className="grid content-start gap-4" aria-label="Summary">
+          <div className="glass p-5">
+            <p className="t-meta">Total value of tokenized stock holdings</p>
+            <p className="t-big mt-1" data-testid="total-value">
+              {vm && vm.state === "ready" ? usd(vm.totalValueUsd) : "–"}
+            </p>
+            {vm?.state === "ready" ? (
+              <dl className="mt-3">
+                <div className="detail-row">
+                  <dt>Unrealized gain or loss</dt>
+                  <dd>{usd(vm.totalUnrealizedPnlUsd)}</dd>
+                </div>
+                <div className="detail-row">
+                  <dt>Realized gain or loss</dt>
+                  <dd>{usd(vm.totalRealizedPnlUsd)}</dd>
+                </div>
+              </dl>
+            ) : null}
+            {env ? (
+              <div className="mt-3">
+                <VmFreshness
+                  stale={env.stale || (vm?.stale ?? false)}
+                  ageMs={vm?.ageMs ?? env.ageMs}
+                  source={vm?.source ?? null}
+                  fixtures={env.fixtures}
+                />
+              </div>
+            ) : null}
+          </div>
+          <WalletBalances
+            data={env ? balances.data : null}
+            failed={!!balances.error}
+            fixtures={env?.fixtures ?? false}
+          />
+          <ComingSoon items={["Price alerts"]} />
+        </aside>
+      </div>
     </div>
   );
 }
@@ -241,22 +262,29 @@ function WalletBalances({
   // what it is. On a live server a reading older than two minutes is not shown.
   const age = Date.now() - Date.parse(data.asOf);
   if (!fixtures && (!Number.isFinite(age) || age > BALANCES_MAX_AGE_MS)) return null;
+  // Anything under $1 is left out, with no way to show it.
+  const shown = otherAssetsShown(data.wallet, (data as { bnbUsd?: number | null }).bnbUsd);
+  if (!shown.usdt && !shown.bnb) return null;
   return (
     <div className="panel p-5" data-testid="wallet-balances">
       <p className="t-meta">Other assets in this wallet</p>
       <dl className="mt-2">
-        <div className="detail-row">
-          <dt>USDT</dt>
-          <dd data-testid="balance-usdt">
-            <LiveUsd value={data.wallet.usdt} />
-          </dd>
-        </div>
-        <div className="detail-row">
-          <dt>BNB (for network fees)</dt>
-          <dd data-testid="balance-bnb">
-            <LiveNumber value={data.wallet.bnb} decimals={5} />
-          </dd>
-        </div>
+        {shown.usdt ? (
+          <div className="detail-row">
+            <dt>USDT</dt>
+            <dd data-testid="balance-usdt">
+              <LiveUsd value={data.wallet.usdt} />
+            </dd>
+          </div>
+        ) : null}
+        {shown.bnb ? (
+          <div className="detail-row">
+            <dt>BNB (for network fees)</dt>
+            <dd data-testid="balance-bnb">
+              <LiveNumber value={data.wallet.bnb} decimals={5} />
+            </dd>
+          </div>
+        ) : null}
       </dl>
       {fixtures ? (
         <p className="t-meta mt-2 text-amber" data-testid="balances-fixture-label">

@@ -60,7 +60,7 @@ export function TradeClient(props: { ticker: string; initialUsd?: number }) {
           <div hidden={active !== "migrate"}>
             <MigrateTab flow={migrate} />
           </div>
-          {migrate.step === "idle" || migrate.step === 1 ? (
+          {(migrate.step === "idle" || migrate.step === 1) && !migrate.autoSelling ? (
             <SellSheet flow={migrate.sell} isMigrate={migrate.step === 1} />
           ) : null}
           <MigrateSheet flow={migrate} />

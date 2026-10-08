@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Modal } from "@/components/motion/modal";
-import { Button } from "@/components/motion/button";
+import { Button, ButtonLink } from "@/components/motion/button";
 import { useMigrateFlow } from "./use-migrate-flow";
 import { useTradeFlow } from "./use-trade-flow";
 import { TradeFlowLayer } from "./flow-host";
@@ -11,9 +11,33 @@ import { formatUnits, parseUnits } from "viem";
 import { Loader2 } from "lucide-react";
 import { roundDownToCent } from "@/lib/migrate/state";
 import { MigrateReceiptModal } from "./migrate-receipt";
+import { MigrateReviewModal, MigrateSellProgress } from "./migrate-review";
 import type { PlanDto } from "@/lib/dto";
 
+/** Everything Migrate shows: the review, the automatic sale's progress, then the later steps. */
 export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
+  const sp = flow.sell.phase;
+  return (
+    <>
+      <MigrateReviewModal
+        review={flow.reviewing}
+        onConfirm={() => void flow.confirmReview()}
+        onClose={flow.cancelReview}
+      />
+      {flow.autoSelling ? (
+        <MigrateSellProgress
+          phaseName={sp.name}
+          approving={sp.name === "approve" ? sp.step : null}
+          symbol={flow.pm?.from === "ondo" ? `${flow.pm.ticker}on` : `${flow.pm?.ticker ?? ""}B`}
+          onCancel={flow.cancel}
+        />
+      ) : null}
+      <MigrateSteps flow={flow} />
+    </>
+  );
+}
+
+function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
   const { pm, step, cancel, resumeStep2, waitingReceipt, source, onBuyDone, onBuySigning } = flow;
 
   const open = step !== "idle";
@@ -28,6 +52,13 @@ export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow>
       return false;
     }
   };
+
+  // After a verified sale the buy follows at once: its own review (with Confirm) is the next dialog. Only when the proceeds had
+  // to be typed in by hand does this step wait for the person.
+  useEffect(() => {
+    if (step === "interstitial" && source === "receipt" && !waitingReceipt && pm?.usdtReceived)
+      resumeStep2();
+  }, [step, source, waitingReceipt, pm?.usdtReceived, resumeStep2]);
 
   if (!pm) return null;
 
@@ -100,7 +131,18 @@ export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow>
             ) : step === "done" ? (
               <div className="grid gap-4">
                 <div className="flex justify-center mt-2">
-                  <Button onClick={() => setShowReceipt(true)}>View Migrate Receipt</Button>
+                  {pm.saleHash && pm.buyHash ? (
+                    <ButtonLink
+                      href={`/receipt/migrate/${pm.saleHash}/${pm.buyHash}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      data-testid="migrate-receipt-link"
+                    >
+                      View Migrate Receipt
+                    </ButtonLink>
+                  ) : (
+                    <Button onClick={() => setShowReceipt(true)}>View Migrate Receipt</Button>
+                  )}
                 </div>
 
                 <div className="flex justify-center space-x-4 text-xs text-neutral-500">
