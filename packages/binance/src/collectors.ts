@@ -226,7 +226,7 @@ export class BinanceCollectors {
   }
   prices(addresses: readonly string[]): Promise<RwaPrice[]> {
     if (addresses.length === 0) return Promise.resolve([]);
-    if (addresses.length > 100) throw new RangeError("rwa/price accepts at most 100 addresses");
+    if (addresses.length > 20) throw new RangeError("rwa/price accepts at most 20 addresses");
     const validated = addresses.map((a) => address.parse(a));
     return this.client.get(
       "/api/v1/dex/market/rwa/price",

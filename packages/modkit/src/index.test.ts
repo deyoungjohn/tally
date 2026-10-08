@@ -1,6 +1,7 @@
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { Worker } from "node:worker_threads";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { flags, MODULE_NAMES } from "@tally/config";
 import {
@@ -12,6 +13,7 @@ import {
 } from "./index";
 
 const stores: OpenSnapshotStore[] = [];
+const { DatabaseSync } = process.getBuiltinModule("node:sqlite") as typeof import("node:sqlite");
 const store = () => {
   const s = openStore(":memory:");
   stores.push(s);
@@ -22,6 +24,80 @@ afterEach(() => {
 });
 
 describe("snapshot store", () => {
+  it("a second connection waits through a six-second writer lock instead of failing after five seconds", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "tally-modkit-busy-"));
+    const path = join(dir, "tally.db");
+    const a = openStore(path);
+    const b = openStore(path);
+    const worker = new Worker(
+      `
+      const { parentPort, workerData } = require("node:worker_threads");
+      const { DatabaseSync } = require("node:sqlite");
+      const db = new DatabaseSync(workerData);
+      db.exec("BEGIN IMMEDIATE");
+      parentPort.postMessage("locked");
+      setTimeout(() => { db.exec("COMMIT"); db.close(); }, 6000);
+    `,
+      { eval: true, workerData: path },
+    );
+    try {
+      await new Promise<void>((resolve, reject) => {
+        worker.once("error", reject);
+        worker.once("message", () => resolve());
+      });
+      const start = process.hrtime.bigint();
+      b.put({ kind: "price", key: "NVDA", data: 1, source: "fixture", observedAt: 100 });
+      expect(Number(process.hrtime.bigint() - start) / 1_000_000).toBeGreaterThan(5000);
+      expect(a.latest("price", "NVDA", { maxAgeMs: 0, now: 100 })?.data).toBe(1);
+    } finally {
+      await worker.terminate();
+      a.close();
+      b.close();
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }, 20_000);
+
+  it("pruning commits at most 200 deletions at a time and another connection can write between chunks", () => {
+    const dir = mkdtempSync(join(tmpdir(), "tally-modkit-prune-"));
+    const path = join(dir, "tally.db");
+    const a = openStore(path);
+    const b = openStore(path);
+    const chunks: number[] = [];
+    const prepare = DatabaseSync.prototype.prepare;
+    try {
+      for (let observedAt = 0; observedAt < 502; observedAt++)
+        a.put({ kind: "flow", key: "NVDA", data: observedAt, observedAt, source: "fixture" });
+      const spy = vi.spyOn(DatabaseSync.prototype, "prepare").mockImplementation(function (
+        this: InstanceType<typeof DatabaseSync>,
+        sql,
+      ) {
+        const statement = prepare.call(this, sql);
+        if (sql.startsWith("DELETE FROM snapshots")) {
+          const run = statement.run.bind(statement);
+          vi.spyOn(statement, "run").mockImplementation((...params) => {
+            const result = run(...params);
+            const deleted = Number(result.changes);
+            chunks.push(deleted);
+            if (deleted > 0) b.health.report("collect-prices", { ok: true, now: chunks.length });
+            return result;
+          });
+        }
+        return statement;
+      });
+      try {
+        expect(a.prune({ kind: "flow", olderThanMs: 1000, keepLatest: 2 })).toBe(500);
+        expect(chunks).toEqual([200, 200, 100, 0]);
+        expect(a.history("flow", "NVDA", 0).map((row) => row.observedAt)).toEqual([500, 501]);
+        expect(a.health.get("collect-prices")?.lastOkAt).toBe(3);
+      } finally {
+        spy.mockRestore();
+      }
+    } finally {
+      a.close();
+      b.close();
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
   it("skips identical latest observations but retains changed payloads and new timestamps", () => {
     const s = store();
     const snapshot = {

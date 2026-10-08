@@ -96,6 +96,24 @@ function wait(ms: number, signal: AbortSignal): Promise<void> {
   });
 }
 
+/** Bookkeeping is best effort: a locked health table must not stop scheduling jobs. */
+async function reportHealth(
+  context: WorkerContext,
+  name: JobName,
+  result: Parameters<ModuleHealth["report"]>[1],
+  signal: AbortSignal,
+): Promise<void> {
+  for (let attempt = 1; attempt <= 2 && !signal.aborted; attempt++) {
+    try {
+      context.health.report(name, result);
+      return;
+    } catch (error) {
+      context.onWarn(`${name} health write failed (attempt ${attempt}/2): ${errorMessage(error)}`);
+      if (attempt === 1) await wait(250, signal);
+    }
+  }
+}
+
 /** Independent loops: one failing or slow job cannot delay a sibling. */
 export async function runJobs(
   jobs: readonly WorkerJob[],
@@ -114,21 +132,31 @@ export async function runJobs(
       while (!signal.aborted) {
         try {
           await runOnce(job, context, signal);
-          context.health.report(job.name, {
-            ok: true,
-            now: context.now(),
-            intervalMs: job.intervalMs,
-          });
+          await reportHealth(
+            context,
+            job.name,
+            {
+              ok: true,
+              now: context.now(),
+              intervalMs: job.intervalMs,
+            },
+            signal,
+          );
           failures = 0;
         } catch (error) {
           if (signal.aborted) break;
           failures++;
-          context.health.report(job.name, {
-            ok: false,
-            error: errorMessage(error),
-            now: context.now(),
-            intervalMs: job.intervalMs,
-          });
+          await reportHealth(
+            context,
+            job.name,
+            {
+              ok: false,
+              error: errorMessage(error),
+              now: context.now(),
+              intervalMs: job.intervalMs,
+            },
+            signal,
+          );
           context.onWarn(`${job.name} failed: ${errorMessage(error)}`);
         }
         const backoff = Math.min(

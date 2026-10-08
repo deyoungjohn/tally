@@ -45,13 +45,27 @@ describe("additive collector endpoints", () => {
     expect(url.searchParams.get("tokenContractAddresses")).toBe(addresses.join(","));
     expect(fetch.mock.calls[0]?.[1]?.headers).toHaveProperty("X-OC-SIGN");
   });
-  it("rejects over 100 and malformed addresses before requesting; empty batches need no request", async () => {
+  it("rejects over 20 and malformed addresses before requesting; empty batches need no request", async () => {
     const fetch = vi.fn(createFixtureFetch());
     const client = api(fetch);
-    expect(() => client.prices(Array(101).fill(`0x${"1".repeat(40)}`))).toThrow("at most 100");
+    expect(() => client.prices(Array(21).fill(`0x${"1".repeat(40)}`))).toThrow("at most 20");
     expect(() => client.prices(["invalid"])).toThrow();
     expect(await client.prices([])).toEqual([]);
     expect(fetch).not.toHaveBeenCalled();
+  });
+  it("accepts a full 20-address price batch with a short encoded query", async () => {
+    const fetch = vi.fn(createCollectorFixtureFetch(createFixtureFetch()));
+    const recorded = collectorRecording("P_rwa_price_batch").data as {
+      tokenContractAddress: string;
+    }[];
+    const addresses = Array.from(
+      { length: 20 },
+      (_, i) => recorded[i % recorded.length]!.tokenContractAddress,
+    );
+    expect(await api(fetch).prices(addresses)).toEqual(recorded);
+    const url = new URL(String(fetch.mock.calls[0]?.[0]));
+    expect(url.searchParams.get("tokenContractAddresses")?.split(",")).toEqual(addresses);
+    expect(url.search.length).toBeLessThan(1000);
   });
   it("HTTP-200 region errors and schema errors are rejected; the existing client retries rate limits", async () => {
     const recorded = collectorRecording("P_rwa_price_batch").data as {

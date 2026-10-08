@@ -6,6 +6,94 @@ import { collect } from "./collect";
 
 afterEach(() => vi.useRealTimers());
 
+it.each([true, false])(
+  "three locked health writes do not stop the loop or siblings and recover (job ok=%s)",
+  async (ok) => {
+    vi.useFakeTimers();
+    const store = openStore(":memory:");
+    const stop = new AbortController();
+    const onWarn = vi.fn();
+    let lockedWrites = 0;
+    const report = vi.fn<typeof store.health.report>((name, result) => {
+      if (name === "flow" && lockedWrites++ < 3) throw new Error("database is locked");
+      store.health.report(name, result);
+    });
+    const run = vi.fn(async () => {
+      if (!ok) throw new Error("source unavailable");
+    });
+    const sibling = vi.fn(async () => {});
+    const loop = runJobs(
+      [
+        { name: "flow", intervalMs: 10, run },
+        { name: "guardian", intervalMs: 10, run: sibling },
+      ],
+      {
+        store,
+        health: { ...store.health, report },
+        engine: createFixtureEngine(),
+        now: Date.now,
+        onWarn,
+      },
+      stop.signal,
+    );
+    try {
+      await vi.advanceTimersByTimeAsync(250);
+      expect(run).toHaveBeenCalledTimes(1);
+      expect(report.mock.calls.filter(([name]) => name === "flow")).toHaveLength(2);
+      expect(store.health.get("flow")).toBeNull();
+      await vi.advanceTimersByTimeAsync(350);
+      expect(run.mock.calls.length).toBeGreaterThanOrEqual(3);
+      expect(sibling.mock.calls.length).toBeGreaterThan(50);
+      expect(store.health.get("flow")).toMatchObject({ ok, intervalMs: 10 });
+      expect(store.health.get("guardian")?.ok).toBe(true);
+      expect(
+        onWarn.mock.calls.flat().filter((message) => message.includes("health write failed")),
+      ).toEqual([
+        "flow health write failed (attempt 1/2): database is locked",
+        "flow health write failed (attempt 2/2): database is locked",
+        "flow health write failed (attempt 1/2): database is locked",
+      ]);
+      if (!ok) expect(store.health.get("flow")?.lastError).toBe("source unavailable");
+    } finally {
+      stop.abort();
+      await loop;
+      store.close();
+    }
+  },
+);
+
+it("shutdown interrupts the health retry wait without another write", async () => {
+  vi.useFakeTimers();
+  const store = openStore(":memory:");
+  const stop = new AbortController();
+  const report = vi.fn<typeof store.health.report>(() => {
+    throw new Error("database is locked");
+  });
+  const loop = runJobs(
+    [{ name: "flow", intervalMs: 10, run: async () => {} }],
+    {
+      store,
+      health: { ...store.health, report },
+      engine: createFixtureEngine(),
+      now: Date.now,
+      onWarn: vi.fn(),
+    },
+    stop.signal,
+  );
+  try {
+    await vi.advanceTimersByTimeAsync(0);
+    expect(report).toHaveBeenCalledTimes(1);
+    stop.abort();
+    await loop;
+    await vi.advanceTimersByTimeAsync(300);
+    expect(report).toHaveBeenCalledTimes(1);
+  } finally {
+    stop.abort();
+    await loop;
+    store.close();
+  }
+});
+
 it("a job that always throws keeps running with backoff while a sibling stays healthy; abort stops both", async () => {
   vi.useFakeTimers();
   const store = openStore(":memory:");

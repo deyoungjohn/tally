@@ -26,10 +26,27 @@ it("fixture collector jobs write recorded registry/status and prices with origin
       source: expect.stringContaining("fixture:"),
       notes: [expect.stringContaining("truncated")],
     });
+    const batch = vi.spyOn(ctx.engine.collectors, "prices");
     await pricesJob.run(ctx);
+    expect(batch.mock.calls.length).toBeGreaterThan(1);
+    expect(
+      batch.mock.calls.every(([addresses]) => addresses.length > 0 && addresses.length <= 20),
+    ).toBe(true);
+    expect(batch.mock.calls.flatMap(([addresses]) => addresses)).toEqual([
+      ...new Set(
+        (registry!.data as { tokenContractAddress: string }[]).map((row) =>
+          row.tokenContractAddress.toLowerCase(),
+        ),
+      ),
+    ]);
     const prices = store.latest<RwaPrice[]>("prices", "bsc", { maxAgeMs: 15_000 });
     // The truncated registry omits AAPLB even though its price was recorded separately.
-    expect(prices?.data.map((r) => r.platformId)).toEqual(["bstock", "ondo", "ondo"]);
+    // Batch boundaries can change response order, but all recorded values stay the same.
+    const recorded = collectorRecording("P_rwa_price_batch").data as RwaPrice[];
+    const wanted = new Set(batch.mock.calls.flatMap(([addresses]) => addresses));
+    const expected = recorded.filter((row) => wanted.has(row.tokenContractAddress.toLowerCase()));
+    expect(prices?.data).toHaveLength(3);
+    expect(prices?.data).toEqual(expect.arrayContaining(expected));
     expect(prices?.notes?.join()).toContain("omitted by rwa/price");
     for (const row of prices!.data)
       expect(
@@ -46,7 +63,7 @@ it("fixture collector jobs write recorded registry/status and prices with origin
   } finally {
     store.close();
   }
-});
+}, 20_000);
 
 it("price collection without a registry explains why it cannot run", async () => {
   const store = openStore(":memory:");

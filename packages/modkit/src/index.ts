@@ -127,7 +127,7 @@ export function openStore(
   if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
   const db = new DatabaseSync(path);
   db.exec(`
-    PRAGMA busy_timeout = 5000;
+    PRAGMA busy_timeout = 30000;
     PRAGMA journal_mode = WAL;
     CREATE TABLE IF NOT EXISTS snapshots (
       id INTEGER PRIMARY KEY, kind TEXT NOT NULL, key TEXT NOT NULL,
@@ -257,17 +257,25 @@ export function openStore(
         `kind NOT IN (${protectedKinds.map(() => "?").join(",")})`,
       ].join(" AND ");
       const params = [...(kind === undefined ? [] : [kind]), ...protectedKinds];
-      const result = db
-        .prepare(
-          `DELETE FROM snapshots WHERE id IN (
-        SELECT id FROM (
-          SELECT id, observed_at, ROW_NUMBER() OVER (PARTITION BY kind,key ORDER BY observed_at DESC,id DESC) AS position
-          FROM snapshots WHERE ${filter}
-        ) WHERE observed_at < ? AND position > ?
+      const statement = db.prepare(
+        `DELETE FROM snapshots WHERE id IN (
+        SELECT old.id FROM snapshots AS old WHERE ${filter} AND old.observed_at < ?
+          AND old.id NOT IN (
+            SELECT id FROM snapshots WHERE kind=old.kind AND key=old.key
+            ORDER BY observed_at DESC,id DESC LIMIT ?
+          ) LIMIT 200
       )`,
-        )
-        .run(...params, olderThanMs, keepLatest);
-      return Number(result.changes);
+      );
+      // Indexed latest-row lookups avoid scanning/ranking the whole history under the write lock.
+      // Each statement autocommits before pausing, letting other processes acquire the writer lock.
+      const pause = new Int32Array(new SharedArrayBuffer(4));
+      let total = 0;
+      for (;;) {
+        const deleted = Number(statement.run(...params, olderThanMs, keepLatest).changes);
+        if (deleted === 0) return total;
+        total += deleted;
+        Atomics.wait(pause, 0, 0, 1);
+      }
     },
   };
 }
