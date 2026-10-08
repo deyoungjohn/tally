@@ -188,8 +188,8 @@ describe("loadMigrateReceipt", () => {
     const res = await loadMigrateReceipt(h1, h2);
     expect(res.state).toBe("ready");
     if (res.state === "ready") {
-      expect(res.vm.sellLeg.tokenSymbol).toBe("NVDAB");
-      expect(res.vm.buyLeg.tokenSymbol).toBe("NVDAon");
+      expect(res.vm.giveUp.tokenSymbol).toBe("NVDAB");
+      expect(res.vm.receive.tokenSymbol).toBe("NVDAon");
     }
   });
 });
