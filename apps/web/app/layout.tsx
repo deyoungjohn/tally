@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import type { ReactNode } from "react";
+import { BackToTop } from "@/components/back-to-top";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { WalletRoot } from "@/components/wallet/wallet-context";
@@ -58,6 +59,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             {children}
             <SiteFooter />
           </div>
+          <BackToTop />
         </WalletRoot>
       </body>
     </html>

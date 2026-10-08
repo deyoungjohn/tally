@@ -4,11 +4,12 @@
 
 import { ArrowRight, Info } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { RadarCardDisplay, RadarDisplay, RadarGradeDisplay } from "@/app/api/vm/radar/display";
 import type { FlowPanelDisplay } from "@/modules/flow/view-model";
 import { MorphingSearch, type MorphingSearchItem } from "@/components/motion/morphing-search";
 import { Segmented } from "@/components/motion/segmented";
+import { HowWeGradeLink } from "./how-we-grade-link";
 import { FlagBadge, GradeBadge, LiquidityBadge, TokenLogo } from "@/components/trade/badges";
 import { Tip } from "@/components/ui/tooltip";
 import { useJson } from "@/lib/hooks/use-json";
@@ -207,11 +208,38 @@ export function FlowPanel({ panel }: { panel: FlowPanelDisplay }) {
   );
 }
 
+/** Buys plus sells over every window of every issuer (windows with no reading count as zero). */
+function activityOf(card: RadarCardDisplay): number {
+  const panel = card.flowPanel;
+  if (!panel || panel.state !== "ready") return 0;
+  return panel.issuers.reduce(
+    (sum, i) => sum + i.windows.reduce((s, w) => s + (w.reason ? 0 : w.buys + w.sells), 0),
+    0,
+  );
+}
+
+/** The ticker with the most trades; ties go to the first alphabetically. */
+function mostActive(cards: RadarCardDisplay[]): string | null {
+  let best: { ticker: string; n: number } | null = null;
+  for (const c of cards) {
+    const n = activityOf(c);
+    if (!best || n > best.n || (n === best.n && c.ticker < best.ticker))
+      best = { ticker: c.ticker, n };
+  }
+  return best?.ticker ?? null;
+}
+
 /** The Flow tab: search for a token, pick it, and see that one token's flow. Only one is shown at a time. */
 function FlowView({ cards }: { cards: RadarCardDisplay[] }) {
   const [q, setQ] = useState("");
   const [picked, setPicked] = useState<string | null>(null);
   const withFlow = useMemo(() => cards.filter((c) => c.flowPanel), [cards]);
+  // The most active token is chosen once, when the tab first has data; after that only a click changes the pick, so the
+  // panel never jumps while the numbers refresh.
+  const busiest = useMemo(() => mostActive(withFlow), [withFlow]);
+  useEffect(() => {
+    if (picked === null && busiest) setPicked(busiest);
+  }, [picked, busiest]);
   const suggestions = useMemo<MorphingSearchItem[]>(
     () =>
       withFlow.map((c) => ({
@@ -474,9 +502,10 @@ export function RadarVmBody() {
               className="w-full min-[561px]:w-[300px]"
             />
           </div>
+          <HowWeGradeLink />
 
           <ul
-            className="m-0 mt-4 columns-1 gap-3 p-0 min-[761px]:columns-2 min-[1100px]:columns-3"
+            className="m-0 mt-3 columns-1 gap-3 p-0 min-[761px]:columns-2 min-[1100px]:columns-3"
             data-testid="radar-masonry"
           >
             {cards.map(({ card, grades }) => (

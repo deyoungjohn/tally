@@ -16,14 +16,14 @@ type Status = NonNullable<ReceiptVM["status"]>;
 
 const STATUS: Record<Status, { label: string; tone: string; tip: string }> = {
   RECONCILED: {
-    label: "Matches the quote",
+    label: "Verified",
     tone: "badge-up",
-    tip: "The amount received is within the expected range of the quote.",
+    tip: "The chain confirms this transaction and the amount you received.",
   },
   RECONCILED_WITH_DIFFERENCE: {
-    label: "Fill differs from the quote",
-    tone: "badge-amber",
-    tip: "The chain confirms what you received. It differs from the quote, which can happen when prices move.",
+    label: "Verified",
+    tone: "badge-up",
+    tip: "The chain confirms this transaction and the amount you received. The amount differs from the quote, which can happen when prices move.",
   },
   PENDING: {
     label: "Pending",
@@ -61,7 +61,7 @@ const dec = (v: string | null) => {
 const bps = (v: number | null) =>
   v === null ? null : `${v > 0 ? "+" : ""}${(v / 100).toFixed(2)}%`;
 
-const BROWSER_NOTE = "Reported by your browser, not verified";
+const BROWSER_NOTE = "Reported by your browser";
 
 function Step({
   stage,
