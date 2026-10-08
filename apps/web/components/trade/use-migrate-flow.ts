@@ -106,7 +106,7 @@ export function useMigrateFlow() {
               route: plan.routeText,
               vendor: plan.vendor,
               quoteTime: plan.expiresAt - 15000,
-              simulation: false, // Sell doesn't record simulation output
+              simulation: plan.simulation ? plan.simulation.ethCall === "ok" : null,
               guaranteedUsdt: plan.minUsdtOut,
             },
           };
@@ -222,7 +222,7 @@ export function useMigrateFlow() {
             route: plan.routeText,
             vendor: plan.vendor,
             quoteTime: plan.builtAt,
-            simulation: !!plan.simulation && plan.simulation.ethCall === "ok",
+            simulation: plan.simulation ? plan.simulation.ethCall === "ok" : null,
             minShares: plan.minShares,
           },
         };

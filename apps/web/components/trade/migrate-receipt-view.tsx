@@ -1,10 +1,11 @@
 import { CheckCircle2 } from "lucide-react";
 import { MigrateReceiptVM } from "../../lib/migrate/receipt-vm";
+import { ShareReceiptButton } from "./share-receipt-button";
 
 export function MigrateReceiptView({ vm }: { vm: MigrateReceiptVM }) {
   return (
     <div className="grid gap-6 mt-4 text-sm text-white bg-transparent">
-      {vm.isFixture && <div className="text-orange-500 font-medium">Fixture data</div>}
+      {vm.isFixture && <div className="text-[var(--orange-text)] font-medium">Fixture data</div>}
 
       <div className="flex flex-col gap-1 pb-4 border-b border-white/15">
         <h3 className="font-semibold text-base mb-2">Share-true comparison</h3>
@@ -14,21 +15,21 @@ export function MigrateReceiptView({ vm }: { vm: MigrateReceiptVM }) {
             <div className="flex gap-8 mt-2 font-medium">
               <div>
                 <span className="text-white/60 mr-2">Share difference:</span>
-                <span className={vm.shareDiff.isDown ? "text-orange-500" : ""}>
+                <span className={vm.shareDiff.isDown ? "text-[var(--orange-text)]" : ""}>
                   {vm.shareDiff.diff}
                 </span>
               </div>
               {vm.dollarDiff && (
                 <div>
                   <span className="text-white/60 mr-2">Dollar difference:</span>
-                  <span className={vm.dollarDiff.isDown ? "text-orange-500" : ""}>
+                  <span className={vm.dollarDiff.isDown ? "text-[var(--orange-text)]" : ""}>
                     {vm.dollarDiff.diff}
                   </span>
                 </div>
               )}
             </div>
           </>
-        ) : (
+        ) : (vm.giveUp.verified && vm.receive.verified) ? null : (
           <p className="text-white/60">Pending verification...</p>
         )}
       </div>
@@ -51,7 +52,7 @@ export function MigrateReceiptView({ vm }: { vm: MigrateReceiptVM }) {
             </div>
 
             <div className="text-white/60">Shares</div>
-            <div>{vm.giveUp.shares ?? (vm.giveUp.verified ? "unavailable" : "Pending")}</div>
+            <div>{vm.giveUp.shares ?? (vm.giveUp.verified ? "shares unavailable" : "Pending")}</div>
 
             <div className="text-white/60">Value (USDT)</div>
             <div>{vm.giveUp.usdValue ?? "Pending"}</div>
@@ -62,13 +63,17 @@ export function MigrateReceiptView({ vm }: { vm: MigrateReceiptVM }) {
             <div className="flex justify-between items-center">
               <span className="text-white/60">{vm.giveUp.protectionLabel}</span>
               <span>
-                {vm.giveUp.protectionValue ? `${vm.giveUp.protectionValue} USDT` : "Pending"}
+                {vm.giveUp.protectionValue 
+                  ? `${vm.giveUp.protectionValue} USDT` 
+                  : (vm.giveUp.verified ? "Not recorded on chain" : "Pending")}
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-white/60">Delivered</span>
               <div className="flex items-center gap-1">
-                {vm.giveUp.usdValue ? `${vm.giveUp.usdValue} USDT` : "Pending"}
+                {vm.giveUp.usdValue 
+                  ? `${vm.giveUp.usdValue} USDT` 
+                  : (vm.giveUp.verified ? "Not recorded on chain" : "Pending")}
                 {vm.giveUp.protectionPass && <CheckCircle2 className="w-3 h-3 text-white" />}
               </div>
             </div>
@@ -99,7 +104,7 @@ export function MigrateReceiptView({ vm }: { vm: MigrateReceiptVM }) {
                   ? "yes"
                   : vm.giveUp.simulation === false
                     ? "no"
-                    : "Not recorded on chain"}
+                    : "Not recorded"}
               </span>
             </div>
             <div className="flex justify-between">
@@ -153,7 +158,7 @@ export function MigrateReceiptView({ vm }: { vm: MigrateReceiptVM }) {
             </div>
 
             <div className="text-white/60">Shares</div>
-            <div>{vm.receive.shares ?? (vm.receive.verified ? "unavailable" : "Pending")}</div>
+            <div>{vm.receive.shares ?? (vm.receive.verified ? "shares unavailable" : "Pending")}</div>
 
             <div className="text-white/60">Value (USDT)</div>
             <div>{vm.receive.usdValue ?? "Pending"}</div>
@@ -164,13 +169,17 @@ export function MigrateReceiptView({ vm }: { vm: MigrateReceiptVM }) {
             <div className="flex justify-between items-center">
               <span className="text-white/60">{vm.receive.protectionLabel}</span>
               <span>
-                {vm.receive.protectionValue ? `${vm.receive.protectionValue} shares` : "Pending"}
+                {vm.receive.protectionValue 
+                  ? `${vm.receive.protectionValue} shares` 
+                  : (vm.receive.verified ? "Not recorded on chain" : "Pending")}
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-white/60">Delivered</span>
               <div className="flex items-center gap-1">
-                {vm.receive.shares ? `${vm.receive.shares} shares` : "Pending"}
+                {vm.receive.shares 
+                  ? `${vm.receive.shares} shares` 
+                  : (vm.receive.verified ? "Not recorded on chain" : "Pending")}
                 {vm.receive.protectionPass && <CheckCircle2 className="w-3 h-3 text-white" />}
               </div>
             </div>
@@ -201,7 +210,7 @@ export function MigrateReceiptView({ vm }: { vm: MigrateReceiptVM }) {
                   ? "yes"
                   : vm.receive.simulation === false
                     ? "no"
-                    : "Not recorded on chain"}
+                    : "Not recorded"}
               </span>
             </div>
             <div className="flex justify-between">
@@ -239,20 +248,7 @@ export function MigrateReceiptView({ vm }: { vm: MigrateReceiptVM }) {
         </div>
       </div>
 
-      {typeof window !== "undefined" && (
-        <div className="flex justify-center border-t border-white/15 pt-4 mt-2">
-          <button
-            onClick={() =>
-              navigator.clipboard.writeText(
-                `${window.location.origin}/receipt/migrate/${vm.giveUp.txHash}/${vm.receive.txHash}`,
-              )
-            }
-            className="text-sm px-4 py-2 border border-white/15 rounded-md hover:bg-white/5 transition-colors"
-          >
-            Copy Migrate Receipt Link
-          </button>
-        </div>
-      )}
+      <ShareReceiptButton sellHash={vm.giveUp.txHash} buyHash={vm.receive.txHash} />
     </div>
   );
 }

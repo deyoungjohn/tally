@@ -152,17 +152,23 @@ export function buildMigrateReceipt(sell: LegInput, buy: LegInput): MigrateRecei
   if (sell.sellUsdtReceived && buy.buyUsdtSpent) {
     const inUsd = BigInt(sell.sellUsdtReceived);
     const outUsd = BigInt(buy.buyUsdtSpent);
-    // Diff is (out - in). Positive means we got more shares value, but wait:
-    // "USDT out of leg 1 vs USDT spent in leg 2, plus the two fees"
-    // So dollar difference = (leg 2 spent USDT - leg 1 received USDT) - sell fee - buy fee
-    // outUsd is leg 2 spent, inUsd is leg 1 received
-    let netGain = Number(formatUnits(outUsd - inUsd, 18));
-    if (sell.gasUsd) netGain -= sell.gasUsd;
-    if (buy.gasUsd) netGain -= buy.gasUsd;
+    const diffWei = inUsd - outUsd;
+    const isDown = diffWei < 0n;
+    const absDiff = isDown ? -diffWei : diffWei;
+    
+    // Convert to cents (1e16 wei) rounding down, then to dollar string
+    const cents = absDiff / 10000000000000000n;
+    const dollars = cents / 100n;
+    const remainder = cents % 100n;
+    let diffStr = (isDown ? "-" : "+") + `$${dollars}.${remainder.toString().padStart(2, "0")}`;
+    
+    if (sell.gasUsd !== undefined && buy.gasUsd !== undefined) {
+      const totalGas = sell.gasUsd + buy.gasUsd;
+      diffStr += ` (minus $${totalGas.toFixed(2)} gas)`;
+    }
 
-    const isDown = netGain < 0;
     dollarDiff = {
-      diff: (isDown ? "" : "+") + netGain.toFixed(2),
+      diff: diffStr,
       isDown,
     };
   }
