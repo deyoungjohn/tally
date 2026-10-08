@@ -9,6 +9,7 @@ import type { SellTarget } from "@/components/trade/use-sell-flow";
 import { Tip } from "@/components/ui/tooltip";
 import { ISSUER_LABEL } from "@/lib/format";
 import { isBuyable, nameOf } from "@/lib/tickers";
+import { companyName } from "./company-name";
 import type {
   HeadlineHoldingVM,
   IssuerHoldingVM,
@@ -195,8 +196,13 @@ function Group({
       <div className="flex items-center gap-3">
         <TokenLogo ticker={g.ticker} />
         <div className="min-w-0 flex-1">
-          <p className="font-semibold">{nameOf(g.ticker)}</p>
-          <p className="t-meta mono">{g.issuers.map((i) => i.tokenSymbol).join(" · ")}</p>
+          <p
+            className="mono text-[19px] font-bold leading-tight"
+            data-testid={`symbols-${g.ticker}`}
+          >
+            {g.issuers.map((i) => i.tokenSymbol).join(" · ")}
+          </p>
+          <p className="text-[13.5px] font-light text-fg2">{companyName(g.ticker)}</p>
         </div>
         <div className="text-right">
           <p

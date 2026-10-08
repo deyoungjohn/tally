@@ -17,9 +17,15 @@ function Premium({ p }: { p: number | undefined }) {
   // Colour is never the only signal: an arrow and the sign say it too.
   const cheaper = p < 0;
   return (
-    <span className={cn("num", cheaper ? "pos" : p > 0 ? "neg" : "text-fg2")}>
+    <span
+      className={cn(
+        "num inline-flex items-center gap-1",
+        cheaper ? "pos" : p > 0 ? "neg" : "text-fg2",
+      )}
+    >
       {cheaper ? "▼ " : p > 0 ? "▲ " : ""}
-      <LivePct value={p} /> <span className="text-fg3">vs US</span>
+      <LivePct value={p} />
+      <span className="text-fg3">vs US</span>
     </span>
   );
 }
@@ -97,8 +103,9 @@ function Row({ r, selected, onSelect }: { r: RowDto; selected: boolean; onSelect
               ) : null}
             </span>
             {pickable ? (
-              <span className="mt-1 block text-[14px] text-fg2">
-                <LiveUsd value={r.usdPerShare} className="num text-fg" /> per share ·{" "}
+              <span className="mt-1 flex flex-wrap items-center gap-x-1.5 text-[14px] leading-none text-fg2">
+                <LiveUsd value={r.usdPerShare} className="num text-fg" />
+                <span>per share ·</span>
                 <Premium p={r.premium} />
               </span>
             ) : (
@@ -220,11 +227,13 @@ export function IssuerList({
           vs {quote.saving.vsSymbol}, network fee included.
         </p>
       ) : null}
-      {quote.warnings.map((w) => (
-        <p key={w} className="t-meta mt-2 text-amber" role="status">
-          {w}
-        </p>
-      ))}
+      {quote.warnings
+        .filter((w) => !/attestation check skipped/i.test(w))
+        .map((w) => (
+          <p key={w} className="t-meta mt-2 text-amber" role="status">
+            {w}
+          </p>
+        ))}
     </div>
   );
 }

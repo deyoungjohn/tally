@@ -18,6 +18,7 @@ import { MIN_SELL_USDT } from "@tally/config";
 import { Tip } from "@/components/ui/tooltip";
 import { ISSUER_LABEL, fmtUsd } from "@/lib/format";
 import { isBuyable, nameOf, tokenPair } from "@/lib/tickers";
+import { companyName } from "./company-name";
 import { LiveNumber, LiveShares, LiveUsd } from "@/components/motion/live";
 import { LearnMore } from "@/components/learn-more";
 
@@ -41,8 +42,13 @@ export function HoldingGroup({
       <div className="flex items-center gap-3">
         <TokenLogo ticker={g.ticker} />
         <div className="min-w-0 flex-1">
-          <p className="font-semibold">{nameOf(g.ticker)}</p>
-          <p className="t-meta mono">{g.parts.map((x) => x.symbol).join(" · ")}</p>
+          <p
+            className="mono text-[19px] font-bold leading-tight"
+            data-testid={`symbols-${g.ticker}`}
+          >
+            {g.parts.map((x) => x.symbol).join(" · ")}
+          </p>
+          <p className="text-[13.5px] font-light text-fg2">{companyName(g.ticker)}</p>
         </div>
         <div className="text-right">
           <LiveShares
@@ -407,7 +413,7 @@ export function PortfolioPage() {
                 </div>
               </dl>
             </div>
-            <ComingSoon items={["Dividends received as shares", "Sell to USDT", "Price alerts"]} />
+            <ComingSoon items={["Price alerts"]} />
           </aside>
         </div>
       )}

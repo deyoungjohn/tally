@@ -3,6 +3,7 @@
 import { AlertTriangle, ShieldCheck } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatedNumber } from "@/components/motion/animated-number";
+import { LiveText } from "@/components/motion/live";
 import { Button } from "@/components/motion/button";
 import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { useJson } from "@/lib/hooks/use-json";
@@ -97,8 +98,11 @@ function TradeInner({
 
   const spendUsd = useMemo(() => {
     if (unit === "usd") return amount >= MIN_USD ? amount : null;
-    if (row?.amountUsd === undefined) return null;
-    return Math.max(MIN_USD, Math.ceil(row.amountUsd * 100) / 100);
+    // Priced at once from the row's price per share, so the dollar value follows every keystroke; the quote then refines it.
+    const usd =
+      row?.usdPerShare !== undefined && amount > 0 ? amount * row.usdPerShare : row?.amountUsd;
+    if (usd === undefined) return null;
+    return Math.max(MIN_USD, Math.ceil(usd * 100) / 100);
   }, [unit, amount, row]);
 
   // Session price line, from our own polling.
@@ -181,11 +185,14 @@ function TradeInner({
               {q ? <SessionBadge session={q.session} /> : null}
             </div>
             <h1 className="t-h2 mt-4 !text-[clamp(31px,5vw,45px)]">{name}</h1>
-            <p className="t-meta mono">{tokenPair(ticker)} · tokenized, not the underlying share</p>
+            <p className="t-meta mono" data-testid="top-symbol">
+              <LiveText text={best?.symbol ?? tokenPair(ticker)} /> · tokenized, not the underlying
+              share
+            </p>
           </div>
 
           <div className="glass order-2 min-w-0 p-5">
-            <p className="t-meta">US price per share</p>
+            <p className="t-meta">Price</p>
             <p className="t-big mt-1" data-testid="ref-price">
               {q?.referencePrice == null ? (
                 <span className="text-fg-disabled">–</span>
@@ -204,7 +211,7 @@ function TradeInner({
             <div className="mt-3">
               <Sparkline points={points} />
             </div>
-            <p className="t-meta mt-1">This session · updates every 10 seconds</p>
+            <p className="t-meta mt-1">Updates every 10s</p>
           </div>
 
           <div className="order-4 min-w-0">
@@ -312,14 +319,7 @@ function TradeInner({
                 {quote.error.message}
               </p>
             ) : null}
-            <ComingSoon
-              items={
-                flags.switch === true
-                  ? ["Sell to USDT", "Limit price", "Recurring buys"]
-                  : ["Migrate between issuers", "Sell to USDT", "Limit price", "Recurring buys"]
-              }
-              title="Advanced · coming soon"
-            />
+            <ComingSoon items={["Limit price", "Recurring buys"]} title="Advanced · coming soon" />
           </div>
         </div>
       </div>

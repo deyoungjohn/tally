@@ -2,6 +2,8 @@
 // Readings that change while the page is open (prices, shares, balances) roll digit by digit.
 // A missing value renders an en dash, like the rest of the site.
 
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { EASE_OUT } from "@/lib/ease";
 import { fmtPct, fmtShares, fmtUsd } from "@/lib/format";
 import { NumberTicker } from "./animated-number";
 
@@ -65,5 +67,31 @@ export function LiveNumber({
       duration={0.6}
       className={className}
     />
+  );
+}
+
+/** A word that changes while the page is open (the top issuer's symbol): the old text rolls up and out, the new one rolls in, like a digit. */
+export function LiveText({ text, className }: { text: string; className?: string }) {
+  const reduce = useReducedMotion();
+  return (
+    <span
+      className={`relative inline-flex overflow-hidden align-bottom ${className ?? ""}`}
+      style={{ height: "1.3em" }}
+    >
+      <span className="sr-only">{text}</span>
+      <AnimatePresence initial={false} mode="popLayout">
+        <motion.span
+          key={text}
+          aria-hidden="true"
+          className="inline-block leading-[1.3]"
+          initial={reduce ? false : { y: "100%", opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={reduce ? { opacity: 0 } : { y: "-100%", opacity: 0 }}
+          transition={reduce ? { duration: 0 } : { duration: 0.45, ease: EASE_OUT }}
+        >
+          {text}
+        </motion.span>
+      </AnimatePresence>
+    </span>
   );
 }

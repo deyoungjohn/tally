@@ -47,8 +47,8 @@ export function useLiveQuote(ticker: string, amount: QuoteAmount | null, paused 
 
   useEffect(() => {
     if (!key || paused) return;
-    // Debounce typing: wait for a pause before asking.
-    const first = setTimeout(() => void load(), 350);
+    // Debounce typing: a short pause before asking.
+    const first = setTimeout(() => void load(), 120);
     const tick = setInterval(() => {
       if (document.visibilityState === "visible") void load();
     }, QUOTE_POLL_MS);

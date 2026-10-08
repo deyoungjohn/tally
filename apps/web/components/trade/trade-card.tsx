@@ -156,10 +156,11 @@ export function TradeCard(p: TradeCardProps) {
                 autoComplete="off"
                 placeholder={selling ? "0.025" : p.unit === "usd" ? "6" : "0.025"}
                 value={selling ? p.sell!.text : p.amountText}
+                onChange={() => {}}
                 aria-invalid={selling ? sellShares > p.sell!.heldShares : tooSmall}
                 aria-describedby="amount-hint"
-                onChange={(e) => {
-                  const v = e.target.value.replace(",", ".");
+                onInput={(e) => {
+                  const v = e.currentTarget.value.replace(",", ".");
                   if (/^\d*\.?\d{0,8}$/.test(v)) (selling ? p.sell!.onText : p.onAmount)(v);
                 }}
               />

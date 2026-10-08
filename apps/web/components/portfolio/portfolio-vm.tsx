@@ -206,7 +206,7 @@ export function PortfolioVmPanel({
           failed={!!balances.error}
           fixtures={env?.fixtures ?? false}
         />
-        <ComingSoon items={["Dividends received as shares", "Sell to USDT", "Price alerts"]} />
+        <ComingSoon items={["Price alerts"]} />
       </aside>
     </div>
   );

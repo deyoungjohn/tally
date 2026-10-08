@@ -4,7 +4,7 @@
 // wallet from the Privy access token and `x-tally-wallet` (see `useSessionFetch`). The settings are shown read-only: no route
 // accepts a change yet, and the screen says so.
 
-import { Bell, BellOff, Link2, LogIn, ShieldAlert } from "lucide-react";
+import { Bell, BellOff, Check, Copy, ExternalLink, Link2, LogIn, ShieldAlert } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type {
   AlertFeedItemVM,
@@ -17,6 +17,35 @@ import { Tip } from "@/components/ui/tooltip";
 import { useSessionFetch } from "@/lib/hooks/use-session-fetch";
 import { useSessionJson, type SessionJson } from "@/lib/hooks/use-session-json";
 import { tokenSymbol } from "@/lib/tickers";
+
+/** The Guardian bot's public Telegram username. */
+export const GUARDIAN_BOT = "tallyguardianbot";
+const BOT_URL = `https://t.me/${GUARDIAN_BOT}`;
+
+/** Copies `text` and says so for two seconds. A blocked clipboard leaves the text selectable on screen. */
+function CopyButton({ text, label, testId }: { text: string; label: string; testId: string }) {
+  const [done, setDone] = useState(false);
+  return (
+    <button
+      type="button"
+      className="btn btn-glassy !h-9 !px-3 text-[13.5px]"
+      aria-label={done ? `${label} copied` : `Copy ${label}`}
+      data-testid={testId}
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          setDone(true);
+          window.setTimeout(() => setDone(false), 2000);
+        } catch {
+          /* clipboard blocked */
+        }
+      }}
+    >
+      {done ? <Check size={14} aria-hidden /> : <Copy size={14} aria-hidden />}
+      {done ? "Copied" : "Copy"}
+    </button>
+  );
+}
 
 const SEVERITY: Record<AlertFeedItemVM["severity"], { label: string; cls: string }> = {
   critical: { label: "Critical", cls: "badge-amber" },
@@ -142,13 +171,40 @@ function TelegramCard({
           </p>
           {t.activeLinkCode ? (
             <div className="mt-3" data-testid="guardian-link-code">
-              <p className="t-meta">Send this to the Tally bot in Telegram:</p>
-              <p className="mono mt-1 text-[20px] font-bold tracking-wide">
-                /link {t.activeLinkCode.code}
-              </p>
+              <p className="t-meta">1. Open the Tally bot in Telegram:</p>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <a
+                  className="btn btn-primary !h-9 !px-4 text-[14px]"
+                  href={BOT_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  data-testid="guardian-open-telegram"
+                >
+                  <ExternalLink size={14} aria-hidden /> Open @{GUARDIAN_BOT}
+                </a>
+                <CopyButton
+                  text={`@${GUARDIAN_BOT}`}
+                  label="bot username"
+                  testId="guardian-copy-bot"
+                />
+              </div>
+              <p className="t-meta mt-3">2. Send it this message:</p>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <p
+                  className="mono m-0 select-all text-[20px] font-bold tracking-wide"
+                  data-testid="guardian-link-text"
+                >
+                  /link {t.activeLinkCode.code}
+                </p>
+                <CopyButton
+                  text={`/link ${t.activeLinkCode.code}`}
+                  label="link command"
+                  testId="guardian-copy-link"
+                />
+              </div>
               <p className="t-meta mt-1">
                 Valid for about {Math.max(1, Math.round(t.activeLinkCode.expiresInSeconds / 60))}{" "}
-                minutes, once.
+                minutes, once. This page updates by itself when the bot confirms.
               </p>
             </div>
           ) : (
@@ -202,10 +258,17 @@ function Settings({ vm }: { vm: GuardianSettingsVM }) {
   );
 }
 
+const polledLinked = (st: SessionJson<GuardianSettingsVM>) =>
+  "data" in st && st.data?.telegram.linked === true;
+
 export function GuardianScreen() {
   const { signedIn, ready, login, sessionFetch } = useSessionFetch();
   const feed = useSessionJson<AlertFeedVM>("/api/session/guardian/feed", { refreshMs: 60_000 });
-  const settings = useSessionJson<GuardianSettingsVM>("/api/session/guardian/settings");
+  // While a link code is on screen, look for the link every few seconds so the page notices when the bot confirms it.
+  const [watching, setWatching] = useState(false);
+  const settings = useSessionJson<GuardianSettingsVM>("/api/session/guardian/settings", {
+    refreshMs: watching ? 4000 : undefined,
+  });
   const [busy, setBusy] = useState(false);
   const [codeError, setCodeError] = useState<string | null>(null);
   const [issued, setIssued] = useState<GuardianSettingsVM | null>(null);
@@ -225,13 +288,21 @@ export function GuardianScreen() {
         setCodeError("We couldn't verify your sign-in. Sign in again.");
       else if (res.status === 429) setCodeError("Too many codes requested. Try again in a while.");
       else if (!res.ok) setCodeError("Couldn't get a code right now.");
-      else setIssued((await res.json()) as GuardianSettingsVM);
+      else {
+        setIssued((await res.json()) as GuardianSettingsVM);
+        setWatching(true);
+      }
     } catch {
       setCodeError("Couldn't reach Tally.");
     } finally {
       setBusy(false);
     }
   }, [sessionFetch]);
+
+  const isLinked = polledLinked(settings.state);
+  useEffect(() => {
+    if (isLinked) setWatching(false);
+  }, [isLinked]);
 
   if (!ready && !signedIn && !waited) return <VmSkeleton rows={1} label="Loading" />;
   if (!signedIn)
@@ -250,9 +321,10 @@ export function GuardianScreen() {
   if (feed.state.status === "unverified" || settings.state.status === "unverified")
     return <Unverified login={login} />;
 
-  const settingsVm =
-    issued ??
-    ("data" in settings.state ? (settings.state.data as GuardianSettingsVM | null) : null);
+  const polled =
+    "data" in settings.state ? (settings.state.data as GuardianSettingsVM | null) : null;
+  // A fresh read that says "linked" beats the code we issued earlier.
+  const settingsVm = polled?.telegram.linked ? polled : (issued ?? polled);
   return (
     <div className="grid grid-cols-1 gap-6 min-[981px]:grid-cols-[minmax(0,1fr)_340px]">
       <div className="min-w-0">

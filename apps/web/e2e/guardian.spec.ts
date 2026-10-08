@@ -192,6 +192,46 @@ test.describe("guardian: real server, module running", () => {
     expect(post).toMatchObject({ method: "POST", auth: "Bearer mock-access-token" });
   });
 
+  test("a shown code links to the bot, copies whole, and the page notices when the bot confirms", async ({
+    page,
+    context,
+  }) => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await mockWallet(page);
+    await page.route("**/api/session/guardian/feed", (r) => r.fulfill({ json: feed() }));
+    let linked = false;
+    await page.route("**/api/session/guardian/settings", (r) =>
+      r.fulfill({
+        json: linked ? settings({ linked: true, alertsEnabled: true }) : settings(),
+      }),
+    );
+    await page.route("**/api/session/guardian/link-code", (route) =>
+      route.fulfill({
+        json: settings({
+          activeLinkCode: {
+            code: "AB12CD34",
+            expiresAt: Date.now() + 600_000,
+            expiresInSeconds: 600,
+          },
+        }),
+      }),
+    );
+    await page.goto(`${server.url}/guardian`);
+    await page.getByRole("button", { name: "Get a link code" }).click({ timeout: 20_000 });
+    await expect(page.getByTestId("guardian-open-telegram")).toHaveAttribute(
+      "href",
+      "https://t.me/tallyguardianbot",
+    );
+    await expect(page.getByTestId("guardian-link-code")).toContainText("@tallyguardianbot");
+    await page.getByTestId("guardian-copy-link").click();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("/link AB12CD34");
+    await page.getByTestId("guardian-copy-bot").click();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe("@tallyguardianbot");
+    linked = true;
+    await expect(page.getByTestId("guardian-linked")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("guardian-link-code")).toHaveCount(0);
+  });
+
   test("linked: says so and shows no chat id", async ({ page }) => {
     await mockWallet(page);
     await stub(page, feed(), settings({ linked: true, chatId: 987654321, alertsEnabled: true }));

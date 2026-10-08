@@ -2,9 +2,8 @@
 
 import { ExternalLink, FileText } from "lucide-react";
 import Link from "next/link";
-import { shortHash } from "@/lib/format";
 import { useModuleFlags } from "@/lib/hooks/use-flags";
-import { tokenPair } from "@/lib/tickers";
+import { tokenPair, tokenSymbol } from "@/lib/tickers";
 import type { ActivityVM, ReceiptVM } from "@/modules/receipts/view-model";
 
 const STATUS: Record<string, { label: string; cls: string }> = {
@@ -15,7 +14,7 @@ const STATUS: Record<string, { label: string; cls: string }> = {
   UNRECONCILED: { label: "Not reconciled yet", cls: "text-amber" },
 };
 const KIND: Record<string, string> = {
-  swap: "Buy",
+  swap: "Purchase",
   sell: "Sale",
   approval: "USDT approval",
   stock_approval: "Token approval",
@@ -28,7 +27,12 @@ function Item({ r }: { r: ReceiptVM }) {
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <p className="font-semibold">
           {r.kind ? (KIND[r.kind] ?? "Transaction") : "Transaction"}
-          {r.ticker ? <span className="font-normal text-fg2"> · {tokenPair(r.ticker)}</span> : null}
+          {r.ticker ? (
+            <span className="font-normal text-fg2">
+              {" "}
+              · {r.symbol ?? (r.issuer ? tokenSymbol(r.ticker, r.issuer) : tokenPair(r.ticker))}
+            </span>
+          ) : null}
         </p>
         <p className={`text-[14.5px] font-semibold ${st.cls}`} data-testid="activity-status">
           {st.label}
@@ -57,8 +61,7 @@ function Item({ r }: { r: ReceiptVM }) {
             rel="noreferrer"
             aria-label="View transaction on BscScan (opens in a new tab)"
           >
-            <ExternalLink size={14} aria-hidden /> BscScan{" "}
-            <span className="mono text-[12.5px] text-fg2">{shortHash(r.txHash)}</span>
+            <ExternalLink size={14} aria-hidden /> BscScan
           </a>
         ) : null}
       </div>
