@@ -134,6 +134,9 @@ products and failed captures are excluded from the owner additions. The existing
   that full set. `BUYABLE_TICKERS` now imports the generated list while
   retaining its `{ ticker, name }` entry shape. NFLX is no longer a
   comparison-only entry, so the picker contains each ticker once.
+  Product labels retain the curated short company names. Other registry names
+  have trailing corporate suffixes and punctuation removed for display; the
+  generated registry metadata is unchanged.
   Recorded fixture quotes remain limited to AAPL, NFLX and NVDA; the other
   18 enabled tickers return an explicit missing-recording error offline.
   Fixture guard readings remain limited to NVDA. No fixture quotes, guard

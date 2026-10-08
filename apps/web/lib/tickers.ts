@@ -1,7 +1,47 @@
 import { GENERATED_BUYABLE_TICKERS } from "./buyable.generated";
 
 /** Manifest tickers verified enabled by the recorded after-owner comparison. */
-export const BUYABLE_TICKERS = GENERATED_BUYABLE_TICKERS;
+export const BUYABLE_TICKERS = (() => {
+  const shortNames: Readonly<Record<string, string>> = {
+    NVDA: "NVIDIA",
+    AAPL: "Apple",
+    TSLA: "Tesla",
+    QQQ: "Invesco QQQ",
+    SPY: "SPDR S&P 500",
+    TSM: "TSMC",
+    NFLX: "Netflix",
+    GOOGL: "Alphabet",
+    AMZN: "Amazon",
+    MSFT: "Microsoft",
+    META: "Meta",
+    HOOD: "Robinhood",
+    CRCL: "Circle",
+    BABA: "Alibaba",
+    INTC: "Intel",
+    GME: "GameStop",
+    MSTR: "Strategy",
+    SNDK: "SanDisk",
+    SKHY: "SK Hynix",
+    BMNR: "BitMine",
+  };
+
+  const cleanName = (registryName: string): string => {
+    let name = registryName.trim();
+    for (;;) {
+      const cleaned = name
+        .replace(/[\s,.]+$/, "")
+        .replace(/(?:\s+|,\s*)(?:Inc|Corp|Corporation|Ltd|Limited|Co|Company|Holdings|Group)$/i, "")
+        .trim();
+      if (cleaned === name) return cleaned;
+      name = cleaned;
+    }
+  };
+
+  return GENERATED_BUYABLE_TICKERS.map(({ ticker, name }) => ({
+    ticker,
+    name: shortNames[ticker] ?? cleanName(name),
+  }));
+})();
 
 /** No comparison-only tickers remain: NFLX is now in the enabled manifest. */
 export const COMPARE_ONLY_TICKERS: readonly { ticker: string; name: string }[] = [];
