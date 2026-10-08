@@ -390,3 +390,38 @@ export function updateQuietHoursForChat(
 
   return true;
 }
+
+/**
+ * Unlinks the Telegram chat from the wallet address.
+ */
+export function unlinkChat(
+  store: SnapshotStore,
+  chatId: number | string,
+  now = Date.now(),
+): string | null {
+  const existing = getLinkedWalletForChat(store, chatId, now);
+  if (!existing || !existing.walletAddress) return null;
+
+  const chatKey = String(chatId);
+  const walletKey = existing.walletAddress.toLowerCase();
+
+  // Remove the chat -> wallet link
+  store.put({
+    kind: "guardian-chat",
+    key: chatKey,
+    data: null,
+    source: "guardian-bot",
+    observedAt: now,
+  });
+
+  // Remove the wallet -> chat link
+  store.put({
+    kind: "guardian-link",
+    key: walletKey,
+    data: null,
+    source: "guardian-bot",
+    observedAt: now,
+  });
+
+  return existing.walletAddress;
+}

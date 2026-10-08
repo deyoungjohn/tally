@@ -121,15 +121,16 @@ export function isValidAddress(address: string): boolean {
 
 export function handleHelp(): string {
   return [
-    "🛡️ Tally Guardian Bot Commands",
+    "🛡️ <b>Tally Guardian Bot Commands</b>",
     "",
-    "/quote <TICKER> [usd] - Compare issuers in shares (default $25, min $6)",
-    "/shares <0xaddress> - Portfolio holdings in shares across issuers",
-    "/shield - Flagged tokens, traps and integrity grades",
-    "/link <CODE> - Link your Telegram to your Tally wallet",
-    "/alerts on|off - Turn Guardian alert notifications on or off",
-    "/quiet <start>-<end> - Set quiet hours in UTC (e.g. /quiet 22-07) or /quiet off",
-    "/help - Show this help message",
+    "<code>/quote &lt;TICKER&gt; [usd]</code> - Compare issuers in shares (default $25, min $6)",
+    "<code>/shares &lt;0xaddress&gt;</code> - Portfolio holdings in shares across issuers",
+    "<code>/shield</code> - Flagged tokens, traps and integrity grades",
+    "<code>/link &lt;CODE&gt;</code> - Link your Telegram to your Tally wallet",
+    "<code>/unlink</code> - Unlink your Tally wallet and stop alerts",
+    "<code>/alerts on|off</code> - Turn Guardian alert notifications on or off",
+    "<code>/quiet &lt;start&gt;-&lt;end&gt;</code> - Set quiet hours in UTC (e.g. <code>/quiet 22-07</code>) or <code>/quiet off</code>",
+    "<code>/help</code> - Show this help message",
   ].join("\n");
 }
 
@@ -151,26 +152,26 @@ export async function handleStart(args: string, ctx: BotContext): Promise<string
 
   if (linked) {
     lines.push(
-      `✅ Linked to wallet \`${linked.walletAddress}\`.`,
+      `✅ Linked to wallet <code>${linked.walletAddress}</code>.`,
       `Alerts: ${linked.alertsEnabled ? "ON" : "OFF"}`,
       "",
     );
   } else {
     lines.push(
       "To receive alerts for your holdings, connect your wallet in the Tally web app and send:",
-      "`/link <CODE>`",
+      "<code>/link &lt;CODE&gt;</code>",
       "",
     );
   }
 
   lines.push(
     "Commands:",
-    "• `/quote <TICKER> [usd]` - Compare issuers in shares",
-    "• `/shares <0xaddress>` - Holdings in shares",
-    "• `/shield` - View flagged tokens & integrity traps",
-    "• `/alerts on|off` - Manage alert delivery",
-    "• `/quiet 22-07` - Configure quiet hours (UTC)",
-    "• `/help` - Command guide",
+    "• <code>/quote &lt;TICKER&gt; [usd]</code> - Compare issuers in shares",
+    "• <code>/shares &lt;0xaddress&gt;</code> - Holdings in shares",
+    "• <code>/shield</code> - View flagged tokens & integrity traps",
+    "• <code>/alerts on|off</code> - Manage alert delivery",
+    "• <code>/quiet 22-07</code> - Configure quiet hours (UTC)",
+    "• <code>/help</code> - Command guide",
   );
 
   return lines.join("\n");
@@ -184,7 +185,7 @@ export async function handleLink(args: string, ctx: BotContext): Promise<string>
   const code = args.trim();
   if (!code) {
     return [
-      "Usage: `/link <CODE>`",
+      "Usage: <code>/link &lt;CODE&gt;</code>",
       "",
       "Generate an 8-character link code in the Tally web app under Guardian settings.",
     ].join("\n");
@@ -198,21 +199,37 @@ export async function handleLink(args: string, ctx: BotContext): Promise<string>
   }
 
   return [
-    `✅ Telegram linked to wallet \`${result.walletAddress}\`!`,
+    `✅ Telegram linked to wallet <code>${result.walletAddress}</code>!`,
     "",
     "You will now receive Guardian alerts for your holdings here.",
     "",
     "Commands:",
-    "• `/alerts on|off` - Enable or mute alerts",
-    "• `/quiet 22-07` - Set quiet hours window (UTC)",
+    "• <code>/alerts on|off</code> - Enable or mute alerts",
+    "• <code>/quiet 22-07</code> - Set quiet hours window (UTC)",
   ].join("\n");
+}
+
+export async function handleUnlink(ctx: BotContext): Promise<string> {
+  if (ctx.chatType !== "private") {
+    return "❌ Unlinking your wallet is only permitted in private direct messages with the bot.";
+  }
+
+  const { unlinkChat } = await import("@tally/mod-guardian");
+  const now = ctx.now ? ctx.now() : Date.now();
+  const walletAddress = unlinkChat(ctx.store, ctx.chatId, now);
+
+  if (!walletAddress) {
+    return "❌ Your Telegram account is not linked to any wallet.";
+  }
+
+  return `✅ Unlinked from wallet <code>${walletAddress}</code>. You will get no more alerts. Send /link CODE to link again.`;
 }
 
 export async function handleAlerts(args: string, ctx: BotContext): Promise<string> {
   const now = ctx.now ? ctx.now() : Date.now();
   const linked = getLinkedWalletForChat(ctx.store, ctx.chatId, now);
   if (!linked) {
-    return "⚠️ Your Telegram is not linked to a wallet yet. Send `/link <CODE>` first.";
+    return "⚠️ Your Telegram is not linked to a wallet yet. Send <code>/link &lt;CODE&gt;</code> first.";
   }
 
   const mode = args.trim().toLowerCase();
@@ -226,14 +243,14 @@ export async function handleAlerts(args: string, ctx: BotContext): Promise<strin
     return "🔕 Guardian alerts turned OFF.";
   }
 
-  return `Guardian alerts are currently ${linked.alertsEnabled ? "ON" : "OFF"}. Use \`/alerts on\` or \`/alerts off\`.`;
+  return `Guardian alerts are currently ${linked.alertsEnabled ? "ON" : "OFF"}. Use <code>/alerts on</code> or <code>/alerts off</code>.`;
 }
 
 export async function handleQuiet(args: string, ctx: BotContext): Promise<string> {
   const now = ctx.now ? ctx.now() : Date.now();
   const linked = getLinkedWalletForChat(ctx.store, ctx.chatId, now);
   if (!linked) {
-    return "⚠️ Your Telegram is not linked to a wallet yet. Send `/link <CODE>` first.";
+    return "⚠️ Your Telegram is not linked to a wallet yet. Send <code>/link &lt;CODE&gt;</code> first.";
   }
 
   const input = args.trim().toLowerCase();
@@ -245,14 +262,14 @@ export async function handleQuiet(args: string, ctx: BotContext): Promise<string
 
   const match = /^(\d{1,2})-(\d{1,2})$/.exec(input);
   if (!match) {
-    return "Usage: `/quiet 22-07` (UTC start-end hours, 0-23) or `/quiet off`";
+    return "Usage: <code>/quiet 22-07</code> (UTC start-end hours, 0-23) or <code>/quiet off</code>";
   }
 
   const startHourUtc = Number.parseInt(match[1]!, 10);
   const endHourUtc = Number.parseInt(match[2]!, 10);
 
   if (startHourUtc < 0 || startHourUtc > 23 || endHourUtc < 0 || endHourUtc > 23) {
-    return "❌ Invalid hours. Please provide hours from 0 to 23 (e.g. `/quiet 22-07`).";
+    return "❌ Invalid hours. Please provide hours from 0 to 23 (e.g. <code>/quiet 22-07</code>).";
   }
 
   const quiet: QuietHours = {
@@ -274,14 +291,14 @@ export async function handleQuote(args: string, ctx: BotContext): Promise<string
 
   const parts = args.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) {
-    return "Usage: `/quote <TICKER> [usd]`\nExample: `/quote NVDA 25`";
+    return "Usage: <code>/quote &lt;TICKER&gt; [usd]</code>\nExample: <code>/quote NVDA 25</code>";
   }
 
   const ticker = parts[0]!.toUpperCase();
   const usdAmount = parts[1] ? Number.parseFloat(parts[1]) : 25;
 
   if (Number.isNaN(usdAmount) || usdAmount <= 0) {
-    return "❌ Invalid amount. Example: `/quote NVDA 25`";
+    return "❌ Invalid amount. Example: <code>/quote NVDA 25</code>";
   }
 
   if (usdAmount < 6) {
@@ -295,7 +312,7 @@ export async function handleQuote(args: string, ctx: BotContext): Promise<string
     });
 
     const lines: string[] = [
-      `📊 *${quote.ticker} Quote* ($${usdAmount} USDT order)`,
+      `📊 <b>${quote.ticker} Quote</b> ($${usdAmount} USDT order)`,
       `Session: ${quote.session}`,
       "",
     ];
@@ -307,25 +324,25 @@ export async function handleQuote(args: string, ctx: BotContext): Promise<string
     for (const row of quote.rows) {
       const isBest = row.isBest ? " ⭐ BEST" : "";
       const issuer = row.issuer.toUpperCase();
-      lines.push(`*${row.symbol}* (${issuer})${isBest}`);
+      lines.push(`<b>${row.symbol}</b> (${issuer})${isBest}`);
 
       if (!row.multiplier) {
-        lines.push("  • Shares: `null` (multiplier unknown, never 1:1)");
+        lines.push("  • Shares: <code>null</code> (multiplier unknown, never 1:1)");
       } else if (row.sharesOut !== undefined) {
-        lines.push(`  • Shares: \`${formatUnits(row.sharesOut, row.decimals, 4)}\``);
+        lines.push(`  • Shares: <code>${formatUnits(row.sharesOut, row.decimals, 4)}</code>`);
       }
 
       if (row.usdPerShare !== undefined) {
-        lines.push(`  • Price/share: \`$${row.usdPerShare.toFixed(2)}\``);
+        lines.push(`  • Price/share: <code>$${row.usdPerShare.toFixed(2)}</code>`);
       }
 
       if (row.premium !== undefined) {
         const sign = row.premium >= 0 ? "+" : "";
-        lines.push(`  • Premium vs US: \`${sign}${(row.premium * 100).toFixed(2)}%\``);
+        lines.push(`  • Premium vs US: <code>${sign}${(row.premium * 100).toFixed(2)}%</code>`);
       }
 
       if (row.feeUsd !== undefined) {
-        lines.push(`  • Network fee: \`~$${row.feeUsd.toFixed(2)}\``);
+        lines.push(`  • Network fee: <code>~$${row.feeUsd.toFixed(2)}</code>`);
       }
 
       lines.push(`  • Integrity: Grade ${row.integrity.grade}`);
@@ -384,7 +401,7 @@ export async function handleShares(
 
   const address = args.trim();
   if (!address || !isValidAddress(address)) {
-    return "❌ Please provide a valid 0x wallet address: `/shares 0x...`";
+    return "❌ Please provide a valid 0x wallet address: <code>/shares 0x...</code>";
   }
 
   const port =
@@ -397,7 +414,11 @@ export async function handleShares(
   try {
     const rawResult = await port(address);
     const holdings = adaptSharesReport(rawResult);
-    const lines: string[] = [`💼 Portfolio Holdings in Shares`, `Wallet: ${address}`, ""];
+    const lines: string[] = [
+      `💼 Portfolio Holdings in Shares`,
+      `Wallet: <code>${address}</code>`,
+      "",
+    ];
 
     // Re-review 3 Finding 3: Show only rows with a balance or a reason; when nothing is held, print scanned tickers
     const activeHoldings = holdings.filter(
