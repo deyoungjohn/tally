@@ -16,9 +16,9 @@ type Status = NonNullable<ReceiptVM["status"]>;
 
 const STATUS: Record<Status, { label: string; tone: string; tip: string }> = {
   RECONCILED: {
-    label: "Verified",
+    label: "Matches the quote",
     tone: "badge-up",
-    tip: "The chain confirms this transaction and the amount you received.",
+    tip: "The amount received is within the expected range of the quote.",
   },
   RECONCILED_WITH_DIFFERENCE: {
     label: "Verified",

@@ -194,13 +194,30 @@ export function FlowPanel({ panel }: { panel: FlowPanelDisplay }) {
             </p>
           ))}
           {i.whalePrints.length ? (
-            <ul className="m-0 mt-3 grid list-none gap-1 p-0 text-[14px] text-fg2">
-              {i.whalePrints.map((p) => (
-                <li key={`${p.txHash}:${p.side}:${p.shares}`}>
-                  Large {p.side}: {p.shares} shares (${p.usd})
-                </li>
-              ))}
-            </ul>
+            <div className="mt-3 overflow-x-auto" data-testid={`radarvm-whales-${i.issuer}`}>
+              <table className="w-full min-w-[320px] border-collapse text-left text-[14px]">
+                <caption className="t-meta pb-2 text-left">Large trades</caption>
+                <thead>
+                  <tr className="text-fg3">
+                    <th className="py-1.5 pr-3 font-medium">Side</th>
+                    <th className="py-1.5 pr-3 text-right font-medium">Shares</th>
+                    <th className="py-1.5 text-right font-medium">Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {i.whalePrints.map((p) => (
+                    <tr
+                      key={`${p.txHash}:${p.side}:${p.shares}`}
+                      className="border-t border-white/[0.06]"
+                    >
+                      <td className="py-1.5 pr-3 capitalize">{p.side}</td>
+                      <td className="num py-1.5 pr-3 text-right">{p.shares}</td>
+                      <td className="num py-1.5 text-right">${p.usd}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : null}
         </section>
       ))}
