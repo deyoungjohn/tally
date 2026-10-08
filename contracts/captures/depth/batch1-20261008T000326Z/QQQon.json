@@ -1,0 +1,270 @@
+{
+  "schema": 1,
+  "token": "QQQon",
+  "tokenAddress": "0x0cde6936d305d5b34667fc46425e852efd73559a",
+  "ticker": "QQQ",
+  "kind": "ondo",
+  "role": "control",
+  "held": false,
+  "capturedAtUtc": "2026-10-08T00:04:10Z",
+  "premiumLimitPct": "1.5",
+  "reference": {
+    "source": "authenticated /api/v1/dex/market/rwa/tokens",
+    "tokenContractAddress": "0x0cde6936d305d5b34667fc46425e852efd73559a",
+    "binanceChainId": "56",
+    "tokenSymbol": "QQQon",
+    "underlyingTicker": "QQQ",
+    "referencePricePerTokenUsd": "761.8155508207602",
+    "tokenToShareRatio": "1.004082430180208355",
+    "decimals": 18,
+    "referencePricePerShareUsd": "758.71813699999994285585235795616187054468118438783960173669779618310276280575667"
+  },
+  "integrityEvidence": {
+    "source": "pnpm --silent tally facts QQQ --json",
+    "asOf": "2026-10-08T00:04:13.713Z",
+    "inspection": {
+      "symbol": "QQQon",
+      "issuer": "ondo",
+      "address": "0x0cde6936d305d5b34667fc46425e852efd73559a",
+      "executable": false,
+      "blockedReason": "Paused: Paused for session transition",
+      "readings": {
+        "list": "1004082430180208355",
+        "api": "1004082430180208355"
+      },
+      "multiplier": {
+        "value": "1004082430180208355",
+        "source": "api",
+        "degraded": false,
+        "maxDeviationPpm": 0,
+        "disagree": false
+      },
+      "facts": {
+        "status": {
+          "kind": "paused",
+          "reasonCode": "MARKET_PAUSED",
+          "reasonMsg": "Paused for session transition",
+          "session": "unknown"
+        },
+        "notes": {},
+        "listedTokenPrice": 764.9256096171829,
+        "onchainVolume24hUsd": 73394.09750596908,
+        "attestation": {
+          "reportDate": "2026-10-02",
+          "url": "[endpoint omitted]"
+        },
+        "multiplierBaseline": {
+          "value": "1004082430180208355",
+          "at": 1791395807916
+        },
+        "multiplierChangedAt": 1789949314082
+      },
+      "bounds": {
+        "outcome": "pass",
+        "detail": "1.00408243 vs baseline 1.00408243 (seen 2026-10-07): unchanged",
+        "validation": {
+          "outcome": "not-needed",
+          "inputs": {},
+          "summary": "multiplier unchanged: price check not needed"
+        }
+      },
+      "referencePrice": {
+        "price": 758.7181370000001,
+        "session": "unknown"
+      },
+      "integrity": {
+        "score": 40,
+        "grade": "D",
+        "flags": [
+          "paused"
+        ],
+        "reasons": [
+          {
+            "id": "status",
+            "outcome": "deduct",
+            "points": 50,
+            "flag": "paused",
+            "inputs": {
+              "kind": "paused",
+              "reasonCode": "MARKET_PAUSED",
+              "reasonMsg": "Paused for session transition"
+            },
+            "summary": "paused (MARKET_PAUSED: Paused for session transition) \u2192 \u221250",
+            "reason": "Trading is paused (Paused for session transition)."
+          },
+          {
+            "id": "attestation",
+            "outcome": "deduct",
+            "points": 10,
+            "inputs": {
+              "reportDate": "2026-10-02",
+              "ageDays": 6,
+              "url": "[endpoint omitted]",
+              "now": "2026-10-08T00:04:13.159Z"
+            },
+            "summary": "report 2026-10-02, age 6.0d > 3d \u2192 \u221210",
+            "reason": "Latest reserve attestation is 6 days old."
+          }
+        ],
+        "checks": [
+          {
+            "id": "multiplier-sources",
+            "outcome": "pass",
+            "points": 0,
+            "inputs": {
+              "onchain": "\u2013",
+              "api": "1.004082",
+              "list": "1.004082",
+              "maxDeviationPpm": 0,
+              "used": "api"
+            },
+            "summary": "onchain \u2013, api 1.004082, list 1.004082; max difference 0 ppm \u2264 1000, using api \u2192 pass"
+          },
+          {
+            "id": "ondo-bounds",
+            "outcome": "pass",
+            "points": 0,
+            "inputs": {
+              "detail": "1.00408243 vs baseline 1.00408243 (seen 2026-10-07): unchanged"
+            },
+            "summary": "1.00408243 vs baseline 1.00408243 (seen 2026-10-07): unchanged \u2192 pass"
+          },
+          {
+            "id": "multiplier-validation",
+            "outcome": "skipped",
+            "points": 0,
+            "inputs": {},
+            "summary": "multiplier unchanged: price check not needed \u2192 skipped"
+          },
+          {
+            "id": "premium",
+            "outcome": "skipped",
+            "points": 0,
+            "inputs": {
+              "premium": 0.004082430180208263,
+              "basis": "listed price",
+              "session": "unknown"
+            },
+            "summary": "premium +0.41% (listed price); session unknown, the 2% rule applies in regular hours only \u2192 skipped"
+          },
+          {
+            "id": "onchain-volume",
+            "outcome": "pass",
+            "points": 0,
+            "inputs": {
+              "onchainVolume24hUsd": 73394.09750596908
+            },
+            "summary": "$73,394 in 24h \u2265 $1,000 \u2192 pass"
+          },
+          {
+            "id": "status",
+            "outcome": "deduct",
+            "points": 50,
+            "flag": "paused",
+            "inputs": {
+              "kind": "paused",
+              "reasonCode": "MARKET_PAUSED",
+              "reasonMsg": "Paused for session transition"
+            },
+            "summary": "paused (MARKET_PAUSED: Paused for session transition) \u2192 \u221250",
+            "reason": "Trading is paused (Paused for session transition)."
+          },
+          {
+            "id": "attestation",
+            "outcome": "deduct",
+            "points": 10,
+            "inputs": {
+              "reportDate": "2026-10-02",
+              "ageDays": 6,
+              "url": "[endpoint omitted]",
+              "now": "2026-10-08T00:04:13.159Z"
+            },
+            "summary": "report 2026-10-02, age 6.0d > 3d \u2192 \u221210",
+            "reason": "Latest reserve attestation is 6 days old."
+          },
+          {
+            "id": "unit-trap",
+            "outcome": "pass",
+            "points": 0,
+            "inputs": {},
+            "summary": "multipliers within 1.25\u00d7 of the other issuers' \u2192 pass"
+          }
+        ],
+        "unitTrap": false
+      }
+    }
+  },
+  "quotes": {
+    "6": {
+      "eoa": {
+        "quote": {
+          "user": "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
+          "replayable": "false",
+          "error": "ApiError (http=200, code=40367)",
+          "router": "",
+          "data": "0x",
+          "approveTarget": "",
+          "value": "0",
+          "minReceive": "0",
+          "toTokenAmount": "0",
+          "mode": "ERROR"
+        },
+        "assessment": {
+          "amountInUsdtE18": "6000000000000000000",
+          "premiumPct": null,
+          "quotedPricePerShareUsd": null,
+          "sharesOut": null,
+          "pass": false,
+          "reasons": [
+            "executionMode is not SWAP",
+            "no quoted route",
+            "$6 swap calldata is not replayable SWAP",
+            "cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      },
+      "guard": {
+        "quote": {
+          "user": "0xcb634955B8A7DF7B106f7AB47C9759B26206b777",
+          "replayable": "false",
+          "error": "ApiError (http=200, code=40367)",
+          "router": "",
+          "data": "0x",
+          "approveTarget": "",
+          "value": "0",
+          "minReceive": "0",
+          "toTokenAmount": "0",
+          "mode": "ERROR"
+        },
+        "assessment": {
+          "amountInUsdtE18": "6000000000000000000",
+          "premiumPct": null,
+          "quotedPricePerShareUsd": null,
+          "sharesOut": null,
+          "pass": false,
+          "reasons": [
+            "executionMode is not SWAP",
+            "no quoted route",
+            "$6 swap calldata is not replayable SWAP",
+            "cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      }
+    }
+  },
+  "errors": [],
+  "forkCapture": "captures/QQQon.batch1-20261008T000326Z.json",
+  "gates": {
+    "depth": "failed",
+    "fork": "pending",
+    "enablement": "not approved"
+  },
+  "integrityAssessment": {
+    "pass": false,
+    "grade": "D",
+    "label": "Not Tradable",
+    "reasons": [
+      "Paused: Paused for session transition"
+    ]
+  }
+}

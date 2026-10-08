@@ -1,0 +1,36 @@
+{
+  "token": "INTCon",
+  "tokenAddress": "0xa528caaa2f96090e379d43f90834c75df54d6e74",
+  "tokenIn": "0x55d398326f99059fF775485246999027B3197955",
+  "amountIn": "6000000000000000000",
+  "multiplierSource": "feed",
+  "multiplier": "1000000000000000000",
+  "multiplierFrom": "public RWA API sharesMultiplier",
+  "referencePrice": "113.677273",
+  "capturedAtUtc": "2026-10-08T00:07:36Z",
+  "blockAtCapture": "126345228",
+  "eoa": {
+    "user": "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
+    "replayable": "false",
+    "error": "ApiError (http=200, code=40374)",
+    "router": "",
+    "data": "0x",
+    "approveTarget": "",
+    "value": "0",
+    "minReceive": "0",
+    "toTokenAmount": "0",
+    "mode": "ERROR"
+  },
+  "guard": {
+    "user": "0xcb634955B8A7DF7B106f7AB47C9759B26206b777",
+    "replayable": "false",
+    "error": "ApiError (http=200, code=40374)",
+    "router": "",
+    "data": "0x",
+    "approveTarget": "",
+    "value": "0",
+    "minReceive": "0",
+    "toTokenAmount": "0",
+    "mode": "ERROR"
+  }
+}

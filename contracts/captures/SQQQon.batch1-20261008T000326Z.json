@@ -1,0 +1,36 @@
+{
+  "token": "SQQQon",
+  "tokenAddress": "0x17515b68378d86c38f394c666e79907da05dcba9",
+  "tokenIn": "0x55d398326f99059fF775485246999027B3197955",
+  "amountIn": "6000000000000000000",
+  "multiplierSource": "feed",
+  "multiplier": "1027709560516422679",
+  "multiplierFrom": "public RWA API sharesMultiplier",
+  "referencePrice": "31.976429",
+  "capturedAtUtc": "2026-10-08T00:09:01Z",
+  "blockAtCapture": "126345417",
+  "eoa": {
+    "user": "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
+    "replayable": "false",
+    "error": "ApiError (http=200, code=40367)",
+    "router": "",
+    "data": "0x",
+    "approveTarget": "",
+    "value": "0",
+    "minReceive": "0",
+    "toTokenAmount": "0",
+    "mode": "ERROR"
+  },
+  "guard": {
+    "user": "0xcb634955B8A7DF7B106f7AB47C9759B26206b777",
+    "replayable": "false",
+    "error": "ApiError (http=200, code=40367)",
+    "router": "",
+    "data": "0x",
+    "approveTarget": "",
+    "value": "0",
+    "minReceive": "0",
+    "toTokenAmount": "0",
+    "mode": "ERROR"
+  }
+}
