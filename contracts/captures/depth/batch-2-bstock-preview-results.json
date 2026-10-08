@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "recordedAtUtc": "2026-10-08T19:07:54.116212+00:00",
+  "guard": "0x28F6F19bffbF25E36452c78d12090F0bC922970a",
+  "owner": "0x327DCcbDA0B4633A109F536951C7CBa81a8Ef710",
+  "blockNumber": 126496974,
+  "manifest": "contracts/captures/depth/batch-2-bstock-manifest.json",
+  "newTokenCount": 6,
+  "mode": "keyless local fork simulation of deployed guard; no seeds, keys or transactions",
+  "pass": true,
+  "stages": [
+    {
+      "stage": "preview",
+      "command": [
+        "forge",
+        "script",
+        "script/AddAssets.s.sol:AddAssets",
+        "--sig",
+        "previewBstockBatch2()",
+        "--rpc-url",
+        "bsc",
+        "--fork-block-number",
+        "126496974",
+        "-vv"
+      ],
+      "blockNumber": 126496974,
+      "exitCode": 0,
+      "elapsedSeconds": 32.25,
+      "output": "contracts/captures/depth/batch-2-bstock-preview-20261008.txt"
+    },
+    {
+      "stage": "owner-dry-run",
+      "command": [
+        "forge",
+        "script",
+        "script/AddAssets.s.sol:AddAssets",
+        "--sig",
+        "runBstockBatch2()",
+        "--rpc-url",
+        "bsc",
+        "--fork-block-number",
+        "126496974",
+        "--sender",
+        "0x327DCcbDA0B4633A109F536951C7CBa81a8Ef710",
+        "-vv"
+      ],
+      "blockNumber": 126496974,
+      "exitCode": 0,
+      "elapsedSeconds": 19.12,
+      "output": "contracts/captures/depth/batch-2-bstock-owner-dry-run-20261008.txt"
+    },
+    {
+      "stage": "fork-integration",
+      "command": [
+        "forge",
+        "test",
+        "--match-contract",
+        "BstockBatch2ForkTest",
+        "-vv"
+      ],
+      "blockNumber": 126496974,
+      "exitCode": 0,
+      "elapsedSeconds": 23.94,
+      "output": "contracts/captures/depth/batch-2-bstock-fork-integration-20261008.txt"
+    }
+  ]
+}

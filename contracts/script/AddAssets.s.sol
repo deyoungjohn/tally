@@ -17,6 +17,8 @@ contract AddAssets is Script {
     bytes32 internal constant APPROVED_SYMBOLS = keccak256(
         "SPCXB|BABAB|GOOGLB|SKHYB|MSTRB|CRCLB|SNDKB|HOODB|MSFTB|INTCB|METAB|TSMB|SPCXon|GMEon|GOOGLon|CRCLon|AMZNon|BMNRon|TSMon|NFLXon|"
     );
+    bytes32 internal constant BSTOCK_BATCH2_MANIFEST_HASH =
+        0x019035a2067432e11788612676b092ce29882e50c7628db938ffa0b3a65720be;
 
     struct PlannedAsset {
         address stock;
@@ -92,6 +94,100 @@ contract AddAssets is Script {
         guard.setAsset(stock, cfg, 0);
         vm.stopBroadcast();
         console2.log("disabled asset", stock);
+    }
+
+    /// Separate, pinned bStock-only scope. Never reads seeds or a signing key.
+    function previewBstockBatch2() external {
+        ShareGuard guard = _guard();
+        string memory assets = _loadBstockBatch2();
+        PlannedAsset[] memory plan = _plan(guard, assets, "", "", 0, 6);
+        vm.startPrank(guard.owner());
+        uint256 added = _apply(guard, plan);
+        vm.stopPrank();
+        console2.log("Batch 2 simulated bStock additions", added);
+        console2.log("No seeds, no signing, no transaction broadcast");
+        _verifyBstockBatch2(guard, assets);
+    }
+
+    function runBstockBatch2() external {
+        ShareGuard guard = _guard();
+        string memory assets = _loadBstockBatch2();
+        PlannedAsset[] memory plan = _plan(guard, assets, "", "", 0, 6);
+        vm.startBroadcast(guard.owner());
+        uint256 added = _apply(guard, plan);
+        vm.stopBroadcast();
+        console2.log("Batch 2 configured bStock additions", added);
+        _verifyBstockBatch2(guard, assets);
+    }
+
+    function verifyBstockBatch2() external view {
+        _verifyBstockBatch2(_guard(), _loadBstockBatch2());
+    }
+
+    function rollbackBstockBatch2(address stock) external {
+        ShareGuard guard = _guard();
+        string memory assets = _loadBstockBatch2();
+        bool inScope;
+        for (uint256 i; i < 6; i++) {
+            if (assets.readAddress(_key("assets", i, "address")) == stock) inScope = true;
+        }
+        require(inScope, "rollback outside Batch 2");
+        ShareGuard.Asset memory cfg = guard.assetOf(stock);
+        require(cfg.source != ShareGuard.Source.None, "asset was never configured");
+        cfg.enabled = false;
+        vm.startBroadcast(guard.owner());
+        guard.setAsset(stock, cfg, 0);
+        vm.stopBroadcast();
+        console2.log("Batch 2 disabled asset", stock);
+    }
+
+    function _loadBstockBatch2() internal view returns (string memory assets) {
+        assets = vm.readFile("captures/depth/batch-2-bstock-manifest.json");
+        _validateBstockBatch2(assets);
+        for (uint256 i; i < 6; i++) {
+            _verifyFilePin(
+                assets,
+                string.concat(_key("assets", i, "capture"), ".path"),
+                string.concat(_key("assets", i, "capture"), ".sha256")
+            );
+        }
+        for (uint256 i; i < 3; i++) {
+            string memory field = i == 0 ? ".baseline" : i == 1 ? ".selection" : ".forkReport";
+            _verifyFilePin(assets, string.concat(field, ".path"), string.concat(field, ".sha256"));
+        }
+    }
+
+    function _validateBstockBatch2(string memory assets) internal view {
+        require(keccak256(bytes(assets)) == BSTOCK_BATCH2_MANIFEST_HASH, "Batch 2 manifest bytes differ");
+        require(assets.readUint(".count") == 6 && !assets.readBool(".needsSeeds"), "invalid Batch 2 scope");
+        require(!vm.keyExistsJson(assets, _key("assets", 6, "address")), "extra Batch 2 asset");
+        for (uint256 i; i < 6; i++) {
+            require(
+                keccak256(bytes(assets.readString(_key("assets", i, "kind")))) == keccak256("bstock"),
+                "Batch 2 must be bStock only"
+            );
+        }
+    }
+
+    function _verifyFilePin(string memory assets, string memory pathKey, string memory hashKey) internal view {
+        bytes32 expected = vm.parseBytes32(assets.readString(hashKey));
+        require(sha256(bytes(vm.readFile(assets.readString(pathKey)))) == expected, "Batch 2 evidence bytes differ");
+    }
+
+    function _verifyBstockBatch2(ShareGuard guard, string memory assets) internal view {
+        require(!guard.paused(), "ShareGuard paused");
+        for (uint256 i; i < 6; i++) {
+            address stock = assets.readAddress(_key("assets", i, "address"));
+            ShareGuard.Asset memory cfg = guard.assetOf(stock);
+            require(
+                cfg.source == ShareGuard.Source.UiMultiplier && cfg.enabled && cfg.maxStepBps == 0
+                    && cfg.pauseCheck == ShareGuard.PauseCheck.Manager
+                    && cfg.pauseManager == assets.readAddress(".bstockPauseManager"),
+                "Batch 2 configuration mismatch"
+            );
+            require(guard.sharesPerToken(stock) > 0 && !guard.isTokenPaused(stock), "Batch 2 issuer unavailable");
+        }
+        console2.log("Batch 2 verification passed: all six enabled with exact bStock configuration");
     }
 
     function _guard() internal view returns (ShareGuard guard) {

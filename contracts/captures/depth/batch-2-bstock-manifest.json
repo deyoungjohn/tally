@@ -1,0 +1,132 @@
+{
+  "router": "0xB44446b0c8E56988c34f7Ff73Ae904982b5FdDA5",
+  "approveTarget": "0xB44446b0c8E56988c34f7Ff73Ae904982b5FdDA5",
+  "bstockPauseManager": "0x9fc74Be63f3589485B2423984a7a0557e0CF700a",
+  "schema": 1,
+  "id": "batch-2-bstock-engine-reference",
+  "guard": "0x28F6F19bffbF25E36452c78d12090F0bC922970a",
+  "count": 6,
+  "assets": [
+    {
+      "symbol": "AMZNB",
+      "ticker": "AMZN",
+      "address": "0x1a4b499833a79a09ad7cf1d42d7dacf71e92eb00",
+      "kind": "bstock",
+      "name": "Amazon.Com Inc",
+      "capture": {
+        "path": "captures/AMZNB.batch1-bstock-us-20261008T133231Z.json",
+        "sha256": "bfc00d694a26f742d4a7ecb4d690bc4defadabb599e7e8427af5a6c8ede5bb05"
+      },
+      "blockAtCapture": "126452540"
+    },
+    {
+      "symbol": "NFLXB",
+      "ticker": "NFLX",
+      "address": "0xd6829ea836b6fa224d099d40e54b31262f874631",
+      "kind": "bstock",
+      "name": "NetFlix Inc",
+      "capture": {
+        "path": "captures/NFLXB.batch1-bstock-us-20261008T133231Z.json",
+        "sha256": "a3d32ff89c689fe28b65061b1d7cbbed0bc09c33a8aa292c06c5f2ff956a90ed"
+      },
+      "blockAtCapture": "126452640"
+    },
+    {
+      "symbol": "GMEB",
+      "ticker": "GME",
+      "address": "0x46ceefda28dd7207059ed19b0acdc026955bb15c",
+      "kind": "bstock",
+      "name": "GameStop Corp.",
+      "capture": {
+        "path": "captures/GMEB.batch1-bstock-us-20261008T133231Z.json",
+        "sha256": "c5126471a52bf794810ed19288aa89f1634612b82f73e4560f37de6b8dd4f266"
+      },
+      "blockAtCapture": "126452609"
+    },
+    {
+      "symbol": "BMNRB",
+      "ticker": "BMNR",
+      "address": "0x3548da95a9effe481e8604664d75e95821e557f5",
+      "kind": "bstock",
+      "name": "Bitmine Immersion Technologies, Inc.",
+      "capture": {
+        "path": "captures/BMNRB.batch1-bstock-us-20261008T133231Z.json",
+        "sha256": "35c3c82916a71cac95cb3d79e8fc9d1441622a0554aefe3017ce98a53fe226a0"
+      },
+      "blockAtCapture": "126452555"
+    },
+    {
+      "symbol": "MRNAB",
+      "ticker": "MRNA",
+      "address": "0x5fd86da9b05abe396fe9d02a4a213a7c00556503",
+      "kind": "bstock",
+      "name": "Moderna, Inc.",
+      "capture": {
+        "path": "captures/MRNAB.batch1-bstock-us-20261008T133231Z.json",
+        "sha256": "bed62e3611f51756857350283c0edfe19c20774ff95319dd5a84a52ffdb8ba83"
+      },
+      "blockAtCapture": "126452625"
+    },
+    {
+      "symbol": "FLNCB",
+      "ticker": "FLNC",
+      "address": "0x4af1d41cd9dd950dca43984b43aaa2a8702714ac",
+      "kind": "bstock",
+      "name": "Fluence Energy, Inc.",
+      "capture": {
+        "path": "captures/FLNCB.batch1-bstock-us-20261008T133231Z.json",
+        "sha256": "4e953fbe19d4858b33c4eb5d252811246afa23c426e5b4195087e47e206adeb4"
+      },
+      "blockAtCapture": "126452594"
+    }
+  ],
+  "baseline": {
+    "path": "deploy/assets.json",
+    "sha256": "fad576124776b5a2a392a82b311975d58c3d624a8ee8d1f047b551eeac9050b1"
+  },
+  "afterOwnerBaseline": {
+    "path": "captures/depth/batch-1-after-owner-20261008T115923Z.json",
+    "sha256": "f479e8814981b6623170b29d9e7a349b556a675eb10682d467f13615775088c9"
+  },
+  "selection": {
+    "path": "captures/depth/batch-2-engine-reference-results.json",
+    "sha256": "b169007a550a65efb34e1e9e31ecf56df0d5c56496c307e8281413799efb5351"
+  },
+  "forkReport": {
+    "path": "captures/depth/batch-2-engine-reference-fork-results.json",
+    "sha256": "2b3c13040f96cd3a7ef3df136418bcff08652a3ef0c42b53749837a1dbba3255"
+  },
+  "registryNames": {
+    "path": "packages/binance/fixtures/raw/rwa_authenticated_probes_20261002T024847Z.json",
+    "sha256": "2a11c8853b021ccef56e74c31645c4e45562853cb6e00d0621992c892e053cf4"
+  },
+  "sourceRunId": "batch1-bstock-us-20261008T133231Z",
+  "referenceSource": "engine ticker reference (authenticated list, per share)",
+  "premiumLimitPct": "1.5",
+  "status": "all six passed recorded depth and forks; owner enablement pending",
+  "needsSeeds": false,
+  "excluded": [
+    {
+      "symbol": "AAPLB",
+      "reason": "already-enabled control"
+    },
+    {
+      "symbol": "DJTB",
+      "reason": "no independent engine ticker reference"
+    },
+    {
+      "symbol": "SOXSB",
+      "reason": "held leveraged/inverse product"
+    },
+    {
+      "symbol": "SQQQB",
+      "reason": "held leveraged/inverse product"
+    }
+  ],
+  "notes": [
+    "Only six new bStock additions; no Ondo, controls, held assets or inferred twins.",
+    "The first manifest, seeds and generated product list remain unchanged.",
+    "Product release waits for owner enablement and verification; this manifest is a separate owner scope."
+  ],
+  "pathsRelativeTo": "contracts; registryNames is relative to the repository root"
+}

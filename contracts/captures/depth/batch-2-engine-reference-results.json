@@ -1,0 +1,688 @@
+{
+  "schema": 1,
+  "policy": "stockInfo.price first; then positive engine ticker reference in regular/pre/post session, already per share; never DEX price",
+  "runId": "batch1-bstock-us-20261008T133231Z",
+  "referenceSource": "engine ticker reference (authenticated list, per share)",
+  "pins": [
+    {
+      "path": "contracts/deploy/batch-1.json",
+      "sha256": "24153ed6b35ea16437dd86907c070a3ab0d04c719566e21b8781ef0ceac44d76"
+    },
+    {
+      "path": "contracts/captures/depth/batch-1-onchain.json",
+      "sha256": "f05461b7169bbb4d40bec17a61b104144793fe540608505d059c440b24eb99fe"
+    },
+    {
+      "path": "contracts/captures/depth/batch-1-after-owner-20261008T115923Z.json",
+      "sha256": "f479e8814981b6623170b29d9e7a349b556a675eb10682d467f13615775088c9"
+    }
+  ],
+  "premiumLimitPct": "1.5",
+  "tokenCount": 7,
+  "depthPassed": 7,
+  "potentialAdditions": 6,
+  "forkStatus": "completed",
+  "results": [
+    {
+      "token": "AAPLB",
+      "ticker": "AAPL",
+      "address": "0x431a3bee82e2ca41e49895cbece5bb0f76a89b7a",
+      "kind": "bstock",
+      "role": "control",
+      "held": false,
+      "depthEvidence": {
+        "path": "contracts/captures/depth/batch1-bstock-us-20261008T133231Z/AAPLB.json",
+        "sha256": "586658c575479e9022fa69206666b836b0e705ef894ace39387ef7f1b0344bae"
+      },
+      "capture": {
+        "path": "contracts/captures/AAPLB.batch1-bstock-us-20261008T133231Z.json",
+        "sha256": "80513d6768e351741115bee908ffb658623716cdcfd715e51df73634c55b447e"
+      },
+      "reference": {
+        "tokenContractAddress": "0x431a3bee82e2ca41e49895cbece5bb0f76a89b7a",
+        "binanceChainId": "56",
+        "tokenSymbol": "AAPLB",
+        "underlyingTicker": "AAPL",
+        "tokenToShareRatio": "1.000603906075632366",
+        "ratioSource": "public bStock list multiplier",
+        "decimals": 18,
+        "decimalsSource": "public bStock list d",
+        "source": "engine ticker reference (authenticated list, per share)",
+        "sourceField": "integrityEvidence.inspection.referencePrice.price",
+        "capturedAtUtc": "2026-10-08T13:32:37.372Z",
+        "session": "regular",
+        "referencePricePerShareUsd": "336.616364"
+      },
+      "registryMetadata": {
+        "path": "research/snapshot-2026-09-30/rwa_list_bstock.json",
+        "sha256": "1a15a27f9591d466be05a7f7e0ab570be688ee7d1b3dbb399a65b7ab4b9b51e4"
+      },
+      "capturedAtUtc": "2026-10-08T13:32:37Z",
+      "blockAtCapture": "126452525",
+      "multiplierE18": "1000603906075632366",
+      "originalDepth": "failed",
+      "originalReferenceObservation": {
+        "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+        "sourceField": "stockInfo.price",
+        "attemptedAtUtc": "2026-10-08T13:32:37Z",
+        "capturedAtUtc": "2026-10-08T13:32:37Z",
+        "pricePerShareUsd": null
+      },
+      "referenceResolution": "The earlier no-fallback policy is superseded by the chief engineer. Original evidence remains unchanged.",
+      "warning": "stockInfo.price is null; using the recorded independent engine ticker reference",
+      "integrity": {
+        "pass": true,
+        "grade": "A",
+        "label": "Tradable",
+        "reasons": []
+      },
+      "assessments": {
+        "$6/eoa": {
+          "amountInUsdtE18": "6000000000000000000",
+          "premiumPct": "0.0553425561373118114921314747912680993055713700822816374569588182148654161073800",
+          "quotedPricePerShareUsd": "336.80265610021407786718734711654194326537432359539596025624727683885224967119414",
+          "sharesOut": "0.017814586349980350678562749552050712",
+          "pass": true,
+          "reasons": []
+        },
+        "$6/guard": {
+          "amountInUsdtE18": "6000000000000000000",
+          "premiumPct": "0.0553425561373118114921314747912680993055713700822816374569588182148654161073800",
+          "quotedPricePerShareUsd": "336.80265610021407786718734711654194326537432359539596025624727683885224967119414",
+          "sharesOut": "0.017814586349980350678562749552050712",
+          "pass": true,
+          "reasons": []
+        },
+        "$100/eoa": {
+          "amountInUsdtE18": "100000000000000000000",
+          "premiumPct": "0.0603973842614066363862821169035131101780761910689200489367354390203723816930900",
+          "quotedPricePerShareUsd": "336.81967147885185527465820385670283521974475399952589140279785949512981473051549",
+          "sharesOut": "0.296894773280125278055577077050033414",
+          "pass": true,
+          "reasons": []
+        },
+        "$100/guard": {
+          "amountInUsdtE18": "100000000000000000000",
+          "premiumPct": "0.0603973842614066363862821169035131101780761910689200489367354390203723816930900",
+          "quotedPricePerShareUsd": "336.81967147885185527465820385670283521974475399952589140279785949512981473051549",
+          "sharesOut": "0.296894773280125278055577077050033414",
+          "pass": true,
+          "reasons": []
+        }
+      },
+      "remainingErrors": [],
+      "depth": "passed",
+      "fork": "passed",
+      "addition": false
+    },
+    {
+      "token": "AMZNB",
+      "ticker": "AMZN",
+      "address": "0x1a4b499833a79a09ad7cf1d42d7dacf71e92eb00",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": false,
+      "depthEvidence": {
+        "path": "contracts/captures/depth/batch1-bstock-us-20261008T133231Z/AMZNB.json",
+        "sha256": "133a1403104181baf6fb13bc71ff072594b85277d4dd2b4d0153bf8d6713c9ea"
+      },
+      "capture": {
+        "path": "contracts/captures/AMZNB.batch1-bstock-us-20261008T133231Z.json",
+        "sha256": "bfc00d694a26f742d4a7ecb4d690bc4defadabb599e7e8427af5a6c8ede5bb05"
+      },
+      "reference": {
+        "tokenContractAddress": "0x1a4b499833a79a09ad7cf1d42d7dacf71e92eb00",
+        "binanceChainId": "56",
+        "tokenSymbol": "AMZNB",
+        "underlyingTicker": "AMZN",
+        "tokenToShareRatio": "1",
+        "ratioSource": "public bStock list multiplier",
+        "decimals": 18,
+        "decimalsSource": "public bStock list d",
+        "source": "engine ticker reference (authenticated list, per share)",
+        "sourceField": "integrityEvidence.inspection.referencePrice.price",
+        "capturedAtUtc": "2026-10-08T13:32:44.128Z",
+        "session": "regular",
+        "referencePricePerShareUsd": "258.335"
+      },
+      "registryMetadata": {
+        "path": "research/snapshot-2026-09-30/rwa_list_bstock.json",
+        "sha256": "1a15a27f9591d466be05a7f7e0ab570be688ee7d1b3dbb399a65b7ab4b9b51e4"
+      },
+      "capturedAtUtc": "2026-10-08T13:32:44Z",
+      "blockAtCapture": "126452540",
+      "multiplierE18": "1000000000000000000",
+      "originalDepth": "failed",
+      "originalReferenceObservation": {
+        "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+        "sourceField": "stockInfo.price",
+        "attemptedAtUtc": "2026-10-08T13:32:44Z",
+        "capturedAtUtc": "2026-10-08T13:32:44Z",
+        "pricePerShareUsd": null
+      },
+      "referenceResolution": "The earlier no-fallback policy is superseded by the chief engineer. Original evidence remains unchanged.",
+      "warning": "stockInfo.price is null; using the recorded independent engine ticker reference",
+      "integrity": {
+        "pass": true,
+        "grade": "A",
+        "label": "Tradable",
+        "reasons": []
+      },
+      "assessments": {
+        "$6/eoa": {
+          "amountInUsdtE18": "6000000000000000000",
+          "premiumPct": "0.4636399809082268392364569052942094151779867611182918395919795910179933711701500",
+          "quotedPricePerShareUsd": "259.53274434467926780514150094629179589270005209933493922380994047645633317541241",
+          "sharesOut": "0.02311847013813233",
+          "pass": true,
+          "reasons": []
+        },
+        "$6/guard": {
+          "amountInUsdtE18": "6000000000000000000",
+          "premiumPct": "0.4694712682729321480309491736050491125619358089911834651671481543317017901774600",
+          "quotedPricePerShareUsd": "259.54780860089287926461575254763260362493687687215737380473955218449280181965493",
+          "sharesOut": "0.023117128333093386",
+          "pass": true,
+          "reasons": []
+        },
+        "$100/eoa": {
+          "amountInUsdtE18": "100000000000000000000",
+          "premiumPct": "0.4610430813619851995812510389191513118295252404628871411628085520951617586088600",
+          "quotedPricePerShareUsd": "259.52603564423648446533822487139178954141480402994979949612294147305503612910221",
+          "sharesOut": "0.385317795772451954",
+          "pass": true,
+          "reasons": []
+        },
+        "$100/guard": {
+          "amountInUsdtE18": "100000000000000000000",
+          "premiumPct": "0.4793538273798103143403936787494151284889587423204524557934104052382724692971300",
+          "quotedPricePerShareUsd": "259.57333870996163297555125600999730157218195156697354085167390677037229118355875",
+          "sharesOut": "0.385247577802035279",
+          "pass": true,
+          "reasons": []
+        }
+      },
+      "remainingErrors": [],
+      "depth": "passed",
+      "fork": "passed",
+      "addition": true
+    },
+    {
+      "token": "NFLXB",
+      "ticker": "NFLX",
+      "address": "0xd6829ea836b6fa224d099d40e54b31262f874631",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": false,
+      "depthEvidence": {
+        "path": "contracts/captures/depth/batch1-bstock-us-20261008T133231Z/NFLXB.json",
+        "sha256": "ef2e86616e8c42ef8570b7239c94d4f132adabd9c72e28f008253d1e9e957eb1"
+      },
+      "capture": {
+        "path": "contracts/captures/NFLXB.batch1-bstock-us-20261008T133231Z.json",
+        "sha256": "a3d32ff89c689fe28b65061b1d7cbbed0bc09c33a8aa292c06c5f2ff956a90ed"
+      },
+      "reference": {
+        "tokenContractAddress": "0xd6829ea836b6fa224d099d40e54b31262f874631",
+        "binanceChainId": "56",
+        "tokenSymbol": "NFLXB",
+        "underlyingTicker": "NFLX",
+        "tokenToShareRatio": "1",
+        "ratioSource": "public bStock list multiplier",
+        "decimals": 18,
+        "decimalsSource": "public bStock list d",
+        "source": "engine ticker reference (authenticated list, per share)",
+        "sourceField": "integrityEvidence.inspection.referencePrice.price",
+        "capturedAtUtc": "2026-10-08T13:33:29.097Z",
+        "session": "regular",
+        "referencePricePerShareUsd": "70.02000000000001"
+      },
+      "registryMetadata": {
+        "path": "research/snapshot-2026-09-30/rwa_list_bstock.json",
+        "sha256": "1a15a27f9591d466be05a7f7e0ab570be688ee7d1b3dbb399a65b7ab4b9b51e4"
+      },
+      "capturedAtUtc": "2026-10-08T13:33:29Z",
+      "blockAtCapture": "126452640",
+      "multiplierE18": "1000000000000000000",
+      "originalDepth": "failed",
+      "originalReferenceObservation": {
+        "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+        "sourceField": "stockInfo.price",
+        "attemptedAtUtc": "2026-10-08T13:33:29Z",
+        "capturedAtUtc": "2026-10-08T13:33:29Z",
+        "pricePerShareUsd": null
+      },
+      "referenceResolution": "The earlier no-fallback policy is superseded by the chief engineer. Original evidence remains unchanged.",
+      "warning": "stockInfo.price is null; using the recorded independent engine ticker reference",
+      "integrity": {
+        "pass": true,
+        "grade": "A",
+        "label": "Tradable",
+        "reasons": []
+      },
+      "assessments": {
+        "$6/eoa": {
+          "amountInUsdtE18": "6000000000000000000",
+          "premiumPct": "0.1018768528122724084071708751876227091833004491040814627794471073990998499620100",
+          "quotedPricePerShareUsd": "70.091334172339163150554386328033614261687234493224948758568213775008995992888113",
+          "sharesOut": "0.085602593685081249",
+          "pass": true,
+          "reasons": []
+        },
+        "$6/guard": {
+          "amountInUsdtE18": "6000000000000000000",
+          "premiumPct": "0.1018768528122724084071708751876227091833004491040814627794471073990998499620100",
+          "quotedPricePerShareUsd": "70.091334172339163150554386328033614261687234493224948758568213775008995992888113",
+          "sharesOut": "0.085602593685081249",
+          "pass": true,
+          "reasons": []
+        },
+        "$100/eoa": {
+          "amountInUsdtE18": "100000000000000000000",
+          "premiumPct": "0.1081168334665557862036016264867902591846786390913081773377715681858262127137900",
+          "quotedPricePerShareUsd": "70.095703406793292372311445205521629159841274631770759904239771561174533247919354",
+          "sharesOut": "1.426620964478523896",
+          "pass": true,
+          "reasons": []
+        },
+        "$100/guard": {
+          "amountInUsdtE18": "100000000000000000000",
+          "premiumPct": "0.1081168334665557862036016264867902591846786390913081773377715681858262127137900",
+          "quotedPricePerShareUsd": "70.095703406793292372311445205521629159841274631770759904239771561174533247919354",
+          "sharesOut": "1.426620964478523896",
+          "pass": true,
+          "reasons": []
+        }
+      },
+      "remainingErrors": [],
+      "depth": "passed",
+      "fork": "passed",
+      "addition": true
+    },
+    {
+      "token": "GMEB",
+      "ticker": "GME",
+      "address": "0x46ceefda28dd7207059ed19b0acdc026955bb15c",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": false,
+      "depthEvidence": {
+        "path": "contracts/captures/depth/batch1-bstock-us-20261008T133231Z/GMEB.json",
+        "sha256": "da1777075a0109775eb1917d42952ce76ebaccad4979f97d6785bc2c90cb0226"
+      },
+      "capture": {
+        "path": "contracts/captures/GMEB.batch1-bstock-us-20261008T133231Z.json",
+        "sha256": "c5126471a52bf794810ed19288aa89f1634612b82f73e4560f37de6b8dd4f266"
+      },
+      "reference": {
+        "tokenContractAddress": "0x46ceefda28dd7207059ed19b0acdc026955bb15c",
+        "binanceChainId": "56",
+        "tokenSymbol": "GMEB",
+        "underlyingTicker": "GME",
+        "tokenToShareRatio": "1",
+        "ratioSource": "public bStock list multiplier",
+        "decimals": 18,
+        "decimalsSource": "public bStock list d",
+        "source": "engine ticker reference (authenticated list, per share)",
+        "sourceField": "integrityEvidence.inspection.referencePrice.price",
+        "capturedAtUtc": "2026-10-08T13:33:15.106Z",
+        "session": "regular",
+        "referencePricePerShareUsd": "24.336667000000002"
+      },
+      "registryMetadata": {
+        "path": "research/snapshot-2026-09-30/rwa_list_bstock.json",
+        "sha256": "1a15a27f9591d466be05a7f7e0ab570be688ee7d1b3dbb399a65b7ab4b9b51e4"
+      },
+      "capturedAtUtc": "2026-10-08T13:33:15Z",
+      "blockAtCapture": "126452609",
+      "multiplierE18": "1000000000000000000",
+      "originalDepth": "failed",
+      "originalReferenceObservation": {
+        "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+        "sourceField": "stockInfo.price",
+        "attemptedAtUtc": "2026-10-08T13:33:15Z",
+        "capturedAtUtc": "2026-10-08T13:33:15Z",
+        "pricePerShareUsd": null
+      },
+      "referenceResolution": "The earlier no-fallback policy is superseded by the chief engineer. Original evidence remains unchanged.",
+      "warning": "stockInfo.price is null; using the recorded independent engine ticker reference",
+      "integrity": {
+        "pass": true,
+        "grade": "A",
+        "label": "Tradable",
+        "reasons": []
+      },
+      "assessments": {
+        "$6/eoa": {
+          "amountInUsdtE18": "6000000000000000000",
+          "premiumPct": "-0.10751091191311638936125665586137505837189997336388715005595866026619893350149300",
+          "quotedPricePerShareUsd": "24.310502427379043532848509302385353383197841964681840918597091559915610850877017",
+          "sharesOut": "0.246806910631458725",
+          "pass": true,
+          "reasons": []
+        },
+        "$6/guard": {
+          "amountInUsdtE18": "6000000000000000000",
+          "premiumPct": "-0.10751091191311638936125665586137505837189997336388715005595866026619893350149300",
+          "quotedPricePerShareUsd": "24.310502427379043532848509302385353383197841964681840918597091559915610850877017",
+          "sharesOut": "0.246806910631458725",
+          "pass": true,
+          "reasons": []
+        },
+        "$100/eoa": {
+          "amountInUsdtE18": "100000000000000000000",
+          "premiumPct": "-0.03784764628394026388068972676105658130418895980515165578206344796646499673694400",
+          "quotedPricePerShareUsd": "24.327456144356541582743482338216146496512620740580324766603553776836650026431300",
+          "sharesOut": "4.11058186300329218",
+          "pass": true,
+          "reasons": []
+        },
+        "$100/guard": {
+          "amountInUsdtE18": "100000000000000000000",
+          "premiumPct": "0.0543799906824549035276514218846447261406586454755477212161036709363807658258200",
+          "quotedPricePerShareUsd": "24.349901277247022078384295593113929181686942483848989138151624410281517193153153",
+          "sharesOut": "4.106792830960746712",
+          "pass": true,
+          "reasons": []
+        }
+      },
+      "remainingErrors": [],
+      "depth": "passed",
+      "fork": "passed",
+      "addition": true
+    },
+    {
+      "token": "BMNRB",
+      "ticker": "BMNR",
+      "address": "0x3548da95a9effe481e8604664d75e95821e557f5",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": false,
+      "depthEvidence": {
+        "path": "contracts/captures/depth/batch1-bstock-us-20261008T133231Z/BMNRB.json",
+        "sha256": "d5bd9ad510383253580f56a8d8d5048a48dbcfdbfd3c5c7ae8f92ef19e6af00e"
+      },
+      "capture": {
+        "path": "contracts/captures/BMNRB.batch1-bstock-us-20261008T133231Z.json",
+        "sha256": "35c3c82916a71cac95cb3d79e8fc9d1441622a0554aefe3017ce98a53fe226a0"
+      },
+      "reference": {
+        "tokenContractAddress": "0x3548da95a9effe481e8604664d75e95821e557f5",
+        "binanceChainId": "56",
+        "tokenSymbol": "BMNRB",
+        "underlyingTicker": "BMNR",
+        "tokenToShareRatio": "1",
+        "ratioSource": "public bStock list multiplier",
+        "decimals": 18,
+        "decimalsSource": "public bStock list d",
+        "source": "engine ticker reference (authenticated list, per share)",
+        "sourceField": "integrityEvidence.inspection.referencePrice.price",
+        "capturedAtUtc": "2026-10-08T13:32:50.908Z",
+        "session": "regular",
+        "referencePricePerShareUsd": "24.241613"
+      },
+      "registryMetadata": {
+        "path": "research/snapshot-2026-09-30/rwa_list_bstock.json",
+        "sha256": "1a15a27f9591d466be05a7f7e0ab570be688ee7d1b3dbb399a65b7ab4b9b51e4"
+      },
+      "capturedAtUtc": "2026-10-08T13:32:51Z",
+      "blockAtCapture": "126452555",
+      "multiplierE18": "1000000000000000000",
+      "originalDepth": "failed",
+      "originalReferenceObservation": {
+        "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+        "sourceField": "stockInfo.price",
+        "attemptedAtUtc": "2026-10-08T13:32:50Z",
+        "capturedAtUtc": "2026-10-08T13:32:50Z",
+        "pricePerShareUsd": null
+      },
+      "referenceResolution": "The earlier no-fallback policy is superseded by the chief engineer. Original evidence remains unchanged.",
+      "warning": "stockInfo.price is null; using the recorded independent engine ticker reference",
+      "integrity": {
+        "pass": true,
+        "grade": "A",
+        "label": "Tradable",
+        "reasons": []
+      },
+      "assessments": {
+        "$6/eoa": {
+          "amountInUsdtE18": "6000000000000000000",
+          "premiumPct": "0.1476440174072228131911657691491305863356629767323731855030717884042741765668300",
+          "quotedPricePerShareUsd": "24.277404291317511588421515355945605629604122299803741953345426766057143021342268",
+          "sharesOut": "0.247143390125352883",
+          "pass": true,
+          "reasons": []
+        },
+        "$6/guard": {
+          "amountInUsdtE18": "6000000000000000000",
+          "premiumPct": "0.1171211302283561832380708090582742786037614239477404472779937882313250144092500",
+          "quotedPricePerShareUsd": "24.270005051131184122202143994197875795097665647836700561473600288307077354765285",
+          "sharesOut": "0.247218737176173356",
+          "pass": true,
+          "reasons": []
+        },
+        "$100/eoa": {
+          "amountInUsdtE18": "100000000000000000000",
+          "premiumPct": "0.1518513286468412839777322160650883374279415346742568847724791885346003126264100",
+          "quotedPricePerShareUsd": "24.278424211425925400786112849994822542867415740701994164632400335390098178883685",
+          "sharesOut": "4.118883463323700589",
+          "pass": true,
+          "reasons": []
+        },
+        "$100/guard": {
+          "amountInUsdtE18": "100000000000000000000",
+          "premiumPct": "0.1594563213107959742163537033613653818588214676611062625996848255042734216009100",
+          "quotedPricePerShareUsd": "24.280267784316199687289108247480030187386187706551325531698179334618471261326351",
+          "sharesOut": "4.118570721225522923",
+          "pass": true,
+          "reasons": []
+        }
+      },
+      "remainingErrors": [],
+      "depth": "passed",
+      "fork": "passed",
+      "addition": true
+    },
+    {
+      "token": "MRNAB",
+      "ticker": "MRNA",
+      "address": "0x5fd86da9b05abe396fe9d02a4a213a7c00556503",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": false,
+      "depthEvidence": {
+        "path": "contracts/captures/depth/batch1-bstock-us-20261008T133231Z/MRNAB.json",
+        "sha256": "1400d9092ce7e746d154c5ee87f52b784680a9267de899781b28ff74e6503ef2"
+      },
+      "capture": {
+        "path": "contracts/captures/MRNAB.batch1-bstock-us-20261008T133231Z.json",
+        "sha256": "bed62e3611f51756857350283c0edfe19c20774ff95319dd5a84a52ffdb8ba83"
+      },
+      "reference": {
+        "tokenContractAddress": "0x5fd86da9b05abe396fe9d02a4a213a7c00556503",
+        "binanceChainId": "56",
+        "tokenSymbol": "MRNAB",
+        "underlyingTicker": "MRNA",
+        "tokenToShareRatio": "1",
+        "ratioSource": "public bStock list multiplier",
+        "decimals": 18,
+        "decimalsSource": "public bStock list d",
+        "source": "engine ticker reference (authenticated list, per share)",
+        "sourceField": "integrityEvidence.inspection.referencePrice.price",
+        "capturedAtUtc": "2026-10-08T13:33:22.178Z",
+        "session": "regular",
+        "referencePricePerShareUsd": "196.53"
+      },
+      "registryMetadata": {
+        "path": "research/snapshot-2026-09-30/rwa_list_bstock.json",
+        "sha256": "1a15a27f9591d466be05a7f7e0ab570be688ee7d1b3dbb399a65b7ab4b9b51e4"
+      },
+      "capturedAtUtc": "2026-10-08T13:33:22Z",
+      "blockAtCapture": "126452625",
+      "multiplierE18": "1000000000000000000",
+      "originalDepth": "failed",
+      "originalReferenceObservation": {
+        "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+        "sourceField": "stockInfo.price",
+        "attemptedAtUtc": "2026-10-08T13:33:22Z",
+        "capturedAtUtc": "2026-10-08T13:33:22Z",
+        "pricePerShareUsd": null
+      },
+      "referenceResolution": "The earlier no-fallback policy is superseded by the chief engineer. Original evidence remains unchanged.",
+      "warning": "stockInfo.price is null; using the recorded independent engine ticker reference",
+      "integrity": {
+        "pass": true,
+        "grade": "A",
+        "label": "Tradable",
+        "reasons": []
+      },
+      "assessments": {
+        "$6/eoa": {
+          "amountInUsdtE18": "6000000000000000000",
+          "premiumPct": "0.1310213276824901658114846865238707717757179767567515236508225401529137575886800",
+          "quotedPricePerShareUsd": "196.78749621529439792286931085442536322777081853972004376943096153816252140778904",
+          "sharesOut": "0.030489742058792848",
+          "pass": true,
+          "reasons": []
+        },
+        "$6/guard": {
+          "amountInUsdtE18": "6000000000000000000",
+          "premiumPct": "0.1310213276824901658114846865238707717757179767567515236508225401529137575886800",
+          "quotedPricePerShareUsd": "196.78749621529439792286931085442536322777081853972004376943096153816252140778904",
+          "sharesOut": "0.030489742058792848",
+          "pass": true,
+          "reasons": []
+        },
+        "$100/eoa": {
+          "amountInUsdtE18": "100000000000000000000",
+          "premiumPct": "0.1292164117198008628220894887927525579679312689291731484421498770138690722375500",
+          "quotedPricePerShareUsd": "196.78394901395292463570425247232439660217437532282650398863335715329535688766846",
+          "sharesOut": "0.50817152771392712",
+          "pass": true,
+          "reasons": []
+        },
+        "$100/guard": {
+          "amountInUsdtE18": "100000000000000000000",
+          "premiumPct": "0.1292164117198008628220894887927525579679312689291731484421498770138690722375500",
+          "quotedPricePerShareUsd": "196.78394901395292463570425247232439660217437532282650398863335715329535688766846",
+          "sharesOut": "0.50817152771392712",
+          "pass": true,
+          "reasons": []
+        }
+      },
+      "remainingErrors": [],
+      "depth": "passed",
+      "fork": "passed",
+      "addition": true
+    },
+    {
+      "token": "FLNCB",
+      "ticker": "FLNC",
+      "address": "0x4af1d41cd9dd950dca43984b43aaa2a8702714ac",
+      "kind": "bstock",
+      "role": "candidate",
+      "held": false,
+      "depthEvidence": {
+        "path": "contracts/captures/depth/batch1-bstock-us-20261008T133231Z/FLNCB.json",
+        "sha256": "190a17ec211dc87f45888fd5fcd06db898ca2a7abfb76439cb5e487f83aa1ce5"
+      },
+      "capture": {
+        "path": "contracts/captures/FLNCB.batch1-bstock-us-20261008T133231Z.json",
+        "sha256": "4e953fbe19d4858b33c4eb5d252811246afa23c426e5b4195087e47e206adeb4"
+      },
+      "reference": {
+        "tokenContractAddress": "0x4af1d41cd9dd950dca43984b43aaa2a8702714ac",
+        "binanceChainId": "56",
+        "tokenSymbol": "FLNCB",
+        "underlyingTicker": "FLNC",
+        "tokenToShareRatio": "1",
+        "ratioSource": "public bStock list multiplier",
+        "decimals": 18,
+        "decimalsSource": "public bStock list d",
+        "source": "engine ticker reference (authenticated list, per share)",
+        "sourceField": "integrityEvidence.inspection.referencePrice.price",
+        "capturedAtUtc": "2026-10-08T13:33:08.229Z",
+        "session": "regular",
+        "referencePricePerShareUsd": "7.547143"
+      },
+      "registryMetadata": {
+        "path": "research/snapshot-2026-09-30/rwa_list_bstock.json",
+        "sha256": "1a15a27f9591d466be05a7f7e0ab570be688ee7d1b3dbb399a65b7ab4b9b51e4"
+      },
+      "capturedAtUtc": "2026-10-08T13:33:08Z",
+      "blockAtCapture": "126452594",
+      "multiplierE18": "1000000000000000000",
+      "originalDepth": "failed",
+      "originalReferenceObservation": {
+        "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+        "sourceField": "stockInfo.price",
+        "attemptedAtUtc": "2026-10-08T13:33:08Z",
+        "capturedAtUtc": "2026-10-08T13:33:08Z",
+        "pricePerShareUsd": null
+      },
+      "referenceResolution": "The earlier no-fallback policy is superseded by the chief engineer. Original evidence remains unchanged.",
+      "warning": "stockInfo.price is null; using the recorded independent engine ticker reference",
+      "integrity": {
+        "pass": true,
+        "grade": "A",
+        "label": "Tradable",
+        "reasons": []
+      },
+      "assessments": {
+        "$6/eoa": {
+          "amountInUsdtE18": "6000000000000000000",
+          "premiumPct": "-0.24210597384901499979298786015476075331341625219014675955582792663361868123915000",
+          "quotedPricePerShareUsd": "7.5288709159420722338741735022214801846395592372619689921464555015430257120521672",
+          "sharesOut": "0.796932244819770862",
+          "pass": true,
+          "reasons": []
+        },
+        "$6/guard": {
+          "amountInUsdtE18": "6000000000000000000",
+          "premiumPct": "-0.25232968892633058494761774025952357441296112041502727808194335808445482710557600",
+          "quotedPricePerShareUsd": "7.5280993175452746661012668140492451847203424137078756978341480775863641334279394",
+          "sharesOut": "0.797013927010257654",
+          "pass": true,
+          "reasons": []
+        },
+        "$100/eoa": {
+          "amountInUsdtE18": "100000000000000000000",
+          "premiumPct": "0.0327368680323355897756809813308236214465484214528788329527562124744462997182900",
+          "quotedPricePerShareUsd": "7.5496136982441216532002640228848405617883496779312914431396756337968303006979478",
+          "sharesOut": "13.245710839914611373",
+          "pass": true,
+          "reasons": []
+        },
+        "$100/guard": {
+          "amountInUsdtE18": "100000000000000000000",
+          "premiumPct": "0.0327368680323355897756809813308236214465484214528788329527562124744462997182900",
+          "quotedPricePerShareUsd": "7.5496136982441216532002640228848405617883496779312914431396756337968303006979478",
+          "sharesOut": "13.245710839914611373",
+          "pass": true,
+          "reasons": []
+        }
+      },
+      "remainingErrors": [],
+      "depth": "passed",
+      "fork": "passed",
+      "addition": true
+    }
+  ],
+  "notes": [
+    "Offline recomputation only; original captures, depth evidence, first manifest and product data unchanged.",
+    "Decimals and public share ratios are from the recorded registry; every captured UI multiplier still passes the independent ratio-agreement gate.",
+    "AAPLB is an already-enabled control, not an addition. DJTB has no engine reference; SOXSB/SQQQB remain held and excluded.",
+    "References are contemporaneous CLI ticker-level underlying share prices, not token DEX prices. No additional ratio division is applied."
+  ],
+  "forkReport": "contracts/captures/depth/batch-2-engine-reference-fork-results.json",
+  "forkPassed": 7,
+  "forkFailed": 0,
+  "passingNewAdditions": [
+    "AMZNB",
+    "NFLXB",
+    "GMEB",
+    "BMNRB",
+    "MRNAB",
+    "FLNCB"
+  ]
+}

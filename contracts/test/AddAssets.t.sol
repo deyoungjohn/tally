@@ -23,6 +23,14 @@ contract AddAssetsHarness is AddAssets {
     function manifest() external view returns (string memory) {
         return _loadAssets();
     }
+
+    function batch2Manifest() external view returns (string memory) {
+        return _loadBstockBatch2();
+    }
+
+    function validateBatch2(string memory assets) external view {
+        _validateBstockBatch2(assets);
+    }
 }
 
 contract AddAssetsTest is Test {
@@ -134,6 +142,13 @@ contract AddAssetsTest is Test {
         assertTrue(bytes(loaded).length > 0);
     }
 
+    function test_batch2ManifestIsPinnedBstockOnlyAndRejectsChangedBytes() public {
+        string memory loaded = script.batch2Manifest();
+        script.validateBatch2(loaded);
+        vm.expectRevert("Batch 2 manifest bytes differ");
+        script.validateBatch2(string.concat(loaded, " "));
+    }
+
     function test_productionEntryPointsRefuseOtherChains() public {
         vm.chainId(1);
         vm.expectRevert("BSC chain 56 required");
@@ -142,6 +157,92 @@ contract AddAssetsTest is Test {
         script.run();
         vm.expectRevert("BSC chain 56 required");
         script.rollback(address(bstock));
+    }
+}
+
+contract BstockBatch2ForkTest is Test {
+    using stdJson for string;
+    AddAssetsHarness script;
+    ShareGuard guard;
+    string assets;
+    bool enabled;
+
+    function setUp() public {
+        enabled = vm.envOr("BSTOCK_BATCH2_FORK", false);
+        if (!enabled) return;
+        vm.createSelectFork(vm.envString("BSC_RPC"), vm.envUint("BSTOCK_BATCH2_BLOCK"));
+        script = new AddAssetsHarness();
+        guard = ShareGuard(script.DEPLOYED_GUARD());
+        assets = script.batch2Manifest();
+    }
+
+    function test_forkBatch2PreviewPreservesEveryOtherKnownAssetAndNeedsNoSeeds() public {
+        vm.skip(!enabled);
+        string memory batch = vm.readFile("deploy/batch-1.json");
+        bytes32[] memory before = new bytes32[](53);
+        for (uint256 i; i < 53; i++) {
+            address stock = batch.readAddress(string.concat(".tokens[", vm.toString(i), "].address"));
+            before[i] = keccak256(abi.encode(guard.assetOf(stock)));
+        }
+        script.previewBstockBatch2();
+        for (uint256 i; i < 53; i++) {
+            address stock = batch.readAddress(string.concat(".tokens[", vm.toString(i), "].address"));
+            bool added;
+            for (uint256 j; j < 6; j++) {
+                if (stock == assets.readAddress(string.concat(".assets[", vm.toString(j), "].address"))) added = true;
+            }
+            if (!added) assertEq(keccak256(abi.encode(guard.assetOf(stock))), before[i]);
+        }
+        for (uint256 i; i < 6; i++) {
+            address stock = assets.readAddress(string.concat(".assets[", vm.toString(i), "].address"));
+            assertEq(uint256(guard.assetOf(stock).source), 1);
+            (uint256 seed,,) = guard.feedOf(stock);
+            assertEq(seed, 0);
+        }
+    }
+
+    function test_forkBatch2OwnerRunAndConfiguredAssetsAreSkipped() public {
+        vm.skip(!enabled);
+        script.runBstockBatch2();
+        bytes32[] memory before = new bytes32[](6);
+        for (uint256 i; i < 6; i++) {
+            address stock = assets.readAddress(string.concat(".assets[", vm.toString(i), "].address"));
+            before[i] = keccak256(abi.encode(guard.assetOf(stock)));
+        }
+        script.runBstockBatch2();
+        for (uint256 i; i < 6; i++) {
+            address stock = assets.readAddress(string.concat(".assets[", vm.toString(i), "].address"));
+            assertEq(keccak256(abi.encode(guard.assetOf(stock))), before[i]);
+        }
+    }
+
+    function test_forkBatch2DisabledConfiguredAssetIsNeverReenabled() public {
+        vm.skip(!enabled);
+        script.runBstockBatch2();
+        address stock = assets.readAddress(".assets[0].address");
+        script.rollbackBstockBatch2(stock);
+        vm.expectRevert("Batch 2 configuration mismatch");
+        script.runBstockBatch2();
+        assertFalse(guard.assetOf(stock).enabled);
+    }
+
+    function test_forkBatch2RollbackOnlyDisablesAndRejectsOutOfScopeAssets() public {
+        vm.skip(!enabled);
+        script.runBstockBatch2();
+        address stock = assets.readAddress(".assets[0].address");
+        ShareGuard.Asset memory cfg = guard.assetOf(stock);
+        (uint256 m, uint64 at, uint64 afterTime) = guard.feedOf(stock);
+        script.rollbackBstockBatch2(stock);
+        cfg.enabled = false;
+        assertEq(keccak256(abi.encode(guard.assetOf(stock))), keccak256(abi.encode(cfg)));
+        (uint256 newM, uint64 newAt, uint64 newAfter) = guard.feedOf(stock);
+        assertEq(newM, m);
+        assertEq(newAt, at);
+        assertEq(newAfter, afterTime);
+        vm.expectRevert(abi.encodeWithSelector(ShareGuard.AssetNotEnabled.selector, stock));
+        guard.swapForShares(address(0x123), 6e18, stock, 1, address(0x456), "", address(this), block.timestamp + 60);
+        vm.expectRevert("rollback outside Batch 2");
+        script.rollbackBstockBatch2(address(0x123));
     }
 }
 

@@ -7,6 +7,7 @@ No signing, writes, credentials, configured RPC URLs or seed reads.
 """
 
 import argparse
+import hashlib
 from datetime import datetime, timezone
 import json
 from pathlib import Path
@@ -22,6 +23,9 @@ from list_candidates import load_batch
 
 GUARD = "0x28F6F19bffbF25E36452c78d12090F0bC922970a"
 ASSET_SELECTOR = "0x71f96211"
+BATCH2_SYMBOLS = ["AMZNB", "NFLXB", "GMEB", "BMNRB", "MRNAB", "FLNCB"]
+BATCH2_MANIFEST = CONTRACTS / "captures/depth/batch-2-bstock-manifest.json"
+BATCH2_SHA256 = "59b73585f741e387878c9907988ffa400a2178596512d34b8e9727147d7ed72f"
 
 
 def read_rpc(method, params):
@@ -94,6 +98,58 @@ def compare(manifest, batch, readings, generated):
     return result
 
 
+def batch2_manifest():
+    raw = BATCH2_MANIFEST.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != BATCH2_SHA256:
+        raise ValueError("Batch 2 manifest differs from pinned bytes")
+    return json.loads(raw)
+
+
+def compare_batch2(manifest, batch, readings, generated, second):
+    result = compare(manifest, batch, readings, generated)
+    rows = second["assets"]
+    if second["count"] != 6 or [r["symbol"] for r in rows] != BATCH2_SYMBOLS:
+        raise ValueError("Batch 2 scope differs")
+    known = {r["symbol"]: r for r in batch["tokens"]}
+    baseline = validate_manifest(manifest, batch)
+    if second["bstockPauseManager"].lower() != manifest["bstockPauseManager"].lower():
+        raise ValueError("Batch 2 manager differs")
+    for row in rows:
+        source = known.get(row["symbol"])
+        if (source is None or source["held"] or source["role"] != "candidate" or row["kind"] != "bstock"
+                or row["ticker"] != source["ticker"] or row["address"].lower() != source["address"].lower()
+                or any(row["address"].lower() == old["address"].lower() for old in baseline)):
+            raise ValueError("Batch 2 token identity differs")
+    symbols = {r["symbol"] for r in rows}
+    result["unexpectedEnabledTokens"] = [s for s in result["unexpectedEnabledTokens"] if s not in symbols]
+    actual = {r["symbol"]: r for r in readings}
+    for row in rows:
+        cfg = actual[row["symbol"]].get("config")
+        if cfg is None:
+            continue  # The first comparison already records this unavailable read.
+        if cfg["source"] == 0 or not cfg["enabled"]:
+            result["missingTokens"].append(row["symbol"])
+        if cfg["source"] != 0:
+            wanted = {"source": 1, "enabled": True, "maxStepBps": 0, "pauseCheck": 1,
+                      "pauseManager": manifest["bstockPauseManager"].lower()}
+            if cfg != wanted:
+                result["configurationDifferences"].append({"token": row["symbol"], "actual": cfg, "expected": wanted})
+    desired = {r["ticker"] for r in baseline + rows}
+    enabled = {r["ticker"] for r in readings if r.get("config") is not None
+               and r["config"]["source"] != 0 and r["config"]["enabled"]}
+    result["tickersMissingOnChain"] = sorted(desired-enabled)
+    result["tickersMissingFromCombinedManifest"] = sorted(enabled-desired)
+    result["productTickersAwaitingBatch2"] = sorted(desired-{r["ticker"] for r in baseline})
+    result["scope"] = "first 30 tokens plus pinned Batch 2 six; generated product remains first batch only"
+    result["expectedEnabledTokens"] = 36
+    result["expectedTickers"] = len(desired)
+    result["batch2NotConnectedToProduct"] = BATCH2_SYMBOLS
+    result["pass"] = not any(result[k] for k in ("missingTokens", "unexpectedEnabledTokens",
+                          "configurationDifferences", "unavailable", "tickersMissingOnChain",
+                          "tickersMissingFromCombinedManifest")) and result["generatedFileMatchesManifest"]
+    return result
+
+
 def capture(manifest, batch, generated, rpc=read_rpc, sleep=time.sleep):
     if int(rpc("eth_chainId", []), 16) != 56:
         raise ValueError("expected BSC chain 56")
@@ -126,6 +182,7 @@ def main():
     p.add_argument("--snapshot", type=Path)
     p.add_argument("--recorded", type=Path, help="compare recorded chain readings offline")
     p.add_argument("--self-test", action="store_true")
+    p.add_argument("--batch2", action="store_true", help="verify the pinned six additions plus the first 30; do not generate or connect product data")
     args = p.parse_args()
     if args.self_test:
         return 0 if unittest.TextTestRunner().run(unittest.defaultTestLoader.loadTestsFromTestCase(Tests)).wasSuccessful() else 1
@@ -138,6 +195,8 @@ def main():
         report["replayedOffline"] = True
     else:
         report = capture(manifest, batch, generated)
+    if args.batch2:
+        report["comparison"] = compare_batch2(manifest, batch, report["readings"], generated, batch2_manifest())
     if args.snapshot:
         with args.snapshot.open("x") as target:
             json.dump(report, target, indent=2)
@@ -166,6 +225,44 @@ class Tests(unittest.TestCase):
 
     def test_matching_chain_and_file_pass(self):
         self.assertTrue(self.check()["pass"])
+
+    def batch2_check(self):
+        return compare_batch2(self.manifest, self.batch, self.readings,
+                              render(self.manifest, self.batch), batch2_manifest())
+
+    def test_batch2_is_missing_before_owner_and_matches_after_all_six_are_enabled(self):
+        self.assertEqual(self.batch2_check()["missingTokens"], BATCH2_SYMBOLS)
+        for row in self.readings:
+            if row["symbol"] in BATCH2_SYMBOLS:
+                row["config"].update(source=1, enabled=True, pauseCheck=1,
+                                      pauseManager=self.manifest["bstockPauseManager"].lower())
+        result = self.batch2_check()
+        self.assertTrue(result["pass"])
+        self.assertEqual(result["expectedEnabledTokens"], 36)
+        self.assertEqual(result["expectedTickers"], 23)
+        self.assertEqual(result["batch2NotConnectedToProduct"], BATCH2_SYMBOLS)
+        self.assertEqual(result["tickersMissingFromGeneratedTarget"], ["FLNC", "MRNA"])
+        self.assertEqual(result["tickersMissingFromCombinedManifest"], [])
+        self.assertFalse(self.check()["pass"])  # Default first-batch verification is unchanged.
+
+    def test_batch2_detects_bad_config_unknown_enabled_asset_and_missing_reads(self):
+        for row in self.readings:
+            if row["symbol"] in BATCH2_SYMBOLS:
+                row["config"].update(source=1, enabled=True, pauseCheck=1,
+                                      pauseManager=self.manifest["bstockPauseManager"].lower())
+        next(r for r in self.readings if r["symbol"]=="AMZNB")["config"]["maxStepBps"]=99
+        next(r for r in self.readings if r["symbol"]=="NFLXB").update(config=None,reason="unavailable")
+        next(r for r in self.readings if r["symbol"]=="SOXLB")["config"].update(source=1,enabled=True)
+        result=self.batch2_check()
+        self.assertFalse(result["pass"])
+        self.assertTrue(result["configurationDifferences"])
+        self.assertTrue(result["unavailable"])
+        self.assertIn("SOXLB",result["unexpectedEnabledTokens"])
+
+    def test_batch2_rejects_twin_or_control_substitution(self):
+        second=batch2_manifest()
+        second["assets"][0]["kind"]="ondo"
+        with self.assertRaises(ValueError): compare_batch2(self.manifest,self.batch,self.readings,render(self.manifest,self.batch),second)
 
     def test_disabled_and_unexpected_held_token_detected_in_both_directions(self):
         next(r for r in self.readings if r["symbol"]=="SPCXB")["config"]["enabled"]=False
