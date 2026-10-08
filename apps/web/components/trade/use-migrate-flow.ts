@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useSellFlow, type SellTarget } from "./use-sell-flow";
+import type { PlanDto } from "@/lib/dto";
 import {
   type PendingMigrate,
   readPendingMigrate,
@@ -94,7 +95,25 @@ export function useMigrateFlow() {
 
   useEffect(() => {
     if (pm && pm.step === 1 && step === 1) {
-      if (sell.phase.name === "confirmed") {
+      if (sell.phase.name === "signing") {
+        if (!pm.sellPlan || pm.sellPlan.quoteTime !== sell.phase.plan.expiresAt - 15000) {
+          const plan = sell.phase.plan;
+          const updated = {
+            ...pm,
+            tokensSpent: plan.tokensIn,
+            sourceMultiplier: plan.multiplier ?? undefined,
+            sellPlan: {
+              route: plan.routeText,
+              vendor: plan.vendor,
+              quoteTime: plan.expiresAt - 15000,
+              simulation: plan.simulation ? plan.simulation.ethCall === "ok" : null,
+              guaranteedUsdt: plan.minUsdtOut,
+            },
+          };
+          writePendingMigrate(updated);
+          setPm(updated);
+        }
+      } else if (sell.phase.name === "confirmed") {
         const updated = { ...pm, saleHash: sell.phase.hash };
         writePendingMigrate(updated);
         setPm(updated);
@@ -102,7 +121,7 @@ export function useMigrateFlow() {
         setWaitingReceipt(true);
       }
     }
-  }, [pm, step, sell.phase.name, sell.phase]);
+  }, [pm, step, sell.phase]);
 
   useEffect(() => {
     if (step === "interstitial" && pm && pm.saleHash && !pm.usdtReceived && waitingReceipt) {
@@ -193,5 +212,37 @@ export function useMigrateFlow() {
     [pm, step],
   );
 
-  return { pm, step, sell, open, cancel, resumeStep2, waitingReceipt, source, onBuyDone };
+  const onBuySigning = useCallback(
+    (plan: PlanDto) => {
+      if (pm && step === 2) {
+        const updated = {
+          ...pm,
+          destMultiplier: plan.multiplier,
+          buyPlan: {
+            route: plan.routeText,
+            vendor: plan.vendor,
+            quoteTime: plan.builtAt,
+            simulation: plan.simulation ? plan.simulation.ethCall === "ok" : null,
+            minShares: plan.minShares,
+          },
+        };
+        writePendingMigrate(updated);
+        setPm(updated);
+      }
+    },
+    [pm, step],
+  );
+
+  return {
+    pm,
+    step,
+    sell,
+    open,
+    cancel,
+    resumeStep2,
+    waitingReceipt,
+    source,
+    onBuyDone,
+    onBuySigning,
+  };
 }

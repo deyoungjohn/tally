@@ -192,12 +192,27 @@ test.describe("Migrate", () => {
       await page.getByTestId("confirm-buy").click();
 
       // Check combined done view
-      const doneDialog = page.getByRole("dialog").filter({ hasText: "Step 1: Sold to USDT" });
+      const doneDialog = page
+        .getByRole("dialog")
+        .filter({ hasText: /Your .* shares have been migrated to/ });
       await expect(doneDialog).toBeVisible();
-      await expect(doneDialog).toContainText(
-        /Your .* shares have been migrated to .* using .* USDT/,
-      );
-      await expect(doneDialog).toContainText("Step 2: Bought destination");
+
+      // Open receipt from done card
+      await page.getByRole("button", { name: "View Migrate Receipt" }).click();
+
+      const receiptModal = page.getByRole("dialog", { name: "Migrate Receipt", exact: true });
+      await expect(receiptModal).toBeVisible();
+      await expect(receiptModal).toContainText("Share-true comparison");
+
+      const copyBtn = receiptModal.getByRole("button", { name: "Copy Migrate Receipt Link" });
+      await expect(copyBtn).toBeVisible();
+
+      await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+      await copyBtn.click();
+
+      const handle = await page.evaluateHandle(() => navigator.clipboard.readText());
+      const copied = await handle.jsonValue();
+      expect(copied).toMatch(/\/receipt\/migrate\/0x[a-f0-9]{64}\/0x[a-f0-9]{64}/);
     });
   });
 });

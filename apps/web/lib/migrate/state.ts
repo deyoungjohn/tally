@@ -9,6 +9,25 @@ export interface PendingMigrate {
   usdtReceived?: string;
   buyHash?: string;
   createdAt: number;
+
+  version?: number;
+  tokensSpent?: string;
+  sourceMultiplier?: string;
+  destMultiplier?: string;
+  sellPlan?: {
+    route: string;
+    vendor: string;
+    quoteTime: number;
+    simulation: boolean | null;
+    guaranteedUsdt: string;
+  };
+  buyPlan?: {
+    route: string;
+    vendor: string;
+    quoteTime: number;
+    simulation: boolean | null;
+    minShares: string;
+  };
 }
 
 export const MIGRATE_STORAGE_KEY = "tally.pendingMigrate";
