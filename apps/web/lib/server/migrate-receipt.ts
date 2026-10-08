@@ -1,7 +1,6 @@
 import { getEngine } from "./engine";
 import { decodeTransfer } from "@tally/mod-receipts/src/decode";
 import { USDT_BSC } from "@tally/config";
-import { formatUnits } from "viem";
 import { buildMigrateReceipt, MigrateReceiptVM } from "../migrate/receipt-vm";
 
 export type MigratePageResult =
@@ -65,12 +64,9 @@ export async function loadMigrateReceipt(
   if (sellUsdtReceived < buyUsdtSpent) return { state: "not_a_migrate", sellHash, buyHash };
 
   // They must be different issuers but same ticker
-  let sellTicker, sellIssuer;
-  let buyTicker, buyIssuer;
-
   const tokens = (await engine.ports.registry.all?.()) ?? [];
-  const sellDef = tokens.find((t: any) => t.address.toLowerCase() === sellStockToken);
-  const buyDef = tokens.find((t: any) => t.address.toLowerCase() === buyStockToken);
+  const sellDef = tokens.find((t: { address: string; ticker: string; issuer: string }) => t.address.toLowerCase() === sellStockToken);
+  const buyDef = tokens.find((t: { address: string; ticker: string; issuer: string }) => t.address.toLowerCase() === buyStockToken);
 
   if (!sellDef || !buyDef) return { state: "not_a_migrate", sellHash, buyHash };
   if (sellDef.ticker !== buyDef.ticker || sellDef.issuer === buyDef.issuer)
@@ -83,7 +79,9 @@ export async function loadMigrateReceipt(
   try {
     const facts = await engine.ports.facts.multipliers(sellDef);
     sellMultiplier = (facts.api ?? facts.list ?? facts.onchain)?.toString();
-  } catch {}
+  } catch {
+    /* ignore */
+  }
 
   const vm = buildMigrateReceipt(
     {

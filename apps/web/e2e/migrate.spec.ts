@@ -429,29 +429,4 @@ test.describe("Migrate stocks tab on the Trade page", () => {
   });
 });
 
-test.describe("Migrate Permalink", () => {
-  [
-    { w: 375, h: 667, motion: "reduce" },
-    { w: 768, h: 1024, motion: "no-preference" },
-    { w: 1280, h: 800, motion: "no-preference" },
-  ].forEach(({ w, h, motion }) => {
-    test.use({
-      viewport: { width: w, height: h },
-      colorScheme: "light",
-      reducedMotion: motion as any,
-    });
-    test(`shows permalink receipt at ${w}x${h}`, async ({ page }) => {
-      await flags(page, true);
-      // Wait, the permalink test needs the backend mock or we can just mock the loader's response or API?
-      // No, the permalink does SSR so it hits the internal engine directly on the server side.
-      // E2E against the real NextJS server with TALLY_FIXTURES=1 will use the mock engine which reads fixtures.
-      // But we can just use the hash from a known fixture.
 
-      const sellHash = "0xf111111111111111111111111111111111111111111111111111111111111111"; // A dummy hash. NextJS will throw if not found in fixtures.
-      // Actually, we can intercept the document request and provide the HTML directly if it's too hard to mock SSR,
-      // but Next.js Playwright tests typically mock network for client side, not server side.
-      // For server side, if TALLY_FIXTURES=1, it will read `packages/binance/fixtures`.
-      // Let's see if there is an existing fixture hash we can use.
-    });
-  });
-});
