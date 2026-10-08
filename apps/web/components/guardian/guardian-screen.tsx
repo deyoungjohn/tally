@@ -11,7 +11,7 @@ import type {
   AlertFeedVM,
   GuardianSettingsVM,
 } from "@/modules/guardian/view-model";
-import { Button } from "@/components/motion/button";
+import { Button, ButtonLink } from "@/components/motion/button";
 import { VmEmpty, VmFreshness, VmSkeleton, ageText } from "@/components/portfolio/vm-shared";
 import { Tip } from "@/components/ui/tooltip";
 import { useSessionFetch } from "@/lib/hooks/use-session-fetch";
@@ -142,10 +142,30 @@ function TelegramCard({
           </p>
           {t.activeLinkCode ? (
             <div className="mt-3" data-testid="guardian-link-code">
-              <p className="t-meta">Send this to the Tally bot in Telegram:</p>
-              <p className="mono mt-1 text-[20px] font-bold tracking-wide">
-                /link {t.activeLinkCode.code}
-              </p>
+              {process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ? (
+                <>
+                  <p className="t-meta">Send this to the Tally bot in Telegram:</p>
+                  <p className="mono mt-1 text-[20px] font-bold tracking-wide">
+                    /link {t.activeLinkCode.code}
+                  </p>
+                  <ButtonLink
+                    href={`https://t.me/${process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    variant="glassy"
+                    className="mt-2"
+                  >
+                    Open
+                  </ButtonLink>
+                </>
+              ) : (
+                <>
+                  <p className="t-meta">Open the Tally bot in Telegram and send /link CODE</p>
+                  <p className="mono mt-1 text-[20px] font-bold tracking-wide">
+                    /link {t.activeLinkCode.code}
+                  </p>
+                </>
+              )}
               <p className="t-meta mt-1">
                 Valid for about {Math.max(1, Math.round(t.activeLinkCode.expiresInSeconds / 60))}{" "}
                 minutes, once.

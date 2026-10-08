@@ -50,7 +50,7 @@ export function createBot(token: string, deps: BotDependencies): Bot {
       now,
       onWarn: deps.onWarn,
     });
-    await ctx.reply(text);
+    await ctx.reply(text, { parse_mode: "HTML" });
   });
 
   bot.command("link", async (ctx) => {
@@ -62,7 +62,7 @@ export function createBot(token: string, deps: BotDependencies): Bot {
       now,
       onWarn: deps.onWarn,
     });
-    await ctx.reply(text);
+    await ctx.reply(text, { parse_mode: "HTML" });
   });
 
   bot.command("alerts", async (ctx) => {
@@ -74,7 +74,7 @@ export function createBot(token: string, deps: BotDependencies): Bot {
       now,
       onWarn: deps.onWarn,
     });
-    await ctx.reply(text);
+    await ctx.reply(text, { parse_mode: "HTML" });
   });
 
   bot.command("quiet", async (ctx) => {
@@ -86,7 +86,7 @@ export function createBot(token: string, deps: BotDependencies): Bot {
       now,
       onWarn: deps.onWarn,
     });
-    await ctx.reply(text);
+    await ctx.reply(text, { parse_mode: "HTML" });
   });
 
   bot.command("quote", async (ctx) => {
@@ -98,7 +98,7 @@ export function createBot(token: string, deps: BotDependencies): Bot {
       now,
       onWarn: deps.onWarn,
     });
-    await ctx.reply(text);
+    await ctx.reply(text, { parse_mode: "HTML" });
   });
 
   bot.command("shares", async (ctx) => {
@@ -111,7 +111,7 @@ export function createBot(token: string, deps: BotDependencies): Bot {
       now,
       onWarn: deps.onWarn,
     });
-    await ctx.reply(text);
+    await ctx.reply(text, { parse_mode: "HTML" });
   });
 
   bot.command("shield", async (ctx) => {
@@ -123,11 +123,11 @@ export function createBot(token: string, deps: BotDependencies): Bot {
       now,
       onWarn: deps.onWarn,
     });
-    await ctx.reply(text);
+    await ctx.reply(text, { parse_mode: "HTML" });
   });
 
   bot.command("help", async (ctx) => {
-    await ctx.reply(handleHelp());
+    await ctx.reply(handleHelp(), { parse_mode: "HTML" });
   });
 
   bot.command("stop", async (ctx) => {
@@ -139,8 +139,37 @@ export function createBot(token: string, deps: BotDependencies): Bot {
       now,
       onWarn: deps.onWarn,
     });
-    await ctx.reply(text);
+    await ctx.reply(text, { parse_mode: "HTML" });
   });
+
+  bot.command("unlink", async (ctx) => {
+    const { handleUnlink } = await import("./commands");
+    const text = await handleUnlink({
+      store: deps.store,
+      engine: deps.engine,
+      chatId: ctx.chat.id,
+      chatType: ctx.chat.type,
+      now,
+      onWarn: deps.onWarn,
+    });
+    await ctx.reply(text, { parse_mode: "HTML" });
+  });
+
+  bot.api
+    .setMyCommands([
+      { command: "start", description: "Start the bot" },
+      { command: "link", description: "Link your Telegram to your Tally wallet" },
+      { command: "unlink", description: "Unlink your Tally wallet and stop alerts" },
+      { command: "alerts", description: "Turn Guardian alert notifications on or off" },
+      { command: "quiet", description: "Set quiet hours in UTC or turn off" },
+      { command: "quote", description: "Compare issuers in shares" },
+      { command: "shares", description: "Portfolio holdings in shares across issuers" },
+      { command: "shield", description: "Flagged tokens, traps and integrity grades" },
+      { command: "help", description: "Show this help message" },
+    ])
+    .catch((err) => {
+      deps.onWarn?.(`Failed to set Telegram commands: ${redactSecrets(String(err))}`);
+    });
 
   return bot;
 }

@@ -44,7 +44,7 @@ Set `FEATURE_<NAME>=1` in `/etc/tally/tally.env` (only `1` turns a flag on; the 
 | `FEATURE_STATEMENT`, `FEATURE_FLOW`, `FEATURE_GUARDIAN` or `FEATURE_AUTOPILOT` | `collect-registry`, `collect-prices` (they feed the others) |
 | `FEATURE_STATEMENT` | `statement` |
 | `FEATURE_FLOW` | `collect-flow`, `flow` |
-| `FEATURE_GUARDIAN` | `guardian`, and `bot` when `TELEGRAM_BOT_TOKEN` is set |
+| `FEATURE_GUARDIAN` | `guardian`, and `bot` when `TELEGRAM_BOT_TOKEN` is set (also requires `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME` for the UI button, rebuild needed) |
 | `FEATURE_AUTOPILOT` | `autopilot` (collects positions for wallets that saved a policy, then records shadow decisions; executes nothing) |
 | any worker above | `prune` (deletes old snapshots; without it the store grows forever) |
 | `--mcp` | `mcp` |
@@ -92,7 +92,7 @@ Limits, so you know what is not covered:
 ## Environment (`/etc/tally/tally.env`, root-only)
 
 Names only here:
-- Always: `NEXT_PUBLIC_PRIVY_APP_ID` (public, baked in at build time: load the file before building), `BINANCE_W3_API_KEY`, `BINANCE_W3_API_SECRET`, `BSC_RPC_PRIMARY` (not `BSC_RPC_URL`), `FEED_SIGNER_PK`, `TALLY_DATA_DIR` (same value for the web app and every worker; writable).
+- Always: `NEXT_PUBLIC_PRIVY_APP_ID`, `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME` (both public, baked in at build time: load the file before building), `BINANCE_W3_API_KEY`, `BINANCE_W3_API_SECRET`, `BSC_RPC_PRIMARY` (not `BSC_RPC_URL`), `FEED_SIGNER_PK`, `TALLY_DATA_DIR` (same value for the web app and every worker; writable).
 - `TALLY_APP_ORIGIN`: the exact browser origin. A quick tunnel changes it on every restart, so update it and restart.
 - Guardian and wallet registration: `PRIVY_APP_SECRET` (server only), `TELEGRAM_BOT_TOKEN`.
 - Tuning: `TALLY_RATE_LIMIT_MULT`, `TALLY_WORKER_RPS`, `TALLY_MIN_FREE_MB`, `TALLY_EST_MB`, `TALLY_STAGGER_S`.

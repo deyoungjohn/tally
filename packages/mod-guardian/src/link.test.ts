@@ -221,4 +221,65 @@ describe("Link Code Protocol (link.ts)", () => {
     const history = store.history<{ address: string }>("wallet:active", "bsc", 0, 50);
     expect(history.some((h) => h.data?.address === wallet.toLowerCase())).toBe(true);
   });
+
+  describe("unlinkChat", () => {
+    it("removes link for a linked chat and returns the unlinked wallet address", async () => {
+      const store = new MemorySnapshotStore();
+      const now = 1_000_000;
+      const { code } = createLinkCode(store, "0xWALLET1", now);
+      consumeLinkCode(store, code, 123456, now + 5000);
+
+      const { unlinkChat } = await import("./link");
+      const wallet = unlinkChat(store, 123456, now + 10000);
+
+      expect(wallet).toBe("0xwallet1");
+      expect(getLinkedWalletForChat(store, 123456, now + 15000)).toBeNull();
+      expect(getLinkedChatForWallet(store, "0xwallet1", now + 15000)).toBeNull();
+    });
+
+    it("returns null when trying to unlink an unlinked chat", async () => {
+      const store = new MemorySnapshotStore();
+      const { unlinkChat } = await import("./link");
+      expect(unlinkChat(store, 999999, Date.now())).toBeNull();
+    });
+
+    it("handles double unlink gracefully (idempotent)", async () => {
+      const store = new MemorySnapshotStore();
+      const now = 1_000_000;
+      const { code } = createLinkCode(store, "0xWALLET1", now);
+      consumeLinkCode(store, code, 123456, now + 5000);
+
+      const { unlinkChat } = await import("./link");
+      const wallet = unlinkChat(store, 123456, now + 10000);
+      expect(wallet).toBe("0xwallet1");
+
+      const doubleWallet = unlinkChat(store, 123456, now + 15000);
+      expect(doubleWallet).toBeNull();
+    });
+
+    it("does not unlink other chats when unlinking a specific chat", async () => {
+      const store = new MemorySnapshotStore();
+      const now = 1_000_000;
+
+      // Link chat A to wallet A
+      const { code: codeA } = createLinkCode(store, "0xWALLET_A", now);
+      consumeLinkCode(store, codeA, 111111, now + 5000);
+
+      // Link chat B to wallet B
+      const { code: codeB } = createLinkCode(store, "0xWALLET_B", now + 1000);
+      consumeLinkCode(store, codeB, 222222, now + 6000);
+
+      const { unlinkChat } = await import("./link");
+
+      // Unlink chat A
+      unlinkChat(store, 111111, now + 10000);
+
+      // Chat A is unlinked
+      expect(getLinkedWalletForChat(store, 111111, now + 15000)).toBeNull();
+
+      // Chat B stays linked
+      const chatB = getLinkedWalletForChat(store, 222222, now + 15000);
+      expect(chatB?.walletAddress).toBe("0xwallet_b");
+    });
+  });
 });
