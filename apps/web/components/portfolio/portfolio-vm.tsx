@@ -12,6 +12,7 @@ import type { PortfolioTab, PortfolioVM, StatementVM } from "@/modules/statement
 import type { ActivityVM } from "@/modules/receipts/view-model";
 import type { PortfolioReport } from "@tally/engine";
 import { LiveNumber, LiveUsd } from "@/components/motion/live";
+import { ChainOnlyHoldings, chainOnlyParts } from "./chain-only-holdings";
 import { ActivityVmView } from "./activity-vm";
 import { HoldingsVm } from "./holdings-vm";
 import { StatementVmView } from "./statement-vm";
@@ -86,7 +87,7 @@ export function PortfolioVmPanel({
   }, [refreshKey, reload]);
   // "Other assets": only `wallet.usdt` and `wallet.bnb` from the engine route (plain wallet balances). Its holdings groups,
   // shares and values are the float-based numbers the view model replaces, so they are never read or shown here.
-  const balances = useJson<Pick<PortfolioReport, "wallet" | "asOf">>(
+  const balances = useJson<Pick<PortfolioReport, "wallet" | "asOf" | "groups">>(
     `/api/portfolio?address=${q}`,
     { refreshMs: 30_000 },
   );
@@ -105,6 +106,8 @@ export function PortfolioVmPanel({
   );
 
   const env = portfolio.data;
+  // A fixture server's chain read is made up, so it is never added to a wallet's holdings.
+  const extras = env?.fixtures ? [] : chainOnlyParts(balances.data ?? null, vm);
   return (
     <div
       className="mt-8 grid grid-cols-1 gap-6 min-[981px]:grid-cols-[1.4fr_1fr]"
@@ -123,18 +126,23 @@ export function PortfolioVmPanel({
         ) : null}
 
         {tab === "holdings" ? (
-          <TabBody
-            name="Portfolio"
-            env={env}
-            error={portfolio.error}
-            emptyTitle="No tokenized shares yet"
-          >
-            {(v) => (
-              <>
-                <HoldingsVm vm={v} onSell={onSell} onMigrate={onMigrate} />
-              </>
+          <>
+            {extras.length > 0 && env?.vm?.state === "empty" ? null : (
+              <TabBody
+                name="Portfolio"
+                env={env}
+                error={portfolio.error}
+                emptyTitle="No tokenized shares yet"
+              >
+                {(v) => (
+                  <>
+                    <HoldingsVm vm={v} onSell={onSell} onMigrate={onMigrate} />
+                  </>
+                )}
+              </TabBody>
             )}
-          </TabBody>
+            <ChainOnlyHoldings parts={extras} onSell={onSell} />
+          </>
         ) : null}
         {tab === "activity" ? (
           <TabBody

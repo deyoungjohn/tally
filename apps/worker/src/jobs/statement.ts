@@ -96,6 +96,24 @@ export const job: WorkerJob = {
       };
     }
 
+    // The authenticated registry snapshot is a truncated list (some Ondo tokens and all xStocks are missing), and a token that
+    // is not in the map is dropped as "not a tokenized stock". Fill the gaps from the engine's complete public registry.
+    try {
+      const complete = (await ctx.engine.ports.registry.all?.()) ?? [];
+      for (const t of complete) {
+        const addr = t.address.toLowerCase();
+        if (registryMap[addr]) continue;
+        registryMap[addr] = {
+          ticker: t.ticker.toUpperCase(),
+          issuer: t.issuer,
+          symbol: t.symbol,
+          decimals: t.decimals,
+        };
+      }
+    } catch (err) {
+      ctx.onWarn(`Could not complete the registry map from the public lists: ${err}`);
+    }
+
     // 3. Fetch raw portfolio data for each target wallet
     interface FetchedWalletData {
       wallet: string;

@@ -141,7 +141,7 @@ export function FlowPanel({ panel }: { panel: FlowPanelDisplay }) {
         <section
           key={i.issuer}
           aria-label={`${ISSUER_LABEL[i.issuer] ?? i.issuer} flow`}
-          className="panel p-4"
+          className="panel radar-card p-4"
         >
           <p className="flex flex-wrap items-center justify-between gap-2 font-semibold">
             {ISSUER_LABEL[i.issuer] ?? i.issuer}
@@ -293,7 +293,7 @@ function FlowView({ cards }: { cards: RadarCardDisplay[] }) {
 function TickerCard({ card, grades }: { card: RadarCardDisplay; grades: RadarGradeDisplay[] }) {
   return (
     <li
-      className="panel mb-3 block w-full break-inside-avoid list-none p-4"
+      className="panel radar-card mb-3 block w-full break-inside-avoid list-none p-4"
       data-testid={`radarvm-card-${card.ticker}`}
     >
       <div className="mb-3 flex items-center gap-3">
@@ -329,7 +329,7 @@ function Stats({ grades }: { grades: RadarGradeDisplay[] }) {
   return (
     <dl className="m-0 grid grid-cols-2 gap-3 min-[761px]:grid-cols-5" data-testid="radarvm-stats">
       {stats.map(([k, v]) => (
-        <div key={k} className="panel p-4">
+        <div key={k} className="panel radar-card p-4">
           <dt className="t-meta">
             <Tip text={STAT_TIP[k]!} className="items-center">
               {k}
@@ -437,8 +437,9 @@ export function RadarVmBody() {
         ) : null}
       </div>
 
-      <div className="mt-6">
+      <div className="mt-6 flex justify-center">
         <Segmented
+          size="lg"
           label="Radar sections"
           value={view}
           onChange={setView}

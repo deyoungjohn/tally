@@ -82,7 +82,8 @@ test.describe("palette: pop-ups and highlights", () => {
     expect(r).toBeGreaterThan(200); // orange: strong red, weak green and blue
     expect(g).toBeLessThan(110);
     expect(b).toBeLessThan(60);
-    expect(a).toBeGreaterThan(0.2);
+    expect(a).toBeGreaterThan(0.08); // fainter than the nav pill (0.26), still visibly orange
+    expect(a).toBeLessThan(0.2);
   });
 
   test("the pressed state is a stronger orange", async ({ page }) => {

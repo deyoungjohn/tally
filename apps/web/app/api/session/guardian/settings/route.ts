@@ -50,7 +50,7 @@ export async function PUT(req: NextRequest) {
       "registry",
       "bsc",
       {
-        maxAgeMs: Infinity,
+        maxAgeMs: 10 * 365 * 86_400_000,
       },
     );
     if (!registrySnap) {

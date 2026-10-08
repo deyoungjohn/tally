@@ -22,6 +22,9 @@
   --hl: rgba(240, 78, 19, 0.26);
   --hl-edge: rgba(255, 131, 80, 0.5);
   --hl-strong: rgba(240, 78, 19, 0.46);
+  /* Fainter orange glass for hovers inside menus, the search panel and dropdowns. */
+  --hl-soft: rgba(240, 78, 19, 0.12);
+  --hl-soft-edge: rgba(255, 131, 80, 0.26);
 
   /* orange accent (buttons, pills, important words); white text on it */
   --orange: #f04e13;
@@ -250,6 +253,13 @@ body {
 }
 .panel:hover {
   border-color: rgba(255, 255, 255, 0.2);
+}
+/* Radar cards: the thin light edge is permanent; hovering one lights it orange. */
+.panel.radar-card {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.panel.radar-card:hover {
+  border-color: var(--hl-edge);
 }
 /* Pop-up surfaces (modals, sheets, menus, dropdowns, tooltips, the search panel): the same liquid glass as the nav bar, with a
    faint transparent black underneath so the text on them stays legible over the bright background. One token, one place. */
@@ -835,7 +845,7 @@ body {
   font-weight: 600;
 }
 .select-trigger:hover {
-  background: var(--hl);
+  background: var(--hl-soft);
   border-color: var(--edge2);
 }
 .select-panel {
@@ -845,6 +855,13 @@ body {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.14),
     0 24px 60px -24px rgba(0, 0, 0, 0.9);
+}
+.select-panel .glide-pill {
+  background: var(--hl-soft);
+  box-shadow: inset 0 0 0 1px var(--hl-soft-edge);
+}
+.select-panel [data-glide-root]:has([data-glide]:active) > .glide-pill {
+  background: var(--hl);
 }
 .select-panel [role="option"] {
   min-height: 44px;

@@ -44,7 +44,7 @@ export function RadarStats({ rows }: { rows: RadarRow[] }) {
   return (
     <dl className="m-0 grid grid-cols-2 gap-3 min-[761px]:grid-cols-5">
       {stats.map(([k, v]) => (
-        <div key={k} className="panel p-4">
+        <div key={k} className="panel radar-card p-4">
           <dt className="t-meta">
             <Tip text={STAT_TIP[k]} className="items-center">
               {k}
@@ -60,7 +60,7 @@ export function RadarStats({ rows }: { rows: RadarRow[] }) {
 export function RadarRowCard({ r }: { r: RadarRow }) {
   return (
     <li
-      className="panel mb-3 block break-inside-avoid list-none p-4"
+      className="panel radar-card mb-3 block break-inside-avoid list-none p-4"
       data-testid={`radar-${r.symbol}`}
     >
       <div className="flex flex-wrap items-start gap-3">

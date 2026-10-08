@@ -39,8 +39,9 @@ export function TradeClient(props: { ticker: string; initialUsd?: number }) {
   return (
     <>
       {migrateOn ? (
-        <div className="wrap pt-8 min-[561px]:pt-12">
+        <div className="wrap flex justify-center pt-8 min-[561px]:pt-12">
           <Segmented
+            size="lg"
             label="Trade sections"
             value={active}
             onChange={setTab}
