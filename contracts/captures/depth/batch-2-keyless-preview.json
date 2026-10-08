@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "status": "no-op: no eligible additions",
+  "mode": "keyless recorded-snapshot plan; no live chain read or EVM execution",
+  "manifest": {
+    "path": "contracts/captures/depth/batch-2-manifest.json",
+    "sha256": "ab39111e716225577967ce4e77f26cf15be0324b282e75a24ddde25098909563"
+  },
+  "guard": "0x28F6F19bffbF25E36452c78d12090F0bC922970a",
+  "baselineSnapshot": {
+    "path": "contracts/captures/depth/batch-1-after-owner-20261008T115923Z.json",
+    "sha256": "f479e8814981b6623170b29d9e7a349b556a675eb10682d467f13615775088c9"
+  },
+  "blockNumber": 126440096,
+  "blockUtc": "2026-10-08T11:59:22Z",
+  "baselineComparisonPassed": true,
+  "existingEnabledTokens": 30,
+  "newAdditions": 0,
+  "setAssetCalls": [],
+  "requiresSeeds": false,
+  "transactionsBroadcast": 0,
+  "reason": "Zero non-held, unenabled tokens passed the recorded depth and premium gates.",
+  "notes": [
+    "No Forge owner preview was run because there are no eligible additions.",
+    "The observed baseline is the chief engineer's pinned snapshot, not a claim about the current live block.",
+    "No seeds were read or generated; no keystore or private RPC configuration was read."
+  ]
+}
