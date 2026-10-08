@@ -1,0 +1,541 @@
+{
+  "schema": 1,
+  "completedAtUtc": "2026-10-08T19:01:46.496783+00:00",
+  "forkMode": "recorded capture block",
+  "script": "contracts/script/fork.sh",
+  "referenceRule": "stockInfo.price first; then positive engine ticker reference in regular/pre/post session, already per share; never DEX price",
+  "tokenCount": 7,
+  "counts": {
+    "passed": 7,
+    "failed": 0
+  },
+  "testCounts": {
+    "pass": 56,
+    "skip": 14,
+    "failed": 0
+  },
+  "notes": [
+    "Archive read-only forks; no live trading, transactions, keys or seeds.",
+    "Run-specific capture filenames are used directly; canonical captures and earlier passing evidence remain untouched."
+  ],
+  "results": [
+    {
+      "token": "AAPLB",
+      "capture": {
+        "path": "contracts/captures/AAPLB.batch1-bstock-us-20261008T133231Z.json",
+        "sha256": "80513d6768e351741115bee908ffb658623716cdcfd715e51df73634c55b447e"
+      },
+      "blockAtCapture": "126452525",
+      "command": [
+        "./script/fork.sh",
+        "AAPLB.batch1-bstock-us-20261008T133231Z"
+      ],
+      "exitCode": 0,
+      "status": "passed",
+      "elapsedSeconds": 25.32,
+      "testCounts": {
+        "pass": 8,
+        "skip": 2,
+        "failed": 0
+      },
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "skip",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "skip",
+          "reason": null
+        }
+      ],
+      "output": "=== fork tests A-I: AAPLB.batch1-bstock-us-20261008T133231Z\nNo files changed, compilation skipped\n\nRan 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest\n[PASS] test_A_replayAsPlainWallet() (gas: 1723357)\nLogs:\n  token AAPLB captured 2026-10-08T13:32:37Z\n  fork block 126452525 capture block 126452525\n  shares per token (1e18) 1000603906075632366\n  route Uniswap V4:AAPLB\n  tokens out 17803834506152532\n  shares out 17814586349980350\n  USDT per share (1e18) 336802656100214090696\n\n[SKIP] test_B2_guardWrappedWithSignedFeed() (gas: 0)\nLogs:\n  token AAPLB captured 2026-10-08T13:32:37Z\n  fork block 126452525 capture block 126452525\n  shares per token (1e18) 1000603906075632366\n\n[PASS] test_B_guardWrapped() (gas: 2046373)\nLogs:\n  token AAPLB captured 2026-10-08T13:32:37Z\n  fork block 126452525 capture block 126452525\n  shares per token (1e18) 1000603906075632366\n  route Uniswap V4:AAPLB\n  tokens out 17803834506152532\n  shares out 17814586349980350\n  USDT per share (1e18) 336802656100214090696\n\n[PASS] test_C_guardRejectsShortfall() (gas: 1999084)\nLogs:\n  token AAPLB captured 2026-10-08T13:32:37Z\n  fork block 126452525 capture block 126452525\n  shares per token (1e18) 1000603906075632366\n  route Uniswap V4:AAPLB\n\n[PASS] test_D_7702BatchSwapThenAssert() (gas: 1732967)\nLogs:\n  token AAPLB captured 2026-10-08T13:32:37Z\n  fork block 126452525 capture block 126452525\n  shares per token (1e18) 1000603906075632366\n  route Uniswap V4:AAPLB\n  tokens out 17803834506152532\n  shares out 17814586349980350\n  USDT per share (1e18) 336802656100214090696\n\n[PASS] test_E_7702BatchRevertsAtomically() (gas: 1781232)\nLogs:\n  token AAPLB captured 2026-10-08T13:32:37Z\n  fork block 126452525 capture block 126452525\n  shares per token (1e18) 1000603906075632366\n  route Uniswap V4:AAPLB\n\n[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 5101308)\nLogs:\n  token AAPLB captured 2026-10-08T13:32:37Z\n  fork block 126452525 capture block 126452525\n  shares per token (1e18) 1000603906075632366\n  route Uniswap V4:AAPLB\n  API gas (the placeholder) 250000\n  gas used by the guarded call 537737\n  estimate (min gas that succeeds + intrinsic) 558930\n  limit we send (estimate x 1.25) 698663\n  FINDING: the API's gas limit is too low for this route; sending it would revert\n\n[PASS] test_G_arbitraryCallAttackReverts() (gas: 3631938)\nLogs:\n  token AAPLB captured 2026-10-08T13:32:37Z\n  fork block 126452525 capture block 126452525\n  shares per token (1e18) 1000603906075632366\n  route Uniswap V4:AAPLB\n\n[PASS] test_H_pausedTokenReverts() (gas: 2044093)\nLogs:\n  token AAPLB captured 2026-10-08T13:32:37Z\n  fork block 126452525 capture block 126452525\n  shares per token (1e18) 1000603906075632366\n  route Uniswap V4:AAPLB\n  pause manager 0x9fc74Be63f3589485B2423984a7a0557e0CF700a\n\n[SKIP] test_I_staleOrOutOfBoundsFeedReverts() (gas: 0)\nLogs:\n  token AAPLB captured 2026-10-08T13:32:37Z\n  fork block 126452525 capture block 126452525\n  shares per token (1e18) 1000603906075632366\n\nSuite result: ok. 8 passed; 0 failed; 2 skipped; finished in 25.05s (113.75s CPU time)\n\nRan 1 test suite in 25.06s (25.05s CPU time): 8 tests passed, 0 failed, 2 skipped (10 total tests)\n",
+      "failedTests": []
+    },
+    {
+      "token": "AMZNB",
+      "capture": {
+        "path": "contracts/captures/AMZNB.batch1-bstock-us-20261008T133231Z.json",
+        "sha256": "bfc00d694a26f742d4a7ecb4d690bc4defadabb599e7e8427af5a6c8ede5bb05"
+      },
+      "blockAtCapture": "126452540",
+      "command": [
+        "./script/fork.sh",
+        "AMZNB.batch1-bstock-us-20261008T133231Z"
+      ],
+      "exitCode": 0,
+      "status": "passed",
+      "elapsedSeconds": 28.53,
+      "testCounts": {
+        "pass": 8,
+        "skip": 2,
+        "failed": 0
+      },
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "skip",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "skip",
+          "reason": null
+        }
+      ],
+      "output": "=== fork tests A-I: AMZNB.batch1-bstock-us-20261008T133231Z\nNo files changed, compilation skipped\n\nRan 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest\n[PASS] test_A_replayAsPlainWallet() (gas: 2090168)\nLogs:\n  token AMZNB captured 2026-10-08T13:32:44Z\n  fork block 126452540 capture block 126452540\n  shares per token (1e18) 1000000000000000000\n  route Rfq Neptunex:AMZNB\n  tokens out 23120065702884632\n  shares out 23120065702884632\n  USDT per share (1e18) 259514833439742137367\n\n[SKIP] test_B2_guardWrappedWithSignedFeed() (gas: 0)\nLogs:\n  token AMZNB captured 2026-10-08T13:32:44Z\n  fork block 126452540 capture block 126452540\n  shares per token (1e18) 1000000000000000000\n\n[PASS] test_B_guardWrapped() (gas: 2456972)\nLogs:\n  token AMZNB captured 2026-10-08T13:32:44Z\n  fork block 126452540 capture block 126452540\n  shares per token (1e18) 1000000000000000000\n  route Rfq Neptunex:AMZNB\n  tokens out 23121762883426613\n  shares out 23121762883426613\n  USDT per share (1e18) 259495784566700321215\n\n[PASS] test_C_guardRejectsShortfall() (gas: 2429582)\nLogs:\n  token AMZNB captured 2026-10-08T13:32:44Z\n  fork block 126452540 capture block 126452540\n  shares per token (1e18) 1000000000000000000\n  route Rfq Neptunex:AMZNB\n\n[PASS] test_D_7702BatchSwapThenAssert() (gas: 2099869)\nLogs:\n  token AMZNB captured 2026-10-08T13:32:44Z\n  fork block 126452540 capture block 126452540\n  shares per token (1e18) 1000000000000000000\n  route Rfq Neptunex:AMZNB\n  tokens out 23120065702884632\n  shares out 23120065702884632\n  USDT per share (1e18) 259514833439742137367\n\n[PASS] test_E_7702BatchRevertsAtomically() (gas: 2168719)\nLogs:\n  token AMZNB captured 2026-10-08T13:32:44Z\n  fork block 126452540 capture block 126452540\n  shares per token (1e18) 1000000000000000000\n  route Rfq Neptunex:AMZNB\n\n[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 4218101)\nLogs:\n  token AMZNB captured 2026-10-08T13:32:44Z\n  fork block 126452540 capture block 126452540\n  shares per token (1e18) 1000000000000000000\n  route Rfq Neptunex:AMZNB\n  API gas (the placeholder) 250000\n  gas used by the guarded call 640865\n  estimate (min gas that succeeds + intrinsic) 666388\n  limit we send (estimate x 1.25) 832985\n  FINDING: the API's gas limit is too low for this route; sending it would revert\n\n[PASS] test_G_arbitraryCallAttackReverts() (gas: 3919085)\nLogs:\n  token AMZNB captured 2026-10-08T13:32:44Z\n  fork block 126452540 capture block 126452540\n  shares per token (1e18) 1000000000000000000\n  route Rfq Neptunex:AMZNB\n\n[PASS] test_H_pausedTokenReverts() (gas: 2422462)\nLogs:\n  token AMZNB captured 2026-10-08T13:32:44Z\n  fork block 126452540 capture block 126452540\n  shares per token (1e18) 1000000000000000000\n  route Rfq Neptunex:AMZNB\n  pause manager 0x9fc74Be63f3589485B2423984a7a0557e0CF700a\n\n[SKIP] test_I_staleOrOutOfBoundsFeedReverts() (gas: 0)\nLogs:\n  token AMZNB captured 2026-10-08T13:32:44Z\n  fork block 126452540 capture block 126452540\n  shares per token (1e18) 1000000000000000000\n\nSuite result: ok. 8 passed; 0 failed; 2 skipped; finished in 28.07s (137.56s CPU time)\n\nRan 1 test suite in 28.08s (28.07s CPU time): 8 tests passed, 0 failed, 2 skipped (10 total tests)\n",
+      "failedTests": []
+    },
+    {
+      "token": "NFLXB",
+      "capture": {
+        "path": "contracts/captures/NFLXB.batch1-bstock-us-20261008T133231Z.json",
+        "sha256": "a3d32ff89c689fe28b65061b1d7cbbed0bc09c33a8aa292c06c5f2ff956a90ed"
+      },
+      "blockAtCapture": "126452640",
+      "command": [
+        "./script/fork.sh",
+        "NFLXB.batch1-bstock-us-20261008T133231Z"
+      ],
+      "exitCode": 0,
+      "status": "passed",
+      "elapsedSeconds": 30.22,
+      "testCounts": {
+        "pass": 8,
+        "skip": 2,
+        "failed": 0
+      },
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "skip",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "skip",
+          "reason": null
+        }
+      ],
+      "output": "=== fork tests A-I: NFLXB.batch1-bstock-us-20261008T133231Z\nNo files changed, compilation skipped\n\nRan 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest\n[PASS] test_A_replayAsPlainWallet() (gas: 1702739)\nLogs:\n  token NFLXB captured 2026-10-08T13:33:29Z\n  fork block 126452640 capture block 126452640\n  shares per token (1e18) 1000000000000000000\n  route Pancakeswap V3:NFLXB\n  tokens out 85602593685081249\n  shares out 85602593685081249\n  USDT per share (1e18) 70091334172339163150\n\n[SKIP] test_B2_guardWrappedWithSignedFeed() (gas: 0)\nLogs:\n  token NFLXB captured 2026-10-08T13:33:29Z\n  fork block 126452640 capture block 126452640\n  shares per token (1e18) 1000000000000000000\n\n[PASS] test_B_guardWrapped() (gas: 2017006)\nLogs:\n  token NFLXB captured 2026-10-08T13:33:29Z\n  fork block 126452640 capture block 126452640\n  shares per token (1e18) 1000000000000000000\n  route Pancakeswap V3:NFLXB\n  tokens out 85602593685081249\n  shares out 85602593685081249\n  USDT per share (1e18) 70091334172339163150\n\n[PASS] test_C_guardRejectsShortfall() (gas: 1977906)\nLogs:\n  token NFLXB captured 2026-10-08T13:33:29Z\n  fork block 126452640 capture block 126452640\n  shares per token (1e18) 1000000000000000000\n  route Pancakeswap V3:NFLXB\n\n[PASS] test_D_7702BatchSwapThenAssert() (gas: 1712339)\nLogs:\n  token NFLXB captured 2026-10-08T13:33:29Z\n  fork block 126452640 capture block 126452640\n  shares per token (1e18) 1000000000000000000\n  route Pancakeswap V3:NFLXB\n  tokens out 85602593685081249\n  shares out 85602593685081249\n  USDT per share (1e18) 70091334172339163150\n\n[PASS] test_E_7702BatchRevertsAtomically() (gas: 1768711)\nLogs:\n  token NFLXB captured 2026-10-08T13:33:29Z\n  fork block 126452640 capture block 126452640\n  shares per token (1e18) 1000000000000000000\n  route Pancakeswap V3:NFLXB\n\n[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 4114792)\nLogs:\n  token NFLXB captured 2026-10-08T13:33:29Z\n  fork block 126452640 capture block 126452640\n  shares per token (1e18) 1000000000000000000\n  route Pancakeswap V3:NFLXB\n  API gas (the placeholder) 250000\n  gas used by the guarded call 578234\n  estimate (min gas that succeeds + intrinsic) 597231\n  limit we send (estimate x 1.25) 746539\n  FINDING: the API's gas limit is too low for this route; sending it would revert\n\n[PASS] test_G_arbitraryCallAttackReverts() (gas: 3578313)\nLogs:\n  token NFLXB captured 2026-10-08T13:33:29Z\n  fork block 126452640 capture block 126452640\n  shares per token (1e18) 1000000000000000000\n  route Pancakeswap V3:NFLXB\n\n[PASS] test_H_pausedTokenReverts() (gas: 2022692)\nLogs:\n  token NFLXB captured 2026-10-08T13:33:29Z\n  fork block 126452640 capture block 126452640\n  shares per token (1e18) 1000000000000000000\n  route Pancakeswap V3:NFLXB\n  pause manager 0x9fc74Be63f3589485B2423984a7a0557e0CF700a\n\n[SKIP] test_I_staleOrOutOfBoundsFeedReverts() (gas: 0)\nLogs:\n  token NFLXB captured 2026-10-08T13:33:29Z\n  fork block 126452640 capture block 126452640\n  shares per token (1e18) 1000000000000000000\n\nSuite result: ok. 8 passed; 0 failed; 2 skipped; finished in 30.03s (153.73s CPU time)\n\nRan 1 test suite in 30.04s (30.03s CPU time): 8 tests passed, 0 failed, 2 skipped (10 total tests)\n",
+      "failedTests": []
+    },
+    {
+      "token": "GMEB",
+      "capture": {
+        "path": "contracts/captures/GMEB.batch1-bstock-us-20261008T133231Z.json",
+        "sha256": "c5126471a52bf794810ed19288aa89f1634612b82f73e4560f37de6b8dd4f266"
+      },
+      "blockAtCapture": "126452609",
+      "command": [
+        "./script/fork.sh",
+        "GMEB.batch1-bstock-us-20261008T133231Z"
+      ],
+      "exitCode": 0,
+      "status": "passed",
+      "elapsedSeconds": 44.46,
+      "testCounts": {
+        "pass": 8,
+        "skip": 2,
+        "failed": 0
+      },
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "skip",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "skip",
+          "reason": null
+        }
+      ],
+      "output": "=== fork tests A-I: GMEB.batch1-bstock-us-20261008T133231Z\nNo files changed, compilation skipped\n\nRan 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest\n[PASS] test_A_replayAsPlainWallet() (gas: 2644698)\nLogs:\n  token GMEB captured 2026-10-08T13:33:15Z\n  fork block 126452609 capture block 126452609\n  shares per token (1e18) 1000000000000000000\n  route Elfomofi:BSC_ETH > Pancakeswap V4:WBNB > Pancakeswap V2:GMEB\n  tokens out 246806910631458725\n  shares out 246806910631458725\n  USDT per share (1e18) 24310502427379043532\n\n[SKIP] test_B2_guardWrappedWithSignedFeed() (gas: 0)\nLogs:\n  token GMEB captured 2026-10-08T13:33:15Z\n  fork block 126452609 capture block 126452609\n  shares per token (1e18) 1000000000000000000\n\n[PASS] test_B_guardWrapped() (gas: 3015800)\nLogs:\n  token GMEB captured 2026-10-08T13:33:15Z\n  fork block 126452609 capture block 126452609\n  shares per token (1e18) 1000000000000000000\n  route Elfomofi:BSC_ETH > Pancakeswap V4:WBNB > Pancakeswap V2:GMEB\n  tokens out 246806910631458725\n  shares out 246806910631458725\n  USDT per share (1e18) 24310502427379043532\n\n[PASS] test_C_guardRejectsShortfall() (gas: 3071017)\nLogs:\n  token GMEB captured 2026-10-08T13:33:15Z\n  fork block 126452609 capture block 126452609\n  shares per token (1e18) 1000000000000000000\n  route Elfomofi:BSC_ETH > Pancakeswap V4:WBNB > Pancakeswap V2:GMEB\n\n[PASS] test_D_7702BatchSwapThenAssert() (gas: 2647886)\nLogs:\n  token GMEB captured 2026-10-08T13:33:15Z\n  fork block 126452609 capture block 126452609\n  shares per token (1e18) 1000000000000000000\n  route Elfomofi:BSC_ETH > Pancakeswap V4:WBNB > Pancakeswap V2:GMEB\n  tokens out 246806910631458725\n  shares out 246806910631458725\n  USDT per share (1e18) 24310502427379043532\n\n[PASS] test_E_7702BatchRevertsAtomically() (gas: 2782435)\nLogs:\n  token GMEB captured 2026-10-08T13:33:15Z\n  fork block 126452609 capture block 126452609\n  shares per token (1e18) 1000000000000000000\n  route Elfomofi:BSC_ETH > Pancakeswap V4:WBNB > Pancakeswap V2:GMEB\n\n[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 6803187)\nLogs:\n  token GMEB captured 2026-10-08T13:33:15Z\n  fork block 126452609 capture block 126452609\n  shares per token (1e18) 1000000000000000000\n  route Elfomofi:BSC_ETH > Pancakeswap V4:WBNB > Pancakeswap V2:GMEB\n  API gas (the placeholder) 250000\n  gas used by the guarded call 1057469\n  estimate (min gas that succeeds + intrinsic) 985143\n  limit we send (estimate x 1.25) 1231429\n  FINDING: the API's gas limit is too low for this route; sending it would revert\n\n[PASS] test_G_arbitraryCallAttackReverts() (gas: 4118074)\nLogs:\n  token GMEB captured 2026-10-08T13:33:15Z\n  fork block 126452609 capture block 126452609\n  shares per token (1e18) 1000000000000000000\n  route Elfomofi:BSC_ETH > Pancakeswap V4:WBNB > Pancakeswap V2:GMEB\n\n[PASS] test_H_pausedTokenReverts() (gas: 2956456)\nLogs:\n  token GMEB captured 2026-10-08T13:33:15Z\n  fork block 126452609 capture block 126452609\n  shares per token (1e18) 1000000000000000000\n  route Elfomofi:BSC_ETH > Pancakeswap V4:WBNB > Pancakeswap V2:GMEB\n  pause manager 0x9fc74Be63f3589485B2423984a7a0557e0CF700a\n\n[SKIP] test_I_staleOrOutOfBoundsFeedReverts() (gas: 0)\nLogs:\n  token GMEB captured 2026-10-08T13:33:15Z\n  fork block 126452609 capture block 126452609\n  shares per token (1e18) 1000000000000000000\n\nSuite result: ok. 8 passed; 0 failed; 2 skipped; finished in 44.30s (249.62s CPU time)\n\nRan 1 test suite in 44.31s (44.30s CPU time): 8 tests passed, 0 failed, 2 skipped (10 total tests)\n",
+      "failedTests": []
+    },
+    {
+      "token": "BMNRB",
+      "capture": {
+        "path": "contracts/captures/BMNRB.batch1-bstock-us-20261008T133231Z.json",
+        "sha256": "35c3c82916a71cac95cb3d79e8fc9d1441622a0554aefe3017ce98a53fe226a0"
+      },
+      "blockAtCapture": "126452555",
+      "command": [
+        "./script/fork.sh",
+        "BMNRB.batch1-bstock-us-20261008T133231Z"
+      ],
+      "exitCode": 0,
+      "status": "passed",
+      "elapsedSeconds": 39.04,
+      "testCounts": {
+        "pass": 8,
+        "skip": 2,
+        "failed": 0
+      },
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "skip",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "skip",
+          "reason": null
+        }
+      ],
+      "output": "=== fork tests A-I: BMNRB.batch1-bstock-us-20261008T133231Z\nNo files changed, compilation skipped\n\nRan 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest\n[PASS] test_A_replayAsPlainWallet() (gas: 2567918)\nLogs:\n  token BMNRB captured 2026-10-08T13:32:51Z\n  fork block 126452555 capture block 126452555\n  shares per token (1e18) 1000000000000000000\n  route Rfq Neptunex:MSTRB > Pancakeswap V3:BMNRB\n  tokens out 247228316666001061\n  shares out 247228316666001061\n  USDT per share (1e18) 24269064648067162318\n\n[SKIP] test_B2_guardWrappedWithSignedFeed() (gas: 0)\nLogs:\n  token BMNRB captured 2026-10-08T13:32:51Z\n  fork block 126452555 capture block 126452555\n  shares per token (1e18) 1000000000000000000\n\n[PASS] test_B_guardWrapped() (gas: 2982915)\nLogs:\n  token BMNRB captured 2026-10-08T13:32:51Z\n  fork block 126452555 capture block 126452555\n  shares per token (1e18) 1000000000000000000\n  route Rfq Neptunex:MSTRB > Pancakeswap V3:BMNRB\n  tokens out 247257885948815927\n  shares out 247257885948815927\n  USDT per share (1e18) 24266162338870926950\n\n[PASS] test_C_guardRejectsShortfall() (gas: 2992915)\nLogs:\n  token BMNRB captured 2026-10-08T13:32:51Z\n  fork block 126452555 capture block 126452555\n  shares per token (1e18) 1000000000000000000\n  route Rfq Neptunex:MSTRB > Pancakeswap V3:BMNRB\n\n[PASS] test_D_7702BatchSwapThenAssert() (gas: 2577750)\nLogs:\n  token BMNRB captured 2026-10-08T13:32:51Z\n  fork block 126452555 capture block 126452555\n  shares per token (1e18) 1000000000000000000\n  route Rfq Neptunex:MSTRB > Pancakeswap V3:BMNRB\n  tokens out 247228316666001061\n  shares out 247228316666001061\n  USDT per share (1e18) 24269064648067162318\n\n[PASS] test_E_7702BatchRevertsAtomically() (gas: 2685207)\nLogs:\n  token BMNRB captured 2026-10-08T13:32:51Z\n  fork block 126452555 capture block 126452555\n  shares per token (1e18) 1000000000000000000\n  route Rfq Neptunex:MSTRB > Pancakeswap V3:BMNRB\n\n[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 6948076)\nLogs:\n  token BMNRB captured 2026-10-08T13:32:51Z\n  fork block 126452555 capture block 126452555\n  shares per token (1e18) 1000000000000000000\n  route Rfq Neptunex:MSTRB > Pancakeswap V3:BMNRB\n  API gas (the placeholder) 250000\n  gas used by the guarded call 834117\n  estimate (min gas that succeeds + intrinsic) 866297\n  limit we send (estimate x 1.25) 1082872\n  FINDING: the API's gas limit is too low for this route; sending it would revert\n\n[PASS] test_G_arbitraryCallAttackReverts() (gas: 4245164)\nLogs:\n  token BMNRB captured 2026-10-08T13:32:51Z\n  fork block 126452555 capture block 126452555\n  shares per token (1e18) 1000000000000000000\n  route Rfq Neptunex:MSTRB > Pancakeswap V3:BMNRB\n\n[PASS] test_H_pausedTokenReverts() (gas: 2909818)\nLogs:\n  token BMNRB captured 2026-10-08T13:32:51Z\n  fork block 126452555 capture block 126452555\n  shares per token (1e18) 1000000000000000000\n  route Rfq Neptunex:MSTRB > Pancakeswap V3:BMNRB\n  pause manager 0x9fc74Be63f3589485B2423984a7a0557e0CF700a\n\n[SKIP] test_I_staleOrOutOfBoundsFeedReverts() (gas: 0)\nLogs:\n  token BMNRB captured 2026-10-08T13:32:51Z\n  fork block 126452555 capture block 126452555\n  shares per token (1e18) 1000000000000000000\n\nSuite result: ok. 8 passed; 0 failed; 2 skipped; finished in 38.89s (212.57s CPU time)\n\nRan 1 test suite in 38.90s (38.89s CPU time): 8 tests passed, 0 failed, 2 skipped (10 total tests)\n",
+      "failedTests": []
+    },
+    {
+      "token": "MRNAB",
+      "capture": {
+        "path": "contracts/captures/MRNAB.batch1-bstock-us-20261008T133231Z.json",
+        "sha256": "bed62e3611f51756857350283c0edfe19c20774ff95319dd5a84a52ffdb8ba83"
+      },
+      "blockAtCapture": "126452625",
+      "command": [
+        "./script/fork.sh",
+        "MRNAB.batch1-bstock-us-20261008T133231Z"
+      ],
+      "exitCode": 0,
+      "status": "passed",
+      "elapsedSeconds": 29.55,
+      "testCounts": {
+        "pass": 8,
+        "skip": 2,
+        "failed": 0
+      },
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "skip",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "skip",
+          "reason": null
+        }
+      ],
+      "output": "=== fork tests A-I: MRNAB.batch1-bstock-us-20261008T133231Z\nNo files changed, compilation skipped\n\nRan 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest\n[PASS] test_A_replayAsPlainWallet() (gas: 1702416)\nLogs:\n  token MRNAB captured 2026-10-08T13:33:22Z\n  fork block 126452625 capture block 126452625\n  shares per token (1e18) 1000000000000000000\n  route Pancakeswap V3:MRNAB\n  tokens out 30489742058792848\n  shares out 30489742058792848\n  USDT per share (1e18) 196787496215294397922\n\n[SKIP] test_B2_guardWrappedWithSignedFeed() (gas: 0)\nLogs:\n  token MRNAB captured 2026-10-08T13:33:22Z\n  fork block 126452625 capture block 126452625\n  shares per token (1e18) 1000000000000000000\n\n[PASS] test_B_guardWrapped() (gas: 2016663)\nLogs:\n  token MRNAB captured 2026-10-08T13:33:22Z\n  fork block 126452625 capture block 126452625\n  shares per token (1e18) 1000000000000000000\n  route Pancakeswap V3:MRNAB\n  tokens out 30489742058792848\n  shares out 30489742058792848\n  USDT per share (1e18) 196787496215294397922\n\n[PASS] test_C_guardRejectsShortfall() (gas: 1977478)\nLogs:\n  token MRNAB captured 2026-10-08T13:33:22Z\n  fork block 126452625 capture block 126452625\n  shares per token (1e18) 1000000000000000000\n  route Pancakeswap V3:MRNAB\n\n[PASS] test_D_7702BatchSwapThenAssert() (gas: 1711996)\nLogs:\n  token MRNAB captured 2026-10-08T13:33:22Z\n  fork block 126452625 capture block 126452625\n  shares per token (1e18) 1000000000000000000\n  route Pancakeswap V3:MRNAB\n  tokens out 30489742058792848\n  shares out 30489742058792848\n  USDT per share (1e18) 196787496215294397922\n\n[PASS] test_E_7702BatchRevertsAtomically() (gas: 1768283)\nLogs:\n  token MRNAB captured 2026-10-08T13:33:22Z\n  fork block 126452625 capture block 126452625\n  shares per token (1e18) 1000000000000000000\n  route Pancakeswap V3:MRNAB\n\n[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 4112852)\nLogs:\n  token MRNAB captured 2026-10-08T13:33:22Z\n  fork block 126452625 capture block 126452625\n  shares per token (1e18) 1000000000000000000\n  route Pancakeswap V3:MRNAB\n  API gas (the placeholder) 250000\n  gas used by the guarded call 577806\n  estimate (min gas that succeeds + intrinsic) 596829\n  limit we send (estimate x 1.25) 746037\n  FINDING: the API's gas limit is too low for this route; sending it would revert\n\n[PASS] test_G_arbitraryCallAttackReverts() (gas: 3578181)\nLogs:\n  token MRNAB captured 2026-10-08T13:33:22Z\n  fork block 126452625 capture block 126452625\n  shares per token (1e18) 1000000000000000000\n  route Pancakeswap V3:MRNAB\n\n[PASS] test_H_pausedTokenReverts() (gas: 2022157)\nLogs:\n  token MRNAB captured 2026-10-08T13:33:22Z\n  fork block 126452625 capture block 126452625\n  shares per token (1e18) 1000000000000000000\n  route Pancakeswap V3:MRNAB\n  pause manager 0x9fc74Be63f3589485B2423984a7a0557e0CF700a\n\n[SKIP] test_I_staleOrOutOfBoundsFeedReverts() (gas: 0)\nLogs:\n  token MRNAB captured 2026-10-08T13:33:22Z\n  fork block 126452625 capture block 126452625\n  shares per token (1e18) 1000000000000000000\n\nSuite result: ok. 8 passed; 0 failed; 2 skipped; finished in 29.36s (146.79s CPU time)\n\nRan 1 test suite in 29.37s (29.36s CPU time): 8 tests passed, 0 failed, 2 skipped (10 total tests)\n",
+      "failedTests": []
+    },
+    {
+      "token": "FLNCB",
+      "capture": {
+        "path": "contracts/captures/FLNCB.batch1-bstock-us-20261008T133231Z.json",
+        "sha256": "4e953fbe19d4858b33c4eb5d252811246afa23c426e5b4195087e47e206adeb4"
+      },
+      "blockAtCapture": "126452594",
+      "command": [
+        "./script/fork.sh",
+        "FLNCB.batch1-bstock-us-20261008T133231Z"
+      ],
+      "exitCode": 0,
+      "status": "passed",
+      "elapsedSeconds": 45.8,
+      "testCounts": {
+        "pass": 8,
+        "skip": 2,
+        "failed": 0
+      },
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "skip",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "skip",
+          "reason": null
+        }
+      ],
+      "output": "=== fork tests A-I: FLNCB.batch1-bstock-us-20261008T133231Z\nNo files changed, compilation skipped\n\nRan 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest\n[PASS] test_A_replayAsPlainWallet() (gas: 2644809)\nLogs:\n  token FLNCB captured 2026-10-08T13:33:08Z\n  fork block 126452594 capture block 126452594\n  shares per token (1e18) 1000000000000000000\n  route Elfomofi:BSC_ETH > Pancakeswap V4:WBNB > Pancakeswap V2:FLNCB\n  tokens out 797013927010257654\n  shares out 797013927010257654\n  USDT per share (1e18) 7528099317545274666\n\n[SKIP] test_B2_guardWrappedWithSignedFeed() (gas: 0)\nLogs:\n  token FLNCB captured 2026-10-08T13:33:08Z\n  fork block 126452594 capture block 126452594\n  shares per token (1e18) 1000000000000000000\n\n[PASS] test_B_guardWrapped() (gas: 3015874)\nLogs:\n  token FLNCB captured 2026-10-08T13:33:08Z\n  fork block 126452594 capture block 126452594\n  shares per token (1e18) 1000000000000000000\n  route Elfomofi:BSC_ETH > Pancakeswap V4:WBNB > Pancakeswap V2:FLNCB\n  tokens out 797013927010257654\n  shares out 797013927010257654\n  USDT per share (1e18) 7528099317545274666\n\n[PASS] test_C_guardRejectsShortfall() (gas: 3071109)\nLogs:\n  token FLNCB captured 2026-10-08T13:33:08Z\n  fork block 126452594 capture block 126452594\n  shares per token (1e18) 1000000000000000000\n  route Elfomofi:BSC_ETH > Pancakeswap V4:WBNB > Pancakeswap V2:FLNCB\n\n[PASS] test_D_7702BatchSwapThenAssert() (gas: 2647997)\nLogs:\n  token FLNCB captured 2026-10-08T13:33:08Z\n  fork block 126452594 capture block 126452594\n  shares per token (1e18) 1000000000000000000\n  route Elfomofi:BSC_ETH > Pancakeswap V4:WBNB > Pancakeswap V2:FLNCB\n  tokens out 797013927010257654\n  shares out 797013927010257654\n  USDT per share (1e18) 7528099317545274666\n\n[PASS] test_E_7702BatchRevertsAtomically() (gas: 2782546)\nLogs:\n  token FLNCB captured 2026-10-08T13:33:08Z\n  fork block 126452594 capture block 126452594\n  shares per token (1e18) 1000000000000000000\n  route Elfomofi:BSC_ETH > Pancakeswap V4:WBNB > Pancakeswap V2:FLNCB\n\n[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 6803449)\nLogs:\n  token FLNCB captured 2026-10-08T13:33:08Z\n  fork block 126452594 capture block 126452594\n  shares per token (1e18) 1000000000000000000\n  route Elfomofi:BSC_ETH > Pancakeswap V4:WBNB > Pancakeswap V2:FLNCB\n  API gas (the placeholder) 250000\n  gas used by the guarded call 1057561\n  estimate (min gas that succeeds + intrinsic) 985221\n  limit we send (estimate x 1.25) 1231527\n  FINDING: the API's gas limit is too low for this route; sending it would revert\n\n[PASS] test_G_arbitraryCallAttackReverts() (gas: 4118074)\nLogs:\n  token FLNCB captured 2026-10-08T13:33:08Z\n  fork block 126452594 capture block 126452594\n  shares per token (1e18) 1000000000000000000\n  route Elfomofi:BSC_ETH > Pancakeswap V4:WBNB > Pancakeswap V2:FLNCB\n\n[PASS] test_H_pausedTokenReverts() (gas: 2956530)\nLogs:\n  token FLNCB captured 2026-10-08T13:33:08Z\n  fork block 126452594 capture block 126452594\n  shares per token (1e18) 1000000000000000000\n  route Elfomofi:BSC_ETH > Pancakeswap V4:WBNB > Pancakeswap V2:FLNCB\n  pause manager 0x9fc74Be63f3589485B2423984a7a0557e0CF700a\n\n[SKIP] test_I_staleOrOutOfBoundsFeedReverts() (gas: 0)\nLogs:\n  token FLNCB captured 2026-10-08T13:33:08Z\n  fork block 126452594 capture block 126452594\n  shares per token (1e18) 1000000000000000000\n\nSuite result: ok. 8 passed; 0 failed; 2 skipped; finished in 45.58s (258.22s CPU time)\n\nRan 1 test suite in 45.60s (45.58s CPU time): 8 tests passed, 0 failed, 2 skipped (10 total tests)\n",
+      "failedTests": []
+    }
+  ]
+}

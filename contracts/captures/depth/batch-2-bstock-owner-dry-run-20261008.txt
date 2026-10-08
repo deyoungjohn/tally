@@ -1,0 +1,67 @@
+Keyless fork simulation only; no seeds, signing or broadcast.
+No files changed, compilation skipped
+Script ran successfully.
+
+== Logs ==
+  existing ShareGuard 0x28F6F19bffbF25E36452c78d12090F0bC922970a
+  owner 0x327DCcbDA0B4633A109F536951C7CBa81a8Ef710
+  block 126496974
+  global pause false
+  AMZNB ADD 0x1a4b499833A79A09ad7Cf1D42D7DacF71e92eb00
+    seed multiplier (1e18; zero for bStock) 0
+  NFLXB ADD 0xD6829Ea836b6FA224d099D40E54B31262f874631
+    seed multiplier (1e18; zero for bStock) 0
+  GMEB ADD 0x46cEeFDa28Dd7207059ed19B0acdc026955bb15C
+    seed multiplier (1e18; zero for bStock) 0
+  BMNRB ADD 0x3548Da95a9eFFE481e8604664d75e95821e557F5
+    seed multiplier (1e18; zero for bStock) 0
+  MRNAB ADD 0x5fd86da9B05abE396fe9d02a4A213A7c00556503
+    seed multiplier (1e18; zero for bStock) 0
+  FLNCB ADD 0x4af1D41cd9dD950dcA43984b43aaA2A8702714Ac
+    seed multiplier (1e18; zero for bStock) 0
+  AMZNB local setAsset gas (excludes intrinsic) 63697
+    shares per token (1e18) 1000000000000000000
+    issuer paused now false
+  NFLXB local setAsset gas (excludes intrinsic) 63709
+    shares per token (1e18) 1000000000000000000
+    issuer paused now false
+  GMEB local setAsset gas (excludes intrinsic) 63709
+    shares per token (1e18) 1000000000000000000
+    issuer paused now false
+  BMNRB local setAsset gas (excludes intrinsic) 63709
+    shares per token (1e18) 1000000000000000000
+    issuer paused now false
+  MRNAB local setAsset gas (excludes intrinsic) 63697
+    shares per token (1e18) 1000000000000000000
+    issuer paused now false
+  FLNCB local setAsset gas (excludes intrinsic) 63709
+    shares per token (1e18) 1000000000000000000
+    issuer paused now false
+  Batch 2 configured bStock additions 6
+  Batch 2 verification passed: all six enabled with exact bStock configuration
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 56
+
+Estimated max fee per gas: 0.05 gwei
+Estimated base fee per gas: 0 gwei
+Estimated max priority fee per gas: 0.05 gwei
+
+Estimated total gas used for script: 511138
+
+Estimated amount required: 0.0000255569 BNB
+
+==========================
+
+SIMULATION COMPLETE. To broadcast these transactions, add --broadcast and wallet configuration(s) to the previous command. See forge script --help for more.
+
+Transactions saved to: /home/dell/Projects/tally-wo09/contracts/broadcast/AddAssets.s.sol/56/dry-run/runBstockBatch2-latest.json
+
+Sensitive values saved to: /home/dell/Projects/tally-wo09/contracts/cache/AddAssets.s.sol/56/dry-run/runBstockBatch2-latest.json
+
+Warning: Detected artifacts built from source files that no longer exist. Run `forge clean` to make sure builds are in sync with project files.
+ - /home/dell/Projects/tally-wo09/contracts/foundry-pp/DeployHelper48.sol
+ - /home/dell/Projects/tally-wo09/contracts/foundry-pp/DeployHelper46.sol

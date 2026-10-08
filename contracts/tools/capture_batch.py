@@ -28,6 +28,7 @@ CONTRACTS = ROOT / "contracts"
 DEFAULT_LIST = CONTRACTS / "deploy" / "batch-1.json"
 PUBLIC_LIST_PATH = "/v1/public/wallet-direct/buw/wallet/market/token/rwa/stock/detail/list/ai?type=3"
 PUBLIC_STOCK_SOURCE = "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai"
+ENGINE_REFERENCE_SOURCE = "engine ticker reference (authenticated list, per share)"
 READ_PATHS = {
     "/api/v1/dex/market/rwa/tokens",
     "/api/v1/dex/aggregator/quote",
@@ -143,16 +144,7 @@ def public_bstock_list():
     return fetch(BAPI + PUBLIC_LIST_PATH)
 
 
-def stock_reference_row(rows, token, dynamic, captured_at):
-    """US share price, already per share; neither DEX nor authenticated fallback."""
-    try:
-        price = decimal((dynamic.get("stockInfo") or {}).get("price"))
-    except (ValueError, AttributeError, TypeError):
-        raise CaptureError("no independent reference price") from None
-    if price <= 0:
-        raise CaptureError("no independent reference price")
-    if dynamic.get("symbol") != token["symbol"] or dynamic.get("ticker") != token["ticker"]:
-        raise CaptureError("public stock identity differs from fixed batch")
+def bstock_reference_metadata(rows, token):
     if not isinstance(rows, list):
         raise CaptureError("public bStock list is unavailable")
     matches = [r for r in rows if str(r.get("chainId")) == "56"
@@ -169,12 +161,50 @@ def stock_reference_row(rows, token, dynamic, captured_at):
     raw_decimals = str(row.get("d"))
     if ratio <= 0 or not raw_decimals.isdigit() or not 0 <= int(raw_decimals) <= 36:
         raise CaptureError("public share ratio or token decimals unavailable")
-    return {"source": PUBLIC_STOCK_SOURCE, "sourceField": "stockInfo.price", "capturedAtUtc": captured_at,
-            "tokenContractAddress": token["address"], "binanceChainId": "56",
+    return {"tokenContractAddress": token["address"], "binanceChainId": "56",
             "tokenSymbol": token["symbol"], "underlyingTicker": token["ticker"],
-            "referencePricePerShareUsd": str(price), "tokenToShareRatio": str(ratio),
+            "tokenToShareRatio": str(ratio),
             "ratioSource": "public bStock list multiplier", "decimals": int(raw_decimals),
             "decimalsSource": "public bStock list d"}
+
+
+def stock_reference_row(rows, token, dynamic, captured_at):
+    """US share price, already per share; never the token's DEX price."""
+    try:
+        price = decimal((dynamic.get("stockInfo") or {}).get("price"))
+    except (ValueError, AttributeError, TypeError):
+        raise CaptureError("no independent reference price") from None
+    if price <= 0:
+        raise CaptureError("no independent reference price")
+    if dynamic.get("symbol") != token["symbol"] or dynamic.get("ticker") != token["ticker"]:
+        raise CaptureError("public stock identity differs from fixed batch")
+    return {**bstock_reference_metadata(rows, token), "source": PUBLIC_STOCK_SOURCE,
+            "sourceField": "stockInfo.price", "capturedAtUtc": captured_at,
+            "referencePricePerShareUsd": str(price)}
+
+
+def bstock_reference(token, dynamic, captured_at, evidence, get_registry=public_bstock_list):
+    """Prefer stockInfo.price, then the engine's independent ticker reference."""
+    if dynamic is not None and (dynamic.get("stockInfo") or {}).get("price") is not None:
+        return stock_reference_row(get_registry(), token, dynamic, captured_at)
+    try:
+        inspection = evidence["inspection"]
+        value = inspection["referencePrice"]
+        price = decimal(value["price"])
+        when = evidence["asOf"]
+        timestamp = datetime.fromisoformat(when.replace("Z", "+00:00"))
+        if price <= 0 or value["session"] not in {"regular", "pre", "post"} or timestamp.tzinfo is None:
+            raise ValueError("invalid engine reference")
+        if (inspection["symbol"] != token["symbol"] or inspection["issuer"] != "bstock"
+                or inspection["address"].lower() != token["address"].lower()
+                or evidence["source"] != f"pnpm --silent tally facts {token['ticker']} --json"):
+            raise ValueError("engine identity mismatch")
+    except (ValueError, KeyError, TypeError, AttributeError):
+        raise CaptureError("no independent reference price") from None
+    return {**bstock_reference_metadata(get_registry(), token), "source": ENGINE_REFERENCE_SOURCE,
+            "sourceField": "integrityEvidence.inspection.referencePrice.price",
+            "capturedAtUtc": when, "session": value["session"],
+            "referencePricePerShareUsd": str(price)}
 
 
 def inspection_row(payload, token):
@@ -290,15 +320,16 @@ def capture_one(token, client, w, cr, cap_path, depth_path, limit_pct, get_facts
             observation = depth["referenceObservation"] = {
                 "source": PUBLIC_STOCK_SOURCE, "sourceField": "stockInfo.price",
                 "attemptedAtUtc": utc_now(), "capturedAtUtc": None, "pricePerShareUsd": None}
-            public_data = w.public_rwa(token["address"])
-            observation.update(capturedAtUtc=utc_now(),
-                               pricePerShareUsd=clean_evidence((public_data.get("stockInfo") or {}).get("price")))
-            # A null independent price fails even when the authenticated list or
-            # tokenInfo.price has a price. Do not turn either into a substitute.
-            if observation["pricePerShareUsd"] is None:
-                raise CaptureError("no independent reference price")
-            depth["reference"] = stock_reference_row(public_bstock_list(), token, public_data,
-                                                     observation["capturedAtUtc"])
+            try:
+                public_data = w.public_rwa(token["address"])
+                observation.update(capturedAtUtc=utc_now(),
+                                   pricePerShareUsd=clean_evidence((public_data.get("stockInfo") or {}).get("price")))
+            except Exception as error:
+                observation["unavailableReason"] = safe_error(error)
+            depth["reference"] = bstock_reference(token, public_data, observation["capturedAtUtc"],
+                                                  depth["integrityEvidence"], get_registry=public_bstock_list)
+            if depth["reference"]["source"] == ENGINE_REFERENCE_SOURCE:
+                depth["warnings"] = ["stockInfo.price unavailable; using the engine's independent ticker reference"]
         else:
             rows = client._request("GET", "/api/v1/dex/market/rwa/tokens", {"chainId": "56"})
             depth["reference"] = reference_row(rows, token)
@@ -359,11 +390,15 @@ def result_line(depth):
         for name, quote in wallets.items():
             reasons += [f"${amount}/{name}: {reason}" for reason in quote["assessment"]["reasons"]]
     observation = depth.get("referenceObservation")
-    reference_label = (f" reference=stockInfo.price reference-captured-at={observation['capturedAtUtc'] or 'unavailable'}"
+    reference = depth.get("reference") or {}
+    reference_label = (f" reference={ENGINE_REFERENCE_SOURCE} reference-captured-at={reference['capturedAtUtc']}"
+                       if reference.get("source") == ENGINE_REFERENCE_SOURCE else
+                       f" reference=stockInfo.price reference-captured-at={observation['capturedAtUtc'] or 'unavailable'}"
                        if observation else "")
     return (f"{depth['token']} DEPTH {depth['gates']['depth'].upper()} {' '.join(premiums)}{reference_label} "
             f"grade={verdict.get('grade') or 'unavailable'} held={'yes' if depth['held'] else 'no'} "
-            f"fork=pending enablement=not-approved" + (" reasons=" + "; ".join(reasons) if reasons else ""))
+            f"fork=pending enablement=not-approved" + (" reasons=" + "; ".join(reasons) if reasons else "")
+            + (" warnings=" + "; ".join(depth["warnings"]) if depth.get("warnings") else ""))
 
 
 def main():
@@ -556,6 +591,78 @@ class CaptureTests(unittest.TestCase):
                 self.assertIsNone(q["assessment"]["premiumPct"])
                 self.assertEqual(q["assessment"]["reasons"], ["no independent reference price"])
         self.assertIn("no independent reference price", result_line(result))
+
+    def engine_facts(self, token, price="0.6", session="regular"):
+        evidence = self.facts(token)
+        evidence["inspection"]["referencePrice"] = {"price": price, "session": session}
+        return evidence
+
+    def test_engine_ticker_reference_is_already_per_share_and_warns_with_recorded_time(self):
+        from unittest.mock import patch
+        token = self.rows[0]
+        for session in ("regular", "pre", "post"):
+            with self.subTest(session=session), \
+                    patch.object(self.w, "public_rwa", return_value=self.public(token, None)):
+                ref = bstock_reference(token, self.public(token, None), "stock-time",
+                                       self.engine_facts(token, session=session), self.public_list)
+                self.assertEqual(ref["referencePricePerShareUsd"], "0.6")
+                self.assertEqual(ref["tokenToShareRatio"], "10")
+                self.assertEqual(ref["session"], session)
+        with patch.object(self.w, "public_rwa", return_value=self.public(token, None)):
+            result, cap, _, client = self.capture(token, facts=self.engine_facts)
+        self.assertEqual(result["gates"]["depth"], "passed")
+        self.assertEqual(result["reference"]["source"], ENGINE_REFERENCE_SOURCE)
+        self.assertEqual(result["reference"]["capturedAtUtc"], "2026-10-07T00:00:00Z")
+        self.assertTrue(result["warnings"])
+        self.assertEqual(client.requests, [])
+        self.assertEqual(len(client.quotes), 4)
+        self.assertEqual(json.loads(cap.read_text())["referencePrice"], "None")
+        self.assertTrue(all(abs(Decimal(q["assessment"]["premiumPct"])) < Decimal("1e-15")
+                            for wallets in result["quotes"].values() for q in wallets.values()))
+        self.assertIn("reference=" + ENGINE_REFERENCE_SOURCE, result_line(result))
+        self.assertIn("reference-captured-at=2026-10-07T00:00:00Z", result_line(result))
+        self.assertIn("warnings=", result_line(result))
+
+    def test_stock_price_has_priority_over_engine_reference(self):
+        token = self.rows[0]
+        result, _, _, _ = self.capture(token, facts=lambda t: self.engine_facts(t, "1.2"))
+        self.assertEqual(result["reference"]["sourceField"], "stockInfo.price")
+        self.assertEqual(result["reference"]["referencePricePerShareUsd"], "0.6")
+        self.assertNotIn("warnings", result)
+
+    def test_engine_reference_rejects_missing_nonpositive_unknown_session_and_identity(self):
+        import copy
+        token = self.rows[0]
+        for price in (None, "0", "-1", "NaN", "Infinity", True):
+            with self.subTest(price=price), self.assertRaisesRegex(CaptureError, "no independent reference price"):
+                bstock_reference(token, self.public(token, None), "recorded",
+                                 self.engine_facts(token, price), self.public_list)
+        for session in (None, "unknown", "closed", "regular-ish"):
+            with self.subTest(session=session), self.assertRaises(CaptureError):
+                bstock_reference(token, self.public(token, None), "recorded",
+                                 self.engine_facts(token, session=session), self.public_list)
+        for key, value in (("symbol", "WRONG"), ("issuer", "ondo"), ("address", "0x" + "0" * 40)):
+            evidence = copy.deepcopy(self.engine_facts(token))
+            evidence["inspection"][key] = value
+            with self.subTest(key=key), self.assertRaises(CaptureError):
+                bstock_reference(token, None, "recorded", evidence, self.public_list)
+        for when in (None, "not-a-time", "2026-10-08T13:30:00"):
+            evidence = self.engine_facts(token)
+            evidence["asOf"] = when
+            with self.subTest(when=when), self.assertRaises(CaptureError):
+                bstock_reference(token, None, "recorded", evidence, self.public_list)
+        for evidence in (None, self.facts(token)):
+            with self.assertRaisesRegex(CaptureError, "no independent reference price"):
+                bstock_reference(token, self.public(token, None), "recorded", evidence, self.public_list)
+
+    def test_engine_reference_can_survive_public_transport_failure_without_diagnostics(self):
+        from unittest.mock import patch
+        with patch.object(self.w, "public_rwa", side_effect=RuntimeError("private diagnostic")):
+            result, _, path, _ = self.capture(self.rows[0], facts=self.engine_facts)
+        self.assertEqual(result["gates"]["depth"], "passed")
+        self.assertEqual(result["reference"]["source"], ENGINE_REFERENCE_SOURCE)
+        self.assertEqual(result["referenceObservation"]["unavailableReason"], "RuntimeError")
+        self.assertNotIn("private diagnostic", path.read_text())
 
     def test_stock_reference_rejects_invalid_price_metadata_and_identity_without_guessing(self):
         token = self.rows[0]

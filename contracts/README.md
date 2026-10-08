@@ -171,8 +171,9 @@ references and do not provide a live premium check. Proof files:
 The retry results in `captures/depth/batch-2-us-session-results.json` pin all
 38 capture/depth pairs from the two bStock and two Ondo runs. The latest runs are
 `batch1-bstock-us-20261008T133231Z` and `batch1-ondo-us-20261008T133359Z`;
-the earlier 12:51/12:54 runs precede the US regular session. **No newly passing
-token was found**, after recomputing all 116 quote assessments:
+the earlier 12:51/12:54 runs precede the US regular session. **Under the earlier
+stockInfo.price-only policy, no newly passing token was found**, after
+recomputing all 116 quote assessments:
 
 - AAPLB, AMZNB, BMNRB, DJTB, FLNCB, GMEB, MRNAB, NFLXB, SOXSB and SQQQB:
   `stockInfo.price` remains null during both attempts, including the US session;
@@ -193,6 +194,38 @@ the first owner manifest, generated product target and seed file are unchanged.
 `captures/depth/batch-2-keyless-preview.json` records a keyless no-op plan using
 the after-owner snapshot: zero additions and zero `setAsset` calls. It is not a
 live-chain or Forge execution preview; there is no eligible owner batch to run.
+
+The chief engineer revised the bStock reference rule on 8 Oct. The recorder
+now prefers `stockInfo.price`, then the positive, timestamped engine ticker
+reference in a recorded regular/pre/post session. The engine reference is
+already per share; it is never divided again or replaced by a DEX price. The
+fallback is labelled and warns. Original capture/depth files remain unchanged.
+
+`captures/depth/batch-2-engine-reference-results.json` recomputes the seven
+US-session bStock records with that rule. All seven pass the unchanged 1.5%
+limit at both $6 and $100, for both EOA and guard quotes. AAPLB is an enabled
+control; the **six new additions** are AMZNB, NFLXB, GMEB, BMNRB, MRNAB and
+FLNCB. All seven pinned A–I suites pass: **56 tests passed, 14 feed-only tests
+skipped, zero failures**, in the accompanying fork report. DJTB remains out
+without an engine reference; held products remain excluded.
+
+`captures/depth/batch-2-bstock-manifest.json` is the separate six-token scope,
+pinned by exact bytes in `AddAssets.s.sol`. The script also verifies its capture,
+selection, fork-report and first-manifest hashes before planning. Separate
+Batch 2 preview/run/verification/rollback methods use only bStock's on-chain
+multiplier and shared pause manager; they never read seeds. The first owner
+manifest and generated product data are unchanged.
+
+The keyless preview and owner dry run at block **126496974** configure all six
+on local fork state and verify their exact configuration, positive multipliers
+and unpaused issuer state. The dry run estimates 511,138 gas / 0.0000255569 BNB
+at 0.05 gwei; it is not a receipt. Four fork integration tests preserve every
+other known asset, prove repeat-run skips and disabled-asset handling, and check
+rollback. Evidence is in the `batch-2-bstock-*` files under `captures/depth/`.
+The enabled comparator's explicit Batch 2 mode checks the first 30 plus these
+six (36 tokens / 23 tickers), while reporting that Batch 2 is not yet connected
+to the product. Owner enablement and this comparison are still required before
+any product-list update. No prior passing capture or canonical filename changed.
 
 Owner and EC2 operations belong to the chief engineer. Run instructions are
 maintained in [the deployment guide](../docs/deployment.md); the orchestrator
