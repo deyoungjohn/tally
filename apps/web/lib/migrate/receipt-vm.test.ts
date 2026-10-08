@@ -22,7 +22,7 @@ describe("MigrateReceiptVM", () => {
         multiplier: parseUnits("0.1", 18).toString(),
         buyUsdtSpent: parseUnits("1", 18).toString(),
         gasUsd: 0.15,
-      }
+      },
     );
 
     expect(vm.giveUp.shares).toBe("0.0254");
@@ -51,7 +51,7 @@ describe("MigrateReceiptVM", () => {
         multiplier: parseUnits("0.1", 18).toString(),
         buyUsdtSpent: parseUnits("102", 18).toString(), // Spent $102
         gasUsd: 0.15,
-      }
+      },
     );
 
     expect(vm.giveUp.shares).toBe("0.0254");
@@ -78,7 +78,7 @@ describe("MigrateReceiptVM", () => {
         buyTokensReceived: parseUnits("0.2600", 18).toString(),
         multiplier: parseUnits("0.1", 18).toString(),
         buyUsdtSpent: parseUnits("100", 18).toString(), // Spent $100
-      }
+      },
     );
 
     expect(vm.giveUp.shares).toBe("0.0254");
@@ -105,7 +105,7 @@ describe("MigrateReceiptVM", () => {
         buyTokensReceived: parseUnits("0.2540", 18).toString(),
         multiplier: parseUnits("0.1", 18).toString(),
         buyUsdtSpent: parseUnits("100", 18).toString(),
-      }
+      },
     );
 
     expect(vm.giveUp.shares).toBe(null);
@@ -130,7 +130,7 @@ describe("MigrateReceiptVM", () => {
         buyTokensReceived: parseUnits("0.2540", 18).toString(),
         multiplier: parseUnits("0.1", 18).toString(),
         buyUsdtSpent: parseUnits("100", 18).toString(),
-      }
+      },
     );
 
     expect(vm.giveUp.verified).toBe(false);
@@ -154,7 +154,7 @@ describe("MigrateReceiptVM", () => {
           vendor: "Tally",
           quoteTime: 1234567890,
           simulation: null,
-        }
+        },
       },
       {
         hash: "0x2",
@@ -168,8 +168,8 @@ describe("MigrateReceiptVM", () => {
           vendor: "Tally",
           quoteTime: 1234567890,
           simulation: null,
-        }
-      }
+        },
+      },
     );
 
     expect(vm.giveUp.simulation).toBe(null);

@@ -23,7 +23,7 @@ const mockVm = buildMigrateReceipt(
     buyUsdtSpent: "99000000000000000000", // 99 USDT
     blockNumber: 1005,
     gasUsed: 120000,
-  }
+  },
 );
 
 export default function MigrateReceiptDev() {

@@ -28,7 +28,10 @@ import type { RwaToken } from "./schemas";
 const ISSUER_BY_TYPE: Record<number, Issuer> = { 1: "ondo", 2: "xstocks", 3: "bstock" };
 const FATAL = new Set(["region_block", "auth"]);
 
-export type OnchainMultiplierReader = (token: RegistryToken, blockNumber?: bigint) => Promise<bigint | undefined>;
+export type OnchainMultiplierReader = (
+  token: RegistryToken,
+  blockNumber?: bigint,
+) => Promise<bigint | undefined>;
 
 export interface BinanceDataOptions {
   api: BinanceApi;
@@ -143,9 +146,10 @@ export class BinanceData {
       all: async () => (await this.loadRegistry()).registry.all(),
     },
     facts: {
-      multipliers: (token, blockNumber) => blockNumber
-        ? this.readMultipliers(token, blockNumber)
-        : this.multCache.get(token.address, () => this.readMultipliers(token)),
+      multipliers: (token, blockNumber) =>
+        blockNumber
+          ? this.readMultipliers(token, blockNumber)
+          : this.multCache.get(token.address, () => this.readMultipliers(token)),
       market: (token) => this.marketCache.get(token.address, () => this.readMarket(token)),
       reference: (ticker) => this.refCache.get(ticker, () => this.readReference(ticker)),
       recordAccepted: async (token, value, at) => this.o.baseline?.record(token, value, at),
@@ -160,7 +164,10 @@ export class BinanceData {
     return this.o.api.bnbUsd(wallet);
   }
 
-  private async readMultipliers(token: RegistryToken, blockNumber?: bigint): Promise<MultiplierReadings> {
+  private async readMultipliers(
+    token: RegistryToken,
+    blockNumber?: bigint,
+  ): Promise<MultiplierReadings> {
     const { listMultiplier } = await this.loadRegistry();
     const auth = (await this.authTokens()).get(token.address);
     const readings: MultiplierReadings = {};

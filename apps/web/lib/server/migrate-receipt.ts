@@ -61,8 +61,14 @@ export async function loadMigrateReceipt(
   try {
     const buyTx = await engine.transactions.getTransaction(buyHash);
     if (buyTx && buyTx.input) {
-      const decoded = decodeFunctionData({ abi: SHAREGUARD_ABI, data: buyTx.input as `0x${string}` });
-      if (decoded.functionName === "swapForShares" || decoded.functionName === "swapForSharesWithFeed") {
+      const decoded = decodeFunctionData({
+        abi: SHAREGUARD_ABI,
+        data: buyTx.input as `0x${string}`,
+      });
+      if (
+        decoded.functionName === "swapForShares" ||
+        decoded.functionName === "swapForSharesWithFeed"
+      ) {
         const args = decoded.args as readonly unknown[];
         buyMinShares = String(args[3]);
       }
@@ -81,15 +87,19 @@ export async function loadMigrateReceipt(
 
   // They must be different issuers but same ticker
   const tokens = (await engine.ports.registry.all?.()) ?? [];
-  const registryTokenAddresses = new Set(tokens.map(t => t.address.toLowerCase()));
-  
+  const registryTokenAddresses = new Set(tokens.map((t) => t.address.toLowerCase()));
+
   // Filter transferred tokens to only registry tokens
-  const transferredRegistryTokens = Array.from(new Set(sellStockTransfers.map(t => t.address))).filter(addr => registryTokenAddresses.has(addr));
+  const transferredRegistryTokens = Array.from(
+    new Set(sellStockTransfers.map((t) => t.address)),
+  ).filter((addr) => registryTokenAddresses.has(addr));
   if (transferredRegistryTokens.length !== 1) {
     return { state: "not_a_migrate", sellHash, buyHash };
   }
   const sellStockToken = transferredRegistryTokens[0]!;
-  const sellTokensSpent = sellStockTransfers.filter(t => t.address === sellStockToken).reduce((sum, t) => sum + t.value, 0n);
+  const sellTokensSpent = sellStockTransfers
+    .filter((t) => t.address === sellStockToken)
+    .reduce((sum, t) => sum + t.value, 0n);
 
   const sellDef = tokens.find(
     (t: { address: string; ticker: string; issuer: string }) =>

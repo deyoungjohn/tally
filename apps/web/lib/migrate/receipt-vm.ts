@@ -155,13 +155,13 @@ export function buildMigrateReceipt(sell: LegInput, buy: LegInput): MigrateRecei
     const diffWei = inUsd - outUsd;
     const isDown = diffWei < 0n;
     const absDiff = isDown ? -diffWei : diffWei;
-    
+
     // Convert to cents (1e16 wei) rounding down, then to dollar string
     const cents = absDiff / 10000000000000000n;
     const dollars = cents / 100n;
     const remainder = cents % 100n;
     let diffStr = (isDown ? "-" : "+") + `$${dollars}.${remainder.toString().padStart(2, "0")}`;
-    
+
     if (sell.gasUsd !== undefined && buy.gasUsd !== undefined) {
       const totalGas = sell.gasUsd + buy.gasUsd;
       diffStr += ` (minus $${totalGas.toFixed(2)} gas)`;

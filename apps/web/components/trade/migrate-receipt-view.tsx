@@ -29,7 +29,7 @@ export function MigrateReceiptView({ vm }: { vm: MigrateReceiptVM }) {
               )}
             </div>
           </>
-        ) : (vm.giveUp.verified && vm.receive.verified) ? null : (
+        ) : vm.giveUp.verified && vm.receive.verified ? null : (
           <p className="text-white/60">Pending verification...</p>
         )}
       </div>
@@ -63,17 +63,21 @@ export function MigrateReceiptView({ vm }: { vm: MigrateReceiptVM }) {
             <div className="flex justify-between items-center">
               <span className="text-white/60">{vm.giveUp.protectionLabel}</span>
               <span>
-                {vm.giveUp.protectionValue 
-                  ? `${vm.giveUp.protectionValue} USDT` 
-                  : (vm.giveUp.verified ? "Not recorded on chain" : "Pending")}
+                {vm.giveUp.protectionValue
+                  ? `${vm.giveUp.protectionValue} USDT`
+                  : vm.giveUp.verified
+                    ? "Not recorded on chain"
+                    : "Pending"}
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-white/60">Delivered</span>
               <div className="flex items-center gap-1">
-                {vm.giveUp.usdValue 
-                  ? `${vm.giveUp.usdValue} USDT` 
-                  : (vm.giveUp.verified ? "Not recorded on chain" : "Pending")}
+                {vm.giveUp.usdValue
+                  ? `${vm.giveUp.usdValue} USDT`
+                  : vm.giveUp.verified
+                    ? "Not recorded on chain"
+                    : "Pending"}
                 {vm.giveUp.protectionPass && <CheckCircle2 className="w-3 h-3 text-white" />}
               </div>
             </div>
@@ -158,7 +162,9 @@ export function MigrateReceiptView({ vm }: { vm: MigrateReceiptVM }) {
             </div>
 
             <div className="text-white/60">Shares</div>
-            <div>{vm.receive.shares ?? (vm.receive.verified ? "shares unavailable" : "Pending")}</div>
+            <div>
+              {vm.receive.shares ?? (vm.receive.verified ? "shares unavailable" : "Pending")}
+            </div>
 
             <div className="text-white/60">Value (USDT)</div>
             <div>{vm.receive.usdValue ?? "Pending"}</div>
@@ -169,17 +175,21 @@ export function MigrateReceiptView({ vm }: { vm: MigrateReceiptVM }) {
             <div className="flex justify-between items-center">
               <span className="text-white/60">{vm.receive.protectionLabel}</span>
               <span>
-                {vm.receive.protectionValue 
-                  ? `${vm.receive.protectionValue} shares` 
-                  : (vm.receive.verified ? "Not recorded on chain" : "Pending")}
+                {vm.receive.protectionValue
+                  ? `${vm.receive.protectionValue} shares`
+                  : vm.receive.verified
+                    ? "Not recorded on chain"
+                    : "Pending"}
               </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-white/60">Delivered</span>
               <div className="flex items-center gap-1">
-                {vm.receive.shares 
-                  ? `${vm.receive.shares} shares` 
-                  : (vm.receive.verified ? "Not recorded on chain" : "Pending")}
+                {vm.receive.shares
+                  ? `${vm.receive.shares} shares`
+                  : vm.receive.verified
+                    ? "Not recorded on chain"
+                    : "Pending"}
                 {vm.receive.protectionPass && <CheckCircle2 className="w-3 h-3 text-white" />}
               </div>
             </div>
