@@ -1,0 +1,378 @@
+{
+  "schema": 1,
+  "source": "recorded fixture engine; actual route GET handlers; runtime picker array injection in a temporary process only; live fetch throws",
+  "limitations": "Five fresh-engine samples per route. No HTTP/server startup or network latency; not a live latency estimate. The 53-ticker stress set is constructed from recorded registry identities, not candidate discovery.",
+  "warnings": 1910,
+  "results": [
+    {
+      "scenario": "current-6",
+      "route": "/api/radar",
+      "tickerCount": 6,
+      "tickers": [
+        "NVDA",
+        "AAPL",
+        "TSLA",
+        "QQQ",
+        "SPY",
+        "NFLX"
+      ],
+      "samples": [
+        {
+          "elapsedMs": 147.399,
+          "status": 200,
+          "bytes": 6475
+        },
+        {
+          "elapsedMs": 41.12,
+          "status": 200,
+          "bytes": 6475
+        },
+        {
+          "elapsedMs": 45.093,
+          "status": 200,
+          "bytes": 6475
+        },
+        {
+          "elapsedMs": 41.401,
+          "status": 200,
+          "bytes": 6475
+        },
+        {
+          "elapsedMs": 50.1,
+          "status": 200,
+          "bytes": 6475
+        }
+      ],
+      "medianMs": 45.093
+    },
+    {
+      "scenario": "current-6",
+      "route": "/api/portfolio",
+      "tickerCount": 6,
+      "tickers": [
+        "NVDA",
+        "AAPL",
+        "TSLA",
+        "QQQ",
+        "SPY",
+        "NFLX"
+      ],
+      "samples": [
+        {
+          "elapsedMs": 46.237,
+          "status": 200,
+          "bytes": 765
+        },
+        {
+          "elapsedMs": 35.562,
+          "status": 200,
+          "bytes": 765
+        },
+        {
+          "elapsedMs": 39.785,
+          "status": 200,
+          "bytes": 765
+        },
+        {
+          "elapsedMs": 45.814,
+          "status": 200,
+          "bytes": 765
+        },
+        {
+          "elapsedMs": 41.626,
+          "status": 200,
+          "bytes": 765
+        }
+      ],
+      "medianMs": 41.626
+    },
+    {
+      "scenario": "planned-21",
+      "route": "/api/radar",
+      "tickerCount": 21,
+      "tickers": [
+        "NVDA",
+        "AAPL",
+        "TSLA",
+        "QQQ",
+        "SPY",
+        "SPCX",
+        "BABA",
+        "GOOGL",
+        "SKHY",
+        "MSTR",
+        "CRCL",
+        "SNDK",
+        "HOOD",
+        "MSFT",
+        "INTC",
+        "META",
+        "TSM",
+        "GME",
+        "AMZN",
+        "BMNR",
+        "NFLX"
+      ],
+      "samples": [
+        {
+          "elapsedMs": 60.256,
+          "status": 200,
+          "bytes": 18993
+        },
+        {
+          "elapsedMs": 60.171,
+          "status": 200,
+          "bytes": 18993
+        },
+        {
+          "elapsedMs": 49.233,
+          "status": 200,
+          "bytes": 18993
+        },
+        {
+          "elapsedMs": 67.349,
+          "status": 200,
+          "bytes": 18993
+        },
+        {
+          "elapsedMs": 91.912,
+          "status": 200,
+          "bytes": 18993
+        }
+      ],
+      "medianMs": 60.256
+    },
+    {
+      "scenario": "planned-21",
+      "route": "/api/portfolio",
+      "tickerCount": 21,
+      "tickers": [
+        "NVDA",
+        "AAPL",
+        "TSLA",
+        "QQQ",
+        "SPY",
+        "SPCX",
+        "BABA",
+        "GOOGL",
+        "SKHY",
+        "MSTR",
+        "CRCL",
+        "SNDK",
+        "HOOD",
+        "MSFT",
+        "INTC",
+        "META",
+        "TSM",
+        "GME",
+        "AMZN",
+        "BMNR",
+        "NFLX"
+      ],
+      "samples": [
+        {
+          "elapsedMs": 84.063,
+          "status": 200,
+          "bytes": 765
+        },
+        {
+          "elapsedMs": 104.804,
+          "status": 200,
+          "bytes": 765
+        },
+        {
+          "elapsedMs": 81.881,
+          "status": 200,
+          "bytes": 765
+        },
+        {
+          "elapsedMs": 89.257,
+          "status": 200,
+          "bytes": 765
+        },
+        {
+          "elapsedMs": 60.953,
+          "status": 200,
+          "bytes": 765
+        }
+      ],
+      "medianMs": 84.063
+    },
+    {
+      "scenario": "stress-53",
+      "route": "/api/radar",
+      "tickerCount": 53,
+      "tickers": [
+        "NVDA",
+        "AAPL",
+        "TSLA",
+        "QQQ",
+        "SPY",
+        "SPCX",
+        "BABA",
+        "GOOGL",
+        "SKHY",
+        "MSTR",
+        "CRCL",
+        "SNDK",
+        "HOOD",
+        "MSFT",
+        "INTC",
+        "META",
+        "TSM",
+        "GME",
+        "AMZN",
+        "BMNR",
+        "NFLX",
+        "EEM",
+        "MRNA",
+        "OXY",
+        "AAL",
+        "ORCL",
+        "NKE",
+        "NVO",
+        "AGG",
+        "GS",
+        "COP",
+        "HYG",
+        "ADI",
+        "PANW",
+        "AVGO",
+        "IVV",
+        "SNOW",
+        "MRVL",
+        "VTI",
+        "IJH",
+        "SQQQ",
+        "CPNG",
+        "DGRW",
+        "V",
+        "AMC",
+        "GRND",
+        "IEMG",
+        "BLK",
+        "TMUS",
+        "MA",
+        "CAT",
+        "RIVN",
+        "NTES"
+      ],
+      "samples": [
+        {
+          "elapsedMs": 93.599,
+          "status": 200,
+          "bytes": 33957
+        },
+        {
+          "elapsedMs": 100.086,
+          "status": 200,
+          "bytes": 33957
+        },
+        {
+          "elapsedMs": 96.601,
+          "status": 200,
+          "bytes": 33957
+        },
+        {
+          "elapsedMs": 134.237,
+          "status": 200,
+          "bytes": 33957
+        },
+        {
+          "elapsedMs": 118.694,
+          "status": 200,
+          "bytes": 33957
+        }
+      ],
+      "medianMs": 100.086
+    },
+    {
+      "scenario": "stress-53",
+      "route": "/api/portfolio",
+      "tickerCount": 53,
+      "tickers": [
+        "NVDA",
+        "AAPL",
+        "TSLA",
+        "QQQ",
+        "SPY",
+        "SPCX",
+        "BABA",
+        "GOOGL",
+        "SKHY",
+        "MSTR",
+        "CRCL",
+        "SNDK",
+        "HOOD",
+        "MSFT",
+        "INTC",
+        "META",
+        "TSM",
+        "GME",
+        "AMZN",
+        "BMNR",
+        "NFLX",
+        "EEM",
+        "MRNA",
+        "OXY",
+        "AAL",
+        "ORCL",
+        "NKE",
+        "NVO",
+        "AGG",
+        "GS",
+        "COP",
+        "HYG",
+        "ADI",
+        "PANW",
+        "AVGO",
+        "IVV",
+        "SNOW",
+        "MRVL",
+        "VTI",
+        "IJH",
+        "SQQQ",
+        "CPNG",
+        "DGRW",
+        "V",
+        "AMC",
+        "GRND",
+        "IEMG",
+        "BLK",
+        "TMUS",
+        "MA",
+        "CAT",
+        "RIVN",
+        "NTES"
+      ],
+      "samples": [
+        {
+          "elapsedMs": 92.714,
+          "status": 200,
+          "bytes": 765
+        },
+        {
+          "elapsedMs": 67.75,
+          "status": 200,
+          "bytes": 765
+        },
+        {
+          "elapsedMs": 68.561,
+          "status": 200,
+          "bytes": 765
+        },
+        {
+          "elapsedMs": 68.968,
+          "status": 200,
+          "bytes": 765
+        },
+        {
+          "elapsedMs": 54.136,
+          "status": 200,
+          "bytes": 765
+        }
+      ],
+      "medianMs": 68.561
+    }
+  ]
+}

@@ -75,10 +75,14 @@ test.describe("radar view model: real route on a seeded server", () => {
     await page.getByRole("radio", { name: "Not Tradable" }).click();
     await expect(page.getByTestId("radarvm-NVDAx")).toBeVisible();
     await expect(page.getByTestId("radarvm-TSLAB")).toHaveCount(0);
-    // Flow tab: nothing until a token is picked, then only that token's flow.
+    // "How we grade tokens" jumps to the explainer at the bottom.
+    await page.getByRole("radio", { name: "All" }).click();
+    await page.getByTestId("how-we-grade-link").click();
+    await expect(page.locator("#how-we-grade")).toBeInViewport({ timeout: 5000 });
+    await page.evaluate(() => window.scrollTo(0, 0));
+    // Flow tab: the busiest token is shown by default; only a click changes it, and only one is shown.
     await page.getByRole("radio", { name: "Flow" }).click();
-    await expect(page.getByTestId("radarvm-flow-prompt")).toBeVisible();
-    await expect(page.getByTestId("radarvm-flow-NVDA")).toHaveCount(0);
+    await expect(page.getByTestId("radarvm-flow-NVDA")).toBeVisible();
     await page.getByTestId("radarvm-flow-pick-NVDA").click();
     await expect(page.getByTestId("radarvm-flow-NVDA")).toContainText("5.000000");
     await expect(page.getByTestId("radarvm-flow-NVDA")).toContainText("Holder list unavailable");

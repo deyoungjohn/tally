@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "chainId": 56,
+  "guard": "0x28F6F19bffbF25E36452c78d12090F0bC922970a",
+  "blockNumber": 126396848,
+  "blockUtc": "2026-10-08T06:34:56Z",
+  "command": "ADD_ASSETS_FORK=1 ADD_ASSETS_BLOCK=126396848 forge test --match-contract AddAssetsForkTest -vv",
+  "exitCode": 0,
+  "summary": [
+    "Ran 5 tests for test/AddAssets.t.sol:AddAssetsForkTest",
+    "[PASS] test_forkConfiguredDisabledAssetIsSkippedWithoutReenable() (gas: 9856932)",
+    "[PASS] test_forkInvalidOwnerBatchRefused() (gas: 5639151)",
+    "[PASS] test_forkOwnerBstockBatchNeedsNoSeedsAndTouchesOnlyFirstTen() (gas: 11955503)",
+    "[PASS] test_forkPreviewConfiguresOnlyApprovedTwentyAndPreservesExistingAssets() (gas: 156238361)",
+    "[PASS] test_forkRollbackPreservesConfigurationAndFeedAndBlocksBuy() (gas: 13507688)",
+    "Suite result: ok. 5 passed; 0 failed; 0 skipped; finished in 1.87s (1.10s CPU time)",
+    "Ran 1 test suite in 1.88s (1.87s CPU time): 5 tests passed, 0 failed, 0 skipped (5 total tests)"
+  ],
+  "scope": "20 additions only; local fork changes; seeds unchanged; no transactions sent"
+}

@@ -37,7 +37,7 @@ test.describe("receipt and quality pages: real server, signed out", () => {
       timeout: 20_000,
     });
     // No registry snapshot is seeded, so the issuer is the browser's word and the page says so.
-    await expect(page.getByTestId("receipt-issuer-note")).toContainText("not verified");
+    await expect(page.getByTestId("receipt-issuer-note")).toContainText("reported by your browser");
     for (const s of ["Quoted", "Simulated", "Received"])
       await expect(page.getByTestId(`receipt-step-${s}`)).toBeVisible();
     await expect(page.getByTestId("receipt-status")).toBeVisible();
@@ -57,7 +57,7 @@ test.describe("receipt and quality pages: real server, signed out", () => {
     await page.goto(`${server.url}/receipt/${STALE_HASH}`);
     await expect(page.getByTestId("receipt-title")).toBeVisible({ timeout: 20_000 });
     await expect(page.getByTestId("receipt-browser-note")).toContainText(
-      "Reported by your browser, not verified",
+      "Reported by your browser",
     );
     await expect(page.getByTestId("vm-stale")).toContainText("Last update");
   });

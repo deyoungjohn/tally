@@ -1,0 +1,85 @@
+No files changed, compilation skipped
+Warning: Detected artifacts built from source files that no longer exist. Run `forge clean` to make sure builds are in sync with project files.
+ - /home/dell/Projects/tally-wo09/contracts/foundry-pp/DeployHelper48.sol
+ - /home/dell/Projects/tally-wo09/contracts/foundry-pp/DeployHelper46.sol
+Script ran successfully.
+
+== Logs ==
+  existing ShareGuard 0x28F6F19bffbF25E36452c78d12090F0bC922970a
+  owner 0x327DCcbDA0B4633A109F536951C7CBa81a8Ef710
+  block 126396848
+  global pause false
+  SPCXB ADD 0xbe9D156892E55e7154BcD3cB0FEA677F9D3103E1
+    seed multiplier (1e18; zero for bStock) 0
+  BABAB ADD 0x4eF9d3062c7F6ebA4AAE4990c5036598C6eff4ec
+    seed multiplier (1e18; zero for bStock) 0
+  GOOGLB ADD 0x3F53De71c126BdaBAe20f9cD64848d317f6C3238
+    seed multiplier (1e18; zero for bStock) 0
+  SKHYB ADD 0xCA750eF65f295BBECd685Abf54e82CAf297BDB61
+    seed multiplier (1e18; zero for bStock) 0
+  MSTRB ADD 0xE87afb3076AeB0f9B14E368DE8145ae6a2826A14
+    seed multiplier (1e18; zero for bStock) 0
+  CRCLB ADD 0x80f3D493EBCe97e343c53D29a137942416B4ffC0
+    seed multiplier (1e18; zero for bStock) 0
+  SNDKB ADD 0x3eE4dF61bd4F867E349BEaE8bFE07bc31b4850fb
+    seed multiplier (1e18; zero for bStock) 0
+  HOODB ADD 0xA394dCEa3fd3847fD793afBFd163E2e3858B7c65
+    seed multiplier (1e18; zero for bStock) 0
+  MSFTB ADD 0x80106cb3EAD06659A5ad19DF39D9b4733863B9b0
+    seed multiplier (1e18; zero for bStock) 0
+  INTCB ADD 0xe614E2fc6C787035FF51f452e8E826Bfd32D5283
+    seed multiplier (1e18; zero for bStock) 0
+  SPCXB local setAsset gas (excludes intrinsic) 63709
+    shares per token (1e18) 1000000000000000000
+    issuer paused now false
+  BABAB local setAsset gas (excludes intrinsic) 63709
+    shares per token (1e18) 1000000000000000000
+    issuer paused now false
+  GOOGLB local setAsset gas (excludes intrinsic) 63709
+    shares per token (1e18) 1000478058978107511
+    issuer paused now false
+  SKHYB local setAsset gas (excludes intrinsic) 63709
+    shares per token (1e18) 1000000000000000000
+    issuer paused now false
+  MSTRB local setAsset gas (excludes intrinsic) 63709
+    shares per token (1e18) 1000000000000000000
+    issuer paused now false
+  CRCLB local setAsset gas (excludes intrinsic) 63709
+    shares per token (1e18) 1000000000000000000
+    issuer paused now false
+  SNDKB local setAsset gas (excludes intrinsic) 64027
+    shares per token (1e18) 1000000000000000000
+    issuer paused now false
+  HOODB local setAsset gas (excludes intrinsic) 64082
+    shares per token (1e18) 1000000000000000000
+    issuer paused now false
+  MSFTB local setAsset gas (excludes intrinsic) 64029
+    shares per token (1e18) 1001313964833366845
+    issuer paused now false
+  INTCB local setAsset gas (excludes intrinsic) 64083
+    shares per token (1e18) 1000000000000000000
+    issuer paused now false
+  configured additions 10
+
+## Setting up 1 EVM.
+
+==========================
+
+Chain 56
+
+Estimated max fee per gas: 0.05 gwei
+Estimated base fee per gas: 0 gwei
+Estimated max priority fee per gas: 0.05 gwei
+
+Estimated total gas used for script: 835570
+
+Estimated amount required: 0.0000417785 BNB
+
+==========================
+
+SIMULATION COMPLETE. To broadcast these transactions, add --broadcast and wallet configuration(s) to the previous command. See forge script --help for more.
+
+Transactions saved to: /home/dell/Projects/tally-wo09/contracts/broadcast/AddAssets.s.sol/56/dry-run/runBatch-latest.json
+
+Sensitive values saved to: /home/dell/Projects/tally-wo09/contracts/cache/AddAssets.s.sol/56/dry-run/runBatch-latest.json
+

@@ -137,6 +137,10 @@ test.describe("portfolio view model: real routes on a seeded server", () => {
     await expect(
       page.getByTestId("vm-activity").getByTestId("activity-status").first(),
     ).toBeVisible();
+    // One kind of verified tag, and no line that says the opposite.
+    const text = await page.getByTestId("vm-activity").innerText();
+    expect(text).not.toContain("not verified");
+    expect(text).not.toContain("Verified, differs");
     await expect(
       page
         .getByTestId("vm-activity")

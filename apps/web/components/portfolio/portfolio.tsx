@@ -17,7 +17,7 @@ import { useJson } from "@/lib/hooks/use-json";
 import { MIN_SELL_USDT } from "@tally/config";
 import { Tip } from "@/components/ui/tooltip";
 import { ISSUER_LABEL, fmtUsd } from "@/lib/format";
-import { isBuyable, nameOf, tokenPair } from "@/lib/tickers";
+import { isBuyable, tokenPair } from "@/lib/tickers";
 import { companyName } from "./company-name";
 import { OndoGate } from "@/components/trade/ondo-gate";
 import { LiveNumber, LiveShares, LiveUsd } from "@/components/motion/live";
@@ -184,7 +184,10 @@ export function HoldingGroup({
           href={`/trade/${g.ticker}`}
           className="mt-3 inline-flex min-h-[44px] items-center gap-1 text-[14px] text-blue"
         >
-          Buy more {nameOf(g.ticker)} <ArrowRight size={13} aria-hidden />
+          Buy more{" "}
+          {[...g.parts].sort((a, b) => (b.valueUsd ?? 0) - (a.valueUsd ?? 0))[0]?.symbol ??
+            g.ticker}{" "}
+          <ArrowRight size={13} aria-hidden />
         </Link>
       )}
     </li>
