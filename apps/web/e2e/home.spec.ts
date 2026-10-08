@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { GENERATED_BUYABLE_TICKERS } from "../lib/buyable.generated";
 
 const WIDTHS = [375, 768, 1280] as const;
 const USER = "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7";
@@ -302,7 +303,7 @@ test.describe("signed-in changes", () => {
     await expect(dialog.getByTestId("send-done")).toBeVisible({ timeout: 10_000 });
   });
 
-  test("Live comparison has a stock dropdown with the five stocks and no '$25 of NVDA' text", async ({
+  test("Live comparison offers every enabled ticker once and no '$25 of NVDA' text", async ({
     page,
   }) => {
     await page.goto("/");
@@ -310,9 +311,12 @@ test.describe("signed-in changes", () => {
     await expect(block.getByRole("heading", { name: "Live comparison" })).toBeVisible();
     await expect(page.getByText("$25 of NVDA")).toHaveCount(0);
     await block.getByTestId("stock-picker").click();
-    // The comparison block's dropdown is short on purpose: just the tickers.
-    for (const t of ["NVDA", "AAPL", "TSLA", "QQQ", "SPY"])
-      await expect(page.getByRole("option", { name: t, exact: true })).toBeVisible();
+    // Plain comparison options retain ticker-only labels as the list grows.
+    await expect(page.getByRole("option")).toHaveText(
+      GENERATED_BUYABLE_TICKERS.map((entry) => entry.ticker),
+    );
+    for (const { ticker } of GENERATED_BUYABLE_TICKERS)
+      await expect(page.getByRole("option", { name: ticker, exact: true })).toBeVisible();
     await expect(page.getByText("Stocks you can buy")).toHaveCount(0);
   });
 
