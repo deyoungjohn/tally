@@ -2,7 +2,9 @@
 
 The generated list is a deployment target, not proof of on-chain enablement. It is
 not imported by the product until the owner has enabled the additions and the
-read-only list_enabled.py comparison passes. Never writes or fetches seeds.
+read-only list_enabled.py comparison passes. The explicit --seeds-only command
+instead reads public multiplier sources and writes only deploy/seeds.json for
+the eight approved Ondo additions; it never writes assets or the product list.
 """
 
 import argparse
@@ -11,9 +13,12 @@ import json
 from pathlib import Path
 import re
 import sys
+import tempfile
+import time
 import unittest
 
-from list_candidates import load_batch
+from gen_assets import to_wei
+from list_candidates import BAPI, E18, decimal, fetch, load_batch
 
 ROOT = Path(__file__).resolve().parents[2]
 CONTRACTS = ROOT / "contracts"
@@ -113,19 +118,92 @@ def render(manifest, batch):
             + array(assets) + " as const;\n")
 
 
+def seed_multiplier(raw):
+    value = decimal(raw)
+    if value < decimal("0.000000000000000001") or value >= decimal(2**256):
+        raise ValueError("positive uint256 multiplier required")
+    # Same positive-decimal conversion as gen_assets.py; no float share maths.
+    multiplier = to_wei(format(value, "f"))
+    if multiplier >= 2**256:
+        raise ValueError("positive uint256 multiplier required")
+    return multiplier
+
+
+def seed_payload(manifest, batch, public_read, fetched_at):
+    validate_manifest(manifest, batch)
+    tokens = [r for r in manifest["assets"] if r["kind"] == "ondo"]
+    if [r["symbol"] for r in tokens] != APPROVED[12:]:
+        raise ValueError("exactly the eight approved Ondo symbols required")
+    rows = public_read(BAPI + "/v1/public/wallet-direct/buw/wallet/market/token/rwa/stock/detail/list/ai?type=1")
+    if not isinstance(rows, list):
+        raise ValueError("public Ondo list unavailable")
+    seeds = {}
+    for token in tokens:
+        matches = [r for r in rows if isinstance(r, dict) and str(r.get("chainId")) == "56"
+                   and str(r.get("contractAddress", "")).lower() == token["address"].lower()]
+        if len(matches) != 1:
+            raise ValueError(f"{token['symbol']}: exactly one matching public BSC token required")
+        row = matches[0]
+        if row.get("symbol") != token["symbol"] or row.get("ticker") != token["ticker"] or row.get("type") != 1:
+            raise ValueError(f"{token['symbol']}: public registry identity differs from manifest")
+        try:
+            dynamic = public_read(BAPI + "/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai"
+                                  + f"?chainId=56&contractAddress={token['address']}")
+        except (ValueError, OSError):
+            raise ValueError(f"{token['symbol']}: public dynamic multiplier source unavailable") from None
+        if (not isinstance(dynamic, dict) or dynamic.get("symbol") != token["symbol"]
+                or dynamic.get("ticker") != token["ticker"] or not isinstance(dynamic.get("tokenInfo"), dict)):
+            raise ValueError(f"{token['symbol']}: public dynamic identity or multiplier unavailable")
+        m_list, m_dyn = row.get("multiplier"), dynamic["tokenInfo"].get("sharesMultiplier")
+        try:
+            a, b = seed_multiplier(m_dyn), seed_multiplier(m_list)
+        except ValueError:
+            raise ValueError(f"{token['symbol']}: positive uint256 readings required from both multiplier sources") from None
+        if abs(a - b) * 1000 > min(a, b):
+            raise ValueError(f"{token['symbol']}: multiplier sources disagree by more than 0.1%")
+        seeds[token["symbol"]] = {"multiplier": str(a), "list": str(m_list), "dynamic": str(m_dyn)}
+    return {"fetchedAtUnix": fetched_at, "fetchedAtUtc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(fetched_at)),
+            "seeds": seeds}
+
+
+def write_seeds_only(assets_path, batch, public_read=None, clock=None):
+    original = assets_path.read_bytes()
+    # Timestamp the start of recording so slow requests cannot extend seed age.
+    payload = seed_payload(json.loads(original), batch, public_read or fetch, int((clock or time.time)()))
+    if assets_path.read_bytes() != original:
+        raise ValueError("manifest changed during seed recording; no seeds written")
+    target = assets_path.with_name("seeds.json")
+    temporary = None
+    try:
+        # Validate all eight before touching the old file; atomically replace it.
+        with tempfile.NamedTemporaryFile(mode="w", dir=target.parent, prefix=".seeds-", suffix=".tmp", delete=False) as out:
+            temporary = Path(out.name)
+            out.write(json.dumps(payload, indent=2) + "\n")
+        temporary.replace(target)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+    return payload
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--prepare-assets", action="store_true")
-    p.add_argument("--check", action="store_true")
-    p.add_argument("--self-test", action="store_true")
+    modes = p.add_mutually_exclusive_group()
+    modes.add_argument("--prepare-assets", action="store_true")
+    modes.add_argument("--check", action="store_true")
+    modes.add_argument("--seeds-only", action="store_true", help="public two-source recording for exactly the eight manifest Ondo additions; write only seeds.json")
+    modes.add_argument("--self-test", action="store_true")
     args = p.parse_args()
     if args.self_test:
         return 0 if unittest.TextTestRunner().run(unittest.defaultTestLoader.loadTestsFromTestCase(Tests)).wasSuccessful() else 1
     batch = load_batch(CONTRACTS / "deploy/batch-1.json")
+    if args.seeds_only:
+        payload = write_seeds_only(ASSETS, batch)
+        print("wrote deploy/seeds.json for exactly: " + ", ".join(payload["seeds"]))
+        print("multiplier sources agree within 0.1%; assets.json and generated product list unchanged")
+        return 0
     manifest = json.loads(ASSETS.read_text())
     if args.prepare_assets:
-        if args.check:
-            raise ValueError("--prepare-assets cannot be combined with --check")
         manifest = prepare_manifest(manifest, batch,
             json.loads((CONTRACTS / "captures/depth/batch-1-fork-selection.json").read_text()),
             registry_names(json.loads(REGISTRY.read_text())))
@@ -185,10 +263,110 @@ class Tests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "passing"):
             prepare_manifest(self.manifest, self.batch, selection, {})
 
+    def public_seed_data(self):
+        # Include controls and held tokens in the public list: none may be seeded.
+        tokens = [r for r in self.batch["tokens"] if r["kind"] == "ondo"]
+        rows = [{"chainId": "56", "contractAddress": r["address"], "symbol": r["symbol"],
+                 "ticker": r["ticker"], "type": 1, "multiplier": "1.2345678901234567899"} for r in tokens]
+        dynamic = {r["address"]: {"symbol": r["symbol"], "ticker": r["ticker"],
+                   "tokenInfo": {"sharesMultiplier": "1.2345678901234567899"}} for r in tokens}
+        calls = []
+
+        def read(url):
+            calls.append(url)
+            return rows if "list/ai?" in url else dynamic[url.split("contractAddress=")[1]]
+
+        return rows, dynamic, calls, read
+
+    def test_seeds_only_cli_writes_exact_eight_and_preserves_assets_and_product_file(self):
+        import contextlib
+        import io
+        from unittest.mock import patch
+        _, _, calls, read = self.public_seed_data()
+        with tempfile.TemporaryDirectory() as directory:
+            assets = Path(directory) / "assets.json"
+            output = Path(directory) / "buyable.generated.ts"
+            assets.write_bytes(ASSETS.read_bytes())
+            output.write_text("existing product file")
+            before = assets.read_bytes(), assets.stat().st_mtime_ns, output.read_bytes()
+            with patch(__name__ + ".ASSETS", assets), patch(__name__ + ".OUTPUT", output), \
+                    patch(__name__ + ".fetch", side_effect=read), patch("time.time", return_value=1791441300), \
+                    patch("sys.argv", ["gen_buyable.py", "--seeds-only"]), contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(main(), 0)
+            payload = json.loads(assets.with_name("seeds.json").read_text())
+            self.assertEqual(list(payload["seeds"]), APPROVED[12:])
+            self.assertEqual(payload["fetchedAtUnix"], 1791441300)
+            self.assertEqual(payload["fetchedAtUtc"], "2026-10-08T06:35:00Z")
+            self.assertEqual(before, (assets.read_bytes(), assets.stat().st_mtime_ns, output.read_bytes()))
+            self.assertEqual(len(calls), 9)
+            self.assertEqual([u.split("contractAddress=")[1] for u in calls[1:]],
+                             [r["address"] for r in self.manifest["assets"] if r["kind"] == "ondo"])
+            for seed in payload["seeds"].values():
+                self.assertEqual(seed, {"multiplier": "1234567890123456789", "list": "1.2345678901234567899", "dynamic": "1.2345678901234567899"})
+            self.assertFalse(list(assets.parent.glob(".seeds-*.tmp")))
+
+    def test_seed_cross_check_uses_same_boundary_and_fixed_point_as_gen_assets(self):
+        rows, dynamic, _, read = self.public_seed_data()
+        token = self.manifest["assets"][12]
+        row = next(r for r in rows if r["symbol"] == token["symbol"])
+        row["multiplier"] = "1"
+        dynamic[token["address"]]["tokenInfo"]["sharesMultiplier"] = "1.001"
+        self.assertEqual(seed_payload(self.manifest, self.batch, read, 1)["seeds"][token["symbol"]]["multiplier"], str(to_wei("1.001")))
+        dynamic[token["address"]]["tokenInfo"]["sharesMultiplier"] = "1.001000000000000001"
+        with self.assertRaisesRegex(ValueError, "more than 0.1%"):
+            seed_payload(self.manifest, self.batch, read, 1)
+        for value in ("1", "10.01234567890123456789", "0.000000000000000001"):
+            self.assertEqual(seed_multiplier(value), to_wei(value))
+        maximum = 2**256 - 1
+        self.assertEqual(seed_multiplier(f"{maximum // E18}.{maximum % E18:018d}"), maximum)
+        with self.assertRaises(ValueError):
+            seed_multiplier(f"{(maximum + 1) // E18}.{(maximum + 1) % E18:018d}")
+        for value in (None, True, "0", "-1", "NaN", "Infinity", "0.0000000000000000001", str(2**256)):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                seed_multiplier(value)
+
+    def test_last_token_failure_preserves_old_seeds_and_assets(self):
+        token = self.manifest["assets"][-1]
+        for failure in ("missing", "disagree", "identity", "transport"):
+            rows, dynamic, _, read = self.public_seed_data()
+            if failure == "missing":
+                dynamic[token["address"]]["tokenInfo"]["sharesMultiplier"] = None
+            elif failure == "disagree":
+                dynamic[token["address"]]["tokenInfo"]["sharesMultiplier"] = "10"
+            elif failure == "identity":
+                dynamic[token["address"]]["symbol"] = "WRONG"
+            def source(url):
+                if failure == "transport" and url.endswith(token["address"]):
+                    raise ValueError("public data unavailable")
+                return read(url)
+            with self.subTest(failure=failure), tempfile.TemporaryDirectory() as directory:
+                assets = Path(directory) / "assets.json"
+                seeds = assets.with_name("seeds.json")
+                assets.write_bytes(ASSETS.read_bytes())
+                seeds.write_text("previous seeds")
+                before = assets.read_bytes(), seeds.read_bytes()
+                with self.assertRaises(ValueError):
+                    write_seeds_only(assets, self.batch, source, lambda: 1)
+                self.assertEqual(before, (assets.read_bytes(), seeds.read_bytes()))
+                self.assertFalse(list(assets.parent.glob(".seeds-*.tmp")))
+
+    def test_seed_registry_identity_and_duplicate_matches_refused(self):
+        for failure in ("missing", "duplicate", "ticker", "kind", "chain"):
+            rows, _, _, read = self.public_seed_data()
+            index = next(i for i,r in enumerate(rows) if r["symbol"] == APPROVED[12])
+            if failure == "missing": rows.pop(index)
+            elif failure == "duplicate": rows.append(dict(rows[index]))
+            elif failure == "ticker": rows[index]["ticker"] = "WRONG"
+            elif failure == "kind": rows[index]["type"] = 3
+            else: rows[index]["chainId"] = "1"
+            with self.subTest(failure=failure), self.assertRaises(ValueError):
+                seed_payload(self.manifest, self.batch, read, 1)
+
 
 if __name__ == "__main__":
     try:
         raise SystemExit(main())
     except (ValueError, KeyError, OSError) as error:
-        print(f"generation refused: {type(error).__name__}; no seeds or product import changed", file=sys.stderr)
+        reason = str(error) if isinstance(error, ValueError) else type(error).__name__
+        print(f"generation refused: {reason}; no seeds or product import changed", file=sys.stderr)
         raise SystemExit(1) from None

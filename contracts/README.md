@@ -133,6 +133,11 @@ products and failed captures are excluded from the owner additions. The existing
   the existing five tickers. It is deliberately not connected to the product
   until the owner steps and enabled-list comparison pass; the product still uses
   its existing five-ticker list.
+  Its explicit seeds-only mode records only the eight approved Ondo additions,
+  cross-checks the public list multiplier against the dynamic shares multiplier
+  within 0.1%, and atomically replaces only `deploy/seeds.json` after all eight
+  pass. The manifest and generated product list remain unchanged; missing or
+  conflicting readings leave the previous seeds intact.
 - `tools/list_enabled.py` reads configurations at one pinned public-chain block
   and compares both tokens and tickers in both directions, including disabled
   assets, issuer configuration differences and failed reads. Its coverage is the
