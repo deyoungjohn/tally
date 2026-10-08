@@ -11,6 +11,7 @@
 
 - `packages/mod-flow/**`
 - `apps/worker/src/jobs/collect-flow.ts`, `apps/worker/src/jobs/flow.ts`
+- Approved 2026-10-08 (EC2 disk retention, `docs/prompts/wo04-flow-retention.md`): `apps/worker/src/jobs/prune.ts`, `apps/worker/src/prune.test.ts`
 - `apps/web/modules/flow/**`, `apps/web/app/dev/flow/**`
 - Approved 2026-10-03, **additive only** (no change to existing signatures or behaviour):
   - Market collectors in `packages/binance/src/collectors.ts`, `packages/binance/src/collector-fixtures.ts`, `packages/binance/src/collectors.test.ts`: `trades(token, cursor?, limit?)`, `holders(token)`, `topTraders(token)`, `topLiquidity(token)` with zod schemas; fixture fetch mapped to the `F_*` probe keys
