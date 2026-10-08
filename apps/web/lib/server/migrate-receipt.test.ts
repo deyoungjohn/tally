@@ -19,6 +19,7 @@ const mockEngine = {
 
 vi.mock("./engine", () => ({
   getEngine: async () => mockEngine,
+  isFixtureMode: () => false,
 }));
 
 // We must mock USDT_BSC to a constant since we check it against the log address

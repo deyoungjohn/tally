@@ -5,6 +5,7 @@ export interface LegVM {
   tokenSymbol: string;
   tokenAmount: string | null;
   shares: string | null;
+  sharesLabel?: string;
   usdValue: string | null;
 
   route: string;
@@ -27,6 +28,7 @@ export interface MigrateReceiptVM {
     label: string;
     diff: string;
     isDown: boolean;
+    approximate?: boolean;
   } | null;
   dollarDiff: {
     diff: string;
@@ -49,6 +51,7 @@ export interface LegInput {
 
   // common
   multiplier?: string;
+  isTodayMultiplier?: boolean;
 
   // sell specific
   sellGuaranteedUsdt?: string;
@@ -92,6 +95,9 @@ export function buildMigrateReceipt(sell: LegInput, buy: LegInput): MigrateRecei
     const tokens = BigInt(sell.sellTokensSpent);
     const m = BigInt(sell.multiplier);
     giveUp.shares = formatUnits((tokens * m) / 1000000000000000000n, 18);
+    if (sell.isTodayMultiplier) {
+      giveUp.sharesLabel = "Shares at today's multiplier";
+    }
   }
 
   if (sell.sellUsdtReceived && sell.sellGuaranteedUsdt) {
@@ -120,6 +126,9 @@ export function buildMigrateReceipt(sell: LegInput, buy: LegInput): MigrateRecei
     const tokens = BigInt(buy.buyTokensReceived);
     const m = BigInt(buy.multiplier);
     receive.shares = formatUnits((tokens * m) / 1000000000000000000n, 18);
+    if (buy.isTodayMultiplier) {
+      receive.sharesLabel = "Shares at today's multiplier";
+    }
   }
 
   if (receive.shares && buy.buyMinShares) {
@@ -145,6 +154,7 @@ export function buildMigrateReceipt(sell: LegInput, buy: LegInput): MigrateRecei
       label: `${fIn} ${giveUp.tokenSymbol} = ${fIn} shares to ${fOut} ${receive.tokenSymbol} = ${fOut} shares`,
       diff: (isDown ? "" : "+") + parseFloat(formatUnits(diff, 18)).toString(),
       isDown,
+      approximate: !!(sell.isTodayMultiplier || buy.isTodayMultiplier),
     };
   }
 

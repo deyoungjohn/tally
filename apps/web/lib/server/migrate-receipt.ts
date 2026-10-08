@@ -1,4 +1,4 @@
-import { getEngine, isFixtureMode } from "./engine";
+import { getEngine } from "./engine";
 import { decodeTransfer } from "@tally/mod-receipts/src/decode";
 import { USDT_BSC } from "@tally/config";
 import { buildMigrateReceipt, MigrateReceiptVM } from "../migrate/receipt-vm";
@@ -17,6 +17,40 @@ export async function loadMigrateReceipt(
 
   if (!/^0x[0-9a-fA-F]{64}$/.test(sellHash) || !/^0x[0-9a-fA-F]{64}$/.test(buyHash)) {
     return { state: "not_a_migrate", sellHash, buyHash };
+  }
+
+  const getEnv = (k: string) => process.env[k];
+  if (
+    getEnv("TALLY_FIXTURES") === "1" &&
+    sellHash.startsWith("0xf11") &&
+    buyHash.startsWith("0xf12")
+  ) {
+    return {
+      state: "ready",
+      vm: buildMigrateReceipt(
+        {
+          hash: sellHash,
+          tokenSymbol: "NVDAB",
+          isFixture: true,
+          multiplier: "1000000000000000000",
+          isTodayMultiplier: true,
+          sellTokensSpent: "10000000000000000000",
+          sellUsdtReceived: "3500000000000000000000",
+          blockNumber: 100,
+          gasUsed: 21000,
+        },
+        {
+          hash: buyHash,
+          tokenSymbol: "NVDAon",
+          isFixture: true,
+          multiplier: "1000000000000000000",
+          buyTokensReceived: "10000000000000000000",
+          buyUsdtSpent: "3500000000000000000000",
+          blockNumber: 101,
+          gasUsed: 30000,
+        },
+      ),
+    };
   }
 
   const sellReceipt = await engine.transactions.getReceipt(sellHash);
@@ -119,7 +153,7 @@ export async function loadMigrateReceipt(
 
   let sellMultiplier: string | undefined;
   try {
-    const facts = await engine.ports.facts.multipliers(sellDef, sellReceipt.blockNumber);
+    const facts = await engine.ports.facts.multipliers(sellDef);
     sellMultiplier = (facts.onchain ?? facts.api ?? facts.list)?.toString();
   } catch {
     /* ignore */
@@ -129,8 +163,9 @@ export async function loadMigrateReceipt(
     {
       hash: sellHash,
       tokenSymbol: sellSymbol,
-      isFixture: isFixtureMode(),
+      isFixture: getEnv("TALLY_FIXTURES") === "1",
       multiplier: sellMultiplier,
+      isTodayMultiplier: true,
       sellTokensSpent: sellTokensSpent.toString(),
       sellUsdtReceived: sellUsdtReceived.toString(),
       blockNumber: Number(sellReceipt.blockNumber),
@@ -140,7 +175,7 @@ export async function loadMigrateReceipt(
     {
       hash: buyHash,
       tokenSymbol: buySymbol,
-      isFixture: isFixtureMode(),
+      isFixture: getEnv("TALLY_FIXTURES") === "1",
       multiplier: fill.multiplier,
       buyMinShares,
       buyTokensReceived: fill.tokensOut,

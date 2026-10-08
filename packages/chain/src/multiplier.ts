@@ -8,40 +8,19 @@ export const MULTIPLIER_ABI = parseAbi([
   "function multiplier() view returns (uint256)",
 ]);
 
-export async function readUiMultiplier(
-  client: BscClient,
-  token: Address,
-  blockNumber?: bigint,
-): Promise<bigint> {
-  return client.readContract({
-    address: token,
-    abi: MULTIPLIER_ABI,
-    functionName: "uiMultiplier",
-    blockNumber,
-  });
+export async function readUiMultiplier(client: BscClient, token: Address): Promise<bigint> {
+  return client.readContract({ address: token, abi: MULTIPLIER_ABI, functionName: "uiMultiplier" });
 }
 
-export async function readMultiplier(
-  client: BscClient,
-  token: Address,
-  blockNumber?: bigint,
-): Promise<bigint> {
-  return client.readContract({
-    address: token,
-    abi: MULTIPLIER_ABI,
-    functionName: "multiplier",
-    blockNumber,
-  });
+export async function readMultiplier(client: BscClient, token: Address): Promise<bigint> {
+  return client.readContract({ address: token, abi: MULTIPLIER_ABI, functionName: "multiplier" });
 }
 
 /** Reader for @tally/binance's facts port: bStock and xStocks are read on-chain; Ondo returns undefined (API only). */
 export function onchainMultiplierReader(client: BscClient) {
-  return async (
-    token: { issuer: Issuer; address: Address },
-    blockNumber?: bigint,
-  ): Promise<bigint | undefined> => {
-    if (token.issuer === "bstock") return readUiMultiplier(client, token.address, blockNumber);
-    if (token.issuer === "xstocks") return readMultiplier(client, token.address, blockNumber);
+  return async (token: { issuer: Issuer; address: Address }): Promise<bigint | undefined> => {
+    if (token.issuer === "bstock") return readUiMultiplier(client, token.address);
+    if (token.issuer === "xstocks") return readMultiplier(client, token.address);
     return undefined;
   };
 }

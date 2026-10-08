@@ -33,7 +33,7 @@ export interface EnginePorts {
     all?(): Promise<RegistryToken[]>;
   };
   facts: {
-    multipliers(token: RegistryToken, blockNumber?: bigint): Promise<MultiplierReadings>;
+    multipliers(token: RegistryToken): Promise<MultiplierReadings>;
     market(token: RegistryToken): Promise<TokenMarketFacts>;
     reference(ticker: string): Promise<ReferencePrice | null>;
     /** Optional: persist an Ondo multiplier reading that passed the bounds check as the new baseline. */

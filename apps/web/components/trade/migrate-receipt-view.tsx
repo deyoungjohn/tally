@@ -14,7 +14,9 @@ export function MigrateReceiptView({ vm }: { vm: MigrateReceiptVM }) {
             <p className="text-white/60">{vm.shareDiff.label}</p>
             <div className="flex gap-8 mt-2 font-medium">
               <div>
-                <span className="text-white/60 mr-2">Share difference:</span>
+                <span className="text-white/60 mr-2">
+                  Share difference{vm.shareDiff.approximate ? " (approximate)" : ""}:
+                </span>
                 <span className={vm.shareDiff.isDown ? "text-[var(--orange-text)]" : ""}>
                   {vm.shareDiff.diff}
                 </span>
@@ -51,7 +53,7 @@ export function MigrateReceiptView({ vm }: { vm: MigrateReceiptVM }) {
               )}
             </div>
 
-            <div className="text-white/60">Shares</div>
+            <div className="text-white/60">{vm.giveUp.sharesLabel ?? "Shares"}</div>
             <div>{vm.giveUp.shares ?? (vm.giveUp.verified ? "shares unavailable" : "Pending")}</div>
 
             <div className="text-white/60">Value (USDT)</div>
@@ -161,7 +163,7 @@ export function MigrateReceiptView({ vm }: { vm: MigrateReceiptVM }) {
               )}
             </div>
 
-            <div className="text-white/60">Shares</div>
+            <div className="text-white/60">{vm.receive.sharesLabel ?? "Shares"}</div>
             <div>
               {vm.receive.shares ?? (vm.receive.verified ? "shares unavailable" : "Pending")}
             </div>
