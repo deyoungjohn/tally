@@ -81,13 +81,13 @@ export function VmEmpty({
 export function VmFreshness({
   stale,
   ageMs,
-  source,
   fixtures,
   asOf,
 }: {
   stale: boolean;
   ageMs: number | null;
-  source: string | null;
+  /** Kept so call sites need not change; the source is no longer shown. */
+  source?: string | null;
   fixtures: boolean;
   asOf?: string | null;
 }) {
@@ -111,7 +111,6 @@ export function VmFreshness({
         <p className="t-meta">Last update {age}.</p>
       ) : null}
       {asOf ? <p className="t-meta">As of {new Date(asOf).toUTCString()}.</p> : null}
-      {source ? <p className="t-meta">Source: {source}.</p> : null}
     </div>
   );
 }

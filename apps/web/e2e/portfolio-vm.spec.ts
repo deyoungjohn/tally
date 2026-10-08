@@ -115,7 +115,7 @@ test.describe("portfolio view model: real routes on a seeded server", () => {
     await page.goto(`${server.url}/portfolio`);
     await page.getByRole("radio", { name: "Statement" }).click({ timeout: 20_000 });
     await expect(page.getByTestId("st-table")).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByTestId("st-table")).toContainText("Sell");
+    await expect(page.getByTestId("st-table")).toContainText("Sale");
     await expect(page.getByTestId("st-converted")).toContainText("converted at today's ratio");
     await expect(page.getByTestId("st-realized")).toContainText("$");
     const [download] = await Promise.all([

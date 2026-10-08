@@ -315,21 +315,25 @@ export function buildStatementVM(
     };
   }
 
-  const lines: StatementLineVM[] = stmt.trades.map((t) => ({
-    date: new Date(t.time).toISOString(),
-    ticker: t.ticker,
-    issuer: t.issuer,
-    type: t.type,
-    amountTokens: formatUnits(t.amountTokens, 18, 4),
-    multiplier: t.multiplier !== null ? formatUnits(t.multiplier, 18, 4) : "unavailable",
-    amountShares: t.amountShares !== null ? formatUnits(t.amountShares, 18, 4) : "unavailable",
-    pricePerShareUsd: t.pricePerShareUsdE18 ? formatUsd(t.pricePerShareUsdE18) : "-",
-    valueUsd: formatUsd(t.valueUsdE18),
-    realizedPnlUsd: t.realizedPnlUsdE18 !== undefined ? formatUsd(t.realizedPnlUsdE18) : undefined,
-    convertedAtTodaysRatio: t.convertedAtTodaysRatio,
-    ...(t.sharesUnavailableReason ? { sharesUnavailableReason: t.sharesUnavailableReason } : {}),
-    txHash: t.txHash,
-  }));
+  // Lines are for tokenized stocks. A swap also moves BNB or USDT, and those legs are not buys or sales of a stock.
+  const lines: StatementLineVM[] = stmt.trades
+    .filter((t) => t.isRecognized)
+    .map((t) => ({
+      date: new Date(t.time).toISOString(),
+      ticker: t.ticker,
+      issuer: t.issuer,
+      type: t.type,
+      amountTokens: formatUnits(t.amountTokens, 18, 4),
+      multiplier: t.multiplier !== null ? formatUnits(t.multiplier, 18, 4) : "unavailable",
+      amountShares: t.amountShares !== null ? formatUnits(t.amountShares, 18, 4) : "unavailable",
+      pricePerShareUsd: t.pricePerShareUsdE18 ? formatUsd(t.pricePerShareUsdE18) : "-",
+      valueUsd: formatUsd(t.valueUsdE18),
+      realizedPnlUsd:
+        t.realizedPnlUsdE18 !== undefined ? formatUsd(t.realizedPnlUsdE18) : undefined,
+      convertedAtTodaysRatio: t.convertedAtTodaysRatio,
+      ...(t.sharesUnavailableReason ? { sharesUnavailableReason: t.sharesUnavailableReason } : {}),
+      txHash: t.txHash,
+    }));
 
   const convertedAtTodaysRatio = stmt.convertedAtTodaysRatioCount > 0;
   const convertedAtTodaysRatioNote = convertedAtTodaysRatio

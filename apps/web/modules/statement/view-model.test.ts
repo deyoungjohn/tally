@@ -130,6 +130,44 @@ describe("WO-03 Slice B: View-model tests", () => {
     expect(issuerNames).toContain("bstock");
   });
 
+  it("statement lines list tokenized stocks only, not the BNB leg of a swap", () => {
+    const base = {
+      txHash: "0xabc",
+      time: 1790935427000,
+      type: "BUY" as const,
+      amountTokens: E18,
+      multiplier: E18,
+      amountShares: E18,
+      convertedAtTodaysRatio: false,
+      pricePerTokenUsdE18: E18,
+      pricePerShareUsdE18: E18,
+      valueUsdE18: E18,
+    };
+    const stmt = statement({
+      walletAddress: WALLET,
+      trades: [
+        {
+          ...base,
+          tokenContractAddress: "0xa9ee28c80f960b889dfbd1902055218cba016f75",
+          tokenSymbol: "NVDAon",
+          ticker: "NVDA",
+          issuer: "ondo",
+          isRecognized: true,
+        },
+        {
+          ...base,
+          tokenContractAddress: "0xbnb",
+          tokenSymbol: "BNB",
+          ticker: "BNB",
+          issuer: null,
+          isRecognized: false,
+        },
+      ],
+    });
+    const lines = buildStatementVM(stmt).lines;
+    expect(lines.map((l) => l.ticker)).toEqual(["NVDA"]);
+  });
+
   it("API down produces degraded statement from receipts without errors", () => {
     const receipts: StatementReceipt[] = [
       {

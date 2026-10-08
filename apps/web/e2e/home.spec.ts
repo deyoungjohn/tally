@@ -91,9 +91,10 @@ test.describe("home behaviour", () => {
   test("swapping out to BNB or USDT is shown but disabled", async ({ page }) => {
     await page.goto("/");
     const swap = page.getByTestId("home-card").getByRole("region", { name: "Coming soon" });
-    await expect(swap).toContainText("Sell to USDT");
+    await expect(swap).toContainText("Sell to BNB");
     await expect(swap).toContainText("Soon");
-    await expect(swap).toContainText("Migrate between issuers");
+    await expect(swap).not.toContainText("Sell to USDT");
+    await expect(swap).not.toContainText("Migrate between issuers");
     expect(await swap.getByRole("button").count()).toBe(0);
   });
 
@@ -110,13 +111,14 @@ test.describe("home behaviour", () => {
     expect(alpha).toBeLessThanOrEqual(0.05);
   });
 
-  test("nav has Trade, Portfolio, Radar, How it works and Get Started; FAQ is not in the nav", async ({
+  test("nav has Trade, Portfolio, Radar and Get Started; How it works and FAQ are not in the nav", async ({
     page,
   }) => {
     await page.goto("/");
     const nav = page.getByRole("navigation", { name: "Primary" });
-    for (const n of ["Trade", "Portfolio", "Radar", "How it works"])
+    for (const n of ["Trade", "Portfolio", "Radar"])
       await expect(nav.getByRole("link", { name: n })).toBeVisible();
+    await expect(nav.getByRole("link", { name: "How it works" })).toHaveCount(0);
     await expect(page.getByRole("banner").getByRole("link", { name: "Get Started" })).toBeVisible();
     await expect(page.getByText("Get a quote")).toHaveCount(0);
     await expect(nav.getByRole("link", { name: "FAQ" })).toHaveCount(0);
@@ -223,7 +225,7 @@ test.describe("real wallet provider (no mock)", () => {
 test.describe("signed-in changes", () => {
   test.use({ viewport: { width: 1280, height: 900 } });
 
-  test("hero buttons are gone once signed in; How it works stays in the nav and footer", async ({
+  test("hero buttons are gone once signed in; How it works stays in the footer only", async ({
     page,
   }) => {
     await page.goto("/");
@@ -237,7 +239,7 @@ test.describe("signed-in changes", () => {
     await expect(page.getByTestId("hero-actions")).toHaveCount(0);
     await expect(
       page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: "How it works" }),
-    ).toBeVisible();
+    ).toHaveCount(0);
     await expect(
       page.getByRole("contentinfo").getByRole("link", { name: "How it works" }),
     ).toBeVisible();

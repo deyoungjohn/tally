@@ -1,0 +1,65 @@
+import { nameOf } from "@/lib/tickers";
+
+/** Plain company names for the tickers a wallet is most likely to hold. Anything not listed shows its ticker: a name is never guessed. */
+const NAMES: Record<string, string> = {
+  AAPL: "Apple",
+  ABBV: "AbbVie",
+  ADBE: "Adobe",
+  AMD: "AMD",
+  AMZN: "Amazon",
+  ARM: "Arm",
+  ASML: "ASML",
+  AVGO: "Broadcom",
+  BA: "Boeing",
+  BABA: "Alibaba",
+  BAC: "Bank of America",
+  COIN: "Coinbase",
+  COST: "Costco",
+  CRM: "Salesforce",
+  CRWD: "CrowdStrike",
+  CSCO: "Cisco",
+  DIS: "Disney",
+  GOOG: "Alphabet",
+  GOOGL: "Alphabet",
+  GS: "Goldman Sachs",
+  HOOD: "Robinhood",
+  IBM: "IBM",
+  INTC: "Intel",
+  JNJ: "Johnson & Johnson",
+  JPM: "JPMorgan Chase",
+  KO: "Coca-Cola",
+  LLY: "Eli Lilly",
+  MA: "Mastercard",
+  MCD: "McDonald's",
+  META: "Meta",
+  MRNA: "Moderna",
+  MSFT: "Microsoft",
+  MSTR: "Strategy",
+  MU: "Micron",
+  NFLX: "Netflix",
+  NKE: "Nike",
+  NVDA: "NVIDIA",
+  ORCL: "Oracle",
+  PLTR: "Palantir",
+  PYPL: "PayPal",
+  QCOM: "Qualcomm",
+  SBUX: "Starbucks",
+  SHOP: "Shopify",
+  SNOW: "Snowflake",
+  SOFI: "SoFi",
+  SPCX: "SpaceX",
+  SPOT: "Spotify",
+  TSLA: "Tesla",
+  TSM: "TSMC",
+  UBER: "Uber",
+  V: "Visa",
+  WMT: "Walmart",
+  XOM: "Exxon Mobil",
+};
+
+/** The company (or fund) name under a holding's token symbol. */
+export const companyName = (ticker: string): string => {
+  const t = ticker.toUpperCase();
+  const known = nameOf(t);
+  return known !== t ? known : (NAMES[t] ?? t);
+};

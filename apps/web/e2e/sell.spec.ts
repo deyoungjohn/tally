@@ -176,7 +176,7 @@ test.describe("sell", () => {
     await expect(page.getByRole("dialog")).toHaveCount(0);
   });
 
-  test("flag on: every issuer row has Sell, the coming-soon card says Sell to USDT", async ({
+  test("flag on: every issuer row has Sell, the coming-soon card no longer lists Sell to USDT", async ({
     page,
   }) => {
     await mockWallet(page);
@@ -185,8 +185,7 @@ test.describe("sell", () => {
     await expect(page.getByTestId("sell-NVDAB")).toBeVisible({ timeout: 20_000 });
     await expect(page.getByTestId("sell-NVDAon")).toBeVisible();
     const soon = page.getByRole("region", { name: "Coming soon" });
-    await expect(soon).toContainText("Sell to USDT");
-    await expect(soon).not.toContainText("Sell to USDT or BNB");
+    await expect(soon).not.toContainText("Sell to USDT");
   });
 
   test("a refused token shows the engine's reason in plain words", async ({ page }) => {

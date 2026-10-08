@@ -210,7 +210,10 @@ export function FlowPanel({ panel }: { panel: FlowPanelDisplay }) {
 function TickerCard({ card, grades }: { card: RadarCardDisplay; grades: RadarGradeDisplay[] }) {
   const [open, setOpen] = useState(false);
   return (
-    <li className="panel list-none p-4" data-testid={`radarvm-card-${card.ticker}`}>
+    <li
+      className="panel mb-3 block w-full break-inside-avoid list-none p-4"
+      data-testid={`radarvm-card-${card.ticker}`}
+    >
       <div className="mb-3 flex items-center gap-3">
         <TokenLogo ticker={card.ticker} />
         <p className="flex-1 font-semibold">{nameOf(card.ticker)}</p>
@@ -245,7 +248,7 @@ function TickerCard({ card, grades }: { card: RadarCardDisplay; grades: RadarGra
 
 const STAT_TIP: Record<string, string> = {
   "Tokens checked": "Every tokenized stock Tally reads, across all issuers.",
-  Liquid: "Grade A or B: plenty of trading and no data problems found.",
+  Liquid: "Grade A or B: good trading liquidity and no data problems found",
   "Low Liquidity": "Grade C to F: trading is thin or the data is inconsistent.",
   "Not Tradable": "Under $1,000 of cleaned 24-hour volume, so the price can be stale.",
   "Unit traps":
@@ -391,7 +394,10 @@ export function RadarVmBody() {
         />
       </div>
 
-      <ul className="m-0 mt-4 grid grid-cols-1 gap-3 p-0 min-[981px]:grid-cols-2">
+      <ul
+        className="m-0 mt-4 columns-1 gap-3 p-0 min-[761px]:columns-2 min-[1100px]:columns-3"
+        data-testid="radar-masonry"
+      >
         {cards.map(({ card, grades }) => (
           <TickerCard key={card.ticker} card={card} grades={grades} />
         ))}

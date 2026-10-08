@@ -2,7 +2,7 @@
 
 import { Download } from "lucide-react";
 import { Button } from "@/components/motion/button";
-import { ISSUER_LABEL, shortHash } from "@/lib/format";
+import { tokenSymbol } from "@/lib/tickers";
 import type { StatementVM } from "@/modules/statement/view-model";
 import { sharesStr, usd } from "./vm-shared";
 
@@ -20,6 +20,8 @@ function downloadCsv(vm: StatementVM) {
 }
 
 export function StatementVmView({ vm }: { vm: StatementVM }) {
+  // The table lists tokenized stocks only. A line with no issuer is not one (for example BNB or USDT moving as part of a swap).
+  const lines = vm.lines.filter((l) => l.issuer !== null);
   const anyRealized = vm.lines.some((l) => l.realizedPnlUsd !== undefined);
   return (
     <div className="grid gap-4" data-testid="vm-statement">
@@ -76,7 +78,7 @@ export function StatementVmView({ vm }: { vm: StatementVM }) {
         </ul>
       ) : null}
 
-      {vm.lines.length > 0 ? (
+      {lines.length > 0 ? (
         <div className="glass min-w-0 overflow-x-auto p-2" data-testid="st-table">
           <table className="w-full min-w-[620px] border-collapse text-left text-[14px]">
             <caption className="sr-only">Buys and sells, in shares</caption>
@@ -92,26 +94,27 @@ export function StatementVmView({ vm }: { vm: StatementVM }) {
               </tr>
             </thead>
             <tbody>
-              {vm.lines.map((l, i) => (
+              {lines.map((l, i) => (
                 <tr key={l.txHash ?? i} className="border-t border-white/[0.06]">
                   <td className="px-3 py-2">{l.date.slice(0, 10)}</td>
-                  <td className="px-3 py-2">{l.type === "BUY" ? "Buy" : "Sell"}</td>
+                  <td className="px-3 py-2">{l.type === "BUY" ? "Purchase" : "Sale"}</td>
                   <td className="px-3 py-2">
-                    <span className="font-bold">{l.ticker}</span>{" "}
-                    <span className="text-[12.5px] font-light text-fg3">
-                      {l.issuer ? ISSUER_LABEL[l.issuer] : ""}
-                    </span>
-                    {l.txHash ? (
-                      <a
-                        className="mono ml-2 text-[12.5px] text-blue"
-                        href={`https://bscscan.com/tx/${l.txHash}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        aria-label="View transaction on BscScan (opens in a new tab)"
-                      >
-                        {shortHash(l.txHash)}
-                      </a>
-                    ) : null}
+                    {(() => {
+                      const symbol = l.issuer ? tokenSymbol(l.ticker, l.issuer) : l.ticker;
+                      return l.txHash ? (
+                        <a
+                          className="font-bold text-blue"
+                          href={`https://bscscan.com/tx/${l.txHash}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label={`${symbol}: view transaction on BscScan (opens in a new tab)`}
+                        >
+                          {symbol}
+                        </a>
+                      ) : (
+                        <span className="font-bold">{symbol}</span>
+                      );
+                    })()}
                     {l.convertedAtTodaysRatio ? (
                       <span className="t-meta block">Converted at today&apos;s ratio</span>
                     ) : null}

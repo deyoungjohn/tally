@@ -25,7 +25,7 @@ export const liquidityRank = (r: RadarRow) => (r.flags.includes("ghost") ? 2 : f
 
 const STAT_TIP: Record<string, string> = {
   "Tokens checked": "Every tokenized stock Tally reads, across all issuers.",
-  Liquid: "Grade A or B: plenty of trading and no data problems found.",
+  Liquid: "Grade A or B: good trading liquidity and no data problems found",
   "Low Liquidity": "Grade C to F: trading is thin or the data is inconsistent.",
   "Not Tradable":
     "Under $1,000 traded in 24 hours, so the price can be stale. Tally does not let you buy these.",
@@ -59,7 +59,10 @@ export function RadarStats({ rows }: { rows: RadarRow[] }) {
 
 export function RadarRowCard({ r }: { r: RadarRow }) {
   return (
-    <li className="panel list-none p-4" data-testid={`radar-${r.symbol}`}>
+    <li
+      className="panel mb-3 block break-inside-avoid list-none p-4"
+      data-testid={`radar-${r.symbol}`}
+    >
       <div className="flex flex-wrap items-start gap-3">
         <TokenLogo ticker={r.symbol} />
         <div className="min-w-0 flex-1">
@@ -202,11 +205,13 @@ function RadarLegacyBody() {
         </p>
       ) : null}
       <ul
-        className="m-0 mt-4 grid grid-cols-1 gap-3 p-0 min-[981px]:grid-cols-2"
+        className="m-0 mt-4 columns-1 gap-3 p-0 min-[761px]:columns-2 min-[1100px]:columns-3"
         aria-busy={loading}
       >
         {!data
-          ? [0, 1, 2, 3].map((i) => <li key={i} className="skeleton h-[120px] list-none" />)
+          ? [0, 1, 2, 3].map((i) => (
+              <li key={i} className="skeleton mb-3 h-[120px] list-none break-inside-avoid" />
+            ))
           : rows.map((r) => <RadarRowCard key={r.address} r={r} />)}
       </ul>
       {data && rows.length === 0 ? (

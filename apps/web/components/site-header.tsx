@@ -17,7 +17,6 @@ export const NAV_LINKS = [
   { href: "/trade", label: "Trade" },
   { href: "/portfolio", label: "Portfolio" },
   { href: "/radar", label: "Radar" },
-  { href: "/docs#how", label: "How it works" },
 ] as const;
 
 /** Feature-flagged modules from other work orders. Portfolio and Radar are core pages here, so they are not repeated. */
