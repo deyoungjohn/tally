@@ -30,10 +30,15 @@ vi.mock("@tally/modkit", async (importOriginal) => {
         const snapshots: Array<{ kind: string; key: string; data: unknown; source: string }> = [];
         mockStore = {
           close: vi.fn(),
-          latest: vi.fn().mockImplementation((kind: string, key: string) => {
-            const hist = snapshots.filter((s) => s.kind === kind && s.key === key);
-            return hist.length > 0 ? hist[hist.length - 1] : null;
-          }),
+          latest: vi
+            .fn()
+            .mockImplementation((kind: string, key: string, opts?: { maxAgeMs: number }) => {
+              // The real store rejects an infinite or negative age; a route that passes one fails with a 500 in production.
+              if (opts && (!Number.isFinite(opts.maxAgeMs) || opts.maxAgeMs < 0))
+                throw new RangeError("maxAgeMs must be nonnegative and finite");
+              const hist = snapshots.filter((s) => s.kind === kind && s.key === key);
+              return hist.length > 0 ? hist[hist.length - 1] : null;
+            }),
           history: vi.fn().mockImplementation((kind: string, key: string) => {
             return snapshots.filter((s) => s.kind === kind && s.key === key);
           }),

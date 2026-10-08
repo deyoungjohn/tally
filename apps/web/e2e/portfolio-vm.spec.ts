@@ -312,6 +312,19 @@ const env = (vm: unknown, over: Record<string, unknown> = {}) => ({
 
 async function stubPortfolio(page: Page, body: unknown, delayMs = 0) {
   await flags(page, { statement: true, receipts: true, sell: true });
+  // The chain read behind "Also in your wallet": none by default, so these tests see only the view model.
+  await page.route("**/api/portfolio?*", (route) =>
+    route.fulfill({
+      json: {
+        address: WALLET,
+        asOf: new Date().toISOString(),
+        groups: [],
+        totalValueUsd: 0,
+        wallet: { usdt: 0, bnb: 0 },
+        failed: [],
+      },
+    }),
+  );
   await page.route("**/api/vm/portfolio*", async (route) => {
     if (delayMs) await new Promise((r) => setTimeout(r, delayMs));
     await route.fulfill({ json: body });
@@ -512,6 +525,18 @@ test.describe("portfolio view model: states (stubbed routes)", () => {
       await mockWallet(page);
       await flags(page, { statement: true, receipts: true, sell: true });
       let body: unknown = env(holdingVm());
+      await page.route("**/api/portfolio?*", (route) =>
+        route.fulfill({
+          json: {
+            address: WALLET,
+            asOf: new Date().toISOString(),
+            groups: [],
+            totalValueUsd: 0,
+            wallet: { usdt: 0, bnb: 0 },
+            failed: [],
+          },
+        }),
+      );
       await page.route("**/api/vm/portfolio*", (route) => route.fulfill({ json: body }));
       const states: [string, unknown, string][] = [
         ["normal", env(holdingVm()), "vm-holdings"],
@@ -604,6 +629,41 @@ test.describe("other assets: wallet.usdt and wallet.bnb only, from /api/portfoli
     expect(text).not.toContain("98,765");
     // The total comes from the view model, not from the engine route.
     await expect(page.getByTestId("total-value")).toHaveText("$123.16");
+  });
+
+  test("a token held on chain but missing from the statement feed is still shown, labelled", async ({
+    page,
+  }) => {
+    await run(page, {
+      body: report({
+        groups: [
+          {
+            ticker: "TSM",
+            shares: 1.5,
+            valueUsd: 300,
+            referencePrice: 200,
+            parts: [
+              {
+                ticker: "TSM",
+                symbol: "TSMon",
+                issuer: "ondo",
+                address: "0x00000000000000000000000000000000000ee011",
+                tokens: 1.5,
+                multiplier: 1,
+                shares: 1.5,
+                valueUsd: 300,
+                grade: "A",
+              },
+            ],
+          },
+        ],
+      }),
+    });
+    const extra = page.getByTestId("chain-only-holdings");
+    await expect(extra).toBeVisible({ timeout: 20_000 });
+    await expect(extra).toContainText("TSMon");
+    await expect(extra).toContainText("TSMC");
+    await expect(page.getByTestId("group-NVDA")).toBeVisible();
   });
 
   test("a fixture server says the balances are recorded, not live", async ({ page }) => {

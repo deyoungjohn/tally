@@ -19,6 +19,7 @@ import { Tip } from "@/components/ui/tooltip";
 import { ISSUER_LABEL, fmtUsd } from "@/lib/format";
 import { isBuyable, nameOf, tokenPair } from "@/lib/tickers";
 import { companyName } from "./company-name";
+import { OndoGate } from "@/components/trade/ondo-gate";
 import { LiveNumber, LiveShares, LiveUsd } from "@/components/motion/live";
 import { LearnMore } from "@/components/learn-more";
 
@@ -127,11 +128,14 @@ export function HoldingGroup({
                   )
                 ) : null}
 
-                {onMigrate
-                  ? (() => {
+                {onMigrate ? (
+                  <OndoGate ticker={p.ticker} issuer={p.issuer}>
+                    {(ondoClosed) => {
                       let reason: string | null = null;
                       if (p.issuer === "xstocks") {
                         reason = "No market to exit this token on BNB Chain";
+                      } else if (ondoClosed) {
+                        reason = ondoClosed;
                       } else if (!isBuyable(p.ticker)) {
                         reason = `${p.ticker} can't be bought through Tally yet.`;
                       } else if (p.valueUsd !== null && p.valueUsd < MIN_SELL_USDT) {
@@ -167,8 +171,9 @@ export function HoldingGroup({
                           Migrate
                         </Button>
                       );
-                    })()
-                  : null}
+                    }}
+                  </OndoGate>
+                ) : null}
               </div>
             ) : null}
           </li>

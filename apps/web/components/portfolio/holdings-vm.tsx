@@ -10,6 +10,7 @@ import { Tip } from "@/components/ui/tooltip";
 import { ISSUER_LABEL } from "@/lib/format";
 import { isBuyable, nameOf } from "@/lib/tickers";
 import { companyName } from "./company-name";
+import { useOndoClosedReason } from "@/components/trade/ondo-gate";
 import type {
   HeadlineHoldingVM,
   IssuerHoldingVM,
@@ -40,6 +41,7 @@ function IssuerRow({
   const tooSmall = Number.isFinite(worth) && worth < MIN_SELL_USDT;
   // The view model's own row-action metadata says what a row action acts on (token, issuer, balance, ticker).
   const action = h.rowActionsSlot;
+  const ondoClosed = useOndoClosedReason(action.ticker ?? ticker, action.issuer ?? "");
 
   const openSell = () =>
     onSell?.({
@@ -138,6 +140,8 @@ function IssuerRow({
                 let reason: string | null = null;
                 if (action.issuer === "xstocks") {
                   reason = "No market to exit this token on BNB Chain";
+                } else if (ondoClosed) {
+                  reason = ondoClosed;
                 } else if (!isBuyable(action.ticker ?? ticker)) {
                   reason = `${action.ticker ?? ticker} can't be bought through Tally yet.`;
                 } else if (tooSmall) {

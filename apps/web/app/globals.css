@@ -251,6 +251,13 @@ body {
 .panel:hover {
   border-color: rgba(255, 255, 255, 0.2);
 }
+/* Radar cards: the thin light edge is permanent; hovering one lights it orange. */
+.panel.radar-card {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.panel.radar-card:hover {
+  border-color: var(--hl-edge);
+}
 /* Pop-up surfaces (modals, sheets, menus, dropdowns, tooltips, the search panel): the same liquid glass as the nav bar, with a
    faint transparent black underneath so the text on them stays legible over the bright background. One token, one place. */
 :root {

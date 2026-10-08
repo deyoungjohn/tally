@@ -17,12 +17,15 @@ export function Segmented<T extends string>({
   options,
   label,
   className,
+  size = "md",
 }: {
   value: T;
   onChange: (v: T) => void;
   options: SegmentedOption<T>[];
   label: string;
   className?: string;
+  /** "lg" is for page-level tab switches. */
+  size?: "md" | "lg";
 }) {
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
 
@@ -68,7 +71,9 @@ export function Segmented<T extends string>({
             onClick={() => onChange(o.value)}
             onKeyDown={(e) => onKey(e, i)}
             className={cn(
-              "relative min-h-[36px] min-w-[44px] rounded-full px-4 text-[15px] font-semibold transition-colors",
+              size === "lg"
+                ? "relative min-h-[46px] min-w-[96px] rounded-full px-7 text-[17px] font-semibold transition-colors"
+                : "relative min-h-[36px] min-w-[44px] rounded-full px-4 text-[15px] font-semibold transition-colors",
               active ? "text-white" : "text-fg2 hover:text-fg",
             )}
           >
