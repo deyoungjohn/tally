@@ -12,7 +12,8 @@ import { Tip } from "@/components/ui/tooltip";
 import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { useJson } from "@/lib/hooks/use-json";
 import { ISSUER_LABEL } from "@/lib/format";
-import { isBuyable, tokenSymbol } from "@/lib/tickers";
+import { tokenSymbol } from "@/lib/tickers";
+import { canMigrateTicker } from "@/components/portfolio/enablement";
 import { companyName } from "@/components/portfolio/company-name";
 import { TokenLogo } from "./badges";
 import { OndoGate } from "./ondo-gate";
@@ -24,7 +25,6 @@ type Part = PortfolioReport["groups"][number]["parts"][number];
 function blocked(p: Part, ondoClosed: string | null): string | null {
   if (p.issuer === "xstocks") return "No market to exit this token on BNB Chain.";
   if (ondoClosed) return ondoClosed;
-  if (!isBuyable(p.ticker)) return `${p.ticker} can't be bought through Tally yet.`;
   if (p.valueUsd !== null && p.valueUsd < MIN_SELL_USDT)
     return `Too small to migrate: the sale must be at least $${MIN_SELL_USDT} and the buy at least 6 USDT.`;
   return null;
@@ -38,7 +38,7 @@ export function MigrateTab({ flow }: { flow: ReturnType<typeof useMigrateFlow> }
   );
   const parts = (portfolio.data?.groups ?? [])
     .flatMap((g) => g.parts)
-    .filter((p) => p.issuer === "ondo" || p.issuer === "bstock")
+    .filter((p) => (p.issuer === "ondo" || p.issuer === "bstock") && canMigrateTicker(p.ticker))
     .sort((a, b) => (b.valueUsd ?? 0) - (a.valueUsd ?? 0));
 
   return (

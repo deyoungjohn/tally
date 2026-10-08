@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSellFlow, type SellTarget } from "./use-sell-flow";
 import type { PlanDto } from "@/lib/dto";
 import {
@@ -13,6 +13,12 @@ import {
 import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { useModuleFlags } from "@/lib/hooks/use-flags";
 
+/** What the review dialog shows before anything is sent. */
+export interface MigrateReview {
+  target: SellTarget;
+  to: "ondo" | "bstock";
+}
+
 export type MigrateStep = 1 | 2 | "interstitial" | "done" | "idle";
 
 export function useMigrateFlow() {
@@ -23,6 +29,11 @@ export function useMigrateFlow() {
   const [step, setStep] = useState<MigrateStep>("idle");
   const [waitingReceipt, setWaitingReceipt] = useState(false);
   const [source, setSource] = useState<"receipt" | "wallet" | null>(null);
+  // Migrate starts with a review dialog (what you sell, what you receive, the costs). Confirming it sells the whole holding by
+  // itself: "auto" drives the sell flow's own steps (sell all, approve, sign) so nobody has to click through its form.
+  const [reviewing, setReviewing] = useState<MigrateReview | null>(null);
+  const [auto, setAuto] = useState(false);
+  const acted = useRef("");
   const [receiptState, setReceiptState] = useState<"pending" | "failed" | "unreconciled" | null>(
     null,
   );
@@ -49,7 +60,7 @@ export function useMigrateFlow() {
     }
   }, []);
 
-  const open = useCallback(
+  const begin = useCallback(
     async (target: SellTarget, toIssuer: "ondo" | "bstock") => {
       let usdtBefore = "0";
       if (wallet.address) {
@@ -81,7 +92,23 @@ export function useMigrateFlow() {
     [sell, wallet.address],
   );
 
+  /** Migrate was pressed: show the review first. Nothing is sent until it is confirmed. */
+  const open = useCallback((target: SellTarget, to: "ondo" | "bstock") => {
+    setReviewing({ target, to });
+  }, []);
+  const cancelReview = useCallback(() => setReviewing(null), []);
+  const confirmReview = useCallback(async () => {
+    if (!reviewing) return;
+    const r = reviewing;
+    setReviewing(null);
+    acted.current = "";
+    setAuto(true);
+    await begin(r.target, r.to);
+  }, [reviewing, begin]);
+
   const cancel = useCallback(() => {
+    setAuto(false);
+    setReviewing(null);
     clearPendingMigrate();
     setPm(null);
     setStep("idle");
@@ -90,6 +117,41 @@ export function useMigrateFlow() {
     setWaitElapsedMs(0);
     sell.close();
   }, [sell]);
+
+  // The automatic sale: sell all, approve if the plan asks for it, then sign. Each plan is acted on once; if anything
+  // comes back needing a person (a refusal, a worse price, a failure) the automation stops and the sell sheet takes over.
+  const { phase: sp, inputs: sellInputs, sellAll, approve, confirm } = sell;
+  useEffect(() => {
+    if (!auto) return;
+    if (step !== 1) {
+      if (step !== "idle") setAuto(false);
+      return;
+    }
+    if (sp.name === "refused" || sp.name === "failed") return setAuto(false);
+    if (sp.name !== "form") return;
+    if (sp.failure || sp.notice) return setAuto(false);
+    if (sp.refreshing) return;
+    // The sheet opens on the form with no plan yet; "sell all" is what asks for the first one.
+    if (!sellInputs.all) {
+      if (acted.current !== "all") {
+        acted.current = "all";
+        sellAll();
+      }
+      return;
+    }
+    if (!sp.plan) return;
+    const key = `${sp.plan.builtAt}:${sp.plan.status}`;
+    if (acted.current === key) return;
+    if (sp.plan.status === "needs_approval") {
+      acted.current = key;
+      void approve();
+    } else if (sp.plan.status === "ready") {
+      acted.current = key;
+      void confirm();
+    } else {
+      setAuto(false);
+    }
+  }, [auto, step, sp, sellInputs.all, sellAll, approve, confirm]);
 
   useEffect(() => {
     if (pm && step === 1 && sell.phase.name === "idle") {
@@ -286,6 +348,10 @@ export function useMigrateFlow() {
     step,
     sell,
     open,
+    reviewing,
+    cancelReview,
+    confirmReview,
+    autoSelling: auto && step === 1,
     cancel,
     resumeStep2,
     waitingReceipt,

@@ -14,7 +14,7 @@ import { FlagBadge, GradeBadge, LiquidityBadge, TokenLogo } from "@/components/t
 import { Tip } from "@/components/ui/tooltip";
 import { useJson } from "@/lib/hooks/use-json";
 import { ISSUER_LABEL } from "@/lib/format";
-import { isBuyable, nameOf } from "@/lib/tickers";
+import { isTokenBuyable, nameOf } from "@/lib/tickers";
 import {
   VmDegraded,
   VmEmpty,
@@ -102,7 +102,7 @@ function GradeRow({ g, ticker }: { g: RadarGradeDisplay; ticker: string }) {
         </div>
         <div className="flex flex-col items-end gap-2">
           <GradeBadge grade={g.grade} />
-          {g.executable !== false && !g.ghost && isBuyable(ticker) ? (
+          {g.executable !== false && !g.ghost && isTokenBuyable(ticker, g.issuer) ? (
             <Link
               href={`/trade/${ticker}`}
               className="inline-flex min-h-[44px] items-center gap-1 text-[14px] text-blue"
@@ -110,8 +110,15 @@ function GradeRow({ g, ticker }: { g: RadarGradeDisplay; ticker: string }) {
               Buy <ArrowRight size={13} aria-hidden />
             </Link>
           ) : (
-            <span className="t-meta" title={g.executableReason ?? undefined}>
-              {g.executable === false || g.ghost ? "Not buyable" : "Compare only"}
+            <span
+              className="t-meta"
+              title={
+                g.executable === false || g.ghost
+                  ? (g.executableReason ?? undefined)
+                  : "This issuer is not enabled yet."
+              }
+            >
+              {g.executable === false || g.ghost ? "Not buyable" : "Not enabled yet"}
             </span>
           )}
         </div>

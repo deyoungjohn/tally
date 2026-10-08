@@ -5,6 +5,7 @@ import { LayoutGroup, motion, useReducedMotion } from "motion/react";
 import { useState } from "react";
 import type { QuoteDto, RowDto } from "@/lib/dto";
 import { ISSUER_LABEL, fmtUsd } from "@/lib/format";
+import { isTokenBuyable } from "@/lib/tickers";
 import { SPRING_LAYOUT } from "@/lib/ease";
 import { cn } from "@/lib/utils";
 import { FlagBadge, GradeBadge, TokenLogo } from "./badges";
@@ -56,17 +57,31 @@ function PremiumBar({ p }: { p: number | undefined }) {
   );
 }
 
-function Row({ r, selected, onSelect }: { r: RowDto; selected: boolean; onSelect: () => void }) {
+function Row({
+  r,
+  ticker,
+  selected,
+  onSelect,
+}: {
+  r: RowDto;
+  ticker: string;
+  selected: boolean;
+  onSelect: () => void;
+}) {
   const [open, setOpen] = useState(false);
   const reduce = useReducedMotion();
-  const pickable = r.executable && r.shares !== undefined;
+  // An issuer that is not enabled for this stock is shown, never offered as a buy option.
+  const enabled =
+    (r.issuer === "ondo" || r.issuer === "bstock") && isTokenBuyable(ticker, r.issuer);
+  const pickable = enabled && r.executable && r.shares !== undefined;
   return (
     <motion.li
       layout={reduce ? false : "position"}
       transition={SPRING_LAYOUT}
       className={cn(
         "panel min-w-0 list-none p-0",
-        r.isBest && "row-best",
+        r.isBest && enabled && "row-best",
+        !enabled && "opacity-60",
         selected && pickable && "!bg-[var(--hl)]",
       )}
       data-testid={`row-${r.symbol}`}
@@ -75,6 +90,7 @@ function Row({ r, selected, onSelect }: { r: RowDto; selected: boolean; onSelect
         type="button"
         aria-pressed={selected}
         disabled={!pickable}
+        aria-disabled={!enabled}
         onClick={onSelect}
         className="flex w-full flex-col gap-1 rounded-[18px] p-4 text-left disabled:cursor-default"
       >
@@ -84,7 +100,7 @@ function Row({ r, selected, onSelect }: { r: RowDto; selected: boolean; onSelect
             <span className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">{ISSUER_LABEL[r.issuer]}</span>
               <span className="mono text-[13px] text-fg3">{r.symbol}</span>
-              {r.isBest ? (
+              {r.isBest && enabled ? (
                 <Tip
                   text="Best: the most shares for your money right now, network fee included."
                   focusable={false}
@@ -110,7 +126,9 @@ function Row({ r, selected, onSelect }: { r: RowDto; selected: boolean; onSelect
               </span>
             ) : (
               <span className="mt-1 block text-[14px] text-fg3">
-                {r.notExecutableReason ?? r.error ?? "Not available"}
+                {!enabled
+                  ? "Not enabled yet"
+                  : (r.notExecutableReason ?? r.error ?? "Not available")}
               </span>
             )}
           </span>
@@ -215,6 +233,7 @@ export function IssuerList({
             <Row
               key={r.symbol}
               r={r}
+              ticker={quote.ticker}
               selected={selected === r.symbol}
               onSelect={() => onSelect(r.symbol)}
             />

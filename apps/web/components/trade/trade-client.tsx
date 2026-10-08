@@ -17,7 +17,7 @@ import { useMigrateFlow } from "./use-migrate-flow";
 import { useSellFlow } from "./use-sell-flow";
 import { useLiveQuote, type QuoteAmount } from "@/lib/hooks/use-live-quote";
 import { fmtUsd, SESSION_LABEL } from "@/lib/format";
-import { isBuyable, nameOf, tokenPair } from "@/lib/tickers";
+import { isTokenBuyable, issuersOf, nameOf, tokenPair } from "@/lib/tickers";
 import { ComingSoon } from "./coming-soon";
 import { StockPicker } from "./stock-picker";
 import { SessionBadge } from "./badges";
@@ -60,7 +60,7 @@ export function TradeClient(props: { ticker: string; initialUsd?: number }) {
           <div hidden={active !== "migrate"}>
             <MigrateTab flow={migrate} />
           </div>
-          {migrate.step === "idle" || migrate.step === 1 ? (
+          {(migrate.step === "idle" || migrate.step === 1) && !migrate.autoSelling ? (
             <SellSheet flow={migrate.sell} isMigrate={migrate.step === 1} />
           ) : null}
           <MigrateSheet flow={migrate} />
@@ -95,7 +95,6 @@ function TradeInner({
 }) {
   const [ticker, setTicker] = useState(initialTicker);
   const name = nameOf(ticker);
-  const buyable = isBuyable(ticker);
   const wallet = useTallyWallet();
   const [unit, setUnit] = useState<Unit>("usd");
   const [amountText, setAmountText] = useState(
@@ -134,13 +133,21 @@ function TradeInner({
 
   const row = useMemo(() => {
     if (!q) return undefined;
+    // Only an enabled issuer can be the one to buy from; the others stay in the list, marked "Not enabled yet".
+    const on = (r: (typeof q.rows)[number]) =>
+      (r.issuer === "ondo" || r.issuer === "bstock") && isTokenBuyable(ticker, r.issuer);
     return (
-      q.rows.find((r) => r.symbol === picked && r.executable) ??
-      q.rows.find((r) => r.isBest) ??
-      q.rows.find((r) => r.executable) ??
+      q.rows.find((r) => r.symbol === picked && r.executable && on(r)) ??
+      q.rows.find((r) => r.isBest && on(r)) ??
+      q.rows.find((r) => r.executable && on(r)) ??
+      q.rows.find(on) ??
       q.rows[0]
     );
-  }, [q, picked]);
+  }, [q, picked, ticker]);
+  // Buying is on only when the chosen issuer is enabled for this stock (before a quote: when any issuer is).
+  const buyable = row
+    ? (row.issuer === "ondo" || row.issuer === "bstock") && isTokenBuyable(ticker, row.issuer)
+    : issuersOf(ticker).length > 0;
 
   const spendUsd = useMemo(() => {
     if (unit === "usd") return amount >= MIN_USD ? amount : null;

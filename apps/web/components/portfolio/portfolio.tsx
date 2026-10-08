@@ -17,8 +17,15 @@ import { useJson } from "@/lib/hooks/use-json";
 import { MIN_SELL_USDT } from "@tally/config";
 import { Tip } from "@/components/ui/tooltip";
 import { ISSUER_LABEL, fmtUsd } from "@/lib/format";
-import { isBuyable, tokenPair } from "@/lib/tickers";
+import { tokenPair } from "@/lib/tickers";
+import { buyMoreToken, canMigrateTicker } from "./enablement";
 import { companyName } from "./company-name";
+import {
+  SmallBalancesLink,
+  isSmallUsd,
+  otherAssetsShown,
+  type SmallBalance,
+} from "./small-balances";
 import { OndoGate } from "@/components/trade/ondo-gate";
 import { LiveNumber, LiveShares, LiveUsd } from "@/components/motion/live";
 import { LearnMore } from "@/components/learn-more";
@@ -38,6 +45,10 @@ export function HoldingGroup({
   onSell?: (p: Part) => void;
   onMigrate?: (p: Part) => void;
 }) {
+  const buyMore = buyMoreToken(
+    g.ticker,
+    g.parts.map((p) => ({ ...p, valueUsd: p.valueUsd ?? 0 })),
+  );
   return (
     <li className="panel list-none p-5" data-testid={`group-${g.ticker}`}>
       <div className="flex items-center gap-3">
@@ -133,7 +144,7 @@ export function HoldingGroup({
                     )
                   ) : null}
 
-                  {onMigrate ? (
+                  {onMigrate && canMigrateTicker(p.ticker) ? (
                     <OndoGate ticker={p.ticker} issuer={p.issuer}>
                       {(ondoClosed) => {
                         let reason: string | null = null;
@@ -141,8 +152,6 @@ export function HoldingGroup({
                           reason = "No market to exit this token on BNB Chain";
                         } else if (ondoClosed) {
                           reason = ondoClosed;
-                        } else if (!isBuyable(p.ticker)) {
-                          reason = `${p.ticker} can't be bought through Tally yet.`;
                         } else if (p.valueUsd !== null && p.valueUsd < MIN_SELL_USDT) {
                           reason =
                             "Too small to migrate: the buy needs at least 6 USDT. You can sell to USDT instead.";
@@ -184,15 +193,12 @@ export function HoldingGroup({
             </li>
           ))}
       </ul>
-      {example ? null : (
+      {example || !buyMore ? null : (
         <Link
           href={`/trade/${g.ticker}`}
           className="mt-3 inline-flex min-h-[44px] items-center gap-1 text-[14px] text-blue"
         >
-          Buy more{" "}
-          {[...g.parts].sort((a, b) => (b.valueUsd ?? 0) - (a.valueUsd ?? 0))[0]?.symbol ??
-            g.ticker}{" "}
-          <ArrowRight size={13} aria-hidden />
+          Buy more {buyMore.symbol} <ArrowRight size={13} aria-hidden />
         </Link>
       )}
     </li>
@@ -262,6 +268,28 @@ export function PortfolioPage() {
     address?.toLowerCase() === wallet.address.toLowerCase();
   const canSell = flags.sell === true && own;
   const canMigrate = flags.switch === true && own;
+  const shownOther = data?.wallet
+    ? otherAssetsShown(data.wallet, (data as { bnbUsd?: number | null }).bnbUsd)
+    : { usdt: true, bnb: true };
+  // Tokens worth under $1 stay out of the list; a link opens them in a dialog.
+  const sortedGroups = [...(data?.groups ?? [])].sort(
+    (a, b) => (b.valueUsd ?? 0) - (a.valueUsd ?? 0),
+  );
+  const bigGroups = sortedGroups
+    .map((g) => ({ ...g, parts: g.parts.filter((p) => !isSmallUsd(p.valueUsd)) }))
+    .filter((g) => g.parts.length > 0);
+  const smallParts: SmallBalance[] = sortedGroups.flatMap((g) =>
+    g.parts
+      .filter((p) => isSmallUsd(p.valueUsd))
+      .map((p) => ({
+        key: p.address,
+        symbol: p.symbol,
+        ticker: p.ticker,
+        issuer: p.issuer,
+        shares: String(Number(p.shares.toFixed(6))),
+        valueUsd: (p.valueUsd ?? 0).toFixed(2),
+      })),
+  );
   const [confirmedSales, setConfirmedSales] = useState(0);
   useEffect(() => {
     if (sell.phase.name === "confirmed") {
@@ -349,7 +377,7 @@ export function PortfolioPage() {
                 <div className="skeleton h-[160px]" />
                 <div className="skeleton h-[160px]" />
               </div>
-            ) : data.groups.length === 0 ? (
+            ) : bigGroups.length === 0 && smallParts.length === 0 ? (
               <div className="glass p-6 min-[561px]:p-8" data-testid="empty-portfolio">
                 <h2 className="t-h3">No tokenized shares yet</h2>
                 <p className="mt-2 text-fg2">
@@ -361,43 +389,42 @@ export function PortfolioPage() {
               </div>
             ) : (
               <ul className="m-0 grid list-none gap-3 p-0">
-                {[...data.groups]
-                  .sort((a, b) => (b.valueUsd ?? 0) - (a.valueUsd ?? 0))
-                  .map((g) => (
-                    <HoldingGroup
-                      key={g.ticker}
-                      g={g}
-                      onSell={
-                        canSell
-                          ? (p) =>
-                              void sell.open({
+                {bigGroups.map((g) => (
+                  <HoldingGroup
+                    key={g.ticker}
+                    g={g}
+                    onSell={
+                      canSell
+                        ? (p) =>
+                            void sell.open({
+                              ticker: p.ticker,
+                              issuer: p.issuer as "ondo" | "bstock",
+                              symbol: p.symbol,
+                              probeShares: p.shares,
+                              probeUsd: p.valueUsd,
+                            })
+                        : undefined
+                    }
+                    onMigrate={
+                      canMigrate
+                        ? (p) =>
+                            void migrate.open(
+                              {
                                 ticker: p.ticker,
                                 issuer: p.issuer as "ondo" | "bstock",
                                 symbol: p.symbol,
                                 probeShares: p.shares,
                                 probeUsd: p.valueUsd,
-                              })
-                          : undefined
-                      }
-                      onMigrate={
-                        canMigrate
-                          ? (p) =>
-                              void migrate.open(
-                                {
-                                  ticker: p.ticker,
-                                  issuer: p.issuer as "ondo" | "bstock",
-                                  symbol: p.symbol,
-                                  probeShares: p.shares,
-                                  probeUsd: p.valueUsd,
-                                },
-                                p.issuer === "ondo" ? "bstock" : "ondo",
-                              )
-                          : undefined
-                      }
-                    />
-                  ))}
+                              },
+                              p.issuer === "ondo" ? "bstock" : "ondo",
+                            )
+                        : undefined
+                    }
+                  />
+                ))}
               </ul>
             )}
+            <SmallBalancesLink items={smallParts} />
             {data?.failed.length ? (
               <p className="t-meta mt-3 text-amber" role="status">
                 Couldn&apos;t read {data.failed.map((f) => tokenPair(f.ticker)).join(", ")}; those
@@ -412,29 +439,35 @@ export function PortfolioPage() {
                 <LiveUsd value={data?.totalValueUsd} />
               </p>
             </div>
-            <div className="panel p-5">
-              <p className="t-meta">Other assets in this wallet</p>
-              <dl className="mt-2">
-                <div className="detail-row">
-                  <dt>USDT</dt>
-                  <dd>
-                    <LiveUsd value={data?.wallet.usdt} />
-                  </dd>
-                </div>
-                <div className="detail-row">
-                  <dt>BNB (for network fees)</dt>
-                  <dd>
-                    <LiveNumber value={data?.wallet.bnb} decimals={5} />
-                  </dd>
-                </div>
-              </dl>
-            </div>
+            {shownOther.usdt || shownOther.bnb ? (
+              <div className="panel p-5">
+                <p className="t-meta">Other assets in this wallet</p>
+                <dl className="mt-2">
+                  {shownOther.usdt ? (
+                    <div className="detail-row">
+                      <dt>USDT</dt>
+                      <dd>
+                        <LiveUsd value={data?.wallet.usdt} />
+                      </dd>
+                    </div>
+                  ) : null}
+                  {shownOther.bnb ? (
+                    <div className="detail-row">
+                      <dt>BNB (for network fees)</dt>
+                      <dd>
+                        <LiveNumber value={data?.wallet.bnb} decimals={5} />
+                      </dd>
+                    </div>
+                  ) : null}
+                </dl>
+              </div>
+            ) : null}
             <ComingSoon items={["Price alerts"]} />
           </aside>
         </div>
       )}
       {flags.sell === true || flags.switch === true ? (
-        migrate.step === "idle" || migrate.step === 1 ? (
+        (migrate.step === "idle" || migrate.step === 1) && !migrate.autoSelling ? (
           <SellSheet flow={sell} isMigrate={migrate.step === 1} />
         ) : null
       ) : null}

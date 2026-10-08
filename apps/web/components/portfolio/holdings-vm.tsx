@@ -8,8 +8,9 @@ import { TokenLogo } from "@/components/trade/badges";
 import type { SellTarget } from "@/components/trade/use-sell-flow";
 import { Tip } from "@/components/ui/tooltip";
 import { ISSUER_LABEL } from "@/lib/format";
-import { isBuyable } from "@/lib/tickers";
+import { buyMoreToken, canMigrateTicker } from "./enablement";
 import { companyName } from "./company-name";
+import { isSmallUsd, type SmallBalance } from "./small-balances";
 import { useOndoClosedReason } from "@/components/trade/ondo-gate";
 import type {
   HeadlineHoldingVM,
@@ -135,15 +136,13 @@ function IssuerRow({
             )
           ) : null}
 
-          {onMigrate
+          {onMigrate && canMigrateTicker(action.ticker ?? ticker)
             ? (() => {
                 let reason: string | null = null;
                 if (action.issuer === "xstocks") {
                   reason = "No market to exit this token on BNB Chain";
                 } else if (ondoClosed) {
                   reason = ondoClosed;
-                } else if (!isBuyable(action.ticker ?? ticker)) {
-                  reason = `${action.ticker ?? ticker} can't be bought through Tally yet.`;
                 } else if (tooSmall) {
                   reason =
                     "Too small to migrate: the buy needs at least 6 USDT. You can sell to USDT instead.";
@@ -187,10 +186,32 @@ function IssuerRow({
 
 const worthOf = (s: string) => Number.parseFloat(s) || 0;
 /** Tokens actually held (a zero balance, such as the source of a migration, is not a holding), largest value first. */
+const isHeld = (i: IssuerHoldingVM) => !(Number.parseFloat(i.balanceTokens) === 0);
+const isSmall = (i: IssuerHoldingVM) => {
+  const n = Number.parseFloat(i.valueUsd);
+  return isSmallUsd(Number.isFinite(n) ? n : null);
+};
+/** Held and worth at least $1, largest first. */
 const heldIssuers = (g: HeadlineHoldingVM) =>
   g.issuers
-    .filter((i) => !(Number.parseFloat(i.balanceTokens) === 0))
+    .filter((i) => isHeld(i) && !isSmall(i))
     .sort((a, b) => worthOf(b.valueUsd) - worthOf(a.valueUsd));
+
+/** Held tokens worth under $1, for the "Show small token balances" dialog. */
+export function smallBalancesOf(vm: PortfolioVM): SmallBalance[] {
+  return vm.holdings.flatMap((g) =>
+    g.issuers
+      .filter((i) => isHeld(i) && isSmall(i))
+      .map((i) => ({
+        key: i.tokenContractAddress,
+        symbol: i.tokenSymbol,
+        ticker: g.ticker,
+        issuer: (i.issuer ?? "ondo") as SmallBalance["issuer"],
+        shares: sharesStr(i.balanceShares),
+        valueUsd: i.valueUsd,
+      })),
+  );
+}
 
 function Group({
   g,
@@ -203,8 +224,11 @@ function Group({
 }) {
   const known = g.issuers.some((i) => i.balanceShares !== "unavailable");
   const held = heldIssuers(g);
-  // "Buy more" names the token held in the largest amount (by value), not the company.
-  const biggestSymbol = held[0]?.tokenSymbol ?? g.ticker;
+  // "Buy more" names the largest holding whose issuer is enabled for buying; with none, there is no link.
+  const buyMore = buyMoreToken(
+    g.ticker,
+    held.map((i) => ({ ...i, issuer: i.issuer ?? "", valueUsd: worthOf(i.valueUsd) })),
+  );
   return (
     <li className="panel list-none p-5" data-testid={`group-${g.ticker}`}>
       <div className="flex items-center gap-3">
@@ -252,12 +276,14 @@ function Group({
           />
         ))}
       </ul>
-      <Link
-        href={`/trade/${g.ticker}`}
-        className="mt-3 inline-flex min-h-[44px] items-center gap-1 text-[14px] text-blue"
-      >
-        Buy more {biggestSymbol} <ArrowRight size={13} aria-hidden />
-      </Link>
+      {buyMore ? (
+        <Link
+          href={`/trade/${g.ticker}`}
+          className="mt-3 inline-flex min-h-[44px] items-center gap-1 text-[14px] text-blue"
+        >
+          Buy more {buyMore.tokenSymbol} <ArrowRight size={13} aria-hidden />
+        </Link>
+      ) : null}
     </li>
   );
 }

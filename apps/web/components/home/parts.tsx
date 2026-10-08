@@ -18,7 +18,7 @@ import { useModuleFlagsState } from "@/lib/hooks/use-flags";
 import { ISSUER_LABEL, fmtShares, fmtUsd } from "@/lib/format";
 import { useJson } from "@/lib/hooks/use-json";
 import { useLiveQuote } from "@/lib/hooks/use-live-quote";
-import { isBuyable, tokenSymbol } from "@/lib/tickers";
+import { isTokenBuyable, tokenSymbol } from "@/lib/tickers";
 import type { PortfolioReport } from "@tally/engine";
 import { LiveUsd } from "@/components/motion/live";
 
@@ -44,7 +44,7 @@ export function HomeTradeCard() {
     !!row?.executable &&
     usd >= 6 &&
     (row.issuer === "ondo" || row.issuer === "bstock") &&
-    isBuyable(ticker);
+    isTokenBuyable(ticker, row.issuer);
 
   const buy = () => {
     if (!row || (row.issuer !== "ondo" && row.issuer !== "bstock")) return;
@@ -116,7 +116,7 @@ export function HomeTradeCard() {
           <ButtonLink
             href={href}
             big
-            aria-disabled={tooSmall || !isBuyable(ticker)}
+            aria-disabled={tooSmall || !(row && isTokenBuyable(ticker, row.issuer))}
             className="trade-cta"
             data-testid="home-action"
           >

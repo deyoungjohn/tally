@@ -102,6 +102,34 @@ async function stubStatus(page: Page) {
   });
 }
 
+/** The target's live quote, as the review reads it (the recorded fixtures have no quote for an arbitrary amount). */
+async function stubQuote(page: Page) {
+  await page.route("**/api/quote*", (route) =>
+    route.fulfill({
+      json: {
+        ticker: "NVDA",
+        referencePrice: 350,
+        asOf: new Date().toISOString(),
+        session: "regular",
+        rows: [
+          {
+            symbol: "NVDAon",
+            issuer: "ondo",
+            executable: true,
+            shares: 0.0199,
+            usdPerShare: 350,
+            feeUsd: 0.11,
+            isBest: true,
+            flags: [],
+            gradeReasons: [],
+          },
+        ],
+        warnings: [],
+      },
+    }),
+  );
+}
+
 async function stubBuy(page: Page) {
   await page.route("**/api/trade/plan", async (route) => {
     const p = {
@@ -162,6 +190,7 @@ test.describe("Migrate", () => {
       await stubStatus(page);
       await stubReceipts(page);
       await stubBuy(page);
+      await stubQuote(page);
 
       await page.goto("/portfolio");
 
@@ -170,20 +199,15 @@ test.describe("Migrate", () => {
       await expect(migrateBtn).toBeVisible({ timeout: 20_000 });
       await migrateBtn.click();
 
-      // Check sell sheet title
-      await expect(page.getByRole("dialog").filter({ hasText: "Sell NVDAB" })).toBeVisible();
-
-      // Check and click through step 1 (Sell)
-      await page.getByTestId("sell-all").click();
-      await page.getByTestId("sell-confirm").click();
-      // In mock wallet it auto-signs tx, then we wait for status
-      // Then it moves to interstitial
-      await expect(
-        page.getByRole("dialog").filter({ hasText: "Sold NVDAB for 6.99 USDT" }),
-      ).toBeVisible();
-
-      // Resume step 2
-      await page.getByRole("button", { name: "Buy now" }).click();
+      // The review comes first: what is sold, what is received, the fees and the target. Nothing has been sent yet.
+      const review = page.getByTestId("migrate-review");
+      await expect(review).toBeVisible();
+      await expect(review.getByTestId("mr-sell")).toContainText("NVDAB");
+      await expect(review.getByTestId("mr-usdt")).toContainText("about");
+      await expect(review.getByTestId("mr-buy")).toContainText("NVDAon");
+      await expect(review.getByTestId("mr-fees")).toContainText("$");
+      // Confirm sells the whole holding by itself (sell all, sign, mine), then the buy review follows without more clicks.
+      await page.getByTestId("migrate-review-confirm").click();
 
       // Check buy sheet title
       await expect(page.getByRole("dialog").filter({ hasText: "Review your buy" })).toBeVisible();
@@ -197,22 +221,13 @@ test.describe("Migrate", () => {
         .filter({ hasText: /Your .* shares have been migrated to/ });
       await expect(doneDialog).toBeVisible();
 
-      // Open receipt from done card
-      await page.getByRole("button", { name: "View Migrate Receipt" }).click();
-
-      const receiptModal = page.getByRole("dialog", { name: "Migrate Receipt", exact: true });
-      await expect(receiptModal).toBeVisible();
-      await expect(receiptModal).toContainText("Share-true comparison");
-
-      const copyBtn = receiptModal.getByRole("button", { name: "Copy Migrate Receipt Link" });
-      await expect(copyBtn).toBeVisible();
-
-      await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
-      await copyBtn.click({ force: true });
-
-      const handle = await page.evaluateHandle(() => navigator.clipboard.readText());
-      const copied = await handle.jsonValue();
-      expect(copied).toMatch(/\/receipt\/migrate\/0x[a-f0-9]{64}\/0x[a-f0-9]{64}/);
+      // The receipt button opens the receipt page in a new tab.
+      const receiptLink = page.getByTestId("migrate-receipt-link");
+      await expect(receiptLink).toHaveAttribute("target", "_blank");
+      await expect(receiptLink).toHaveAttribute(
+        "href",
+        /\/receipt\/migrate\/0x[a-f0-9]{64}\/0x[a-f0-9]{64}/,
+      );
     });
   });
 });
@@ -395,6 +410,33 @@ test("rounds down to cent when passing USDT to buy step", async ({ page }) => {
   expect(requestedUsd).toBe(6.12);
 });
 
+test.describe("Migrate review", () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+  test("Cancel sends nothing; a refused sale is explained and cannot be confirmed", async ({
+    page,
+  }) => {
+    await flags(page, true);
+    await mockWallet(page);
+    await stubQuote(page);
+    let sold = 0;
+    await page.route("**/api/trade/sell", (route) => {
+      sold++;
+      return route.fulfill({
+        status: 422,
+        json: { error: { kind: "rfq_required", message: "This issuer needs a signed order." } },
+      });
+    });
+    await page.goto("/portfolio");
+    await page.getByTestId("migrate-NVDAB").click({ timeout: 20_000 });
+    await expect(page.getByTestId("migrate-review-error")).toBeVisible();
+    await expect(page.getByTestId("migrate-review-confirm")).toHaveCount(0);
+    expect(sold).toBeGreaterThan(0);
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("migrate-review")).toHaveCount(0);
+    expect(await page.evaluate(() => window.localStorage.getItem("tally.pendingSell"))).toBeNull();
+  });
+});
+
 test("pending-forever falls to typed amount after the cap, cancel and resume work", async ({
   page,
 }) => {
@@ -472,6 +514,48 @@ test("failed sale says it did not go through and clears", async ({ page }) => {
   await expect(page.getByRole("dialog")).not.toBeVisible();
 });
 
+test("Migrate appears only for stocks with both issuers enabled", async ({ page }) => {
+  await flags(page, true);
+  await mockWallet(page);
+  const part = (symbol: string, issuer: string, address: string) => ({
+    ticker: "NFLX",
+    symbol,
+    issuer,
+    address,
+    tokens: 10,
+    shares: 10,
+    valueUsd: 500,
+    multiplier: 1,
+    grade: "A",
+  });
+  await page.route("**/api/portfolio*", (route) =>
+    route.fulfill({
+      json: {
+        address: USER,
+        asOf: new Date().toISOString(),
+        groups: [
+          {
+            ticker: "NFLX",
+            shares: 20,
+            valueUsd: 1000,
+            referencePrice: 50,
+            parts: [part("NFLXon", "ondo", "0x01"), part("NFLXB", "bstock", "0x02")],
+          },
+        ],
+        totalValueUsd: 1000,
+        wallet: { usdt: 10, bnb: 0.1 },
+        failed: [],
+      },
+    }),
+  );
+  await page.goto("/portfolio");
+  await expect(page.getByTestId("group-NFLX")).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByTestId("migrate-NFLXon")).toHaveCount(0);
+  await expect(page.getByTestId("migrate-NFLXB")).toHaveCount(0);
+  // Buy more names an enabled issuer only (NFLX is enabled for Ondo).
+  await expect(page.getByRole("link", { name: /Buy more NFLXon/ })).toBeVisible();
+});
+
 test.describe("Migrate stocks tab on the Trade page", () => {
   test.use({ viewport: { width: 1280, height: 800 } });
 
@@ -482,6 +566,7 @@ test.describe("Migrate stocks tab on the Trade page", () => {
     await stubStatus(page);
     await stubReceipts(page);
     await stubBuy(page);
+    await stubQuote(page);
     await page.goto("/trade");
     await page.getByRole("radio", { name: "Migrate stocks" }).click();
     const tab = page.getByTestId("migrate-tab");
@@ -490,7 +575,7 @@ test.describe("Migrate stocks tab on the Trade page", () => {
     await expect(btn).toBeVisible({ timeout: 20_000 });
     await expect(btn).toContainText("Migrate to NVDAon");
     await btn.click();
-    await expect(page.getByRole("dialog").filter({ hasText: "Sell NVDAB" })).toBeVisible();
+    await expect(page.getByTestId("migrate-review")).toBeVisible();
     // Back on the trade tab nothing was lost.
     await page.keyboard.press("Escape");
     await page.getByRole("radio", { name: "Buy & sell" }).click();
