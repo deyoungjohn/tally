@@ -16,8 +16,8 @@ export const job: WorkerJob = {
     const addresses = [...new Set(registry.data.map((r) => r.tokenContractAddress.toLowerCase()))];
     await collect(ctx, "prices", "bsc", 15_000, async () => {
       const data = [];
-      for (let offset = 0; offset < addresses.length; offset += 100) {
-        data.push(...(await ctx.engine.collectors.prices(addresses.slice(offset, offset + 100))));
+      for (let offset = 0; offset < addresses.length; offset += 20) {
+        data.push(...(await ctx.engine.collectors.prices(addresses.slice(offset, offset + 20))));
       }
       if (!data.length) throw new Error("RWA price batch returned no prices");
       const received = new Set(data.map((r) => r.tokenContractAddress.toLowerCase()));
