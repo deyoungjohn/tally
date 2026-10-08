@@ -1,0 +1,3052 @@
+{
+  "schema": 1,
+  "completedAtUtc": "2026-10-08T00:47:35.666263+00:00",
+  "script": "contracts/script/fork.sh",
+  "contract": "ShareGuardForkTest",
+  "forkMode": "capture-pinned",
+  "runIds": [
+    "batch1-20261007T233708Z",
+    "batch1-20261008T000326Z"
+  ],
+  "tokenCount": 34,
+  "tokenCounts": {
+    "passed": 34,
+    "failed": 0,
+    "blocked": 0
+  },
+  "testCounts": {
+    "pass": 304,
+    "skip": 36,
+    "failed": 0
+  },
+  "enablement": "not approved",
+  "heldTokensRemainHeld": true,
+  "results": [
+    {
+      "token": "NVDAB",
+      "exitCode": 0,
+      "elapsedSeconds": 17.47,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "skip",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "skip",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/NVDAB.log",
+      "capture": "contracts/captures/NVDAB.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126344681",
+      "outputSummary": [
+        "=== fork tests A-I: NVDAB",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 1812275)",
+        "[SKIP] test_B2_guardWrappedWithSignedFeed() (gas: 0)",
+        "[PASS] test_B_guardWrapped() (gas: 2102003)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 2105510)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 1815186)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 1907135)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 5523620)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 3503399)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 2116915)",
+        "[SKIP] test_I_staleOrOutOfBoundsFeedReverts() (gas: 0)",
+        "Suite result: ok. 8 passed; 0 failed; 2 skipped; finished in 17.18s (87.84s CPU time)",
+        "Ran 1 test suite in 17.18s (17.18s CPU time): 8 tests passed, 0 failed, 2 skipped (10 total tests)"
+      ],
+      "logSha256": "922af597a4012d5d26c0e5845920612b4373a30cafa75a6a996143bedf756013",
+      "held": false,
+      "role": "control",
+      "kind": "bstock",
+      "testCounts": {
+        "pass": 8,
+        "skip": 2,
+        "failed": 0
+      }
+    },
+    {
+      "token": "NVDAon",
+      "exitCode": 0,
+      "elapsedSeconds": 52.54,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "pass",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/NVDAon.log",
+      "capture": "contracts/captures/NVDAon.json",
+      "sourceRunId": "batch1-20261007T233708Z",
+      "blockAtCapture": "126341198",
+      "outputSummary": [
+        "=== fork tests A-I: NVDAon",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 2936168)",
+        "[PASS] test_B2_guardWrappedWithSignedFeed() (gas: 3035967)",
+        "[PASS] test_B_guardWrapped() (gas: 3296301)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 3393261)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 2937666)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 3110662)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 10850980)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 4081926)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 3299356)",
+        "[PASS] test_I_staleOrOutOfBoundsFeedReverts() (gas: 2298261)",
+        "Suite result: ok. 10 passed; 0 failed; 0 skipped; finished in 52.38s (394.66s CPU time)",
+        "Ran 1 test suite in 52.39s (52.38s CPU time): 10 tests passed, 0 failed, 0 skipped (10 total tests)"
+      ],
+      "logSha256": "171e9e8bcf5fffcb84d1e82d07799926fb1213ea1a43a5861537f3f884e775f5",
+      "held": false,
+      "role": "control",
+      "kind": "ondo",
+      "testCounts": {
+        "pass": 10,
+        "failed": 0,
+        "skip": 0
+      }
+    },
+    {
+      "token": "AAPLon",
+      "exitCode": 0,
+      "elapsedSeconds": 26.18,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "pass",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/AAPLon.log",
+      "capture": "contracts/captures/AAPLon.json",
+      "sourceRunId": "batch1-20261007T233708Z",
+      "blockAtCapture": "126341227",
+      "outputSummary": [
+        "=== fork tests A-I: AAPLon",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 2682405)",
+        "[PASS] test_B2_guardWrappedWithSignedFeed() (gas: 2802658)",
+        "[PASS] test_B_guardWrapped() (gas: 3086634)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 3133936)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 2689602)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 2843759)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 8055179)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 4208769)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 3077750)",
+        "[PASS] test_I_staleOrOutOfBoundsFeedReverts() (gas: 2472757)",
+        "Suite result: ok. 10 passed; 0 failed; 0 skipped; finished in 26.00s (180.92s CPU time)",
+        "Ran 1 test suite in 26.00s (26.00s CPU time): 10 tests passed, 0 failed, 0 skipped (10 total tests)"
+      ],
+      "logSha256": "1aa9fd714e24a3d3ad523fe04b87b3ad59a37b671735648475da407f6e174158",
+      "held": false,
+      "role": "control",
+      "kind": "ondo",
+      "testCounts": {
+        "pass": 10,
+        "failed": 0,
+        "skip": 0
+      }
+    },
+    {
+      "token": "TSLAB",
+      "exitCode": 0,
+      "elapsedSeconds": 22.27,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "skip",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "skip",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/TSLAB.log",
+      "capture": "contracts/captures/TSLAB.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126344734",
+      "outputSummary": [
+        "=== fork tests A-I: TSLAB",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 2164986)",
+        "[SKIP] test_B2_guardWrappedWithSignedFeed() (gas: 0)",
+        "[PASS] test_B_guardWrapped() (gas: 2523597)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 2519383)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 2170863)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 2262816)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 5235579)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 3897646)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 2490939)",
+        "[SKIP] test_I_staleOrOutOfBoundsFeedReverts() (gas: 0)",
+        "Suite result: ok. 8 passed; 0 failed; 2 skipped; finished in 22.11s (130.12s CPU time)",
+        "Ran 1 test suite in 22.11s (22.11s CPU time): 8 tests passed, 0 failed, 2 skipped (10 total tests)"
+      ],
+      "logSha256": "e80092e55c89212671cfb6e2b517c868ed46957672f7eb5def8c86f4ee2b7eea",
+      "held": false,
+      "role": "control",
+      "kind": "bstock",
+      "testCounts": {
+        "pass": 8,
+        "skip": 2,
+        "failed": 0
+      }
+    },
+    {
+      "token": "QQQB",
+      "exitCode": 0,
+      "elapsedSeconds": 14.36,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "skip",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "skip",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/QQQB.log",
+      "capture": "contracts/captures/QQQB.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126344762",
+      "outputSummary": [
+        "=== fork tests A-I: QQQB",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 1696276)",
+        "[SKIP] test_B2_guardWrappedWithSignedFeed() (gas: 0)",
+        "[PASS] test_B_guardWrapped() (gas: 2010531)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 1970704)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 1705865)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 1761500)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 4095335)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 3574753)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 2016121)",
+        "[SKIP] test_I_staleOrOutOfBoundsFeedReverts() (gas: 0)",
+        "Suite result: ok. 8 passed; 0 failed; 2 skipped; finished in 14.19s (71.17s CPU time)",
+        "Ran 1 test suite in 14.20s (14.19s CPU time): 8 tests passed, 0 failed, 2 skipped (10 total tests)"
+      ],
+      "logSha256": "e0a12ff28c3096f1e76e0fe737c8f62d30f74d73f90c7d4afe13c3a749d108e4",
+      "held": false,
+      "role": "control",
+      "kind": "bstock",
+      "testCounts": {
+        "pass": 8,
+        "skip": 2,
+        "failed": 0
+      }
+    },
+    {
+      "token": "QQQon",
+      "exitCode": 0,
+      "elapsedSeconds": 24.47,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "pass",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/QQQon.log",
+      "capture": "contracts/captures/QQQon.json",
+      "sourceRunId": "batch1-20261007T233708Z",
+      "blockAtCapture": "126341282",
+      "outputSummary": [
+        "=== fork tests A-I: QQQon",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 2733620)",
+        "[PASS] test_B2_guardWrappedWithSignedFeed() (gas: 2833491)",
+        "[PASS] test_B_guardWrapped() (gas: 3104731)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 3169963)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 2735150)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 2876746)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 5955612)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 4161623)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 3099592)",
+        "[PASS] test_I_staleOrOutOfBoundsFeedReverts() (gas: 2394636)",
+        "Suite result: ok. 10 passed; 0 failed; 0 skipped; finished in 24.31s (165.23s CPU time)",
+        "Ran 1 test suite in 24.31s (24.31s CPU time): 10 tests passed, 0 failed, 0 skipped (10 total tests)"
+      ],
+      "logSha256": "daf9ba3ef0659f51e76c95e1018640b154b7e8b9d0b3a1a4d7f96f5997522c31",
+      "held": false,
+      "role": "control",
+      "kind": "ondo",
+      "testCounts": {
+        "pass": 10,
+        "failed": 0,
+        "skip": 0
+      }
+    },
+    {
+      "token": "SPYB",
+      "exitCode": 0,
+      "elapsedSeconds": 51.03,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "skip",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "skip",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/SPYB.log",
+      "capture": "contracts/captures/SPYB.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126344789",
+      "outputSummary": [
+        "=== fork tests A-I: SPYB",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 2386956)",
+        "[SKIP] test_B2_guardWrappedWithSignedFeed() (gas: 0)",
+        "[PASS] test_B_guardWrapped() (gas: 2682710)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 2765294)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 2389949)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 2538798)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 8231316)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 3689214)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 2675450)",
+        "[SKIP] test_I_staleOrOutOfBoundsFeedReverts() (gas: 0)",
+        "Suite result: ok. 8 passed; 0 failed; 2 skipped; finished in 50.87s (326.54s CPU time)",
+        "Ran 1 test suite in 50.88s (50.87s CPU time): 8 tests passed, 0 failed, 2 skipped (10 total tests)"
+      ],
+      "logSha256": "08168803f89c7f491619362cfd077ac5dd2278e2a37d2ced85ac1b9af67ca405",
+      "held": false,
+      "role": "control",
+      "kind": "bstock",
+      "testCounts": {
+        "pass": 8,
+        "skip": 2,
+        "failed": 0
+      }
+    },
+    {
+      "token": "SPYon",
+      "exitCode": 0,
+      "elapsedSeconds": 17.0,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "pass",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/SPYon.log",
+      "capture": "contracts/captures/SPYon.json",
+      "sourceRunId": "batch1-20261007T233708Z",
+      "blockAtCapture": "126341311",
+      "outputSummary": [
+        "=== fork tests A-I: SPYon",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 1696717)",
+        "[PASS] test_B2_guardWrappedWithSignedFeed() (gas: 1825755)",
+        "[PASS] test_B_guardWrapped() (gas: 2016039)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 1974497)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 1703696)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 1764902)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 4823187)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 3589230)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 2078439)",
+        "[PASS] test_I_staleOrOutOfBoundsFeedReverts() (gas: 1730747)",
+        "Suite result: ok. 10 passed; 0 failed; 0 skipped; finished in 16.84s (109.56s CPU time)",
+        "Ran 1 test suite in 16.84s (16.84s CPU time): 10 tests passed, 0 failed, 0 skipped (10 total tests)"
+      ],
+      "logSha256": "74768354a7e270cff9adb636327403d7f3e70b13ec577116577550d3b0be934d",
+      "held": false,
+      "role": "control",
+      "kind": "ondo",
+      "testCounts": {
+        "pass": 10,
+        "failed": 0,
+        "skip": 0
+      }
+    },
+    {
+      "token": "SPCXB",
+      "exitCode": 0,
+      "elapsedSeconds": 19.16,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "skip",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "skip",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/SPCXB.log",
+      "capture": "contracts/captures/SPCXB.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126344815",
+      "outputSummary": [
+        "=== fork tests A-I: SPCXB",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 1814715)",
+        "[SKIP] test_B2_guardWrappedWithSignedFeed() (gas: 0)",
+        "[PASS] test_B_guardWrapped() (gas: 2103955)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 2107950)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 1817626)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 1909575)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 5536480)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 3503399)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 2118867)",
+        "[SKIP] test_I_staleOrOutOfBoundsFeedReverts() (gas: 0)",
+        "Suite result: ok. 8 passed; 0 failed; 2 skipped; finished in 19.00s (101.81s CPU time)",
+        "Ran 1 test suite in 19.00s (19.00s CPU time): 8 tests passed, 0 failed, 2 skipped (10 total tests)"
+      ],
+      "logSha256": "9155aa0133c48dd549cabb9f4617964b6e07ca79d60370a592f1f87c335a245b",
+      "held": false,
+      "role": "candidate",
+      "kind": "bstock",
+      "testCounts": {
+        "pass": 8,
+        "skip": 2,
+        "failed": 0
+      }
+    },
+    {
+      "token": "BABAB",
+      "exitCode": 0,
+      "elapsedSeconds": 13.41,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "skip",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "skip",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/BABAB.log",
+      "capture": "contracts/captures/BABAB.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126344848",
+      "outputSummary": [
+        "=== fork tests A-I: BABAB",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 1669112)",
+        "[SKIP] test_B2_guardWrappedWithSignedFeed() (gas: 0)",
+        "[PASS] test_B_guardWrapped() (gas: 1983367)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 1936761)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 1678701)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 1727557)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 3502743)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 3574753)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 1988981)",
+        "[SKIP] test_I_staleOrOutOfBoundsFeedReverts() (gas: 0)",
+        "Suite result: ok. 8 passed; 0 failed; 2 skipped; finished in 13.25s (64.21s CPU time)",
+        "Ran 1 test suite in 13.26s (13.25s CPU time): 8 tests passed, 0 failed, 2 skipped (10 total tests)"
+      ],
+      "logSha256": "ad60dc557f34e37c468fe55bced3c43c93c5afb11330f0c61f6ea3478fb337d5",
+      "held": false,
+      "role": "candidate",
+      "kind": "bstock",
+      "testCounts": {
+        "pass": 8,
+        "skip": 2,
+        "failed": 0
+      }
+    },
+    {
+      "token": "GOOGLB",
+      "exitCode": 0,
+      "elapsedSeconds": 14.17,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "skip",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "skip",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/GOOGLB.log",
+      "capture": "contracts/captures/GOOGLB.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126344863",
+      "outputSummary": [
+        "=== fork tests A-I: GOOGLB",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 1684965)",
+        "[SKIP] test_B2_guardWrappedWithSignedFeed() (gas: 0)",
+        "[PASS] test_B_guardWrapped() (gas: 1999222)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 1955676)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 1694555)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 1746481)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 4018870)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 3578313)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 2004836)",
+        "[SKIP] test_I_staleOrOutOfBoundsFeedReverts() (gas: 0)",
+        "Suite result: ok. 8 passed; 0 failed; 2 skipped; finished in 14.01s (69.36s CPU time)",
+        "Ran 1 test suite in 14.01s (14.01s CPU time): 8 tests passed, 0 failed, 2 skipped (10 total tests)"
+      ],
+      "logSha256": "111de793f9a0dc569eeec1251287f30c7c6787d1a279984739f382a016fb3f16",
+      "held": false,
+      "role": "candidate",
+      "kind": "bstock",
+      "testCounts": {
+        "pass": 8,
+        "skip": 2,
+        "failed": 0
+      }
+    },
+    {
+      "token": "SKHYB",
+      "exitCode": 0,
+      "elapsedSeconds": 19.9,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "skip",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "skip",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/SKHYB.log",
+      "capture": "contracts/captures/SKHYB.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126344879",
+      "outputSummary": [
+        "=== fork tests A-I: SKHYB",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 1814722)",
+        "[SKIP] test_B2_guardWrappedWithSignedFeed() (gas: 0)",
+        "[PASS] test_B_guardWrapped() (gas: 2103955)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 2107950)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 1817621)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 1909582)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 5536480)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 3503399)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 2118867)",
+        "[SKIP] test_I_staleOrOutOfBoundsFeedReverts() (gas: 0)",
+        "Suite result: ok. 8 passed; 0 failed; 2 skipped; finished in 19.72s (111.70s CPU time)",
+        "Ran 1 test suite in 19.73s (19.72s CPU time): 8 tests passed, 0 failed, 2 skipped (10 total tests)"
+      ],
+      "logSha256": "8ec5baec6c665d8b828974e4ca3fb8cf128eb37c6539bc39cb67800218b9ac89",
+      "held": false,
+      "role": "candidate",
+      "kind": "bstock",
+      "testCounts": {
+        "pass": 8,
+        "skip": 2,
+        "failed": 0
+      }
+    },
+    {
+      "token": "MSTRB",
+      "exitCode": 0,
+      "elapsedSeconds": 15.77,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "skip",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "skip",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/MSTRB.log",
+      "capture": "contracts/captures/MSTRB.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126344895",
+      "outputSummary": [
+        "=== fork tests A-I: MSTRB",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 2093750)",
+        "[SKIP] test_B2_guardWrappedWithSignedFeed() (gas: 0)",
+        "[PASS] test_B_guardWrapped() (gas: 2460564)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 2433176)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 2103461)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 2172330)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 4221123)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 3922809)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 2426120)",
+        "[SKIP] test_I_staleOrOutOfBoundsFeedReverts() (gas: 0)",
+        "Suite result: ok. 8 passed; 0 failed; 2 skipped; finished in 15.59s (79.39s CPU time)",
+        "Ran 1 test suite in 15.60s (15.59s CPU time): 8 tests passed, 0 failed, 2 skipped (10 total tests)"
+      ],
+      "logSha256": "6093b0ad5d58d24c542ec2d5bce0424872a7320aae42dcbde31d3362a7fec072",
+      "held": false,
+      "role": "candidate",
+      "kind": "bstock",
+      "testCounts": {
+        "pass": 8,
+        "skip": 2,
+        "failed": 0
+      }
+    },
+    {
+      "token": "CRCLB",
+      "exitCode": 0,
+      "elapsedSeconds": 19.19,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "skip",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "skip",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/CRCLB.log",
+      "capture": "contracts/captures/CRCLB.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126344910",
+      "outputSummary": [
+        "=== fork tests A-I: CRCLB",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 2093798)",
+        "[SKIP] test_B2_guardWrappedWithSignedFeed() (gas: 0)",
+        "[PASS] test_B_guardWrapped() (gas: 2460621)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 2433236)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 2103518)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 2172390)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 4221464)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 3922809)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 2426297)",
+        "[SKIP] test_I_staleOrOutOfBoundsFeedReverts() (gas: 0)",
+        "Suite result: ok. 8 passed; 0 failed; 2 skipped; finished in 19.01s (98.70s CPU time)",
+        "Ran 1 test suite in 19.01s (19.01s CPU time): 8 tests passed, 0 failed, 2 skipped (10 total tests)"
+      ],
+      "logSha256": "f8dcbdc2e06cb1d65b8472cb7a50410bf9588ee26b0645a6c7d279e7a408484b",
+      "held": false,
+      "role": "candidate",
+      "kind": "bstock",
+      "testCounts": {
+        "pass": 8,
+        "skip": 2,
+        "failed": 0
+      }
+    },
+    {
+      "token": "SNDKB",
+      "exitCode": 0,
+      "elapsedSeconds": 16.87,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "skip",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "skip",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/SNDKB.log",
+      "capture": "contracts/captures/SNDKB.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126344925",
+      "outputSummary": [
+        "=== fork tests A-I: SNDKB",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 1812275)",
+        "[SKIP] test_B2_guardWrappedWithSignedFeed() (gas: 0)",
+        "[PASS] test_B_guardWrapped() (gas: 2102003)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 2105510)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 1815186)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 1907135)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 5523620)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 3503399)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 2116915)",
+        "[SKIP] test_I_staleOrOutOfBoundsFeedReverts() (gas: 0)",
+        "Suite result: ok. 8 passed; 0 failed; 2 skipped; finished in 16.69s (87.34s CPU time)",
+        "Ran 1 test suite in 16.70s (16.69s CPU time): 8 tests passed, 0 failed, 2 skipped (10 total tests)"
+      ],
+      "logSha256": "5f6e51de90189b1f7fe8eb46e312e9387c3d5747117a7a5c3c25b1c212c28082",
+      "held": false,
+      "role": "candidate",
+      "kind": "bstock",
+      "testCounts": {
+        "pass": 8,
+        "skip": 2,
+        "failed": 0
+      }
+    },
+    {
+      "token": "HOODB",
+      "exitCode": 0,
+      "elapsedSeconds": 17.69,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "skip",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "skip",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/HOODB.log",
+      "capture": "contracts/captures/HOODB.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126344957",
+      "outputSummary": [
+        "=== fork tests A-I: HOODB",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 1684259)",
+        "[SKIP] test_B2_guardWrappedWithSignedFeed() (gas: 0)",
+        "[PASS] test_B_guardWrapped() (gas: 1998516)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 1954806)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 1693849)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 1745611)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 4015091)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 3578313)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 2004106)",
+        "[SKIP] test_I_staleOrOutOfBoundsFeedReverts() (gas: 0)",
+        "Suite result: ok. 8 passed; 0 failed; 2 skipped; finished in 17.41s (97.88s CPU time)",
+        "Ran 1 test suite in 17.42s (17.41s CPU time): 8 tests passed, 0 failed, 2 skipped (10 total tests)"
+      ],
+      "logSha256": "c0599bb8270311b2aa4863e5add9b4df6db853ba0852121e22755b2285400b84",
+      "held": false,
+      "role": "candidate",
+      "kind": "bstock",
+      "testCounts": {
+        "pass": 8,
+        "skip": 2,
+        "failed": 0
+      }
+    },
+    {
+      "token": "MSFTB",
+      "exitCode": 0,
+      "elapsedSeconds": 15.62,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "skip",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "skip",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/MSFTB.log",
+      "capture": "contracts/captures/MSFTB.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126344973",
+      "outputSummary": [
+        "=== fork tests A-I: MSFTB",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 2093750)",
+        "[SKIP] test_B2_guardWrappedWithSignedFeed() (gas: 0)",
+        "[PASS] test_B_guardWrapped() (gas: 2460554)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 2433152)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 2103461)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 2172318)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 4221065)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 3922809)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 2426086)",
+        "[SKIP] test_I_staleOrOutOfBoundsFeedReverts() (gas: 0)",
+        "Suite result: ok. 8 passed; 0 failed; 2 skipped; finished in 15.16s (76.06s CPU time)",
+        "Ran 1 test suite in 15.18s (15.16s CPU time): 8 tests passed, 0 failed, 2 skipped (10 total tests)"
+      ],
+      "logSha256": "69e28e2f196bc058f4f02e941459c8fa8733b47ea078faa70af866aab2af2c4f",
+      "held": false,
+      "role": "candidate",
+      "kind": "bstock",
+      "testCounts": {
+        "pass": 8,
+        "skip": 2,
+        "failed": 0
+      }
+    },
+    {
+      "token": "INTCB",
+      "exitCode": 0,
+      "elapsedSeconds": 17.99,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "skip",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "skip",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/INTCB.log",
+      "capture": "contracts/captures/INTCB.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126344988",
+      "outputSummary": [
+        "=== fork tests A-I: INTCB",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 2093741)",
+        "[SKIP] test_B2_guardWrappedWithSignedFeed() (gas: 0)",
+        "[PASS] test_B_guardWrapped() (gas: 2460564)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 2433176)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 2103451)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 2172318)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 4221123)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 3922809)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 2426120)",
+        "[SKIP] test_I_staleOrOutOfBoundsFeedReverts() (gas: 0)",
+        "Suite result: ok. 8 passed; 0 failed; 2 skipped; finished in 17.68s (98.81s CPU time)",
+        "Ran 1 test suite in 17.69s (17.68s CPU time): 8 tests passed, 0 failed, 2 skipped (10 total tests)"
+      ],
+      "logSha256": "c77e572920cfbfca78610a35c4f46550b7955cb436197be01f5ebb7c5f2b8e9a",
+      "held": false,
+      "role": "candidate",
+      "kind": "bstock",
+      "testCounts": {
+        "pass": 8,
+        "skip": 2,
+        "failed": 0
+      }
+    },
+    {
+      "token": "METAB",
+      "exitCode": 0,
+      "elapsedSeconds": 17.93,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "skip",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "skip",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/METAB.log",
+      "capture": "contracts/captures/METAB.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126345004",
+      "outputSummary": [
+        "=== fork tests A-I: METAB",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 2090197)",
+        "[SKIP] test_B2_guardWrappedWithSignedFeed() (gas: 0)",
+        "[PASS] test_B_guardWrapped() (gas: 2457001)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 2429618)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 2099907)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 2168767)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 4218272)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 3919217)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 2422563)",
+        "[SKIP] test_I_staleOrOutOfBoundsFeedReverts() (gas: 0)",
+        "Suite result: ok. 8 passed; 0 failed; 2 skipped; finished in 17.65s (99.35s CPU time)",
+        "Ran 1 test suite in 17.66s (17.65s CPU time): 8 tests passed, 0 failed, 2 skipped (10 total tests)"
+      ],
+      "logSha256": "c4c46fc968b39953e78e9a6b547aea029f8d4956f247a0b29633234771a25694",
+      "held": false,
+      "role": "candidate",
+      "kind": "bstock",
+      "testCounts": {
+        "pass": 8,
+        "skip": 2,
+        "failed": 0
+      }
+    },
+    {
+      "token": "TSMB",
+      "exitCode": 0,
+      "elapsedSeconds": 19.48,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "skip",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "skip",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/TSMB.log",
+      "capture": "contracts/captures/TSMB.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126345084",
+      "outputSummary": [
+        "=== fork tests A-I: TSMB",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 1702483)",
+        "[SKIP] test_B2_guardWrappedWithSignedFeed() (gas: 0)",
+        "[PASS] test_B_guardWrapped() (gas: 2016739)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 1977573)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 1712072)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 1768378)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 4113307)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 3578313)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 2022329)",
+        "[SKIP] test_I_staleOrOutOfBoundsFeedReverts() (gas: 0)",
+        "Suite result: ok. 8 passed; 0 failed; 2 skipped; finished in 19.20s (100.05s CPU time)",
+        "Ran 1 test suite in 19.21s (19.20s CPU time): 8 tests passed, 0 failed, 2 skipped (10 total tests)"
+      ],
+      "logSha256": "fe7db9c76c2077a996556d57514e7f4824e1fb4bcefe8d74ea491342b4b978bc",
+      "held": false,
+      "role": "candidate",
+      "kind": "bstock",
+      "testCounts": {
+        "pass": 8,
+        "skip": 2,
+        "failed": 0
+      }
+    },
+    {
+      "token": "SPCXon",
+      "exitCode": 0,
+      "elapsedSeconds": 26.43,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "pass",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/SPCXon.log",
+      "capture": "contracts/captures/SPCXon.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126345115",
+      "outputSummary": [
+        "=== fork tests A-I: SPCXon",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 2367428)",
+        "[PASS] test_B2_guardWrappedWithSignedFeed() (gas: 2467046)",
+        "[PASS] test_B_guardWrapped() (gas: 2699067)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 2739764)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 2368844)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 2484940)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 7151703)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 3894160)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 2724659)",
+        "[PASS] test_I_staleOrOutOfBoundsFeedReverts() (gas: 2075597)",
+        "Suite result: ok. 10 passed; 0 failed; 0 skipped; finished in 26.07s (180.17s CPU time)",
+        "Ran 1 test suite in 26.08s (26.07s CPU time): 10 tests passed, 0 failed, 0 skipped (10 total tests)"
+      ],
+      "logSha256": "29c9bcbca504eddef59ef024da9cf135a8e1c666461dcc90b600463270988547",
+      "held": false,
+      "role": "candidate",
+      "kind": "ondo",
+      "testCounts": {
+        "pass": 10,
+        "failed": 0,
+        "skip": 0
+      }
+    },
+    {
+      "token": "GMEon",
+      "exitCode": 0,
+      "elapsedSeconds": 25.12,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "pass",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/GMEon.log",
+      "capture": "contracts/captures/GMEon.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126345128",
+      "outputSummary": [
+        "=== fork tests A-I: GMEon",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 2682249)",
+        "[PASS] test_B2_guardWrappedWithSignedFeed() (gas: 2802521)",
+        "[PASS] test_B_guardWrapped() (gas: 3086497)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 3133765)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 2689455)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 2843576)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 8054350)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 4208769)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 3077805)",
+        "[PASS] test_I_staleOrOutOfBoundsFeedReverts() (gas: 2474077)",
+        "Suite result: ok. 10 passed; 0 failed; 0 skipped; finished in 24.64s (167.86s CPU time)",
+        "Ran 1 test suite in 24.65s (24.64s CPU time): 10 tests passed, 0 failed, 0 skipped (10 total tests)"
+      ],
+      "logSha256": "271d7e16368803e20d2d5e8cfa552e06a05cd746197e7c06a1207585f4f77e46",
+      "held": false,
+      "role": "candidate",
+      "kind": "ondo",
+      "testCounts": {
+        "pass": 10,
+        "failed": 0,
+        "skip": 0
+      }
+    },
+    {
+      "token": "GOOGLon",
+      "exitCode": 0,
+      "elapsedSeconds": 15.36,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "pass",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/GOOGLon.log",
+      "capture": "contracts/captures/GOOGLon.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126345142",
+      "outputSummary": [
+        "=== fork tests A-I: GOOGLon",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 1701739)",
+        "[PASS] test_B2_guardWrappedWithSignedFeed() (gas: 1830739)",
+        "[PASS] test_B_guardWrapped() (gas: 2021042)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 1979860)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 1708709)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 1770287)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 4836652)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 3592658)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 2083346)",
+        "[PASS] test_I_staleOrOutOfBoundsFeedReverts() (gas: 1733745)",
+        "Suite result: ok. 10 passed; 0 failed; 0 skipped; finished in 14.42s (86.62s CPU time)",
+        "Ran 1 test suite in 14.44s (14.42s CPU time): 10 tests passed, 0 failed, 0 skipped (10 total tests)"
+      ],
+      "logSha256": "9c5fa14f5be684b359774b75ddaf1d6ffea8c6a8a1022f5d93ad3a97a11bd8f3",
+      "held": false,
+      "role": "candidate",
+      "kind": "ondo",
+      "testCounts": {
+        "pass": 10,
+        "failed": 0,
+        "skip": 0
+      }
+    },
+    {
+      "token": "CRCLon",
+      "exitCode": 0,
+      "elapsedSeconds": 23.19,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "pass",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/CRCLon.log",
+      "capture": "contracts/captures/CRCLon.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126345179",
+      "outputSummary": [
+        "=== fork tests A-I: CRCLon",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 2135210)",
+        "[PASS] test_B2_guardWrappedWithSignedFeed() (gas: 2264170)",
+        "[PASS] test_B_guardWrapped() (gas: 2502408)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 2489791)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 2142000)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 2232840)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 6858256)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 3912160)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 2526596)",
+        "[PASS] test_I_staleOrOutOfBoundsFeedReverts() (gas: 2098486)",
+        "Suite result: ok. 10 passed; 0 failed; 0 skipped; finished in 22.52s (152.88s CPU time)",
+        "Ran 1 test suite in 22.55s (22.52s CPU time): 10 tests passed, 0 failed, 0 skipped (10 total tests)"
+      ],
+      "logSha256": "736ea93f82886f370ca31f95e2c4dfd57d72281ef33c7b4d2743eb6daf06d94c",
+      "held": false,
+      "role": "candidate",
+      "kind": "ondo",
+      "testCounts": {
+        "pass": 10,
+        "failed": 0,
+        "skip": 0
+      }
+    },
+    {
+      "token": "AMZNon",
+      "exitCode": 0,
+      "elapsedSeconds": 46.79,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "pass",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/AMZNon.log",
+      "capture": "contracts/captures/AMZNon.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126345260",
+      "outputSummary": [
+        "=== fork tests A-I: AMZNon",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 2705019)",
+        "[PASS] test_B2_guardWrappedWithSignedFeed() (gas: 3236383)",
+        "[PASS] test_B_guardWrapped() (gas: 3505469)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 3587355)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 2706691)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 2828387)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 14752411)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 4313592)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 3501878)",
+        "[PASS] test_I_staleOrOutOfBoundsFeedReverts() (gas: 2545354)",
+        "Suite result: ok. 10 passed; 0 failed; 0 skipped; finished in 45.97s (274.27s CPU time)",
+        "Ran 1 test suite in 46.03s (45.97s CPU time): 10 tests passed, 0 failed, 0 skipped (10 total tests)"
+      ],
+      "logSha256": "9579e54db7a54a37524f9f2ee109c8a3a36a3db1242c010ad6cf1a6fadca0bbc",
+      "held": false,
+      "role": "candidate",
+      "kind": "ondo",
+      "testCounts": {
+        "pass": 10,
+        "failed": 0,
+        "skip": 0
+      }
+    },
+    {
+      "token": "BMNRon",
+      "exitCode": 0,
+      "elapsedSeconds": 26.55,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "pass",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/BMNRon.log",
+      "capture": "contracts/captures/BMNRon.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126345273",
+      "outputSummary": [
+        "=== fork tests A-I: BMNRon",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 2686056)",
+        "[PASS] test_B2_guardWrappedWithSignedFeed() (gas: 2806319)",
+        "[PASS] test_B_guardWrapped() (gas: 3090304)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 3137604)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 2693263)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 2847437)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 8059374)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 4212387)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 3081553)",
+        "[PASS] test_I_staleOrOutOfBoundsFeedReverts() (gas: 2477114)",
+        "Suite result: ok. 10 passed; 0 failed; 0 skipped; finished in 25.33s (171.06s CPU time)",
+        "Ran 1 test suite in 25.36s (25.33s CPU time): 10 tests passed, 0 failed, 0 skipped (10 total tests)"
+      ],
+      "logSha256": "8afea0805edea8db0ebad68547349c155bf43b2bf38af8f5eb7ee0fdf5277181",
+      "held": false,
+      "role": "candidate",
+      "kind": "ondo",
+      "testCounts": {
+        "pass": 10,
+        "failed": 0,
+        "skip": 0
+      }
+    },
+    {
+      "token": "TSMon",
+      "exitCode": 0,
+      "elapsedSeconds": 27.34,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "pass",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/TSMon.log",
+      "capture": "contracts/captures/TSMon.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126345288",
+      "outputSummary": [
+        "=== fork tests A-I: TSMon",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 2686821)",
+        "[PASS] test_B2_guardWrappedWithSignedFeed() (gas: 2825620)",
+        "[PASS] test_B_guardWrapped() (gas: 3109596)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 3162638)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 2694018)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 2849279)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 9149105)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 4208769)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 3101264)",
+        "[PASS] test_I_staleOrOutOfBoundsFeedReverts() (gas: 2476207)",
+        "Suite result: ok. 10 passed; 0 failed; 0 skipped; finished in 26.07s (175.74s CPU time)",
+        "Ran 1 test suite in 26.10s (26.07s CPU time): 10 tests passed, 0 failed, 0 skipped (10 total tests)"
+      ],
+      "logSha256": "e161d29dec22e177145fe8092fa424f741bf0dabbe24515911e8dcc453d3a0af",
+      "held": false,
+      "role": "candidate",
+      "kind": "ondo",
+      "testCounts": {
+        "pass": 10,
+        "failed": 0,
+        "skip": 0
+      }
+    },
+    {
+      "token": "NFLXon",
+      "exitCode": 0,
+      "elapsedSeconds": 26.09,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "pass",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/NFLXon.log",
+      "capture": "contracts/captures/NFLXon.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126345302",
+      "outputSummary": [
+        "=== fork tests A-I: NFLXon",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 2686812)",
+        "[PASS] test_B2_guardWrappedWithSignedFeed() (gas: 2816319)",
+        "[PASS] test_B_guardWrapped() (gas: 3100333)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 3151060)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 2694018)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 2849280)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 9075857)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 4208769)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 3091473)",
+        "[PASS] test_I_staleOrOutOfBoundsFeedReverts() (gas: 2472787)",
+        "Suite result: ok. 10 passed; 0 failed; 0 skipped; finished in 25.37s (175.78s CPU time)",
+        "Ran 1 test suite in 25.39s (25.37s CPU time): 10 tests passed, 0 failed, 0 skipped (10 total tests)"
+      ],
+      "logSha256": "5198d43a29d4d9a3f35858da0e24a56376340f3dd89c06ec0142dee25ff25292",
+      "held": false,
+      "role": "candidate",
+      "kind": "ondo",
+      "testCounts": {
+        "pass": 10,
+        "failed": 0,
+        "skip": 0
+      }
+    },
+    {
+      "token": "SOXLB",
+      "exitCode": 0,
+      "elapsedSeconds": 15.09,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "skip",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "skip",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/SOXLB.log",
+      "capture": "contracts/captures/SOXLB.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126345316",
+      "outputSummary": [
+        "=== fork tests A-I: SOXLB",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 2093741)",
+        "[SKIP] test_B2_guardWrappedWithSignedFeed() (gas: 0)",
+        "[PASS] test_B_guardWrapped() (gas: 2460554)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 2433164)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 2103451)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 2172318)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 4221065)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 3922749)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 2426086)",
+        "[SKIP] test_I_staleOrOutOfBoundsFeedReverts() (gas: 0)",
+        "Suite result: ok. 8 passed; 0 failed; 2 skipped; finished in 14.20s (68.94s CPU time)",
+        "Ran 1 test suite in 14.22s (14.20s CPU time): 8 tests passed, 0 failed, 2 skipped (10 total tests)"
+      ],
+      "logSha256": "0e77dff071be7c4d09f876ae9f45907945453a427ab60cb74789d4980d620fd3",
+      "held": true,
+      "role": "candidate",
+      "kind": "bstock",
+      "testCounts": {
+        "pass": 8,
+        "skip": 2,
+        "failed": 0
+      }
+    },
+    {
+      "token": "TQQQB",
+      "exitCode": 0,
+      "elapsedSeconds": 16.33,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "skip",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "skip",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/TQQQB.log",
+      "capture": "contracts/captures/TQQQB.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126345348",
+      "outputSummary": [
+        "=== fork tests A-I: TQQQB",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 2093769)",
+        "[SKIP] test_B2_guardWrappedWithSignedFeed() (gas: 0)",
+        "[PASS] test_B_guardWrapped() (gas: 2460573)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 2433188)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 2103480)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 2172354)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 4221179)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 3922809)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 2426153)",
+        "[SKIP] test_I_staleOrOutOfBoundsFeedReverts() (gas: 0)",
+        "Suite result: ok. 8 passed; 0 failed; 2 skipped; finished in 14.45s (70.26s CPU time)",
+        "Ran 1 test suite in 14.51s (14.45s CPU time): 8 tests passed, 0 failed, 2 skipped (10 total tests)"
+      ],
+      "logSha256": "d9aa1565288952e98b2d351f8475155b949e7b2998d6a1e32d59482e6b4d5c43",
+      "held": true,
+      "role": "candidate",
+      "kind": "bstock",
+      "testCounts": {
+        "pass": 8,
+        "skip": 2,
+        "failed": 0
+      }
+    },
+    {
+      "token": "SOXLon",
+      "exitCode": 0,
+      "elapsedSeconds": 33.44,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "pass",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/SOXLon.log",
+      "capture": "contracts/captures/SOXLon.json",
+      "sourceRunId": "batch1-20261007T233708Z",
+      "blockAtCapture": "126341891",
+      "outputSummary": [
+        "=== fork tests A-I: SOXLon",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 2690416)",
+        "[PASS] test_B2_guardWrappedWithSignedFeed() (gas: 2829176)",
+        "[PASS] test_B_guardWrapped() (gas: 3113152)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 3166176)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 2697613)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 2852887)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 9152325)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 4212387)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 3104737)",
+        "[PASS] test_I_staleOrOutOfBoundsFeedReverts() (gas: 2479334)",
+        "Suite result: ok. 10 passed; 0 failed; 0 skipped; finished in 30.82s (217.59s CPU time)",
+        "Ran 1 test suite in 30.89s (30.82s CPU time): 10 tests passed, 0 failed, 0 skipped (10 total tests)"
+      ],
+      "logSha256": "bfc86db806b95efb7fad64b97fc65016832cb7e83ffdfe273e31958a9e0b7a27",
+      "held": true,
+      "role": "candidate",
+      "kind": "ondo",
+      "testCounts": {
+        "pass": 10,
+        "failed": 0,
+        "skip": 0
+      }
+    },
+    {
+      "token": "SOXSon",
+      "exitCode": 0,
+      "elapsedSeconds": 27.83,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "pass",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/SOXSon.log",
+      "capture": "contracts/captures/SOXSon.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126345389",
+      "outputSummary": [
+        "=== fork tests A-I: SOXSon",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 2699746)",
+        "[PASS] test_B2_guardWrappedWithSignedFeed() (gas: 2829271)",
+        "[PASS] test_B_guardWrapped() (gas: 3113247)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 3166283)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 2706953)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 2864549)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 9153289)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 4212387)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 3105024)",
+        "[PASS] test_I_staleOrOutOfBoundsFeedReverts() (gas: 2480714)",
+        "Suite result: ok. 10 passed; 0 failed; 0 skipped; finished in 26.58s (178.18s CPU time)",
+        "Ran 1 test suite in 26.66s (26.58s CPU time): 10 tests passed, 0 failed, 0 skipped (10 total tests)"
+      ],
+      "logSha256": "fb87e1dbeb48f9f9fe8ce4798c5c3a8b9af5ebd7190363e918053988b2dbb389",
+      "held": true,
+      "role": "candidate",
+      "kind": "ondo",
+      "testCounts": {
+        "pass": 10,
+        "failed": 0,
+        "skip": 0
+      }
+    },
+    {
+      "token": "TQQQon",
+      "exitCode": 0,
+      "elapsedSeconds": 27.85,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "pass",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/TQQQon.log",
+      "capture": "contracts/captures/TQQQon.json",
+      "sourceRunId": "batch1-20261008T000326Z",
+      "blockAtCapture": "126345402",
+      "outputSummary": [
+        "=== fork tests A-I: TQQQon",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 2682404)",
+        "[PASS] test_B2_guardWrappedWithSignedFeed() (gas: 2802648)",
+        "[PASS] test_B_guardWrapped() (gas: 3086624)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 3133935)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 2689601)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 2843770)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 8055088)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 4208769)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 3077692)",
+        "[PASS] test_I_staleOrOutOfBoundsFeedReverts() (gas: 2472427)",
+        "Suite result: ok. 10 passed; 0 failed; 0 skipped; finished in 26.77s (183.63s CPU time)",
+        "Ran 1 test suite in 26.78s (26.77s CPU time): 10 tests passed, 0 failed, 0 skipped (10 total tests)"
+      ],
+      "logSha256": "b5946d476cabb76d4a010dda5c5ba2ba273fd15e05c802ce0267b6c37adf6939",
+      "held": true,
+      "role": "candidate",
+      "kind": "ondo",
+      "testCounts": {
+        "pass": 10,
+        "failed": 0,
+        "skip": 0
+      }
+    },
+    {
+      "token": "SQQQon",
+      "exitCode": 0,
+      "elapsedSeconds": 13.62,
+      "status": "passed",
+      "tests": [
+        {
+          "test": "test_A_replayAsPlainWallet",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B2_guardWrappedWithSignedFeed",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_B_guardWrapped",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_C_guardRejectsShortfall",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_D_7702BatchSwapThenAssert",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_E_7702BatchRevertsAtomically",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_F_fitsOurGasLimitNotTheApis",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_G_arbitraryCallAttackReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_H_pausedTokenReverts",
+          "status": "pass",
+          "reason": null
+        },
+        {
+          "test": "test_I_staleOrOutOfBoundsFeedReverts",
+          "status": "pass",
+          "reason": null
+        }
+      ],
+      "setupReason": null,
+      "timedOut": false,
+      "log": "/tmp/tally-wo09-fork-logs/SQQQon.log",
+      "capture": "contracts/captures/SQQQon.json",
+      "sourceRunId": "batch1-20261007T233708Z",
+      "blockAtCapture": "126341931",
+      "outputSummary": [
+        "=== fork tests A-I: SQQQon",
+        "Ran 10 tests for test/ShareGuardFork.t.sol:ShareGuardForkTest",
+        "[PASS] test_A_replayAsPlainWallet() (gas: 1699855)",
+        "[PASS] test_B2_guardWrappedWithSignedFeed() (gas: 1828903)",
+        "[PASS] test_B_guardWrapped() (gas: 2019187)",
+        "[PASS] test_C_guardRejectsShortfall() (gas: 1977541)",
+        "[PASS] test_D_7702BatchSwapThenAssert() (gas: 1706844)",
+        "[PASS] test_E_7702BatchRevertsAtomically() (gas: 1767956)",
+        "[PASS] test_F_fitsOurGasLimitNotTheApis() (gas: 4824217)",
+        "[PASS] test_G_arbitraryCallAttackReverts() (gas: 3592790)",
+        "[PASS] test_H_pausedTokenReverts() (gas: 2081683)",
+        "[PASS] test_I_staleOrOutOfBoundsFeedReverts() (gas: 1734897)",
+        "Suite result: ok. 10 passed; 0 failed; 0 skipped; finished in 13.15s (77.30s CPU time)",
+        "Ran 1 test suite in 13.16s (13.15s CPU time): 10 tests passed, 0 failed, 0 skipped (10 total tests)"
+      ],
+      "logSha256": "6d683fe492505ebc2aa5778d3419f01c82d60fd5c4c199c4622ca01d00fd45b3",
+      "held": true,
+      "role": "candidate",
+      "kind": "ondo",
+      "testCounts": {
+        "pass": 10,
+        "failed": 0,
+        "skip": 0
+      }
+    }
+  ]
+}
