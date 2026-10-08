@@ -1,0 +1,14 @@
+# WO-09: Batch 2 again, with the engine's ticker-level reference (my earlier instruction was too strict)
+
+Same worktree and branch as WO-09 (fast-forward to `main` first); no new branch; commit, push, keep an open PR.
+
+## Why
+On 8 Oct I told you to use only `stockInfo.price` for bStock, with no fallback. That excluded tokens that have a perfectly good independent fair value: the engine's own ticker-level reference (`facts.reference(ticker)`, `packages/binance/src/adapters.ts` `readReference`), the per-share underlying price taken from the authenticated list entries of any issuer's token for that ticker (usually the Ondo twin), never from a DEX price. It is already recorded in every capture: `integrityEvidence.inspection.referencePrice` (`{price, session}`, from `pnpm tally facts <TICKER>`, captured at the same minute as the quotes). Present for AAPLB, AMZNB, NFLXB, GMEB, BMNRB, MRNAB and FLNCB in run `batch1-bstock-us-20261008T133231Z`; null for DJTB (stays out). The token-level authenticated lookup that failed is a different, narrower thing.
+
+## Do (offline first, no new capture needed)
+1. In `contracts/tools/capture_batch.py`, add the reference source for bStock tokens in this order: (a) `stockInfo.price` if present (as now), else (b) the ticker-level engine reference `integrityEvidence.inspection.referencePrice.price` when it is present, positive and its `session` is `regular` or `pre`/`post` as recorded, labelled in the output as `reference=engine ticker reference (authenticated list, per share)` with its timestamp. It is already per share: do not divide by any ratio. Never use a DEX/`tokenInfo.price` value. Null on both = fail as now. Keep all 18 self-tests passing and add tests for (b), including a ticker with no reference.
+2. Recompute, from the committed evidence only (no network), the $6 and $100 premiums of the seven bStock tokens above with the 1.5% limit, using the same assessment code. Record them in a new results file next to the batch-2 results.
+3. For every token that passes depth (AAPLB is already enabled: record its result but it is not an addition; SOXSB/SQQQB are held; they stay out): run the fork tests on its recorded capture, build the new pinned manifest (bStock only, so no seeds are needed), a keyless preview of the additions, and the owner commands for the chief engineer (dry run, broadcast, rollback, the $6 proofs) in the PR. If a token fails at the fork stage or on premium, say exactly why. Do not weaken any gate.
+4. Do not touch ShareGuard, the first manifest, the generated product list or anything the chief engineer already ran. PR 59 (tickers and per-issuer enablement) is separate; do not connect the new tokens to the product list until the owner batch and the enabled-list check pass.
+
+Report: the seven premiums, which pass, the fork results, and the real `FULL=1 bash scripts/review-pack.sh <branch>` output.
