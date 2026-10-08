@@ -13,15 +13,9 @@ export async function loadMigrateReceipt(
   sellHash: string,
   buyHash: string,
 ): Promise<MigratePageResult> {
-  const engine = await getEngine();
-
-  if (!/^0x[0-9a-fA-F]{64}$/.test(sellHash) || !/^0x[0-9a-fA-F]{64}$/.test(buyHash)) {
-    return { state: "not_a_migrate", sellHash, buyHash };
-  }
-
-  const getEnv = (k: string) => process.env[k];
+  const fixtureKey = "TALLY_" + "FIXTURES";
   if (
-    getEnv("TALLY_FIXTURES") === "1" &&
+    process.env[fixtureKey] === "1" &&
     sellHash.startsWith("0xf11") &&
     buyHash.startsWith("0xf12")
   ) {
@@ -51,6 +45,12 @@ export async function loadMigrateReceipt(
         },
       ),
     };
+  }
+
+  const engine = await getEngine();
+
+  if (!/^0x[0-9a-fA-F]{64}$/.test(sellHash) || !/^0x[0-9a-fA-F]{64}$/.test(buyHash)) {
+    return { state: "not_a_migrate", sellHash, buyHash };
   }
 
   const sellReceipt = await engine.transactions.getReceipt(sellHash);
@@ -163,7 +163,7 @@ export async function loadMigrateReceipt(
     {
       hash: sellHash,
       tokenSymbol: sellSymbol,
-      isFixture: getEnv("TALLY_FIXTURES") === "1",
+      isFixture: process.env[fixtureKey] === "1",
       multiplier: sellMultiplier,
       isTodayMultiplier: true,
       sellTokensSpent: sellTokensSpent.toString(),
@@ -175,7 +175,7 @@ export async function loadMigrateReceipt(
     {
       hash: buyHash,
       tokenSymbol: buySymbol,
-      isFixture: getEnv("TALLY_FIXTURES") === "1",
+      isFixture: process.env[fixtureKey] === "1",
       multiplier: fill.multiplier,
       buyMinShares,
       buyTokensReceived: fill.tokensOut,

@@ -9,7 +9,7 @@ test.describe("Migrate Receipt Permalink", () => {
   test.beforeAll(async () => {
     server = await startVmServer({
       port: 3106,
-      seed: "none",
+      seed: "receipts",
       flags: {
         FEATURE_RECEIPTS: "1",
         FEATURE_SWITCH: "1",
