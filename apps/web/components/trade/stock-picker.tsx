@@ -10,7 +10,7 @@ import {
 import { Search } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { BUYABLE_TICKERS, tokenPair } from "@/lib/tickers";
+import { BUYABLE_TICKERS } from "@/lib/tickers";
 import { TokenLogo } from "./badges";
 
 /** The five stocks Tally can buy, in beUI's Select (glass trigger and panel, unfolding animation). */
@@ -78,7 +78,7 @@ export function StockPicker({
         ) : null}
         {BUYABLE_TICKERS.map((t) => (
           <SelectItem key={t.ticker} value={t.ticker} hidden={!matchSet.has(t.ticker)}>
-            {plain ? t.ticker : `${t.name} · ${tokenPair(t.ticker)}`}
+            {plain ? t.ticker : `${t.name} · ${t.ticker}`}
           </SelectItem>
         ))}
       </SelectContent>

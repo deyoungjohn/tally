@@ -2,7 +2,7 @@
 // The Portfolio screen built from the statement module's view models (holdings in shares from `PortfolioVM`, Activity from
 // `ActivityVM`, Statement from `StatementVM`). Four designed states per tab: loading, empty, stale, degraded.
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ButtonLink } from "@/components/motion/button";
 import { Segmented } from "@/components/motion/segmented";
 import type { SellTarget } from "@/components/trade/use-sell-flow";
@@ -12,13 +12,8 @@ import type { PortfolioTab, PortfolioVM, StatementVM } from "@/modules/statement
 import type { ActivityVM } from "@/modules/receipts/view-model";
 import type { PortfolioReport } from "@tally/engine";
 import { LiveNumber, LiveUsd } from "@/components/motion/live";
-import { ChainOnlyHoldings, chainOnlyParts } from "./chain-only-holdings";
-import {
-  SmallBalancesLink,
-  isSmallUsd,
-  otherAssetsShown,
-  type SmallBalance,
-} from "./small-balances";
+import { mergeChainHoldings } from "./merge-chain";
+import { SmallBalancesLink, otherAssetsShown, type SmallBalance } from "./small-balances";
 import { ActivityVmView } from "./activity-vm";
 import { HoldingsVm, smallBalancesOf } from "./holdings-vm";
 import { StatementVmView } from "./statement-vm";
@@ -97,7 +92,17 @@ export function PortfolioVmPanel({
     `/api/portfolio?address=${q}`,
     { refreshMs: 30_000 },
   );
-  const vm = portfolio.data?.vm ?? null;
+  // The feed can miss tokens the wallet holds; the chain read fills them in, so every tokenized stock is counted and the total is
+  // the sum of all of them. A fixture server's chain read is made up, so it is never merged.
+  const feedEnv = portfolio.data;
+  const mergedVm = useMemo(
+    () =>
+      feedEnv?.vm
+        ? mergeChainHoldings(feedEnv.vm, feedEnv.fixtures ? null : (balances.data ?? null))
+        : null,
+    [feedEnv, balances.data],
+  );
+  const vm = mergedVm;
   const tabs = vm?.availableTabs ?? ["holdings"];
   // A tab that stops being offered (its flag went off) falls back to Holdings.
   useEffect(() => {
@@ -111,24 +116,9 @@ export function PortfolioVmPanel({
     tab === "activity" ? `/api/vm/activity?address=${q}` : null,
   );
 
-  const env = portfolio.data;
-  // A fixture server's chain read is made up, so it is never added to a wallet's holdings.
-  const allExtras = env?.fixtures ? [] : chainOnlyParts(balances.data ?? null, vm);
-  const extras = allExtras.filter((p) => !isSmallUsd(p.valueUsd));
-  // Balances under $1 stay out of the lists; the link below them opens them in a dialog.
-  const small: SmallBalance[] = [
-    ...(vm ? smallBalancesOf(vm) : []),
-    ...allExtras
-      .filter((p) => isSmallUsd(p.valueUsd))
-      .map((p) => ({
-        key: p.address,
-        symbol: p.symbol,
-        ticker: p.ticker,
-        issuer: p.issuer,
-        shares: String(Number(p.shares.toFixed(6))),
-        valueUsd: (p.valueUsd ?? 0).toFixed(2),
-      })),
-  ];
+  const env = feedEnv && mergedVm ? { ...feedEnv, vm: mergedVm } : feedEnv;
+  // Balances under $1 stay out of the list; the link below it opens them in a dialog.
+  const small: SmallBalance[] = vm ? smallBalancesOf(vm) : [];
   return (
     <div className="mt-8" data-testid="portfolio-vm">
       {/* The tabs sit above both columns, so the cards on the left and the right start at the same height. */}
@@ -146,21 +136,14 @@ export function PortfolioVmPanel({
         <section aria-label="Portfolio" className="min-w-0">
           {tab === "holdings" ? (
             <>
-              {extras.length > 0 && env?.vm?.state === "empty" ? null : (
-                <TabBody
-                  name="Portfolio"
-                  env={env}
-                  error={portfolio.error}
-                  emptyTitle="No tokenized shares yet"
-                >
-                  {(v) => (
-                    <>
-                      <HoldingsVm vm={v} onSell={onSell} onMigrate={onMigrate} />
-                    </>
-                  )}
-                </TabBody>
-              )}
-              <ChainOnlyHoldings parts={extras} onSell={onSell} />
+              <TabBody
+                name="Portfolio"
+                env={env}
+                error={portfolio.error}
+                emptyTitle="No tokenized shares yet"
+              >
+                {(v) => <HoldingsVm vm={v} onSell={onSell} onMigrate={onMigrate} />}
+              </TabBody>
               <SmallBalancesLink items={small} />
             </>
           ) : null}
