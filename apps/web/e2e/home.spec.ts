@@ -335,3 +335,21 @@ test.describe("signed-in changes", () => {
     await expect(page.getByText("Other assets in this wallet")).toBeVisible();
   });
 });
+
+test.describe("back to top", () => {
+  test.use({ viewport: { width: 1280, height: 700 } });
+  test("a floating arrow appears after scrolling and returns to the top", async ({ page }) => {
+    await page.goto("/");
+    const btn = page.getByTestId("back-to-top");
+    await expect(btn).toHaveAttribute("data-visible", "false");
+    await page.evaluate(() => window.scrollTo(0, 1500));
+    await expect(btn).toHaveAttribute("data-visible", "true");
+    const alpha = await btn.evaluate((el) => {
+      const m = getComputedStyle(el).backgroundColor.match(/[\d.]+/g) ?? [];
+      return m.length > 3 ? Number(m[3]) : 1;
+    });
+    expect(alpha).toBeLessThanOrEqual(0.02);
+    await btn.click();
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThan(5);
+  });
+});

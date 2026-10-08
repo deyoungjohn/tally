@@ -8,7 +8,7 @@ import type { ActivityVM, ReceiptVM } from "@/modules/receipts/view-model";
 
 const STATUS: Record<string, { label: string; cls: string }> = {
   RECONCILED: { label: "Verified", cls: "text-up" },
-  RECONCILED_WITH_DIFFERENCE: { label: "Verified, differs from the quote", cls: "text-up" },
+  RECONCILED_WITH_DIFFERENCE: { label: "Verified", cls: "text-up" },
   PENDING: { label: "Pending", cls: "text-amber" },
   FAILED: { label: "Failed", cls: "text-red" },
   UNRECONCILED: { label: "Not reconciled yet", cls: "text-amber" },
@@ -38,10 +38,15 @@ function Item({ r }: { r: ReceiptVM }) {
           {st.label}
         </p>
       </div>
+      {r.status === "RECONCILED" || r.status === "RECONCILED_WITH_DIFFERENCE" ? (
+        <p className="t-meta mt-1" data-testid="activity-verified-note">
+          Verified means the chain confirms this transaction and the amount you received.
+        </p>
+      ) : null}
       {r.reason ? <p className="t-meta mt-1">{r.reason}</p> : null}
       {r.comparisonTrust === "client-hint" ? (
         <p className="t-meta mt-1" data-testid="activity-reported">
-          The quote in this receipt was reported by your browser, not verified.
+          The quote in this receipt was reported by your browser.
         </p>
       ) : null}
       <p className="t-meta mt-1">{r.provenance}</p>

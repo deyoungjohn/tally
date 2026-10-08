@@ -16,6 +16,7 @@ import { Tip } from "@/components/ui/tooltip";
 import { LearnMore } from "@/components/learn-more";
 import { useModuleFlagsState } from "@/lib/hooks/use-flags";
 import { RadarVmBody } from "./radar-vm";
+import { HowWeGradeLink } from "./how-we-grade-link";
 
 export const useRadar = () => useJson<RadarReport>("/api/radar");
 
@@ -198,6 +199,7 @@ function RadarLegacyBody() {
           className="w-full min-[561px]:w-[300px]"
         />
       </div>
+      <HowWeGradeLink />
 
       {error && !data ? (
         <p role="alert" className="mt-6 text-amber">
@@ -249,7 +251,12 @@ export function RadarPage() {
         <RadarLegacyBody />
       )}
 
-      <section className="glass mt-12 p-6 min-[561px]:p-8" aria-labelledby="how-grades">
+      <section
+        id="how-we-grade"
+        tabIndex={-1}
+        className="glass mt-12 scroll-mt-24 p-6 outline-none min-[561px]:p-8"
+        aria-labelledby="how-grades"
+      >
         <h2 id="how-grades" className="t-h3">
           How a grade is made
         </h2>

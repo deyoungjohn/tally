@@ -8,7 +8,7 @@ import { TokenLogo } from "@/components/trade/badges";
 import type { SellTarget } from "@/components/trade/use-sell-flow";
 import { Tip } from "@/components/ui/tooltip";
 import { ISSUER_LABEL } from "@/lib/format";
-import { isBuyable, nameOf } from "@/lib/tickers";
+import { isBuyable } from "@/lib/tickers";
 import { companyName } from "./company-name";
 import { useOndoClosedReason } from "@/components/trade/ondo-gate";
 import type {
@@ -195,6 +195,11 @@ function Group({
   onMigrate?: (t: SellTarget, toIssuer: "ondo" | "bstock") => void;
 }) {
   const known = g.issuers.some((i) => i.balanceShares !== "unavailable");
+  // "Buy more" names the token held in the largest amount (by value), not the company.
+  const biggestSymbol =
+    [...g.issuers].sort(
+      (a, b) => (Number.parseFloat(b.valueUsd) || 0) - (Number.parseFloat(a.valueUsd) || 0),
+    )[0]?.tokenSymbol ?? g.ticker;
   return (
     <li className="panel list-none p-5" data-testid={`group-${g.ticker}`}>
       <div className="flex items-center gap-3">
@@ -246,7 +251,7 @@ function Group({
         href={`/trade/${g.ticker}`}
         className="mt-3 inline-flex min-h-[44px] items-center gap-1 text-[14px] text-blue"
       >
-        Buy more {nameOf(g.ticker)} <ArrowRight size={13} aria-hidden />
+        Buy more {biggestSymbol} <ArrowRight size={13} aria-hidden />
       </Link>
     </li>
   );
