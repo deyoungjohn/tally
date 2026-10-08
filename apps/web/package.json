@@ -26,6 +26,7 @@
     "@tally/mod-rewards": "workspace:*",
     "@tally/mod-statement": "workspace:*",
     "@tally/modkit": "workspace:*",
+    "@tanstack/react-virtual": "^3.14.13",
     "clsx": "^2.1.1",
     "lucide-react": "^1.49.0",
     "motion": "^13.5.0",
