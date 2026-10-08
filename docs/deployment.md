@@ -102,6 +102,30 @@ A first big cleanup (gigabytes) must be done in chunks of 100 rows, each followe
 
 Never delete `tally.db` itself: it also holds Telegram link codes, Guardian settings, Autopilot policies and decisions, and receipts. To shrink the file after a big delete, stop the workers (`./deploy/restart.sh --stop`), run `sudo sqlite3 /var/lib/tally/tally.db "VACUUM;"` (needs free space about the size of the live data), then restart. Never run workers as root or with a temporary data directory: two stray root `collect-registry` workers held 4 GB of `/tmp` copies for three days.
 
+## Adding tokens to the deployed ShareGuard (owner steps, run from your own machine)
+
+Done once for Batch 1 on 8 Oct 2026 (20 tokens: 12 bStock, 8 Ondo; three $6 proofs recorded in `contracts/results/`). The owner key never leaves your machine: forge takes an encrypted keystore account (`OWNER_ACCOUNT`, a name, not a key). Use the archive RPC alias `bsc` (`BSC_RPC`). All commands run in `contracts/` unless noted.
+
+```bash
+cd contracts && export PATH="$HOME/.foundry/bin:$PATH"
+SHAREGUARD_ADDRESS=0x28F6F19bffbF25E36452c78d12090F0bC922970a
+OWNER=$(cast call "$SHAREGUARD_ADDRESS" 'owner()(address)' --rpc-url bsc)
+forge script script/AddAssets.s.sol:AddAssets --sig 'preview()' --rpc-url bsc -vv     # keyless, no seeds, nothing signed
+```
+
+Batches hold at most 10 manifest entries. Always run the dry run (no `--account`) before the broadcast:
+
+```bash
+forge script script/AddAssets.s.sol:AddAssets --sig 'runBatch(uint256,uint256)' 0 10 --rpc-url bsc --sender "$OWNER" -vv
+forge script script/AddAssets.s.sol:AddAssets --sig 'runBatch(uint256,uint256)' 0 10 --rpc-url bsc --sender "$OWNER" --account "$OWNER_ACCOUNT" --broadcast -vv
+```
+
+A batch that contains Ondo tokens needs fresh seeds, recorded immediately before it (they expire after 2 hours): from the repo root `python3 contracts/tools/gen_buyable.py --seeds-only`. Never run `gen_assets.py` for this: it also rewrites `deploy/assets.json`. Rollback of one token (only `enabled` changes; dry run first, then add `--account "$OWNER_ACCOUNT" --broadcast`): `forge script script/AddAssets.s.sol:AddAssets --sig 'rollback(address)' "$STOCK" --rpc-url bsc --sender "$OWNER" -vv`.
+
+After the batches, from the repo root: `python3 contracts/tools/gen_buyable.py --check` and `python3 contracts/tools/list_enabled.py --snapshot "contracts/captures/depth/batch-1-after-owner-$(date -u +%Y%m%dT%H%M%SZ).json"` (the comparison must report `pass: true`). A new batch needs a new manifest and a new approval; the script refuses any token outside its pinned list.
+
+Live $6 proofs run on the Seoul EC2 with the buyer wallet configured there (`contracts/tools/guarded_buy.py`, `--send` spends real funds); run each token once without `--send` first. The Ondo proof uses the feed value seeded by the owner step, so no signer key is needed.
+
 ## Checks after a restart
 
 1. Read the `checking the env` block: a `MISSING` line is a feature that will not work. A warning about `TALLY_FIXTURES`, `TALLY_ALLOW_MISSING_GEO` or `TALLY_DEV_PREVIEWS` means something dev-only is on in production: unset it.
