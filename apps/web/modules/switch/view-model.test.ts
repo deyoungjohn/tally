@@ -38,8 +38,50 @@ describe("migrate module view models", () => {
 
     expect(vm.state).toBe("empty");
     expect(vm.eligible).toBe(false);
-    expect(vm.availabilityReason).toBe("DJT can't be bought through Tally yet.");
+    expect(vm.availabilityReason).toBe("DJTB isn’t enabled in Tally yet");
   });
+
+  it.each([
+    ["NFLX", "ondo", "bstock", "NFLXB"],
+    ["MSFT", "bstock", "ondo", "MSFTon"],
+  ] as const)(
+    "blocks %s migration into its disabled issuer",
+    async (ticker, fromIssuer, toIssuer, symbol) => {
+      const vm = await loadMigrateSheet({
+        ticker,
+        fromIssuer,
+        toIssuer,
+        user: "0x123",
+        sellQuotedUsdt: "6500000000000000000",
+      });
+      expect(vm.state).toBe("empty");
+      expect(vm.eligible).toBe(false);
+      expect(vm.toSymbol).toBe(symbol);
+      expect(vm.availabilityReason).toBe(`${symbol} isn’t enabled in Tally yet`);
+    },
+  );
+
+  it.each([
+    ["NFLX", "bstock", "ondo", "NFLXon"],
+    ["MSFT", "ondo", "bstock", "MSFTB"],
+    ["NVDA", "ondo", "bstock", "NVDAB"],
+    ["NVDA", "bstock", "ondo", "NVDAon"],
+  ] as const)(
+    "allows %s migration to enabled %s → %s",
+    async (ticker, fromIssuer, toIssuer, symbol) => {
+      const vm = await loadMigrateSheet({
+        ticker,
+        fromIssuer,
+        toIssuer,
+        user: "0x123",
+        sellQuotedUsdt: "6500000000000000000",
+      });
+      expect(vm.state).toBe("ready");
+      expect(vm.eligible).toBe(true);
+      expect(vm.toSymbol).toBe(symbol);
+      expect(vm.availabilityReason).toBeNull();
+    },
+  );
 
   it("migrate sheet under 6 USDT is blocked", async () => {
     const vm = await loadMigrateSheet({

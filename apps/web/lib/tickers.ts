@@ -1,4 +1,4 @@
-import { GENERATED_BUYABLE_TICKERS } from "./buyable.generated";
+import { GENERATED_BUYABLE_ISSUERS, GENERATED_BUYABLE_TICKERS } from "./buyable.generated";
 
 /** Manifest tickers verified enabled by the recorded after-owner comparison. */
 export const BUYABLE_TICKERS = (() => {
@@ -48,6 +48,15 @@ export const COMPARE_ONLY_TICKERS: readonly { ticker: string; name: string }[] =
 export const PICKER_TICKERS = [...BUYABLE_TICKERS, ...COMPARE_ONLY_TICKERS] as const;
 
 export const isBuyable = (t: string) => BUYABLE_TICKERS.some((b) => b.ticker === t.toUpperCase());
+/** Only issuers in the verified manifest are eligible as buy destinations. */
+export const issuersOf = (ticker: string): readonly ("ondo" | "bstock")[] => {
+  const enabled: Readonly<Record<string, readonly ("ondo" | "bstock")[]>> =
+    GENERATED_BUYABLE_ISSUERS;
+  const key = ticker.toUpperCase();
+  return Object.hasOwn(enabled, key) ? enabled[key]! : [];
+};
+export const isTokenBuyable = (ticker: string, issuer: keyof typeof ISSUER_SUFFIX) =>
+  issuersOf(ticker).some((enabled) => enabled === issuer);
 export const nameOf = (t: string) =>
   BUYABLE_TICKERS.find((b) => b.ticker === t.toUpperCase())?.name ?? t;
 export const TICKER_RE = /^[A-Z0-9.]{1,10}$/;

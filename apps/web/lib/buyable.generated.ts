@@ -269,3 +269,27 @@ export const GENERATED_BUYABLE_ASSETS = [
     kind: "ondo",
   },
 ] as const;
+
+export const GENERATED_BUYABLE_ISSUERS = {
+  AAPL: ["bstock", "ondo"],
+  AMZN: ["ondo"],
+  BABA: ["bstock"],
+  BMNR: ["ondo"],
+  CRCL: ["bstock", "ondo"],
+  GME: ["ondo"],
+  GOOGL: ["bstock", "ondo"],
+  HOOD: ["bstock"],
+  INTC: ["bstock"],
+  META: ["bstock"],
+  MSFT: ["bstock"],
+  MSTR: ["bstock"],
+  NFLX: ["ondo"],
+  NVDA: ["bstock", "ondo"],
+  QQQ: ["bstock", "ondo"],
+  SKHY: ["bstock"],
+  SNDK: ["bstock"],
+  SPCX: ["bstock", "ondo"],
+  SPY: ["bstock", "ondo"],
+  TSLA: ["bstock", "ondo"],
+  TSM: ["bstock", "ondo"],
+} as const;

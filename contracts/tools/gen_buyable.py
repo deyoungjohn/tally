@@ -106,6 +106,10 @@ def render(manifest, batch):
             raise ValueError("issuers disagree on registry company name")
     tickers = [{"ticker": tk, "name": names[tk]} for tk in sorted(names)]
     assets = [{k: r[k] for k in ("symbol", "ticker", "address", "kind")} for r in all_rows]
+    issuers = {tk: sorted({r["kind"] for r in all_rows if r["ticker"] == tk}) for tk in sorted(names)}
+    issuer_map = "{\n" + "".join(
+        f"  {tk if re.fullmatch(r'[A-Z][A-Z0-9]*', tk) else json.dumps(tk)}: {json.dumps(kinds)},\n"
+        for tk, kinds in issuers.items()) + "}"
     def array(items):
         return "[\n" + "".join("  {\n" + "".join(
             f"    {key}: {json.dumps(value, ensure_ascii=False)},\n" for key, value in row.items())
@@ -115,7 +119,8 @@ def render(manifest, batch):
             "// Planned target: import into the product only after list_enabled.py passes.\n"
             "export const GENERATED_BUYABLE_TICKERS = " + array(tickers)
             + " as const;\n\nexport const GENERATED_BUYABLE_ASSETS = "
-            + array(assets) + " as const;\n")
+            + array(assets) + " as const;\n\nexport const GENERATED_BUYABLE_ISSUERS = "
+            + issuer_map + " as const;\n")
 
 
 def seed_multiplier(raw):
@@ -232,6 +237,24 @@ class Tests(unittest.TestCase):
         self.assertIn('ticker: "NVDA"', rendered)
         self.assertIn('ticker: "GME"', rendered)
         self.assertNotIn('ticker: "SOXL"', rendered)
+
+    def test_issuer_map_contains_only_manifest_issuers(self):
+        rows = validate_manifest(self.manifest, self.batch)
+        expected = {tk: sorted({r["kind"] for r in rows if r["ticker"] == tk})
+                    for tk in sorted({r["ticker"] for r in rows})}
+        rendered = render(self.manifest, self.batch)
+        issuer_map = rendered.split("export const GENERATED_BUYABLE_ISSUERS = ", 1)[1]
+        actual = json.loads(re.sub(r"(?m)^  ([A-Z][A-Z0-9]*):", r'  "\1":',
+            issuer_map.removesuffix(" as const;\n")).replace(",\n}", "\n}"))
+        self.assertEqual(actual, expected)
+        self.assertEqual(actual["NFLX"], ["ondo"])
+        self.assertEqual(actual["MSFT"], ["bstock"])
+        self.assertEqual(actual["NVDA"], ["bstock", "ondo"])
+        self.assertEqual(sum(map(len, actual.values())), 30)
+        self.assertEqual(sum(len(kinds) == 1 for kinds in actual.values()), 12)
+        self.assertEqual(sum(len(kinds) == 2 for kinds in actual.values()), 9)
+        self.assertNotIn("DJT", actual)
+        self.assertNotIn("SOXL", actual)
 
     def test_held_control_address_and_kind_substitutions_rejected(self):
         for key, value in (("symbol", "SOXLB"), ("symbol", "NVDAB"), ("kind", "ondo"),
