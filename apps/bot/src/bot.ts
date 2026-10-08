@@ -164,7 +164,7 @@ export function createBot(token: string, deps: BotDependencies): Bot {
       { command: "quiet", description: "Set quiet hours in UTC or turn off" },
       { command: "quote", description: "Compare issuers in shares" },
       { command: "shares", description: "Portfolio holdings in shares across issuers" },
-      { command: "shield", description: "Flagged tokens, traps and integrity grades" },
+      { command: "shield", description: "Integrity check for one stock, e.g. /shield NVDA" },
       { command: "help", description: "Show this help message" },
     ])
     .catch((err) => {

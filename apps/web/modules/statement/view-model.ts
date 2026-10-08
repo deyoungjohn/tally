@@ -362,7 +362,7 @@ export function buildStatementVM(
     notes: stmt.notes,
     csv: {
       filename: csvFilename,
-      content: exportStatementCsv(stmt),
+      content: exportStatementCsv({ ...stmt, trades: stmt.trades.filter((t) => t.isRecognized) }),
     },
     stale,
     ageMs,

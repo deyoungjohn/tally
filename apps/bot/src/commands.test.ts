@@ -252,7 +252,7 @@ describe("Telegram Bot Commands (apps/bot)", () => {
       observedAt: now - 15 * 60_000,
     });
 
-    const reply = await handleShield("", {
+    const reply = await handleShield("NVDA", {
       store,
       engine,
       chatId: 1003,
@@ -261,6 +261,12 @@ describe("Telegram Bot Commands (apps/bot)", () => {
 
     expect(reply).toContain("Tally Trap Shield");
     expect(reply).toContain("Shield data observed 15m ago");
+  });
+
+  it("/shield without a ticker explains how to use it", async () => {
+    const reply = await handleShield("", { store, engine, chatId: 1004, now: () => 1_000_000 });
+    expect(reply).toContain("Usage: /shield &lt;TICKER&gt;");
+    expect(reply).toContain("/shield NVDA");
   });
 
   // Exit check 4: Missing TELEGRAM_BOT_TOKEN gives clear error and unhealthy health row, not a crash

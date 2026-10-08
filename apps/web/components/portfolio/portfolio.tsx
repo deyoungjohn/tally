@@ -321,6 +321,7 @@ export function PortfolioPage() {
           address={address}
           refreshKey={confirmedSales}
           onSell={canSell ? (t) => void sell.open(t) : undefined}
+          onMigrate={canMigrate ? (t, to) => void migrate.open(t, to) : undefined}
         />
       ) : (
         <div className="mt-8 grid grid-cols-1 gap-6 min-[981px]:grid-cols-[1.4fr_1fr]">

@@ -379,3 +379,37 @@ test("rounds down to cent when passing USDT to buy step", async ({ page }) => {
 
   expect(requestedUsd).toBe(6.12);
 });
+
+test.describe("Migrate stocks tab on the Trade page", () => {
+  test.use({ viewport: { width: 1280, height: 800 } });
+
+  test("flag on: the tab lists holdings and starts the same migration", async ({ page }) => {
+    await flags(page, true);
+    await mockWallet(page);
+    await stubSell(page, plan("ready"));
+    await stubStatus(page);
+    await stubReceipts(page);
+    await stubBuy(page);
+    await page.goto("/trade");
+    await page.getByRole("radio", { name: "Migrate stocks" }).click();
+    const tab = page.getByTestId("migrate-tab");
+    await expect(tab).toBeVisible();
+    const btn = tab.getByTestId("migrate-NVDAB");
+    await expect(btn).toBeVisible({ timeout: 20_000 });
+    await expect(btn).toContainText("Migrate to NVDAon");
+    await btn.click();
+    await expect(page.getByRole("dialog").filter({ hasText: "Sell NVDAB" })).toBeVisible();
+    // Back on the trade tab nothing was lost.
+    await page.keyboard.press("Escape");
+    await page.getByRole("radio", { name: "Buy & sell" }).click();
+    await expect(page.getByTestId("trade-card")).toBeVisible();
+  });
+
+  test("flag off: no tabs", async ({ page }) => {
+    await flags(page, false);
+    await mockWallet(page);
+    await page.goto("/trade");
+    await expect(page.getByTestId("trade-card")).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole("radio", { name: "Migrate stocks" })).toHaveCount(0);
+  });
+});

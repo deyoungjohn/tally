@@ -9,7 +9,11 @@ import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { useJson } from "@/lib/hooks/use-json";
 import { useModuleFlags } from "@/lib/hooks/use-flags";
 import type { PortfolioReport } from "@tally/engine";
+import { Segmented } from "@/components/motion/segmented";
+import { MigrateSheet } from "./migrate-sheet";
+import { MigrateTab } from "./migrate-tab";
 import { SellSheet } from "./sell-sheet";
+import { useMigrateFlow } from "./use-migrate-flow";
 import { useSellFlow } from "./use-sell-flow";
 import { useLiveQuote, type QuoteAmount } from "@/lib/hooks/use-live-quote";
 import { fmtUsd, SESSION_LABEL } from "@/lib/format";
@@ -23,8 +27,46 @@ import { Sparkline } from "./sparkline";
 import { MIN_USD, TradeCard, type Unit } from "./trade-card";
 import { useTradeFlow, type FlowParams } from "./use-trade-flow";
 
+type TradeTab = "trade" | "migrate";
+
+/** The Trade page. With the `switch` flag on it has two tabs: the trade card, and "Migrate stocks". Both stay mounted so typed amounts survive a tab change. */
 export function TradeClient(props: { ticker: string; initialUsd?: number }) {
-  return <TradeInner {...props} />;
+  const flags = useModuleFlags();
+  const migrateOn = flags.switch === true;
+  const [tab, setTab] = useState<TradeTab>("trade");
+  const migrate = useMigrateFlow();
+  const active: TradeTab = migrateOn ? tab : "trade";
+  return (
+    <>
+      {migrateOn ? (
+        <div className="wrap pt-8 min-[561px]:pt-12">
+          <Segmented
+            label="Trade sections"
+            value={active}
+            onChange={setTab}
+            options={[
+              { value: "trade", label: "Buy & sell" },
+              { value: "migrate", label: "Migrate stocks" },
+            ]}
+          />
+        </div>
+      ) : null}
+      <div hidden={active !== "trade"}>
+        <TradeInner {...props} tabbed={migrateOn} />
+      </div>
+      {migrateOn ? (
+        <>
+          <div hidden={active !== "migrate"}>
+            <MigrateTab flow={migrate} />
+          </div>
+          {migrate.step === "idle" || migrate.step === 1 ? (
+            <SellSheet flow={migrate.sell} isMigrate={migrate.step === 1} />
+          ) : null}
+          <MigrateSheet flow={migrate} />
+        </>
+      ) : null}
+    </>
+  );
 }
 
 const RETRY_KINDS = new Set([
@@ -43,9 +85,12 @@ const RETRY_KINDS = new Set([
 function TradeInner({
   ticker: initialTicker,
   initialUsd,
+  tabbed = false,
 }: {
   ticker: string;
   initialUsd?: number;
+  /** The tab bar sits above, so the page needs less top padding. */
+  tabbed?: boolean;
 }) {
   const [ticker, setTicker] = useState(initialTicker);
   const name = nameOf(ticker);
@@ -173,7 +218,7 @@ function TradeInner({
   };
 
   return (
-    <main id="main" className="wrap pb-24 pt-8 min-[561px]:pt-12">
+    <main id="main" className={`wrap pb-24 ${tabbed ? "pt-6" : "pt-8 min-[561px]:pt-12"}`}>
       <TradeFlowLayer flow={flow} />
       {sellOn ? <SellSheet flow={sellFlow} /> : null}
       <div className="flex flex-col gap-4 min-[981px]:grid min-[981px]:grid-cols-[minmax(0,480px)_minmax(0,1fr)] min-[981px]:items-start min-[981px]:gap-8">

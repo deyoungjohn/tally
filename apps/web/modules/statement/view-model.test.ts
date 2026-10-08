@@ -166,6 +166,7 @@ describe("WO-03 Slice B: View-model tests", () => {
     });
     const lines = buildStatementVM(stmt).lines;
     expect(lines.map((l) => l.ticker)).toEqual(["NVDA"]);
+    expect(buildStatementVM(stmt).csv.content).not.toContain("BNB");
   });
 
   it("API down produces degraded statement from receipts without errors", () => {

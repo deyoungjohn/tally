@@ -155,8 +155,12 @@ test.describe("guardian: real server, module running", () => {
       expect(s.url).not.toContain(WALLET.toLowerCase());
       expect(s.url).not.toContain("address=");
     }
-    // Settings are read-only and say why.
-    await expect(page.getByTestId("guardian-settings")).toContainText("isn't available yet");
+    // Settings are switches; earnings has no date source, so its switch is off and unavailable.
+    await expect(page.getByTestId("guardian-switch-paused")).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    await expect(page.getByTestId("guardian-switch-earnings")).toBeDisabled();
     await expect(page.getByTestId("guardian-settings")).toContainText(
       "Quiet hours (UTC): 22:00 to 06:00",
     );
@@ -230,6 +234,43 @@ test.describe("guardian: real server, module running", () => {
     linked = true;
     await expect(page.getByTestId("guardian-linked")).toBeVisible({ timeout: 15_000 });
     await expect(page.getByTestId("guardian-link-code")).toHaveCount(0);
+  });
+
+  test("a rule switch saves through PUT with the session headers and shows the answer", async ({
+    page,
+  }) => {
+    await mockWallet(page);
+    await page.route("**/api/session/guardian/feed", (r) => r.fulfill({ json: feed() }));
+    let put: { auth?: string; wallet?: string; body: { rules: Record<string, boolean> } } | null =
+      null;
+    let ghost = false;
+    await page.route("**/api/session/guardian/settings", async (route) => {
+      const req = route.request();
+      if (req.method() === "PUT") {
+        const body = req.postDataJSON();
+        put = {
+          auth: req.headers()["authorization"],
+          wallet: req.headers()["x-tally-wallet"],
+          body,
+        };
+        ghost = body.rules.ghost;
+        const next = settings();
+        next.settings.rules = { ...next.settings.rules, ...body.rules };
+        return route.fulfill({ json: next });
+      }
+      const cur = settings();
+      cur.settings.rules.ghost = ghost;
+      return route.fulfill({ json: cur });
+    });
+    await page.goto(`${server.url}/guardian`);
+    const sw = page.getByTestId("guardian-switch-ghost");
+    await expect(sw).toHaveAttribute("aria-checked", "false", { timeout: 20_000 });
+    await sw.click();
+    await expect(sw).toHaveAttribute("aria-checked", "true");
+    expect(put).toMatchObject({
+      auth: "Bearer mock-access-token",
+      body: { rules: { ghost: true } },
+    });
   });
 
   test("linked: says so and shows no chat id", async ({ page }) => {
