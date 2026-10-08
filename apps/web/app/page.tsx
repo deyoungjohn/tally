@@ -4,7 +4,6 @@ import {
   HomePortfolioPreview,
   HomeRadarPreview,
   HomeTradeCard,
-  TickerStrip,
   UnitTrapCard,
 } from "@/components/home/parts";
 import { HeroActions } from "@/components/home/hero-actions";
@@ -122,8 +121,6 @@ export default function Home() {
             </div>
             <div className="min-w-0">
               <HomeComparison />
-              <p className="t-kicker mb-3 mt-8">Stocks you can buy</p>
-              <TickerStrip />
               <div className="mt-8">
                 <ButtonLink href="/trade">
                   Open Trade <ArrowRight size={16} aria-hidden />

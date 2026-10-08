@@ -101,7 +101,7 @@ export function FAQTabsCard({
                 <motion.span
                   layoutId={`${uid}-faq-tab-pill`}
                   className="absolute inset-0 rounded-full"
-                  style={{ background: "var(--silver)" }}
+                  style={{ background: "linear-gradient(180deg, var(--orange-hi), var(--orange))" }}
                   transition={
                     reduce ? { duration: 0 } : { type: "spring", bounce: 0.2, duration: 0.5 }
                   }
@@ -110,7 +110,7 @@ export function FAQTabsCard({
               <span
                 className={cn(
                   "relative z-10 text-sm font-semibold leading-5 transition-colors duration-200",
-                  active ? "text-[var(--silver-ink)]" : "text-fg2 hover:text-fg",
+                  active ? "text-white" : "text-fg2 hover:text-fg",
                 )}
               >
                 {tab.label}

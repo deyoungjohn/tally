@@ -54,6 +54,19 @@ test.describe("radar view model: real route on a seeded server", () => {
     expect(g.vm.cards.flatMap((c: { grades: unknown[] }) => c.grades)).toHaveLength(1);
   });
 
+  test("the Home page's Radar preview counts the same tokens as the Radar page", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto(`${server.url}/`);
+    const home = page.getByTestId("home-radar");
+    await expect(home).toContainText("Tokens checked", { timeout: 20_000 });
+    const homeText = await home.getByTestId("radarvm-stats").innerText();
+    await page.goto(`${server.url}/radar`);
+    const radarText = await page.getByTestId("radarvm-stats").innerText({ timeout: 20_000 });
+    expect(homeText).toBe(radarText);
+  });
+
   test("large trades in a flow panel are a plain table", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.route("**/api/vm/radar*", async (route) => {

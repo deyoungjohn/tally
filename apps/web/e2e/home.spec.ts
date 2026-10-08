@@ -111,7 +111,7 @@ test.describe("home behaviour", () => {
     expect(alpha).toBeLessThanOrEqual(0.05);
   });
 
-  test("nav has Trade, Portfolio, Radar and Get Started; How it works and FAQ are not in the nav", async ({
+  test("nav has Trade, Portfolio, Radar and Sign in; How it works and FAQ are not in the nav", async ({
     page,
   }) => {
     await page.goto("/");
@@ -119,26 +119,39 @@ test.describe("home behaviour", () => {
     for (const n of ["Trade", "Portfolio", "Radar"])
       await expect(nav.getByRole("link", { name: n })).toBeVisible();
     await expect(nav.getByRole("link", { name: "How it works" })).toHaveCount(0);
-    await expect(page.getByRole("banner").getByRole("link", { name: "Get Started" })).toBeVisible();
+    await expect(page.getByRole("banner").getByRole("button", { name: "Sign in" })).toBeVisible();
+    await expect(page.getByRole("banner").getByRole("link", { name: "Get Started" })).toHaveCount(
+      0,
+    );
+    // The hero button still goes to Trade.
+    await expect(
+      page.getByTestId("hero-actions").getByRole("link", { name: "Get Started" }),
+    ).toHaveAttribute("href", "/trade");
     await expect(page.getByText("Get a quote")).toHaveCount(0);
     await expect(nav.getByRole("link", { name: "FAQ" })).toHaveCount(0);
   });
 
-  test("after sign-in the header shows a short wallet address instead of Get Started", async ({
+  test("after sign-in the header shows a short wallet address instead of Sign in", async ({
     page,
   }) => {
     await mockWallet(page);
     await page.goto("/");
     await expect(page.getByTestId("account-button")).toContainText("0xe05f…cfF7");
-    await expect(page.getByRole("banner").getByRole("link", { name: "Get Started" })).toHaveCount(
-      0,
-    );
+    await expect(page.getByRole("banner").getByRole("button", { name: "Sign in" })).toHaveCount(0);
   });
 
   test("FAQ is three tabs of dropdown questions", async ({ page }) => {
     await page.goto("/");
     const faq = page.getByTestId("faq-card");
     await expect(faq.getByRole("tab")).toHaveCount(3);
+    // The active pill is orange, not white.
+    const pillBg = await faq
+      .getByRole("tab", { name: "Basics" })
+      .locator("span")
+      .first()
+      .evaluate((el) => getComputedStyle(el).backgroundImage);
+    expect(pillBg).toContain("linear-gradient");
+    expect(pillBg).not.toContain("rgb(255, 255, 255)");
     await expect(faq.getByRole("tab", { name: "Basics" })).toHaveAttribute("aria-selected", "true");
     await faq.getByRole("tab", { name: "Buying" }).click();
     await expect(faq.getByRole("tab", { name: "Buying" })).toHaveAttribute("aria-selected", "true");
@@ -196,7 +209,7 @@ test.describe("radar and portfolio pages", () => {
     await mockWallet(page, false);
     await page.goto("/portfolio");
     await expect(page.getByText("not a real account")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
+    await expect(page.getByRole("main").getByRole("button", { name: "Sign in" })).toBeVisible();
   });
 });
 
@@ -297,15 +310,10 @@ test.describe("signed-in changes", () => {
     await expect(block.getByRole("heading", { name: "Live comparison" })).toBeVisible();
     await expect(page.getByText("$25 of NVDA")).toHaveCount(0);
     await block.getByTestId("stock-picker").click();
-    // Options carry the tokens' own symbols (never a bare ticker): "NVIDIA · NVDAon / NVDAB".
-    for (const [name, t] of [
-      ["NVIDIA", "NVDA"],
-      ["Apple", "AAPL"],
-      ["Tesla", "TSLA"],
-      ["Invesco QQQ", "QQQ"],
-      ["SPDR S&P 500", "SPY"],
-    ] as const)
-      await expect(page.getByRole("option", { name: `${name} · ${t}on / ${t}B` })).toBeVisible();
+    // The comparison block's dropdown is short on purpose: just the tickers.
+    for (const t of ["NVDA", "AAPL", "TSLA", "QQQ", "SPY"])
+      await expect(page.getByRole("option", { name: t, exact: true })).toBeVisible();
+    await expect(page.getByText("Stocks you can buy")).toHaveCount(0);
   });
 
   test("the unit-trap toggle has a pill behind the active choice", async ({ page }) => {
