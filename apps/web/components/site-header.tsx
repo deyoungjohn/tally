@@ -90,7 +90,7 @@ function AccountButton({
     }
   };
   const ROW =
-    "flex min-h-[44px] w-full items-center gap-2 rounded-[14px] px-3 text-left text-[15px] text-fg no-underline hover:bg-[var(--hl)] focus-visible:bg-[var(--hl)]";
+    "flex min-h-[44px] w-full items-center gap-2 rounded-[14px] px-3 text-left text-[15px] text-fg no-underline hover:bg-[var(--hl-soft)] focus-visible:bg-[var(--hl-soft)]";
   if (!big) {
     const rows = wallet.embedded ? 5 : 4;
     return (
@@ -207,7 +207,7 @@ function AccountButton({
           <button
             role="menuitem"
             type="button"
-            className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-left text-sm hover:bg-[var(--hl)]"
+            className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-left text-sm hover:bg-[var(--hl-soft)]"
             onClick={async () => {
               try {
                 await navigator.clipboard.writeText(address);
@@ -224,7 +224,7 @@ function AccountButton({
           <button
             role="menuitem"
             type="button"
-            className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-left text-sm hover:bg-[var(--hl)]"
+            className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-left text-sm hover:bg-[var(--hl-soft)]"
             onClick={() => {
               setOpen(false);
               onNavigate?.();
@@ -238,7 +238,7 @@ function AccountButton({
             <button
               role="menuitem"
               type="button"
-              className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-left text-sm hover:bg-[var(--hl)]"
+              className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-left text-sm hover:bg-[var(--hl-soft)]"
               onClick={() => {
                 setOpen(false);
                 wallet.exportWallet();
@@ -255,14 +255,14 @@ function AccountButton({
               setOpen(false);
               onNavigate?.();
             }}
-            className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-sm text-fg no-underline hover:bg-[var(--hl)]"
+            className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-sm text-fg no-underline hover:bg-[var(--hl-soft)]"
           >
             Portfolio
           </Link>
           <button
             role="menuitem"
             type="button"
-            className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-left text-sm hover:bg-[var(--hl)]"
+            className="flex min-h-[44px] items-center gap-2 rounded-[12px] px-3 text-left text-sm hover:bg-[var(--hl-soft)]"
             onClick={() => {
               setOpen(false);
               wallet.logout();

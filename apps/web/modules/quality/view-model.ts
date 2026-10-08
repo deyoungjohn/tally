@@ -67,7 +67,8 @@ export async function loadQuality(options: QualityLoadOptions = {}): Promise<Qua
       pendingCount: result.pendingCount + pendingHints.length,
       unverifiedPendingCount: pendingHints.length,
       stale: samples.some((s) => s.stale),
-      ageMs: samples.length ? Math.max(...samples.map((s) => s.ageMs)) : null,
+      // The freshest sample, so "last update" means the newest fill, not the oldest.
+      ageMs: samples.length ? Math.min(...samples.map((s) => s.ageMs)) : null,
       source: samples.length ? [...new Set(samples.map((s) => s.source))].join(", ") : null,
       reason: !samples.length
         ? vm.reason

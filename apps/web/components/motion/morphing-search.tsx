@@ -397,7 +397,7 @@ export function MorphingSearch({
                             {active ? (
                               <motion.span
                                 layoutId={`${uid}-active-result`}
-                                className="absolute inset-0 rounded-lg bg-[var(--hl)]"
+                                className="absolute inset-0 rounded-lg bg-[var(--hl-soft)]"
                                 transition={transition}
                               />
                             ) : null}
@@ -474,7 +474,7 @@ export function MorphingSearch({
             type="button"
             aria-label="Clear search"
             onClick={() => onValueChange("")}
-            className="absolute right-2 top-1/2 z-10 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-fg2 hover:bg-[var(--hl)] hover:text-fg"
+            className="absolute right-2 top-1/2 z-10 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-fg2 hover:bg-[var(--hl-soft)] hover:text-fg"
           >
             <X size={15} aria-hidden />
           </button>

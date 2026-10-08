@@ -96,6 +96,22 @@ test.describe("receipt and quality pages: real server, signed out", () => {
     await expect(page.getByTestId("quality-insufficient")).toContainText("fewer than 5");
     await expect(page.getByTestId("vm-fixture-label")).toContainText("not live");
     expect(await page.locator("body").innerText()).not.toMatch(GUARD);
+    // The table is beUI's Table and the page keeps itself current.
+    await expect(page.getByTestId("quality-table")).toBeVisible();
+    await expect(page.getByTestId("quality-live")).toContainText("Updates every 5s");
+  });
+
+  test("the quality page polls /api/vm/quality, which answers the module's view model", async ({
+    page,
+  }) => {
+    const res = await page.request.get(`${server.url}/api/vm/quality`);
+    expect(res.status()).toBe(200);
+    const body = await res.json();
+    expect(body.module).toBe("quality");
+    expect(body.vm.state).toBe("ready");
+    const polled = page.waitForRequest("**/api/vm/quality", { timeout: 20_000 });
+    await page.goto(`${server.url}/quality`);
+    await polled;
   });
 
   test("the Activity tab and the receipt modals link to the receipt page", async ({ page }) => {
