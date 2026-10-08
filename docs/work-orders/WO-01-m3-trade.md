@@ -15,6 +15,7 @@ One task remains: typed stage events. (The landing page lead moved to WO-12 on 2
 
 ## Owns
 
+- Approved 2026-10-08 (`docs/prompts/wo01-wallet-identity.md`): `apps/web/components/wallet/**` (wallet choice, logout, account menu label) and their tests; in `apps/web/components/trade/use-sell-flow.ts` and its test only the wallet binding of `tally.pendingSell`; the data hooks' cache reset on a user change (`apps/web/lib/hooks/use-json*` and its test).
 Approved 2026-10-04 by the chief engineer, limited to the stage-event task:
 
 - `apps/web/components/trade/use-trade-flow.ts` — additive optional `onStage` integration only; preserve existing transaction behavior.
