@@ -1,0 +1,36 @@
+{
+  "token": "MRNAon",
+  "tokenAddress": "0x01486675da0764ee780ea7cb65c33062e9b2d28c",
+  "tokenIn": "0x55d398326f99059fF775485246999027B3197955",
+  "amountIn": "6000000000000000000",
+  "multiplierSource": "feed",
+  "multiplier": "1000000000000000000",
+  "multiplierFrom": "public RWA API sharesMultiplier",
+  "referencePrice": "195.6525",
+  "capturedAtUtc": "2026-10-07T23:41:35Z",
+  "blockAtCapture": "126341759",
+  "eoa": {
+    "user": "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
+    "replayable": "false",
+    "error": "ApiError (http=200, code=40374)",
+    "router": "",
+    "data": "0x",
+    "approveTarget": "",
+    "value": "0",
+    "minReceive": "0",
+    "toTokenAmount": "0",
+    "mode": "ERROR"
+  },
+  "guard": {
+    "user": "0xcb634955B8A7DF7B106f7AB47C9759B26206b777",
+    "replayable": "false",
+    "error": "ApiError (http=200, code=40374)",
+    "router": "",
+    "data": "0x",
+    "approveTarget": "",
+    "value": "0",
+    "minReceive": "0",
+    "toTokenAmount": "0",
+    "mode": "ERROR"
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "token": "SKHYon",
+  "tokenAddress": "0x4268f2bfb23a7496504aa5ed1ee325248586299f",
+  "tokenIn": "0x55d398326f99059fF775485246999027B3197955",
+  "amountIn": "6000000000000000000",
+  "multiplierSource": "feed",
+  "multiplier": "1000000000000000000",
+  "multiplierFrom": "public RWA API sharesMultiplier",
+  "referencePrice": "179.75",
+  "capturedAtUtc": "2026-10-07T23:40:51Z",
+  "blockAtCapture": "126341662",
+  "eoa": {
+    "user": "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
+    "replayable": "false",
+    "error": "ApiError (http=200, code=40374)",
+    "router": "",
+    "data": "0x",
+    "approveTarget": "",
+    "value": "0",
+    "minReceive": "0",
+    "toTokenAmount": "0",
+    "mode": "ERROR"
+  },
+  "guard": {
+    "user": "0xcb634955B8A7DF7B106f7AB47C9759B26206b777",
+    "replayable": "false",
+    "error": "ApiError (http=200, code=40374)",
+    "router": "",
+    "data": "0x",
+    "approveTarget": "",
+    "value": "0",
+    "minReceive": "0",
+    "toTokenAmount": "0",
+    "mode": "ERROR"
+  }
+}

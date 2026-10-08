@@ -1,0 +1,270 @@
+{
+  "schema": 1,
+  "token": "SOXLon",
+  "tokenAddress": "0xb943c8a0d77b656daf5244da060d647fd9152289",
+  "ticker": "SOXL",
+  "kind": "ondo",
+  "role": "candidate",
+  "held": true,
+  "capturedAtUtc": "2026-10-08T00:08:41Z",
+  "premiumLimitPct": "1.5",
+  "reference": {
+    "source": "authenticated /api/v1/dex/market/rwa/tokens",
+    "tokenContractAddress": "0xb943c8a0d77b656daf5244da060d647fd9152289",
+    "binanceChainId": "56",
+    "tokenSymbol": "SOXLon",
+    "underlyingTicker": "SOXL",
+    "referencePricePerTokenUsd": "160.35746040832035",
+    "tokenToShareRatio": "1.000469412061933807",
+    "decimals": 18,
+    "referencePricePerShareUsd": "160.28222199999999779815441887429605820396854938563043767327131026752278720466681"
+  },
+  "integrityEvidence": {
+    "source": "pnpm --silent tally facts SOXL --json",
+    "asOf": "2026-10-08T00:08:44.259Z",
+    "inspection": {
+      "symbol": "SOXLon",
+      "issuer": "ondo",
+      "address": "0xb943c8a0d77b656daf5244da060d647fd9152289",
+      "executable": false,
+      "blockedReason": "Binance doesn't support trading this token right now",
+      "readings": {
+        "list": "1000469412061933807",
+        "api": "1000469412061933807"
+      },
+      "multiplier": {
+        "value": "1000469412061933807",
+        "source": "api",
+        "degraded": false,
+        "maxDeviationPpm": 0,
+        "disagree": false
+      },
+      "facts": {
+        "status": {
+          "kind": "unsupported",
+          "reasonCode": "UNSUPPORTED",
+          "reasonMsg": null,
+          "session": "overnight"
+        },
+        "notes": {},
+        "listedTokenPrice": 160.4327341344571,
+        "onchainVolume24hUsd": 157404.0416961966,
+        "attestation": {
+          "reportDate": "2026-10-02",
+          "url": "[endpoint omitted]"
+        },
+        "multiplierBaseline": {
+          "value": "1000469412061933807",
+          "at": 1791413552974
+        },
+        "multiplierChangedAt": 1790064233976
+      },
+      "bounds": {
+        "outcome": "pass",
+        "detail": "1.00046941 vs baseline 1.00046941 (seen 2026-10-07): unchanged",
+        "validation": {
+          "outcome": "not-needed",
+          "inputs": {},
+          "summary": "multiplier unchanged: price check not needed"
+        }
+      },
+      "referencePrice": {
+        "price": 160.28222200000002,
+        "session": "overnight"
+      },
+      "integrity": {
+        "score": 40,
+        "grade": "D",
+        "flags": [
+          "unsupported"
+        ],
+        "reasons": [
+          {
+            "id": "status",
+            "outcome": "deduct",
+            "points": 50,
+            "flag": "unsupported",
+            "inputs": {
+              "kind": "unsupported",
+              "reasonCode": "UNSUPPORTED",
+              "reasonMsg": null
+            },
+            "summary": "unsupported (UNSUPPORTED) \u2192 \u221250",
+            "reason": "Binance does not support trading this token right now."
+          },
+          {
+            "id": "attestation",
+            "outcome": "deduct",
+            "points": 10,
+            "inputs": {
+              "reportDate": "2026-10-02",
+              "ageDays": 6.01,
+              "url": "[endpoint omitted]",
+              "now": "2026-10-08T00:08:43.808Z"
+            },
+            "summary": "report 2026-10-02, age 6.0d > 3d \u2192 \u221210",
+            "reason": "Latest reserve attestation is 6 days old."
+          }
+        ],
+        "checks": [
+          {
+            "id": "multiplier-sources",
+            "outcome": "pass",
+            "points": 0,
+            "inputs": {
+              "onchain": "\u2013",
+              "api": "1.000469",
+              "list": "1.000469",
+              "maxDeviationPpm": 0,
+              "used": "api"
+            },
+            "summary": "onchain \u2013, api 1.000469, list 1.000469; max difference 0 ppm \u2264 1000, using api \u2192 pass"
+          },
+          {
+            "id": "ondo-bounds",
+            "outcome": "pass",
+            "points": 0,
+            "inputs": {
+              "detail": "1.00046941 vs baseline 1.00046941 (seen 2026-10-07): unchanged"
+            },
+            "summary": "1.00046941 vs baseline 1.00046941 (seen 2026-10-07): unchanged \u2192 pass"
+          },
+          {
+            "id": "multiplier-validation",
+            "outcome": "skipped",
+            "points": 0,
+            "inputs": {},
+            "summary": "multiplier unchanged: price check not needed \u2192 skipped"
+          },
+          {
+            "id": "premium",
+            "outcome": "skipped",
+            "points": 0,
+            "inputs": {
+              "premium": 0.00046941206193396035,
+              "basis": "listed price",
+              "session": "overnight"
+            },
+            "summary": "premium +0.05% (listed price); session overnight, the 2% rule applies in regular hours only \u2192 skipped"
+          },
+          {
+            "id": "onchain-volume",
+            "outcome": "pass",
+            "points": 0,
+            "inputs": {
+              "onchainVolume24hUsd": 157404.0416961966
+            },
+            "summary": "$157,404 in 24h \u2265 $1,000 \u2192 pass"
+          },
+          {
+            "id": "status",
+            "outcome": "deduct",
+            "points": 50,
+            "flag": "unsupported",
+            "inputs": {
+              "kind": "unsupported",
+              "reasonCode": "UNSUPPORTED",
+              "reasonMsg": null
+            },
+            "summary": "unsupported (UNSUPPORTED) \u2192 \u221250",
+            "reason": "Binance does not support trading this token right now."
+          },
+          {
+            "id": "attestation",
+            "outcome": "deduct",
+            "points": 10,
+            "inputs": {
+              "reportDate": "2026-10-02",
+              "ageDays": 6.01,
+              "url": "[endpoint omitted]",
+              "now": "2026-10-08T00:08:43.808Z"
+            },
+            "summary": "report 2026-10-02, age 6.0d > 3d \u2192 \u221210",
+            "reason": "Latest reserve attestation is 6 days old."
+          },
+          {
+            "id": "unit-trap",
+            "outcome": "pass",
+            "points": 0,
+            "inputs": {},
+            "summary": "multipliers within 1.25\u00d7 of the other issuers' \u2192 pass"
+          }
+        ],
+        "unitTrap": false
+      }
+    }
+  },
+  "quotes": {
+    "6": {
+      "eoa": {
+        "quote": {
+          "user": "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
+          "replayable": "false",
+          "error": "ApiError (http=200, code=40367)",
+          "router": "",
+          "data": "0x",
+          "approveTarget": "",
+          "value": "0",
+          "minReceive": "0",
+          "toTokenAmount": "0",
+          "mode": "ERROR"
+        },
+        "assessment": {
+          "amountInUsdtE18": "6000000000000000000",
+          "premiumPct": null,
+          "quotedPricePerShareUsd": null,
+          "sharesOut": null,
+          "pass": false,
+          "reasons": [
+            "executionMode is not SWAP",
+            "no quoted route",
+            "$6 swap calldata is not replayable SWAP",
+            "cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      },
+      "guard": {
+        "quote": {
+          "user": "0xcb634955B8A7DF7B106f7AB47C9759B26206b777",
+          "replayable": "false",
+          "error": "ApiError (http=200, code=40367)",
+          "router": "",
+          "data": "0x",
+          "approveTarget": "",
+          "value": "0",
+          "minReceive": "0",
+          "toTokenAmount": "0",
+          "mode": "ERROR"
+        },
+        "assessment": {
+          "amountInUsdtE18": "6000000000000000000",
+          "premiumPct": null,
+          "quotedPricePerShareUsd": null,
+          "sharesOut": null,
+          "pass": false,
+          "reasons": [
+            "executionMode is not SWAP",
+            "no quoted route",
+            "$6 swap calldata is not replayable SWAP",
+            "cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      }
+    }
+  },
+  "errors": [],
+  "forkCapture": "captures/SOXLon.batch1-20261008T000326Z.json",
+  "gates": {
+    "depth": "failed",
+    "fork": "pending",
+    "enablement": "not approved"
+  },
+  "integrityAssessment": {
+    "pass": false,
+    "grade": "D",
+    "label": "Not Tradable",
+    "reasons": [
+      "Binance doesn't support trading this token right now"
+    ]
+  }
+}
