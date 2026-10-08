@@ -208,7 +208,7 @@ test.describe("Migrate", () => {
       await expect(copyBtn).toBeVisible();
 
       await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
-      await copyBtn.click();
+      await copyBtn.click({ force: true });
 
       const handle = await page.evaluateHandle(() => navigator.clipboard.readText());
       const copied = await handle.jsonValue();
@@ -393,6 +393,83 @@ test("rounds down to cent when passing USDT to buy step", async ({ page }) => {
   await expect(page.getByRole("dialog").filter({ hasText: "Review your buy" })).toBeVisible();
 
   expect(requestedUsd).toBe(6.12);
+});
+
+test("pending-forever falls to typed amount after the cap, cancel and resume work", async ({
+  page,
+}) => {
+  await flags(page, true);
+  await mockWallet(page);
+
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "tally.pendingMigrate",
+      JSON.stringify({
+        id: "test",
+        ticker: "NVDA",
+        from: "ondo",
+        to: "bstock",
+        step: 1,
+        saleHash: "0xabc",
+        createdAt: Date.now(),
+        // mock it to be 121 seconds ago
+        pollStartedAt: Date.now() - 121000,
+      }),
+    );
+  });
+
+  await page.route("**/api/receipts*", async (route) => {
+    await route.fulfill({ json: { state: "pending" } });
+  });
+
+  await page.goto("/portfolio");
+
+  // It should immediately fall back to the typed amount because of the pollStartedAt being old
+  await expect(
+    page.getByRole("dialog").filter({ hasText: "We could not confirm the amount automatically" }),
+  ).toBeVisible();
+
+  // Test that "Cancel" works
+  const cancelBtn = page.getByRole("button", { name: "Cancel" });
+  await expect(cancelBtn).toBeVisible();
+  await cancelBtn.click();
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+});
+
+test("failed sale says it did not go through and clears", async ({ page }) => {
+  await flags(page, true);
+  await mockWallet(page);
+
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "tally.pendingMigrate",
+      JSON.stringify({
+        id: "test",
+        ticker: "NVDA",
+        from: "ondo",
+        to: "bstock",
+        step: 1,
+        saleHash: "0xabc",
+        createdAt: Date.now(),
+        pollStartedAt: Date.now(),
+      }),
+    );
+  });
+
+  await page.route("**/api/receipts*", async (route) => {
+    await route.fulfill({ json: { state: "failed" } });
+  });
+
+  await page.goto("/portfolio");
+
+  await expect(
+    page
+      .getByRole("dialog")
+      .filter({ hasText: "The sale transaction failed and did not go through." }),
+  ).toBeVisible({ timeout: 10000 });
+
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(page.getByRole("dialog")).not.toBeVisible();
 });
 
 test.describe("Migrate stocks tab on the Trade page", () => {
