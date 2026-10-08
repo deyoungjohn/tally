@@ -29,6 +29,7 @@ export interface PendingMigrate {
     minShares: string;
   };
   pollStartedAt?: number;
+  source?: "chain" | "receipt" | "wallet";
 }
 
 export const MIGRATE_STORAGE_KEY = "tally.pendingMigrate";

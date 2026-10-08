@@ -9,6 +9,7 @@ import {
   writePendingMigrate,
   clearPendingMigrate,
 } from "../../lib/migrate/state";
+import { fetchSaleStatus } from "../../lib/migrate/poll";
 
 import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { useModuleFlags } from "@/lib/hooks/use-flags";
@@ -28,7 +29,7 @@ export function useMigrateFlow() {
   const [pm, setPm] = useState<PendingMigrate | null>(null);
   const [step, setStep] = useState<MigrateStep>("idle");
   const [waitingReceipt, setWaitingReceipt] = useState(false);
-  const [source, setSource] = useState<"receipt" | "wallet" | null>(null);
+  const [source, setSource] = useState<"receipt" | "wallet" | "chain" | null>(null);
   // Migrate starts with a review dialog (what you sell, what you receive, the costs). Confirming it sells the whole holding by
   // itself: "auto" drives the sell flow's own steps (sell all, approve, sign) so nobody has to click through its form.
   const [reviewing, setReviewing] = useState<MigrateReview | null>(null);
@@ -43,6 +44,7 @@ export function useMigrateFlow() {
     const saved = readPendingMigrate();
     if (saved) {
       setPm(saved);
+      if (saved.source) setSource(saved.source);
       if (saved.step === 1) {
         if (saved.saleHash) {
           setStep("interstitial");
@@ -215,48 +217,46 @@ export function useMigrateFlow() {
       const poll = async () => {
         if (!pm.saleHash) return;
 
-        if (Date.now() - startMs! > 120_000) {
-          setWaitingReceipt(false);
-          setSource("wallet");
-          setStep("interstitial");
-          return;
-        }
-
         try {
-          const res = await fetch(`/api/receipts?hash=${pm.saleHash}`, {
-            signal: controller.signal,
-          });
-          if (res.status === 404) {
-            if (flags.receipts) {
-              timer = setTimeout(poll, 5000);
-              return;
+          const res = await fetchSaleStatus(
+            pm.saleHash,
+            startMs!,
+            Boolean(flags.receipts),
+            (input, init) => fetch(input, { ...init, signal: controller.signal }),
+          );
+
+          if (controller.signal.aborted) return;
+
+          if (res.state === "confirmed") {
+            const updated = {
+              ...pm,
+              usdtReceived: res.usdtReceivedRaw,
+              step: 2 as const,
+              source: res.source,
+            };
+            writePendingMigrate(updated);
+            setPm(updated);
+            setWaitingReceipt(false);
+            setSource(res.source);
+            setStep("interstitial");
+            if (flags.receipts && res.source === "chain") {
+              fetch(`/api/receipts?hash=${pm.saleHash}`).catch(() => {});
             }
+            return;
+          }
+
+          if (res.state === "failed") {
+            clearPendingMigrate();
+            setWaitingReceipt(false);
+            setReceiptState("failed");
+            return;
+          }
+
+          if (res.state === "unrecognised" || res.state === "timeout") {
             setWaitingReceipt(false);
             setSource("wallet");
             setStep("interstitial");
             return;
-          }
-
-          if (res.ok) {
-            const data = await res.json();
-            if (data.state === "reconciled" && data.usdtReceivedRaw) {
-              const raw = BigInt(data.usdtReceivedRaw);
-              if (raw >= 6000000000000000000n) {
-                const updated = { ...pm, usdtReceived: data.usdtReceivedRaw, step: 2 as const };
-                writePendingMigrate(updated);
-                setPm(updated);
-                setWaitingReceipt(false);
-                setSource("receipt");
-                setStep("interstitial");
-                return;
-              }
-            } else if (data.state === "failed") {
-              setWaitingReceipt(false);
-              setReceiptState("failed");
-              return;
-            } else if (data.state === "unreconciled") {
-              // Keep polling, it might reconcile soon
-            }
           }
 
           timer = setTimeout(poll, 5000);
