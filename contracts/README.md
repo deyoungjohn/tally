@@ -106,16 +106,46 @@ simulates at that exact limit, refuses to send if the guard is paused/disabled o
 not on the allow list, and writes `results/guarded_*.json` with the decoded `Guarded` event. Without
 `--sign-feed` an Ondo buy uses the guard's stored (owner-seeded) multiplier, valid for 3 days.
 
-## Expanding the asset list (plan, 2026-10-05; starts after the UI is complete)
+## Expanding the asset list (WO-09, 2026-10-08)
 
-Goal: enable every bStock and Ondo token that can really trade, on the **deployed** ShareGuard, without changing `ShareGuard.sol`. The owner already can do this: `setAsset(stock, Asset{ source, enabled, maxStepBps, pauseCheck, pauseManager }, seedMultiplier)` (`onlyOwner`). The count comes from data, not a target: a token with under $1,000 of raw 24h volume is a ghost and stays out, and xStocks stay out (AMM-only, mostly ghost). The EC2 active-set run on 2026-10-04 found 34 tokens above the volume rule, so expect a few dozen, not a promised 50; the README and `/docs` must state the number actually enabled on-chain.
+The deployed ShareGuard is unchanged. A keyless read at BSC block **126396848**
+(2026-10-08 06:34:56 UTC) found **10 enabled tokens, five tickers**. The approved
+addition manifest contains **20 new passing tokens: 12 bStock and 8 Ondo**, from
+`captures/depth/batch-1-fork-selection.json`. Controls, held leveraged/inverse
+products and failed captures are excluded from the owner additions. The existing
+10-token configuration is retained as comparison metadata, never an owner batch.
 
-1. **Candidates (new `tools/list_candidates.py`, public endpoints only).** Registry tokens with issuer bStock or Ondo, raw 24h volume at or above $1,000, a readable multiplier source (bStock `uiMultiplier()` on-chain; Ondo the accepted API reading, two sources agreeing within 0.1%), and a pause source (bStock: the shared manager stored per asset, verified token by token; Ondo: the token's own manager). Output is the extended `deploy/assets.json`; every excluded token is listed with its reason.
-2. **Seeds.** `tools/gen_assets.py <tickers…>` already takes any number of tickers; Ondo seeds expire after 2 hours, so seeds are generated immediately before the owner step.
-3. **Captures and fork tests.** `./script/capture.sh` on the Seoul EC2 for each new asset, commit the captures, then `./script/fork.sh` runs tests A to I on each capture. An asset that fails any fork test is dropped from the batch and the reason is recorded.
-4. **Owner script (new `script/AddAssets.s.sol`).** Reads `deploy/assets.json` and `deploy/seeds.json`, skips assets whose `assetOf(stock).source` is already set, and calls `setAsset` with exactly the configuration `Deploy.s.sol` uses (bStock: `UiMultiplier`, enabled, 0 step, `Manager`; Ondo: `Feed`, enabled, `ONDO_MAX_STEP_BPS`, `Manager`, no manager address). A dry run prints each multiplier and the gas; the broadcast runs in batches of about ten, from the owner's own machine. Rollback for any asset is `setAsset` with `enabled = false`.
-5. **One list for the whole product.** The hand-written `BUYABLE_TICKERS` in `apps/web/lib/tickers.ts` is replaced by a generated file derived from `deploy/assets.json`, so the trade page, the sell route, the Pies templates and the MCP tools agree. A small `tools/list_enabled.py` reads `assetOf` on-chain and fails when the file and the chain disagree.
-6. **Live proof.** One live $6 guarded buy on three of the new assets (one Ondo, one bStock, one index fund) with `tools/guarded_buy.py`; record the hashes in `IDEAS.md` §F11.
+- `script/AddAssets.s.sol` targets only the existing ShareGuard and this exact
+  20-token manifest. Owner batches contain at most ten manifest entries. A token
+  whose source is already configured is skipped, even when disabled. Issuer
+  configuration matches `Deploy.s.sol`: bStock uses `UiMultiplier`, zero step and
+  the shared pause manager; Ondo uses `Feed`, 300 bps and the token's own manager.
+- Its keyless preview uses recorded Ondo multipliers exclusively in local
+  simulation, prints their timestamp and reports each asset's multiplier, local
+  call gas and pause state. This is not an owner seed recording. The real owner
+  path requires positive Ondo seeds no more than two hours old, checks the whole
+  batch before beginning, and never reads a key itself. Seeds remain pending the
+  chief engineer's instruction.
+- Rollback preserves the deployed asset configuration and feed while setting
+  `enabled=false`, and is restricted to these 20 additions.
+- `tools/gen_buyable.py` generates the planned list offline, using company names
+  from the recorded registry. The target is 30 tokens across 21 tickers, including
+  the existing five tickers. It is deliberately not connected to the product
+  until the owner steps and enabled-list comparison pass; the product still uses
+  its existing five-ticker list.
+- `tools/list_enabled.py` reads configurations at one pinned public-chain block
+  and compares both tokens and tickers in both directions, including disabled
+  assets, issuer configuration differences and failed reads. Its coverage is the
+  fixed 53-token Batch 1 registry; ShareGuard cannot enumerate unknown mapping
+  keys. Before the owner steps, it correctly fails for the 20 missing additions.
 
-Order: Thu morning candidates and EC2 captures; Thu afternoon fork tests and the dry run; Fri morning the owner transactions (the user) and the live proofs; code freeze Sat 10 Oct 23:59. Built by Agent 07 (Codex #2, contracts) with the user running the EC2 and owner steps.
+Evidence: `captures/depth/batch-1-before-owner-20261008.json`,
+`captures/depth/batch-1-keyless-preview-20261008.txt` and the addition fork test
+report. The original 34 passing captures and their fork results remain unchanged.
+The next batch's 19 overnight failures remain recorded in the selection report;
+US-session retries are separate and cannot enter this owner manifest.
 
+Owner and EC2 operations belong to the chief engineer. Run instructions are
+maintained in [the deployment guide](../docs/deployment.md); the orchestrator
+incorporates the exact commands from WO-09's PR. No owner transaction, seed
+recording or live proof has been performed by Agent 09.
