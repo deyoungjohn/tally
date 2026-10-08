@@ -1,0 +1,108 @@
+{
+  "schema": 1,
+  "purpose": "Outside-US-session stockInfo.price observation for the ten bStock retries; no quote or fallback source. Compare with chief-engineer EC2 captures from 2026-10-08 13:30 UTC.",
+  "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+  "sourceField": "stockInfo.price",
+  "observations": [
+    {
+      "token": "AAPLB",
+      "tokenAddress": "0x431a3bee82e2ca41e49895cbece5bb0f76a89b7a",
+      "held": false,
+      "sourceField": "stockInfo.price",
+      "capturedAtUtc": "2026-10-08T02:31:41Z",
+      "pricePerShareUsd": null,
+      "marketStatus": null,
+      "reason": "no independent reference price"
+    },
+    {
+      "token": "AMZNB",
+      "tokenAddress": "0x1a4b499833a79a09ad7cf1d42d7dacf71e92eb00",
+      "held": false,
+      "sourceField": "stockInfo.price",
+      "capturedAtUtc": "2026-10-08T02:31:42Z",
+      "pricePerShareUsd": null,
+      "marketStatus": null,
+      "reason": "no independent reference price"
+    },
+    {
+      "token": "BMNRB",
+      "tokenAddress": "0x3548da95a9effe481e8604664d75e95821e557f5",
+      "held": false,
+      "sourceField": "stockInfo.price",
+      "capturedAtUtc": "2026-10-08T02:31:43Z",
+      "pricePerShareUsd": null,
+      "marketStatus": null,
+      "reason": "no independent reference price"
+    },
+    {
+      "token": "DJTB",
+      "tokenAddress": "0xf2ec508422174ee564de98187db9359d318afb6b",
+      "held": false,
+      "sourceField": "stockInfo.price",
+      "capturedAtUtc": "2026-10-08T02:31:42Z",
+      "pricePerShareUsd": null,
+      "marketStatus": null,
+      "reason": "no independent reference price"
+    },
+    {
+      "token": "FLNCB",
+      "tokenAddress": "0x4af1d41cd9dd950dca43984b43aaa2a8702714ac",
+      "held": false,
+      "sourceField": "stockInfo.price",
+      "capturedAtUtc": "2026-10-08T02:31:43Z",
+      "pricePerShareUsd": null,
+      "marketStatus": null,
+      "reason": "no independent reference price"
+    },
+    {
+      "token": "GMEB",
+      "tokenAddress": "0x46ceefda28dd7207059ed19b0acdc026955bb15c",
+      "held": false,
+      "sourceField": "stockInfo.price",
+      "capturedAtUtc": "2026-10-08T02:31:44Z",
+      "pricePerShareUsd": null,
+      "marketStatus": null,
+      "reason": "no independent reference price"
+    },
+    {
+      "token": "MRNAB",
+      "tokenAddress": "0x5fd86da9b05abe396fe9d02a4a213a7c00556503",
+      "held": false,
+      "sourceField": "stockInfo.price",
+      "capturedAtUtc": "2026-10-08T02:31:45Z",
+      "pricePerShareUsd": null,
+      "marketStatus": null,
+      "reason": "no independent reference price"
+    },
+    {
+      "token": "NFLXB",
+      "tokenAddress": "0xd6829ea836b6fa224d099d40e54b31262f874631",
+      "held": false,
+      "sourceField": "stockInfo.price",
+      "capturedAtUtc": "2026-10-08T02:31:46Z",
+      "pricePerShareUsd": null,
+      "marketStatus": null,
+      "reason": "no independent reference price"
+    },
+    {
+      "token": "SOXSB",
+      "tokenAddress": "0xe28cd11c99af2df76bb8ada4cd0ef3904378280f",
+      "held": true,
+      "sourceField": "stockInfo.price",
+      "capturedAtUtc": "2026-10-08T02:31:47Z",
+      "pricePerShareUsd": null,
+      "marketStatus": null,
+      "reason": "no independent reference price"
+    },
+    {
+      "token": "SQQQB",
+      "tokenAddress": "0x25e572b466d152604d9e6c3e53b432b978825342",
+      "held": true,
+      "sourceField": "stockInfo.price",
+      "capturedAtUtc": "2026-10-08T02:31:48Z",
+      "pricePerShareUsd": null,
+      "marketStatus": null,
+      "reason": "no independent reference price"
+    }
+  ]
+}
