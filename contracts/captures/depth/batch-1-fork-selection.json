@@ -5,8 +5,7 @@
     "batch1-20261007T233708Z",
     "batch1-20261008T000326Z"
   ],
-  "forkStatus": "blocked",
-  "forkReason": "BSC_RPC is not set; fork.sh requires an archive-capable RPC supplied by the chief engineer.",
+  "forkStatus": "completed",
   "enablement": "not approved",
   "tokens": [
     {
@@ -16,7 +15,7 @@
       "role": "control",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -50,7 +49,20 @@
       "canonicalCapture": "contracts/captures/NVDAB.json",
       "sha256": "1a1f0b382649f0ca519ec35b96b22088e1a47695ff39a744961209d4ee2e8b55",
       "blockAtCapture": "126344681",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 8,
+          "skip": 2,
+          "failed": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": [
+          "test_B2_guardWrappedWithSignedFeed",
+          "test_I_staleOrOutOfBoundsFeedReverts"
+        ]
+      }
     },
     {
       "token": "NVDAon",
@@ -59,7 +71,7 @@
       "role": "control",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -101,7 +113,17 @@
       "canonicalCapture": "contracts/captures/NVDAon.json",
       "sha256": "eb3fd0c0832afd29a06097aef3c7659afda721d6b0aaab1788c4508132d47417",
       "blockAtCapture": "126341198",
-      "latestAttemptDepth": "failed"
+      "latestAttemptDepth": "failed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 10,
+          "failed": 0,
+          "skip": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": []
+      }
     },
     {
       "token": "AAPLB",
@@ -165,7 +187,7 @@
       "role": "control",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -207,7 +229,17 @@
       "canonicalCapture": "contracts/captures/AAPLon.json",
       "sha256": "1ab85708d391daec0cd89821f422758c04e69bee5152eb42f26520c9f82a5d46",
       "blockAtCapture": "126341227",
-      "latestAttemptDepth": "failed"
+      "latestAttemptDepth": "failed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 10,
+          "failed": 0,
+          "skip": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": []
+      }
     },
     {
       "token": "TSLAB",
@@ -216,7 +248,7 @@
       "role": "control",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -250,7 +282,20 @@
       "canonicalCapture": "contracts/captures/TSLAB.json",
       "sha256": "02c581a5cf7e10939bb2d08a7d0d199186045132699ccffa69e99b8a17fcb8be",
       "blockAtCapture": "126344734",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 8,
+          "skip": 2,
+          "failed": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": [
+          "test_B2_guardWrappedWithSignedFeed",
+          "test_I_staleOrOutOfBoundsFeedReverts"
+        ]
+      }
     },
     {
       "token": "TSLAon",
@@ -327,7 +372,7 @@
       "role": "control",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -361,7 +406,20 @@
       "canonicalCapture": "contracts/captures/QQQB.json",
       "sha256": "52efeff9bcd482139a895442a8c39292231737f9ade08a225c116311d6bd038c",
       "blockAtCapture": "126344762",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 8,
+          "skip": 2,
+          "failed": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": [
+          "test_B2_guardWrappedWithSignedFeed",
+          "test_I_staleOrOutOfBoundsFeedReverts"
+        ]
+      }
     },
     {
       "token": "QQQon",
@@ -370,7 +428,7 @@
       "role": "control",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -412,7 +470,17 @@
       "canonicalCapture": "contracts/captures/QQQon.json",
       "sha256": "1743524ce4f4de79d84e0d0911107333c5bb0a87b8176e79c3d6d8dbabed2490",
       "blockAtCapture": "126341282",
-      "latestAttemptDepth": "failed"
+      "latestAttemptDepth": "failed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 10,
+          "failed": 0,
+          "skip": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": []
+      }
     },
     {
       "token": "SPYB",
@@ -421,7 +489,7 @@
       "role": "control",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -455,7 +523,20 @@
       "canonicalCapture": "contracts/captures/SPYB.json",
       "sha256": "86baf48bf592bef71c95a2a007578a265c3b12d4c1f56a646f51abd9445f7d14",
       "blockAtCapture": "126344789",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 8,
+          "skip": 2,
+          "failed": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": [
+          "test_B2_guardWrappedWithSignedFeed",
+          "test_I_staleOrOutOfBoundsFeedReverts"
+        ]
+      }
     },
     {
       "token": "SPYon",
@@ -464,7 +545,7 @@
       "role": "control",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -506,7 +587,17 @@
       "canonicalCapture": "contracts/captures/SPYon.json",
       "sha256": "01904b8357e20d3ebf51b961c194667904235b3880a197efa4def249f5379234",
       "blockAtCapture": "126341311",
-      "latestAttemptDepth": "failed"
+      "latestAttemptDepth": "failed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 10,
+          "failed": 0,
+          "skip": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": []
+      }
     },
     {
       "token": "SPCXB",
@@ -515,7 +606,7 @@
       "role": "candidate",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -549,7 +640,20 @@
       "canonicalCapture": "contracts/captures/SPCXB.json",
       "sha256": "b240ee773fce4a67ab8588d3bfadbc1bbc39bcb13b99f4d60ab23410487c80ff",
       "blockAtCapture": "126344815",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 8,
+          "skip": 2,
+          "failed": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": [
+          "test_B2_guardWrappedWithSignedFeed",
+          "test_I_staleOrOutOfBoundsFeedReverts"
+        ]
+      }
     },
     {
       "token": "GMEB",
@@ -613,7 +717,7 @@
       "role": "candidate",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -647,7 +751,20 @@
       "canonicalCapture": "contracts/captures/BABAB.json",
       "sha256": "a79cf635dc85a1954db3e0f2f59a4abc079a5094077e07be71225f978996dc1d",
       "blockAtCapture": "126344848",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 8,
+          "skip": 2,
+          "failed": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": [
+          "test_B2_guardWrappedWithSignedFeed",
+          "test_I_staleOrOutOfBoundsFeedReverts"
+        ]
+      }
     },
     {
       "token": "GOOGLB",
@@ -656,7 +773,7 @@
       "role": "candidate",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -690,7 +807,20 @@
       "canonicalCapture": "contracts/captures/GOOGLB.json",
       "sha256": "2cced344929f133cbe46e60a41fa52c7ea4fab172acd0d2a59f0e376e99d2669",
       "blockAtCapture": "126344863",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 8,
+          "skip": 2,
+          "failed": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": [
+          "test_B2_guardWrappedWithSignedFeed",
+          "test_I_staleOrOutOfBoundsFeedReverts"
+        ]
+      }
     },
     {
       "token": "SKHYB",
@@ -699,7 +829,7 @@
       "role": "candidate",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -733,7 +863,20 @@
       "canonicalCapture": "contracts/captures/SKHYB.json",
       "sha256": "99e3ff820bab708d9cf33665ddbd800e029024f05cbadc6f0f8bef4fb4fee441",
       "blockAtCapture": "126344879",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 8,
+          "skip": 2,
+          "failed": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": [
+          "test_B2_guardWrappedWithSignedFeed",
+          "test_I_staleOrOutOfBoundsFeedReverts"
+        ]
+      }
     },
     {
       "token": "MSTRB",
@@ -742,7 +885,7 @@
       "role": "candidate",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -776,7 +919,20 @@
       "canonicalCapture": "contracts/captures/MSTRB.json",
       "sha256": "e47466753706e65bd1d32248e8e0177ece5a6553dfdb5d78382d77490d82abbc",
       "blockAtCapture": "126344895",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 8,
+          "skip": 2,
+          "failed": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": [
+          "test_B2_guardWrappedWithSignedFeed",
+          "test_I_staleOrOutOfBoundsFeedReverts"
+        ]
+      }
     },
     {
       "token": "CRCLB",
@@ -785,7 +941,7 @@
       "role": "candidate",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -819,7 +975,20 @@
       "canonicalCapture": "contracts/captures/CRCLB.json",
       "sha256": "f4acabfdf0e9665a7ef9b5a8467922a0cf20706d1f7342426749f1a4d7277134",
       "blockAtCapture": "126344910",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 8,
+          "skip": 2,
+          "failed": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": [
+          "test_B2_guardWrappedWithSignedFeed",
+          "test_I_staleOrOutOfBoundsFeedReverts"
+        ]
+      }
     },
     {
       "token": "SNDKB",
@@ -828,7 +997,7 @@
       "role": "candidate",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -862,7 +1031,20 @@
       "canonicalCapture": "contracts/captures/SNDKB.json",
       "sha256": "9883cbd6951baf787dc61a4c3619c6d9096a9998f398abd3207d2b7f82525e50",
       "blockAtCapture": "126344925",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 8,
+          "skip": 2,
+          "failed": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": [
+          "test_B2_guardWrappedWithSignedFeed",
+          "test_I_staleOrOutOfBoundsFeedReverts"
+        ]
+      }
     },
     {
       "token": "DJTB",
@@ -926,7 +1108,7 @@
       "role": "candidate",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -960,7 +1142,20 @@
       "canonicalCapture": "contracts/captures/HOODB.json",
       "sha256": "044717f27454252fdd6e491b8bd7b9b7ad10262d6106bb2af31e426f026c7315",
       "blockAtCapture": "126344957",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 8,
+          "skip": 2,
+          "failed": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": [
+          "test_B2_guardWrappedWithSignedFeed",
+          "test_I_staleOrOutOfBoundsFeedReverts"
+        ]
+      }
     },
     {
       "token": "MSFTB",
@@ -969,7 +1164,7 @@
       "role": "candidate",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -1003,7 +1198,20 @@
       "canonicalCapture": "contracts/captures/MSFTB.json",
       "sha256": "49ccbe0b0bb23c8381cdba8ce7e18aef7bc87c2ef27381313607de28896af3cb",
       "blockAtCapture": "126344973",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 8,
+          "skip": 2,
+          "failed": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": [
+          "test_B2_guardWrappedWithSignedFeed",
+          "test_I_staleOrOutOfBoundsFeedReverts"
+        ]
+      }
     },
     {
       "token": "INTCB",
@@ -1012,7 +1220,7 @@
       "role": "candidate",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -1046,7 +1254,20 @@
       "canonicalCapture": "contracts/captures/INTCB.json",
       "sha256": "08c0d7fb1fa3b8175f8de5e46fcf530c9bc7ecfe325e7a8c3571d41f5e7a7225",
       "blockAtCapture": "126344988",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 8,
+          "skip": 2,
+          "failed": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": [
+          "test_B2_guardWrappedWithSignedFeed",
+          "test_I_staleOrOutOfBoundsFeedReverts"
+        ]
+      }
     },
     {
       "token": "METAB",
@@ -1055,7 +1276,7 @@
       "role": "candidate",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -1089,7 +1310,20 @@
       "canonicalCapture": "contracts/captures/METAB.json",
       "sha256": "c2c7675bc34e9ce7fce965743c0d202c3e7f748f2b3888acbd0b1c4fc88764b8",
       "blockAtCapture": "126345004",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 8,
+          "skip": 2,
+          "failed": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": [
+          "test_B2_guardWrappedWithSignedFeed",
+          "test_I_staleOrOutOfBoundsFeedReverts"
+        ]
+      }
     },
     {
       "token": "MRNAB",
@@ -1318,7 +1552,7 @@
       "role": "candidate",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -1352,7 +1586,20 @@
       "canonicalCapture": "contracts/captures/TSMB.json",
       "sha256": "864570198ba1304ebb17a79c36e53b19253c373c31912d3190ac77750170ca81",
       "blockAtCapture": "126345084",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 8,
+          "skip": 2,
+          "failed": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": [
+          "test_B2_guardWrappedWithSignedFeed",
+          "test_I_staleOrOutOfBoundsFeedReverts"
+        ]
+      }
     },
     {
       "token": "NFLXB",
@@ -1416,7 +1663,7 @@
       "role": "candidate",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -1446,7 +1693,17 @@
       "canonicalCapture": "contracts/captures/SPCXon.json",
       "sha256": "a027f6e1cb1bb48f454dac39720f8140f35f4e277d7a88cb0700166eb8d7b837",
       "blockAtCapture": "126345115",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 10,
+          "failed": 0,
+          "skip": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": []
+      }
     },
     {
       "token": "GMEon",
@@ -1455,7 +1712,7 @@
       "role": "candidate",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -1485,7 +1742,17 @@
       "canonicalCapture": "contracts/captures/GMEon.json",
       "sha256": "1f1ff49f7496157343beffe8d8a5886e596d9d12fe64ff0961bcbce36e1b3d54",
       "blockAtCapture": "126345128",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 10,
+          "failed": 0,
+          "skip": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": []
+      }
     },
     {
       "token": "GOOGLon",
@@ -1494,7 +1761,7 @@
       "role": "candidate",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -1524,7 +1791,17 @@
       "canonicalCapture": "contracts/captures/GOOGLon.json",
       "sha256": "07e0628c154501c6ded0410ec8ccae4cd3a8ed695bffb6d623beba422585f7f4",
       "blockAtCapture": "126345142",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 10,
+          "failed": 0,
+          "skip": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": []
+      }
     },
     {
       "token": "SKHYon",
@@ -1665,7 +1942,7 @@
       "role": "candidate",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -1695,7 +1972,17 @@
       "canonicalCapture": "contracts/captures/CRCLon.json",
       "sha256": "d45b2af53992710e2cd6d3df9de98a2747a85de73dbf4a8595026173d572aa4d",
       "blockAtCapture": "126345179",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 10,
+          "failed": 0,
+          "skip": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": []
+      }
     },
     {
       "token": "SNDKon",
@@ -2055,7 +2342,7 @@
       "role": "candidate",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -2085,7 +2372,17 @@
       "canonicalCapture": "contracts/captures/AMZNon.json",
       "sha256": "58aa87d29f54b124f1a9e56d9989ef08de7f38657d9c20bb60921cde95789bec",
       "blockAtCapture": "126345260",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 10,
+          "failed": 0,
+          "skip": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": []
+      }
     },
     {
       "token": "BMNRon",
@@ -2094,7 +2391,7 @@
       "role": "candidate",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -2124,7 +2421,17 @@
       "canonicalCapture": "contracts/captures/BMNRon.json",
       "sha256": "2646d80b10a52e3c39fe3dc849de162450bd1108358c5672f839fdd9785aa0ed",
       "blockAtCapture": "126345273",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 10,
+          "failed": 0,
+          "skip": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": []
+      }
     },
     {
       "token": "TSMon",
@@ -2133,7 +2440,7 @@
       "role": "candidate",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -2163,7 +2470,17 @@
       "canonicalCapture": "contracts/captures/TSMon.json",
       "sha256": "65c91fa99d66935e57c1b22429d377376746abbfc42a7af8c4f42b5ec0d353e5",
       "blockAtCapture": "126345288",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 10,
+          "failed": 0,
+          "skip": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": []
+      }
     },
     {
       "token": "NFLXon",
@@ -2172,7 +2489,7 @@
       "role": "candidate",
       "held": false,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -2202,7 +2519,17 @@
       "canonicalCapture": "contracts/captures/NFLXon.json",
       "sha256": "a2df3a9f4b2c899bbe0f8024d31cb0c632ce2cdfae24f08a40bd6b7eab9e8747",
       "blockAtCapture": "126345302",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 10,
+          "failed": 0,
+          "skip": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": []
+      }
     },
     {
       "token": "SOXLB",
@@ -2211,7 +2538,7 @@
       "role": "candidate",
       "held": true,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -2245,7 +2572,20 @@
       "canonicalCapture": "contracts/captures/SOXLB.json",
       "sha256": "d5ce5e4527f9250ab881913e03ab87f04605aeac51915f30f2260d46a3e4e8c4",
       "blockAtCapture": "126345316",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 8,
+          "skip": 2,
+          "failed": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": [
+          "test_B2_guardWrappedWithSignedFeed",
+          "test_I_staleOrOutOfBoundsFeedReverts"
+        ]
+      }
     },
     {
       "token": "SOXSB",
@@ -2309,7 +2649,7 @@
       "role": "candidate",
       "held": true,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -2343,7 +2683,20 @@
       "canonicalCapture": "contracts/captures/TQQQB.json",
       "sha256": "fb999b982024f603570b6a829328f7a8fffeeb16d64816c8dacad8383532bd90",
       "blockAtCapture": "126345348",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 8,
+          "skip": 2,
+          "failed": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": [
+          "test_B2_guardWrappedWithSignedFeed",
+          "test_I_staleOrOutOfBoundsFeedReverts"
+        ]
+      }
     },
     {
       "token": "SQQQB",
@@ -2407,7 +2760,7 @@
       "role": "candidate",
       "held": true,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -2449,7 +2802,17 @@
       "canonicalCapture": "contracts/captures/SOXLon.json",
       "sha256": "1f81c10002e3981f664984be307548c6c74a9cfd69ce79966d2c1aac058d0197",
       "blockAtCapture": "126341891",
-      "latestAttemptDepth": "failed"
+      "latestAttemptDepth": "failed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 10,
+          "failed": 0,
+          "skip": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": []
+      }
     },
     {
       "token": "SOXSon",
@@ -2458,7 +2821,7 @@
       "role": "candidate",
       "held": true,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -2488,7 +2851,17 @@
       "canonicalCapture": "contracts/captures/SOXSon.json",
       "sha256": "730ba820f7970c497be72951f8e686d506936fa976b61073e65408b16672abe8",
       "blockAtCapture": "126345389",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 10,
+          "failed": 0,
+          "skip": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": []
+      }
     },
     {
       "token": "TQQQon",
@@ -2497,7 +2870,7 @@
       "role": "candidate",
       "held": true,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -2527,7 +2900,17 @@
       "canonicalCapture": "contracts/captures/TQQQon.json",
       "sha256": "cec4296800199e8ca83033f094f73bf60f632caf6f9550139b8b9beb2298d69f",
       "blockAtCapture": "126345402",
-      "latestAttemptDepth": "passed"
+      "latestAttemptDepth": "passed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 10,
+          "failed": 0,
+          "skip": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": []
+      }
     },
     {
       "token": "SQQQon",
@@ -2536,7 +2919,7 @@
       "role": "candidate",
       "held": true,
       "depth": "passed",
-      "fork": "blocked",
+      "fork": "passed",
       "enablement": "not approved",
       "attempts": [
         {
@@ -2578,7 +2961,17 @@
       "canonicalCapture": "contracts/captures/SQQQon.json",
       "sha256": "b9bdd7d85790cf888a158c43fc0672e2d758121168a7afea704795c2621dd037",
       "blockAtCapture": "126341931",
-      "latestAttemptDepth": "failed"
+      "latestAttemptDepth": "failed",
+      "forkResult": {
+        "report": "contracts/captures/depth/batch-1-fork-results.json",
+        "testCounts": {
+          "pass": 10,
+          "failed": 0,
+          "skip": 0
+        },
+        "failedTests": [],
+        "notApplicableTests": []
+      }
     }
   ],
   "counts": {
@@ -2589,8 +2982,18 @@
       "batch1-20261008T000326Z": 28,
       "batch1-20261007T233708Z": 6
     },
-    "forkPassed": 0,
+    "forkPassed": 34,
     "forkFailed": 0,
-    "forkBlocked": 34
-  }
+    "forkBlocked": 0,
+    "forkTests": {
+      "pass": 304,
+      "skip": 36,
+      "failed": 0
+    }
+  },
+  "previousForkAttempt": {
+    "status": "blocked",
+    "reason": "BSC_RPC is not set; fork.sh requires an archive-capable RPC supplied by the chief engineer."
+  },
+  "forkReport": "contracts/captures/depth/batch-1-fork-results.json"
 }
