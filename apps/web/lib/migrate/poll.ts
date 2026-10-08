@@ -1,7 +1,13 @@
 import { proceedsMeetBuyMinimum } from "./state";
 
 export type PollSaleResult =
-  | { state: "confirmed"; usdtReceivedRaw: string; source: "chain" | "receipt" }
+  | { state: "confirmed"; usdtReceivedRaw: string; source: "chain" | "receipt"; fixture?: boolean }
+  | {
+      state: "underMinimum";
+      usdtReceivedRaw: string;
+      source: "chain" | "receipt";
+      fixture?: boolean;
+    }
   | { state: "failed" }
   | { state: "unrecognised" }
   | { state: "pending" }
@@ -33,9 +39,15 @@ export async function fetchSaleStatus(
             state: "confirmed",
             usdtReceivedRaw: spData.usdtReceivedRaw,
             source: "chain",
+            fixture: spData.fixture === true,
           };
         }
-        return { state: "unrecognised" };
+        return {
+          state: "underMinimum",
+          usdtReceivedRaw: spData.usdtReceivedRaw,
+          source: "chain",
+          fixture: spData.fixture === true,
+        };
       }
       if (spData.state === "failed") {
         return { state: "failed" };
@@ -70,6 +82,11 @@ export async function fetchSaleStatus(
               source: "receipt",
             };
           }
+          return {
+            state: "underMinimum",
+            usdtReceivedRaw: rData.usdtReceivedRaw,
+            source: "receipt",
+          };
         } else if (rData.state === "failed") {
           return { state: "failed" };
         }

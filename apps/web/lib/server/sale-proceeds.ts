@@ -12,6 +12,7 @@ export type SaleProceedsResult =
       tokensSpentRaw: string;
       stockToken: string;
       blockNumber: number;
+      fixture?: boolean;
     };
 
 export async function loadSaleProceeds(
@@ -26,6 +27,7 @@ export async function loadSaleProceeds(
       tokensSpentRaw: "10000000000000000000",
       stockToken: "0x02fca66c1d1afb4e2a7884261eb00f63598a7436",
       blockNumber: 100,
+      fixture: true,
     };
   }
 

@@ -50,6 +50,7 @@ async function stubSaleProceeds(
   page: Page,
   state: "confirmed" | "failed" | "unrecognised" | "pending" = "confirmed",
   usdtReceivedRaw = "6990000000000000000",
+  fixture = false,
 ) {
   await page.route("**/api/trade/sale-proceeds*", async (route) => {
     if (state === "confirmed") {
@@ -61,6 +62,7 @@ async function stubSaleProceeds(
           tokensSpentRaw: "2500000000000000000",
           stockToken: STOCK,
           blockNumber: 123456,
+          fixture,
         },
       });
     } else {
@@ -347,6 +349,7 @@ test("resumes after reload", async ({ page }) => {
       "tally.pendingMigrate",
       JSON.stringify({
         id: "test",
+        wallet: "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
         ticker: "NVDA",
         from: "ondo",
         to: "bstock",
@@ -376,6 +379,7 @@ test("rounds down to cent when passing USDT to buy step", async ({ page }) => {
       "tally.pendingMigrate",
       JSON.stringify({
         id: "test",
+        wallet: "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
         ticker: "NVDA",
         from: "ondo",
         to: "bstock",
@@ -476,6 +480,7 @@ test("pending-forever falls to typed amount after the cap, cancel and resume wor
       "tally.pendingMigrate",
       JSON.stringify({
         id: "test",
+        wallet: "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
         ticker: "NVDA",
         from: "ondo",
         to: "bstock",
@@ -516,6 +521,7 @@ test("failed sale says it did not go through and clears", async ({ page }) => {
       "tally.pendingMigrate",
       JSON.stringify({
         id: "test",
+        wallet: "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
         ticker: "NVDA",
         from: "ondo",
         to: "bstock",
@@ -667,6 +673,7 @@ test("reload-and-resume of an old sale in fixture mode recognises pseudo hash an
         "tally.pendingMigrate",
         JSON.stringify({
           id: "mig-old",
+          wallet: "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
           ticker: "NVDA",
           from: "bstock",
           to: "ondo",
@@ -698,4 +705,143 @@ test("reload-and-resume of an old sale in fixture mode recognises pseudo hash an
     .getByRole("dialog")
     .filter({ hasText: /Your .* shares have been migrated to/ });
   await expect(doneDialog).toBeVisible();
+});
+
+test("pending migrate bound to wallet: old shape without wallet property is discarded safely", async ({
+  page,
+}) => {
+  await flags(page, true);
+  await mockWallet(page);
+
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "tally.pendingMigrate",
+      JSON.stringify({
+        id: "mig-old",
+        ticker: "NVDA",
+        from: "ondo",
+        to: "bstock",
+        step: 1,
+        saleHash: "0xabc",
+        createdAt: Date.now(),
+      }),
+    );
+  });
+
+  await page.goto("/portfolio");
+
+  // Storage should have removed the old shape
+  await expect
+    .poll(async () => page.evaluate(() => window.localStorage.getItem("tally.pendingMigrate")), {
+      timeout: 5000,
+    })
+    .toBeNull();
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+});
+
+test("pending migrate bound to wallet: saved migration for different wallet is ignored and removed", async ({
+  page,
+}) => {
+  await flags(page, true);
+  await mockWallet(page);
+
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "tally.pendingMigrate",
+      JSON.stringify({
+        id: "mig-other",
+        wallet: "0x1111111111111111111111111111111111111111",
+        ticker: "NVDA",
+        from: "ondo",
+        to: "bstock",
+        step: 1,
+        saleHash: "0xabc",
+        createdAt: Date.now(),
+      }),
+    );
+  });
+
+  await page.goto("/portfolio");
+
+  // Storage should have removed the migration for the different wallet
+  await expect
+    .poll(async () => page.evaluate(() => window.localStorage.getItem("tally.pendingMigrate")), {
+      timeout: 5000,
+    })
+    .toBeNull();
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+});
+
+test("confirmed sale under 6 USDT gives its own message and offers no buy", async ({ page }) => {
+  await flags(page, true);
+  await mockWallet(page);
+
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "tally.pendingMigrate",
+      JSON.stringify({
+        id: "mig-small",
+        wallet: "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
+        ticker: "NVDA",
+        from: "ondo",
+        to: "bstock",
+        step: 1,
+        saleHash: "0xabc",
+        createdAt: Date.now(),
+        pollStartedAt: Date.now(),
+      }),
+    );
+  });
+
+  // sale proceeds returns confirmed with 5 USDT (under 6 USDT)
+  await stubSaleProceeds(page, "confirmed", "5000000000000000000");
+
+  await page.goto("/portfolio");
+
+  // Should display the under minimum message
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText("under the 6 USDT minimum required to buy");
+  await expect(dialog).toContainText("Your USDT is in your wallet. No buy was placed.");
+
+  // Click Done dismisses and clears
+  await dialog.getByRole("button", { name: "Done" }).click();
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+
+  await expect
+    .poll(async () => page.evaluate(() => window.localStorage.getItem("tally.pendingMigrate")), {
+      timeout: 5000,
+    })
+    .toBeNull();
+});
+
+test("fixture response shows fixture data in the UI", async ({ page }) => {
+  await flags(page, true);
+  await mockWallet(page);
+
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "tally.pendingMigrate",
+      JSON.stringify({
+        id: "mig-fixture",
+        wallet: "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
+        ticker: "NVDA",
+        from: "ondo",
+        to: "bstock",
+        step: 1,
+        saleHash: "0xabc",
+        createdAt: Date.now(),
+        pollStartedAt: Date.now(),
+      }),
+    );
+  });
+
+  // returns confirmed with fixture: true and under minimum to inspect interstitial
+  await stubSaleProceeds(page, "confirmed", "5000000000000000000", true);
+
+  await page.goto("/portfolio");
+
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText("fixture data");
 });

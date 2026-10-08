@@ -72,10 +72,11 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
       step === "interstitial" &&
       (source === "receipt" || source === "chain") &&
       !waitingReceipt &&
+      receiptState !== "underMinimum" &&
       pm?.usdtReceived
     )
       resumeStep2();
-  }, [step, source, waitingReceipt, pm?.usdtReceived, resumeStep2]);
+  }, [step, source, waitingReceipt, receiptState, pm?.usdtReceived, resumeStep2]);
 
   if (!pm) return null;
 
@@ -107,12 +108,12 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
         >
           <div className="mt-4 grid gap-4">
             {step === "interstitial" && waitingReceipt ? (
-              <div className="flex flex-col gap-3 rounded-lg border border-white/10 bg-white/[0.04] p-4 text-white">
+              <div className="flex flex-col gap-3 rounded-lg border border-black/10 bg-white p-4">
                 <div className="flex items-center gap-3">
-                  <Loader2 className="h-5 w-5 motion-safe:animate-spin text-[#F18F01]" />
+                  <Loader2 className="h-5 w-5 motion-safe:animate-spin text-black" />
                   <div className="flex-1">
-                    <p className="text-sm text-white">Waiting for the sale to confirm...</p>
-                    <p className="text-xs text-white/60 mt-1">
+                    <p className="text-sm text-black">Waiting for the sale to confirm...</p>
+                    <p className="text-xs text-black/60 mt-1">
                       Elapsed: {Math.floor(waitElapsedMs / 1000)}s
                     </p>
                   </div>
@@ -128,22 +129,45 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
                   )}
                 </div>
                 <div className="flex justify-end mt-2">
-                  <Button onClick={cancel}>Cancel</Button>
+                  <Button onClick={cancel} className="bg-white text-black border border-black/10">
+                    Cancel
+                  </Button>
                 </div>
               </div>
             ) : step === "interstitial" && receiptState === "failed" ? (
               <div className="grid gap-4">
-                <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4 space-y-2 text-sm text-white">
+                <div className="rounded-lg border border-black/10 bg-white p-4 space-y-2 text-sm text-black">
                   <p>The sale transaction failed and did not go through.</p>
                   <p>No buy is offered.</p>
                 </div>
                 <div className="flex justify-end">
-                  <Button onClick={cancel}>Cancel</Button>
+                  <Button onClick={cancel} className="bg-white text-black border border-black/10">
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : step === "interstitial" && receiptState === "underMinimum" ? (
+              <div className="grid gap-4">
+                <div className="rounded-lg border border-black/10 bg-white p-4 space-y-2 text-sm text-black">
+                  <p>
+                    The sale confirmed for{" "}
+                    {pm.usdtReceived
+                      ? formatUnits(BigInt(roundDownToCent(pm.usdtReceived)), 18)
+                      : "?"}{" "}
+                    USDT{pm.isFixture ? " (fixture data)" : ""}, which is under the 6 USDT minimum
+                    required to buy.
+                  </p>
+                  <p>Your USDT is in your wallet. No buy was placed.</p>
+                </div>
+                <div className="flex justify-end">
+                  <Button onClick={cancel} className="bg-white text-black border border-black/10">
+                    Done
+                  </Button>
                 </div>
               </div>
             ) : step === "interstitial" ? (
               <div className="grid gap-4">
-                <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4 space-y-2 text-sm text-white">
+                <div className="rounded-lg border border-black/10 bg-white p-4 space-y-2 text-sm text-black">
                   {source === "wallet" ? (
                     <p>
                       We could not confirm the amount automatically. Your USDT is in your wallet.
@@ -155,18 +179,19 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
                       {pm.usdtReceived
                         ? formatUnits(BigInt(roundDownToCent(pm.usdtReceived)), 18)
                         : "?"}{" "}
-                      USDT{source === "chain" ? " (from the chain)" : ""}. Not bought yet. Your USDT
-                      is in your wallet.
+                      USDT{source === "chain" ? " (from the chain)" : ""}
+                      {pm.isFixture ? " (fixture data)" : ""}. Not bought yet. Your USDT is in your
+                      wallet.
                     </p>
                   )}
                   {source === "wallet" ? (
                     <div className="mt-4">
-                      <p className="text-white/60 mb-2">
+                      <p className="text-black/60 mb-2">
                         Check your wallet for the exact USDT received, and enter it below:
                       </p>
                       <input
                         type="text"
-                        className="input num w-full border-white/10 text-white bg-white/[0.04]"
+                        className="input num w-full border-black/10 text-black bg-white"
                         value={typedProceeds}
                         onChange={(e) => setTypedProceeds(e.target.value.replace(/[^0-9.]/g, ""))}
                         placeholder="e.g. 6.0"
@@ -175,11 +200,14 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
                   ) : null}
                 </div>
                 <div className="flex justify-end gap-3">
-                  <Button variant="glassy" onClick={cancel}>
+                  <Button onClick={cancel} className="bg-white text-black border border-black/10">
                     Cancel
                   </Button>
                   {source === "wallet" && (
-                    <Button variant="glassy" onClick={checkAgain}>
+                    <Button
+                      onClick={checkAgain}
+                      className="bg-white text-black border border-black/10"
+                    >
                       Check again
                     </Button>
                   )}
@@ -208,13 +236,13 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
                   )}
                 </div>
 
-                <div className="flex justify-center space-x-4 text-xs text-white/60">
+                <div className="flex justify-center space-x-4 text-xs text-black/60">
                   {pm.saleHash ? (
                     <a
                       href={`/receipt/${pm.saleHash}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="underline hover:text-white"
+                      className="underline hover:text-black"
                     >
                       Sale Receipt
                     </a>
@@ -224,23 +252,25 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
                       href={`/receipt/${pm.buyHash}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="underline hover:text-white"
+                      className="underline hover:text-black"
                     >
                       Buy Receipt
                     </a>
                   ) : null}
                 </div>
 
-                <p className="text-sm text-white/60 text-center mt-2">
+                <p className="text-sm text-black/60 text-center mt-2">
                   Your {fromSymbol} shares have been migrated to{" "}
                   {pm.to === "ondo" ? "Ondo" : "bStock"} ({toSymbol}) using{" "}
                   {pm.usdtReceived
                     ? formatUnits(BigInt(roundDownToCent(pm.usdtReceived)), 18)
                     : "?"}{" "}
-                  USDT.
+                  USDT{pm.isFixture ? " (fixture data)" : ""}.
                 </p>
                 <div className="flex justify-center mt-2">
-                  <Button onClick={cancel}>Done</Button>
+                  <Button onClick={cancel} className="bg-white text-black border border-black/10">
+                    Done
+                  </Button>
                 </div>
               </div>
             ) : null}

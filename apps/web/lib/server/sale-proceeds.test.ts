@@ -130,4 +130,22 @@ describe("loadSaleProceeds", () => {
     const res = await loadSaleProceeds(HASH);
     expect(res).toEqual({ state: "unrecognised" });
   });
+
+  it("returns confirmed with fixture: true in fixture mode for pseudo hash", async () => {
+    const orig = process.env.TALLY_FIXTURES;
+    process.env.TALLY_FIXTURES = "1";
+    try {
+      const res = await loadSaleProceeds("0xf11aaa222333");
+      expect(res).toEqual({
+        state: "confirmed",
+        usdtReceivedRaw: "3500000000000000000000",
+        tokensSpentRaw: "10000000000000000000",
+        stockToken: "0x02fca66c1d1afb4e2a7884261eb00f63598a7436",
+        blockNumber: 100,
+        fixture: true,
+      });
+    } finally {
+      process.env.TALLY_FIXTURES = orig;
+    }
+  });
 });

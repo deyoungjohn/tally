@@ -34,6 +34,7 @@ describe("fetchSaleStatus (poll-state)", () => {
       state: "confirmed",
       usdtReceivedRaw: "6990000000000000000",
       source: "chain",
+      fixture: false,
     });
     // Receipts worker was not even needed or called after chain confirmed
   });
@@ -60,6 +61,7 @@ describe("fetchSaleStatus (poll-state)", () => {
       state: "confirmed",
       usdtReceivedRaw: "7000000000000000000",
       source: "chain",
+      fixture: false,
     });
   });
 
@@ -88,6 +90,7 @@ describe("fetchSaleStatus (poll-state)", () => {
       state: "confirmed",
       usdtReceivedRaw: "8000000000000000000",
       source: "chain",
+      fixture: false,
     });
     expect(fetchFn).toHaveBeenCalledTimes(1);
   });
@@ -116,7 +119,7 @@ describe("fetchSaleStatus (poll-state)", () => {
     expect(res).toEqual({ state: "unrecognised" });
   });
 
-  it("returns unrecognised when proceeds are below the 6 USDT minimum", async () => {
+  it("returns underMinimum when proceeds are below the 6 USDT minimum", async () => {
     const fetchFn = vi.fn(async () => {
       return {
         ok: true,
@@ -128,7 +131,33 @@ describe("fetchSaleStatus (poll-state)", () => {
     });
 
     const res = await fetchSaleStatus(HASH, startMs, true, fetchFn as unknown as typeof fetch, now);
-    expect(res).toEqual({ state: "unrecognised" });
+    expect(res).toEqual({
+      state: "underMinimum",
+      usdtReceivedRaw: "5990000000000000000",
+      source: "chain",
+      fixture: false,
+    });
+  });
+
+  it("propagates fixture: true from fixture mode response", async () => {
+    const fetchFn = vi.fn(async () => {
+      return {
+        ok: true,
+        json: async () => ({
+          state: "confirmed",
+          usdtReceivedRaw: "3500000000000000000000",
+          fixture: true,
+        }),
+      } as Response;
+    });
+
+    const res = await fetchSaleStatus(HASH, startMs, true, fetchFn as unknown as typeof fetch, now);
+    expect(res).toEqual({
+      state: "confirmed",
+      usdtReceivedRaw: "3500000000000000000000",
+      source: "chain",
+      fixture: true,
+    });
   });
 
   it("returns pending when chain is pending and receipts worker is offline/unreconciled (< 120s)", async () => {

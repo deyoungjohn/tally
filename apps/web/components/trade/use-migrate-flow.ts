@@ -35,13 +35,21 @@ export function useMigrateFlow() {
   const [reviewing, setReviewing] = useState<MigrateReview | null>(null);
   const [auto, setAuto] = useState(false);
   const acted = useRef("");
-  const [receiptState, setReceiptState] = useState<"pending" | "failed" | "unreconciled" | null>(
-    null,
-  );
+  const [receiptState, setReceiptState] = useState<
+    "pending" | "failed" | "unreconciled" | "underMinimum" | null
+  >(null);
   const [waitElapsedMs, setWaitElapsedMs] = useState(0);
 
   useEffect(() => {
-    const saved = readPendingMigrate();
+    if (!wallet.address) return;
+    if (pm) {
+      if (pm.wallet && pm.wallet.toLowerCase() !== wallet.address.toLowerCase()) {
+        setPm(null);
+        setStep("idle");
+      }
+      return;
+    }
+    const saved = readPendingMigrate(wallet.address);
     if (saved) {
       setPm(saved);
       if (saved.source) setSource(saved.source);
@@ -60,7 +68,7 @@ export function useMigrateFlow() {
         }
       }
     }
-  }, []);
+  }, [wallet.address, pm]);
 
   const begin = useCallback(
     async (target: SellTarget, toIssuer: "ondo" | "bstock") => {
@@ -79,6 +87,7 @@ export function useMigrateFlow() {
 
       const newPm: PendingMigrate = {
         id: "mig-" + Date.now(),
+        wallet: wallet.address,
         ticker: target.ticker,
         from: target.issuer,
         to: toIssuer,
@@ -233,15 +242,31 @@ export function useMigrateFlow() {
               usdtReceived: res.usdtReceivedRaw,
               step: 2 as const,
               source: res.source,
+              isFixture: res.fixture ?? false,
             };
             writePendingMigrate(updated);
             setPm(updated);
             setWaitingReceipt(false);
             setSource(res.source);
             setStep("interstitial");
-            if (flags.receipts && res.source === "chain") {
-              fetch(`/api/receipts?hash=${pm.saleHash}`).catch(() => {});
-            }
+            return;
+          }
+
+          if (res.state === "underMinimum") {
+            clearPendingMigrate();
+            setWaitingReceipt(false);
+            setReceiptState("underMinimum");
+            setSource(res.source);
+            setPm((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    usdtReceived: res.usdtReceivedRaw,
+                    source: res.source,
+                    isFixture: res.fixture ?? false,
+                  }
+                : null,
+            );
             return;
           }
 
