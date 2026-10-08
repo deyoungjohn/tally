@@ -150,6 +150,42 @@ report. The original 34 passing captures and their fork results remain unchanged
 The next batch's 19 overnight failures remain recorded in the selection report;
 US-session retries are separate and cannot enter this owner manifest.
 
+The chief engineer's after-owner snapshot at block **126440096**
+(2026-10-08 11:59:22 UTC) verifies **30 enabled tokens across 21 tickers**, with no
+missing or unexpected tokens, configuration differences or unavailable reads.
+The three owner-recorded $6 execution proofs for MSFTB, GOOGLon and TSMB passed;
+GOOGLon reports a +0.700% premium. The two bStock proofs have null independent
+references and do not provide a live premium check. Proof files:
+`results/guarded_MSFTB_send_20261008T115228Z.json`,
+`results/guarded_GOOGLon_send_20261008T115255Z.json` and
+`results/guarded_TSMB_send_20261008T115323Z.json`.
+
+The retry results in `captures/depth/batch-2-us-session-results.json` pin all
+38 capture/depth pairs from the two bStock and two Ondo runs. The latest runs are
+`batch1-bstock-us-20261008T133231Z` and `batch1-ondo-us-20261008T133359Z`;
+the earlier 12:51/12:54 runs precede the US regular session. **No newly passing
+token was found**, after recomputing all 116 quote assessments:
+
+- AAPLB, AMZNB, BMNRB, DJTB, FLNCB, GMEB, MRNAB, NFLXB, SOXSB and SQQQB:
+  `stockInfo.price` remains null during both attempts, including the US session;
+  reason **no independent reference price**. No DEX or CLI price was substituted.
+- HOODon, INTCon, METAon, MRNAon, MSTRon, SKHYon and TSLAon: no replayable $6
+  route; the recorded API error is `40374`.
+- MSFTon and SNDKon: absolute premium exceeds 1.5%. Their latest guard quotes
+  compute +295,494,235.227% and +832.129% respectively from the recorded raw
+  outputs, multipliers, declared decimals and reference prices. No alternative
+  output scaling was assumed.
+
+Controls AAPLB/TSLAon and held SOXSB/SQQQB are excluded from new additions. The
+15 remaining candidates fail depth, so **zero new fork tests were run**. All
+34 earlier passing canonical hashes, selections and fork results remain intact.
+`captures/depth/batch-2-manifest.json` is a pinned,
+**non-executable empty audit manifest**;
+the first owner manifest, generated product target and seed file are unchanged.
+`captures/depth/batch-2-keyless-preview.json` records a keyless no-op plan using
+the after-owner snapshot: zero additions and zero `setAsset` calls. It is not a
+live-chain or Forge execution preview; there is no eligible owner batch to run.
+
 Owner and EC2 operations belong to the chief engineer. Run instructions are
 maintained in [the deployment guide](../docs/deployment.md); the orchestrator
 incorporates the exact commands from WO-09's PR. No owner transaction, seed

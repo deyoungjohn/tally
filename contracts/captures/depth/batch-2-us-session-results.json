@@ -1,0 +1,2912 @@
+{
+  "schema": 1,
+  "scope": "US-session retries of the fixed Batch 1 only; no new discovery",
+  "selectionRule": "Only previously unenabled, non-held candidates with passing facts, independent-reference depth and integrity may enter new fork tests. Latest recorded attempts are reported; no reference fallback is permitted.",
+  "runIds": [
+    "batch1-bstock-us-20261008T125128Z",
+    "batch1-bstock-us-20261008T133231Z",
+    "batch1-ondo-us-20261008T125430Z",
+    "batch1-ondo-us-20261008T133359Z"
+  ],
+  "latestRunIds": [
+    "batch1-bstock-us-20261008T133231Z",
+    "batch1-ondo-us-20261008T133359Z"
+  ],
+  "sourcePins": [
+    {
+      "path": "contracts/deploy/batch-1.json",
+      "sha256": "24153ed6b35ea16437dd86907c070a3ab0d04c719566e21b8781ef0ceac44d76"
+    },
+    {
+      "path": "contracts/deploy/assets.json",
+      "sha256": "fad576124776b5a2a392a82b311975d58c3d624a8ee8d1f047b551eeac9050b1"
+    },
+    {
+      "path": "contracts/captures/depth/batch-1-after-owner-20261008T115923Z.json",
+      "sha256": "f479e8814981b6623170b29d9e7a349b556a675eb10682d467f13615775088c9"
+    },
+    {
+      "path": "contracts/captures/depth/batch-1-onchain.json",
+      "sha256": "f05461b7169bbb4d40bec17a61b104144793fe540608505d059c440b24eb99fe"
+    },
+    {
+      "path": "contracts/captures/depth/batch-1-fork-selection.json",
+      "sha256": "91a5a2631e9a0ad9f68037573d3e63e8600a5e031c6717f14ebb8236fb0bc377"
+    }
+  ],
+  "counts": {
+    "recordings": 38,
+    "quoteAssessments": 116,
+    "uniqueTokens": 19,
+    "newNonHeldCandidates": 15,
+    "controls": 2,
+    "held": 2,
+    "newlyDepthPassed": 0,
+    "forksRun": 0,
+    "forkPassed": 0,
+    "forkFailed": 0,
+    "selectedNewAdditions": 0,
+    "latestDropReasons": {
+      "noIndependentReferencePrice": 10,
+      "noRoute": 7,
+      "premiumExceeded": 2
+    }
+  },
+  "previousPassingCaptures": {
+    "count": 34,
+    "hashesVerified": true,
+    "rerun": false,
+    "selectionAndForkResultsChanged": false
+  },
+  "enabledBaseline": {
+    "snapshot": "contracts/captures/depth/batch-1-after-owner-20261008T115923Z.json",
+    "blockNumber": 126440096,
+    "blockUtc": "2026-10-08T11:59:22Z",
+    "comparisonPassed": true,
+    "tokens": 30,
+    "tickers": 21
+  },
+  "forkStatus": "not run: zero newly passing depth captures",
+  "testCounts": {
+    "pass": 0,
+    "skip": 0,
+    "failed": 0
+  },
+  "enablement": "no new additions; existing 30-token state unchanged",
+  "notes": [
+    "The first pair of retry runs precedes the US session; the second pair is at 13:32-13:34 UTC.",
+    "All ten bStock stockInfo.price observations remain null in both attempts, including during US hours.",
+    "MSFTon and SNDKon premiums are recomputed from recorded raw token outputs, declared decimals, multipliers and independent reference values; no alternative scaling or price is assumed.",
+    "Controls AAPLB/TSLAon and held SOXSB/SQQQB remain outside the second manifest.",
+    "No seeds generated, no transaction sent, no live endpoint called, and no canonical captures overwritten."
+  ],
+  "results": [
+    {
+      "token": "AAPLB",
+      "ticker": "AAPL",
+      "kind": "bstock",
+      "address": "0x431a3bee82e2ca41e49895cbece5bb0f76a89b7a",
+      "role": "control",
+      "held": false,
+      "eligibleForNewAddition": false,
+      "attempts": [
+        {
+          "runId": "batch1-bstock-us-20261008T125128Z",
+          "sessionWindow": "before US regular session",
+          "capturedAtUtc": "2026-10-08T12:51:28Z",
+          "blockAtCapture": "126447055",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-bstock-us-20261008T125128Z/AAPLB.json",
+            "sha256": "3a5230ec7c52fcef1848dcd5df5d2053f8f9e43b0e5721f6186a7aaea9d2c7df"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/AAPLB.batch1-bstock-us-20261008T125128Z.json",
+            "sha256": "2a8fdea1aa89f5ce25d62c876ca5253db63eaa65ebb7de51722cf0283a0d1402"
+          },
+          "factsPassed": true,
+          "reference": null,
+          "referenceObservation": {
+            "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+            "sourceField": "stockInfo.price",
+            "attemptedAtUtc": "2026-10-08T12:51:34Z",
+            "capturedAtUtc": "2026-10-08T12:51:34Z",
+            "pricePerShareUsd": null
+          },
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$6/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "no independent reference price"
+          ]
+        },
+        {
+          "runId": "batch1-bstock-us-20261008T133231Z",
+          "sessionWindow": "US regular session",
+          "capturedAtUtc": "2026-10-08T13:32:31Z",
+          "blockAtCapture": "126452525",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-bstock-us-20261008T133231Z/AAPLB.json",
+            "sha256": "586658c575479e9022fa69206666b836b0e705ef894ace39387ef7f1b0344bae"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/AAPLB.batch1-bstock-us-20261008T133231Z.json",
+            "sha256": "80513d6768e351741115bee908ffb658623716cdcfd715e51df73634c55b447e"
+          },
+          "factsPassed": true,
+          "reference": null,
+          "referenceObservation": {
+            "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+            "sourceField": "stockInfo.price",
+            "attemptedAtUtc": "2026-10-08T13:32:37Z",
+            "capturedAtUtc": "2026-10-08T13:32:37Z",
+            "pricePerShareUsd": null
+          },
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$6/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "no independent reference price"
+          ]
+        }
+      ],
+      "latestDepth": "failed",
+      "newlyPassing": false,
+      "fork": "not run: depth gate failed",
+      "selected": false,
+      "reasons": [
+        "no independent reference price",
+        "already-enabled control; not a new addition"
+      ]
+    },
+    {
+      "token": "TSLAon",
+      "ticker": "TSLA",
+      "kind": "ondo",
+      "address": "0x2494b603319d4d9f9715c9f4496d9e0364b59d93",
+      "role": "control",
+      "held": false,
+      "eligibleForNewAddition": false,
+      "attempts": [
+        {
+          "runId": "batch1-ondo-us-20261008T125430Z",
+          "sessionWindow": "before US regular session",
+          "capturedAtUtc": "2026-10-08T12:55:03Z",
+          "blockAtCapture": "126447526",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-ondo-us-20261008T125430Z/TSLAon.json",
+            "sha256": "71c1f93bc360ae50011626913db64f51ad7ee19e635ff5324fcd3bf7845a35e3"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/TSLAon.batch1-ondo-us-20261008T125430Z.json",
+            "sha256": "1bcdc97ea44f5bae25c5cefc94bdacfe91eba7ef1b0070431431d8a66402e920"
+          },
+          "factsPassed": true,
+          "reference": {
+            "source": "authenticated /api/v1/dex/market/rwa/tokens",
+            "tokenContractAddress": "0x2494b603319d4d9f9715c9f4496d9e0364b59d93",
+            "binanceChainId": "56",
+            "tokenSymbol": "TSLAon",
+            "underlyingTicker": "TSLA",
+            "referencePricePerTokenUsd": "373.808",
+            "tokenToShareRatio": "1",
+            "decimals": 18,
+            "referencePricePerShareUsd": "373.808"
+          },
+          "referenceObservation": null,
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            },
+            "$6/guard": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "$6 swap calldata is not replayable SWAP",
+            "cannot compute share price from recorded reference, output and multiplier",
+            "executionMode is not SWAP",
+            "no quoted route"
+          ]
+        },
+        {
+          "runId": "batch1-ondo-us-20261008T133359Z",
+          "sessionWindow": "US regular session",
+          "capturedAtUtc": "2026-10-08T13:34:34Z",
+          "blockAtCapture": "126452792",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-ondo-us-20261008T133359Z/TSLAon.json",
+            "sha256": "d3d007b37f22bdc46a2186138a2ee61a1b7880889764a112d12b2f8b7450865d"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/TSLAon.batch1-ondo-us-20261008T133359Z.json",
+            "sha256": "d6e788bf7348c666ad6d32df567fa92ab6fe902e7187d41aca0b28d77a3efeca"
+          },
+          "factsPassed": true,
+          "reference": {
+            "source": "authenticated /api/v1/dex/market/rwa/tokens",
+            "tokenContractAddress": "0x2494b603319d4d9f9715c9f4496d9e0364b59d93",
+            "binanceChainId": "56",
+            "tokenSymbol": "TSLAon",
+            "underlyingTicker": "TSLA",
+            "referencePricePerTokenUsd": "372.825",
+            "tokenToShareRatio": "1",
+            "decimals": 18,
+            "referencePricePerShareUsd": "372.825"
+          },
+          "referenceObservation": null,
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            },
+            "$6/guard": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "$6 swap calldata is not replayable SWAP",
+            "cannot compute share price from recorded reference, output and multiplier",
+            "executionMode is not SWAP",
+            "no quoted route"
+          ]
+        }
+      ],
+      "latestDepth": "failed",
+      "newlyPassing": false,
+      "fork": "not run: depth gate failed",
+      "selected": false,
+      "reasons": [
+        "$6 swap calldata is not replayable SWAP",
+        "cannot compute share price from recorded reference, output and multiplier",
+        "executionMode is not SWAP",
+        "no quoted route",
+        "already-enabled control; not a new addition"
+      ]
+    },
+    {
+      "token": "GMEB",
+      "ticker": "GME",
+      "kind": "bstock",
+      "address": "0x46ceefda28dd7207059ed19b0acdc026955bb15c",
+      "role": "candidate",
+      "held": false,
+      "eligibleForNewAddition": true,
+      "attempts": [
+        {
+          "runId": "batch1-bstock-us-20261008T125128Z",
+          "sessionWindow": "before US regular session",
+          "capturedAtUtc": "2026-10-08T12:52:07Z",
+          "blockAtCapture": "126447135",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-bstock-us-20261008T125128Z/GMEB.json",
+            "sha256": "4ef369a801e7c25b97d1c8a8c441aa115d96480bcbc19c7a867cbb69aa53129a"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/GMEB.batch1-bstock-us-20261008T125128Z.json",
+            "sha256": "825b53b4661a6526547a93f3c0bf137abebe99af709bd7c8dd11ea342e113028"
+          },
+          "factsPassed": true,
+          "reference": null,
+          "referenceObservation": {
+            "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+            "sourceField": "stockInfo.price",
+            "attemptedAtUtc": "2026-10-08T12:52:10Z",
+            "capturedAtUtc": "2026-10-08T12:52:10Z",
+            "pricePerShareUsd": null
+          },
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$6/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "no independent reference price"
+          ]
+        },
+        {
+          "runId": "batch1-bstock-us-20261008T133231Z",
+          "sessionWindow": "US regular session",
+          "capturedAtUtc": "2026-10-08T13:33:12Z",
+          "blockAtCapture": "126452609",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-bstock-us-20261008T133231Z/GMEB.json",
+            "sha256": "da1777075a0109775eb1917d42952ce76ebaccad4979f97d6785bc2c90cb0226"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/GMEB.batch1-bstock-us-20261008T133231Z.json",
+            "sha256": "c5126471a52bf794810ed19288aa89f1634612b82f73e4560f37de6b8dd4f266"
+          },
+          "factsPassed": true,
+          "reference": null,
+          "referenceObservation": {
+            "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+            "sourceField": "stockInfo.price",
+            "attemptedAtUtc": "2026-10-08T13:33:15Z",
+            "capturedAtUtc": "2026-10-08T13:33:15Z",
+            "pricePerShareUsd": null
+          },
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$6/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "no independent reference price"
+          ]
+        }
+      ],
+      "latestDepth": "failed",
+      "newlyPassing": false,
+      "fork": "not run: depth gate failed",
+      "selected": false,
+      "reasons": [
+        "no independent reference price"
+      ]
+    },
+    {
+      "token": "DJTB",
+      "ticker": "DJT",
+      "kind": "bstock",
+      "address": "0xf2ec508422174ee564de98187db9359d318afb6b",
+      "role": "candidate",
+      "held": false,
+      "eligibleForNewAddition": true,
+      "attempts": [
+        {
+          "runId": "batch1-bstock-us-20261008T125128Z",
+          "sessionWindow": "before US regular session",
+          "capturedAtUtc": "2026-10-08T12:51:53Z",
+          "blockAtCapture": "126447103",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-bstock-us-20261008T125128Z/DJTB.json",
+            "sha256": "a30877a300d508d2eea4bf289a63c22224f0081dd6be921b48b9c7af806c08eb"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/DJTB.batch1-bstock-us-20261008T125128Z.json",
+            "sha256": "8b12647caedb06ed18ae6d99b35d6b96d4d1e54b6a3905d58fb5ea23479d2aeb"
+          },
+          "factsPassed": true,
+          "reference": null,
+          "referenceObservation": {
+            "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+            "sourceField": "stockInfo.price",
+            "attemptedAtUtc": "2026-10-08T12:51:56Z",
+            "capturedAtUtc": "2026-10-08T12:51:56Z",
+            "pricePerShareUsd": null
+          },
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$6/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "no independent reference price"
+          ]
+        },
+        {
+          "runId": "batch1-bstock-us-20261008T133231Z",
+          "sessionWindow": "US regular session",
+          "capturedAtUtc": "2026-10-08T13:32:54Z",
+          "blockAtCapture": "126452575",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-bstock-us-20261008T133231Z/DJTB.json",
+            "sha256": "c79ec44b2573812201a556cb3d444e961fb7d97f8e0fd72ab9852e2933449d4f"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/DJTB.batch1-bstock-us-20261008T133231Z.json",
+            "sha256": "4d1fe6a0af1d17a3ba876c93548b94c6147d11bc6e952a8d2aaa0a6d7180a339"
+          },
+          "factsPassed": true,
+          "reference": null,
+          "referenceObservation": {
+            "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+            "sourceField": "stockInfo.price",
+            "attemptedAtUtc": "2026-10-08T13:32:59Z",
+            "capturedAtUtc": "2026-10-08T13:32:59Z",
+            "pricePerShareUsd": null
+          },
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$6/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "no independent reference price"
+          ]
+        }
+      ],
+      "latestDepth": "failed",
+      "newlyPassing": false,
+      "fork": "not run: depth gate failed",
+      "selected": false,
+      "reasons": [
+        "no independent reference price"
+      ]
+    },
+    {
+      "token": "MRNAB",
+      "ticker": "MRNA",
+      "kind": "bstock",
+      "address": "0x5fd86da9b05abe396fe9d02a4a213a7c00556503",
+      "role": "candidate",
+      "held": false,
+      "eligibleForNewAddition": true,
+      "attempts": [
+        {
+          "runId": "batch1-bstock-us-20261008T125128Z",
+          "sessionWindow": "before US regular session",
+          "capturedAtUtc": "2026-10-08T12:52:14Z",
+          "blockAtCapture": "126447150",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-bstock-us-20261008T125128Z/MRNAB.json",
+            "sha256": "e3221f126b67cec12f2ea4c393c309185c6b870616c71765e0483314b9144a3f"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/MRNAB.batch1-bstock-us-20261008T125128Z.json",
+            "sha256": "39f4a4271865fa2c4b27b0c2be8528465354f52b591353bb25d405b0dd3eb927"
+          },
+          "factsPassed": true,
+          "reference": null,
+          "referenceObservation": {
+            "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+            "sourceField": "stockInfo.price",
+            "attemptedAtUtc": "2026-10-08T12:52:17Z",
+            "capturedAtUtc": "2026-10-08T12:52:17Z",
+            "pricePerShareUsd": null
+          },
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$6/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "no independent reference price"
+          ]
+        },
+        {
+          "runId": "batch1-bstock-us-20261008T133231Z",
+          "sessionWindow": "US regular session",
+          "capturedAtUtc": "2026-10-08T13:33:19Z",
+          "blockAtCapture": "126452625",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-bstock-us-20261008T133231Z/MRNAB.json",
+            "sha256": "1400d9092ce7e746d154c5ee87f52b784680a9267de899781b28ff74e6503ef2"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/MRNAB.batch1-bstock-us-20261008T133231Z.json",
+            "sha256": "bed62e3611f51756857350283c0edfe19c20774ff95319dd5a84a52ffdb8ba83"
+          },
+          "factsPassed": true,
+          "reference": null,
+          "referenceObservation": {
+            "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+            "sourceField": "stockInfo.price",
+            "attemptedAtUtc": "2026-10-08T13:33:22Z",
+            "capturedAtUtc": "2026-10-08T13:33:22Z",
+            "pricePerShareUsd": null
+          },
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$6/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "no independent reference price"
+          ]
+        }
+      ],
+      "latestDepth": "failed",
+      "newlyPassing": false,
+      "fork": "not run: depth gate failed",
+      "selected": false,
+      "reasons": [
+        "no independent reference price"
+      ]
+    },
+    {
+      "token": "AMZNB",
+      "ticker": "AMZN",
+      "kind": "bstock",
+      "address": "0x1a4b499833a79a09ad7cf1d42d7dacf71e92eb00",
+      "role": "candidate",
+      "held": false,
+      "eligibleForNewAddition": true,
+      "attempts": [
+        {
+          "runId": "batch1-bstock-us-20261008T125128Z",
+          "sessionWindow": "before US regular session",
+          "capturedAtUtc": "2026-10-08T12:51:38Z",
+          "blockAtCapture": "126447073",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-bstock-us-20261008T125128Z/AMZNB.json",
+            "sha256": "b5774f2820938e53a1201d642232a39ac00219366a33071c0415a4afb99f3d5d"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/AMZNB.batch1-bstock-us-20261008T125128Z.json",
+            "sha256": "5a6c350657b2dfa23c3a55b19a65a030535f7e7397bf12d9d1ea20d615b7cb64"
+          },
+          "factsPassed": true,
+          "reference": null,
+          "referenceObservation": {
+            "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+            "sourceField": "stockInfo.price",
+            "attemptedAtUtc": "2026-10-08T12:51:42Z",
+            "capturedAtUtc": "2026-10-08T12:51:42Z",
+            "pricePerShareUsd": null
+          },
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$6/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "no independent reference price"
+          ]
+        },
+        {
+          "runId": "batch1-bstock-us-20261008T133231Z",
+          "sessionWindow": "US regular session",
+          "capturedAtUtc": "2026-10-08T13:32:41Z",
+          "blockAtCapture": "126452540",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-bstock-us-20261008T133231Z/AMZNB.json",
+            "sha256": "133a1403104181baf6fb13bc71ff072594b85277d4dd2b4d0153bf8d6713c9ea"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/AMZNB.batch1-bstock-us-20261008T133231Z.json",
+            "sha256": "bfc00d694a26f742d4a7ecb4d690bc4defadabb599e7e8427af5a6c8ede5bb05"
+          },
+          "factsPassed": true,
+          "reference": null,
+          "referenceObservation": {
+            "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+            "sourceField": "stockInfo.price",
+            "attemptedAtUtc": "2026-10-08T13:32:44Z",
+            "capturedAtUtc": "2026-10-08T13:32:44Z",
+            "pricePerShareUsd": null
+          },
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$6/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "no independent reference price"
+          ]
+        }
+      ],
+      "latestDepth": "failed",
+      "newlyPassing": false,
+      "fork": "not run: depth gate failed",
+      "selected": false,
+      "reasons": [
+        "no independent reference price"
+      ]
+    },
+    {
+      "token": "BMNRB",
+      "ticker": "BMNR",
+      "kind": "bstock",
+      "address": "0x3548da95a9effe481e8604664d75e95821e557f5",
+      "role": "candidate",
+      "held": false,
+      "eligibleForNewAddition": true,
+      "attempts": [
+        {
+          "runId": "batch1-bstock-us-20261008T125128Z",
+          "sessionWindow": "before US regular session",
+          "capturedAtUtc": "2026-10-08T12:51:46Z",
+          "blockAtCapture": "126447088",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-bstock-us-20261008T125128Z/BMNRB.json",
+            "sha256": "98590e4796c1e2e80ba7432301dc7b472e53701e5f6a79c5ba1492f6b8b47db1"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/BMNRB.batch1-bstock-us-20261008T125128Z.json",
+            "sha256": "eee3c9cb47476b159f01b2a9ca59e6da3e3fdbf39fab95dd337cdcee3d6153b7"
+          },
+          "factsPassed": true,
+          "reference": null,
+          "referenceObservation": {
+            "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+            "sourceField": "stockInfo.price",
+            "attemptedAtUtc": "2026-10-08T12:51:49Z",
+            "capturedAtUtc": "2026-10-08T12:51:49Z",
+            "pricePerShareUsd": null
+          },
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$6/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "no independent reference price"
+          ]
+        },
+        {
+          "runId": "batch1-bstock-us-20261008T133231Z",
+          "sessionWindow": "US regular session",
+          "capturedAtUtc": "2026-10-08T13:32:48Z",
+          "blockAtCapture": "126452555",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-bstock-us-20261008T133231Z/BMNRB.json",
+            "sha256": "d5bd9ad510383253580f56a8d8d5048a48dbcfdbfd3c5c7ae8f92ef19e6af00e"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/BMNRB.batch1-bstock-us-20261008T133231Z.json",
+            "sha256": "35c3c82916a71cac95cb3d79e8fc9d1441622a0554aefe3017ce98a53fe226a0"
+          },
+          "factsPassed": true,
+          "reference": null,
+          "referenceObservation": {
+            "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+            "sourceField": "stockInfo.price",
+            "attemptedAtUtc": "2026-10-08T13:32:50Z",
+            "capturedAtUtc": "2026-10-08T13:32:50Z",
+            "pricePerShareUsd": null
+          },
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$6/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "no independent reference price"
+          ]
+        }
+      ],
+      "latestDepth": "failed",
+      "newlyPassing": false,
+      "fork": "not run: depth gate failed",
+      "selected": false,
+      "reasons": [
+        "no independent reference price"
+      ]
+    },
+    {
+      "token": "FLNCB",
+      "ticker": "FLNC",
+      "kind": "bstock",
+      "address": "0x4af1d41cd9dd950dca43984b43aaa2a8702714ac",
+      "role": "candidate",
+      "held": false,
+      "eligibleForNewAddition": true,
+      "attempts": [
+        {
+          "runId": "batch1-bstock-us-20261008T125128Z",
+          "sessionWindow": "before US regular session",
+          "capturedAtUtc": "2026-10-08T12:52:00Z",
+          "blockAtCapture": "126447120",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-bstock-us-20261008T125128Z/FLNCB.json",
+            "sha256": "25d121a6d06107b55e11e4635f9788f1080792c4ed5307adf9450cadda3d7c12"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/FLNCB.batch1-bstock-us-20261008T125128Z.json",
+            "sha256": "d77ec8c1eca28af653dc26ff0d8943a3853f454cf2894a70014fb2f0b31024fc"
+          },
+          "factsPassed": true,
+          "reference": null,
+          "referenceObservation": {
+            "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+            "sourceField": "stockInfo.price",
+            "attemptedAtUtc": "2026-10-08T12:52:03Z",
+            "capturedAtUtc": "2026-10-08T12:52:03Z",
+            "pricePerShareUsd": null
+          },
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$6/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "no independent reference price"
+          ]
+        },
+        {
+          "runId": "batch1-bstock-us-20261008T133231Z",
+          "sessionWindow": "US regular session",
+          "capturedAtUtc": "2026-10-08T13:33:03Z",
+          "blockAtCapture": "126452594",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-bstock-us-20261008T133231Z/FLNCB.json",
+            "sha256": "190a17ec211dc87f45888fd5fcd06db898ca2a7abfb76439cb5e487f83aa1ce5"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/FLNCB.batch1-bstock-us-20261008T133231Z.json",
+            "sha256": "4e953fbe19d4858b33c4eb5d252811246afa23c426e5b4195087e47e206adeb4"
+          },
+          "factsPassed": true,
+          "reference": null,
+          "referenceObservation": {
+            "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+            "sourceField": "stockInfo.price",
+            "attemptedAtUtc": "2026-10-08T13:33:08Z",
+            "capturedAtUtc": "2026-10-08T13:33:08Z",
+            "pricePerShareUsd": null
+          },
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$6/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "no independent reference price"
+          ]
+        }
+      ],
+      "latestDepth": "failed",
+      "newlyPassing": false,
+      "fork": "not run: depth gate failed",
+      "selected": false,
+      "reasons": [
+        "no independent reference price"
+      ]
+    },
+    {
+      "token": "NFLXB",
+      "ticker": "NFLX",
+      "kind": "bstock",
+      "address": "0xd6829ea836b6fa224d099d40e54b31262f874631",
+      "role": "candidate",
+      "held": false,
+      "eligibleForNewAddition": true,
+      "attempts": [
+        {
+          "runId": "batch1-bstock-us-20261008T125128Z",
+          "sessionWindow": "before US regular session",
+          "capturedAtUtc": "2026-10-08T12:52:21Z",
+          "blockAtCapture": "126447165",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-bstock-us-20261008T125128Z/NFLXB.json",
+            "sha256": "25974dfca82a04bb2ff88d19c7f9a30956fb1e27fc3c27c18f3d77210f3b1508"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/NFLXB.batch1-bstock-us-20261008T125128Z.json",
+            "sha256": "877ad40c887f8a014163adc85a9ea1b142b81531c352715da00947671dc03a59"
+          },
+          "factsPassed": true,
+          "reference": null,
+          "referenceObservation": {
+            "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+            "sourceField": "stockInfo.price",
+            "attemptedAtUtc": "2026-10-08T12:52:24Z",
+            "capturedAtUtc": "2026-10-08T12:52:24Z",
+            "pricePerShareUsd": null
+          },
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$6/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "no independent reference price"
+          ]
+        },
+        {
+          "runId": "batch1-bstock-us-20261008T133231Z",
+          "sessionWindow": "US regular session",
+          "capturedAtUtc": "2026-10-08T13:33:26Z",
+          "blockAtCapture": "126452640",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-bstock-us-20261008T133231Z/NFLXB.json",
+            "sha256": "ef2e86616e8c42ef8570b7239c94d4f132adabd9c72e28f008253d1e9e957eb1"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/NFLXB.batch1-bstock-us-20261008T133231Z.json",
+            "sha256": "a3d32ff89c689fe28b65061b1d7cbbed0bc09c33a8aa292c06c5f2ff956a90ed"
+          },
+          "factsPassed": true,
+          "reference": null,
+          "referenceObservation": {
+            "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+            "sourceField": "stockInfo.price",
+            "attemptedAtUtc": "2026-10-08T13:33:29Z",
+            "capturedAtUtc": "2026-10-08T13:33:29Z",
+            "pricePerShareUsd": null
+          },
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$6/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "no independent reference price"
+          ]
+        }
+      ],
+      "latestDepth": "failed",
+      "newlyPassing": false,
+      "fork": "not run: depth gate failed",
+      "selected": false,
+      "reasons": [
+        "no independent reference price"
+      ]
+    },
+    {
+      "token": "SKHYon",
+      "ticker": "SKHY",
+      "kind": "ondo",
+      "address": "0x4268f2bfb23a7496504aa5ed1ee325248586299f",
+      "role": "candidate",
+      "held": false,
+      "eligibleForNewAddition": true,
+      "attempts": [
+        {
+          "runId": "batch1-ondo-us-20261008T125430Z",
+          "sessionWindow": "before US regular session",
+          "capturedAtUtc": "2026-10-08T12:54:52Z",
+          "blockAtCapture": "126447500",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-ondo-us-20261008T125430Z/SKHYon.json",
+            "sha256": "bebf1bae077ccd9132ba41e29df8f5ad7b6cceedc4bcb77c62e23cba332d3c0a"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/SKHYon.batch1-ondo-us-20261008T125430Z.json",
+            "sha256": "341394546f0827ec652940e206a3d8f50fe4c8c25475307494becb2e35f85140"
+          },
+          "factsPassed": true,
+          "reference": {
+            "source": "authenticated /api/v1/dex/market/rwa/tokens",
+            "tokenContractAddress": "0x4268f2bfb23a7496504aa5ed1ee325248586299f",
+            "binanceChainId": "56",
+            "tokenSymbol": "SKHYon",
+            "underlyingTicker": "SKHY",
+            "referencePricePerTokenUsd": "175.21",
+            "tokenToShareRatio": "1",
+            "decimals": 18,
+            "referencePricePerShareUsd": "175.21"
+          },
+          "referenceObservation": null,
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            },
+            "$6/guard": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "$6 swap calldata is not replayable SWAP",
+            "cannot compute share price from recorded reference, output and multiplier",
+            "executionMode is not SWAP",
+            "no quoted route"
+          ]
+        },
+        {
+          "runId": "batch1-ondo-us-20261008T133359Z",
+          "sessionWindow": "US regular session",
+          "capturedAtUtc": "2026-10-08T13:34:24Z",
+          "blockAtCapture": "126452769",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-ondo-us-20261008T133359Z/SKHYon.json",
+            "sha256": "8cc9889ca928f75a329bf5e8c744af5fd6e08c27b346e0a90e8edf9f5cf0bf67"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/SKHYon.batch1-ondo-us-20261008T133359Z.json",
+            "sha256": "6580794e6de6e007833e15880eb268026134f860e1421aa21d87d1fba8d77c63"
+          },
+          "factsPassed": true,
+          "reference": {
+            "source": "authenticated /api/v1/dex/market/rwa/tokens",
+            "tokenContractAddress": "0x4268f2bfb23a7496504aa5ed1ee325248586299f",
+            "binanceChainId": "56",
+            "tokenSymbol": "SKHYon",
+            "underlyingTicker": "SKHY",
+            "referencePricePerTokenUsd": "176.834",
+            "tokenToShareRatio": "1",
+            "decimals": 18,
+            "referencePricePerShareUsd": "176.834"
+          },
+          "referenceObservation": null,
+          "integrity": {
+            "pass": false,
+            "grade": "D",
+            "label": "Not Tradable",
+            "reasons": [
+              "Ghost market: almost no trading on BNB Chain"
+            ]
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            },
+            "$6/guard": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "$6 swap calldata is not replayable SWAP",
+            "cannot compute share price from recorded reference, output and multiplier",
+            "executionMode is not SWAP",
+            "no quoted route",
+            "Ghost market: almost no trading on BNB Chain"
+          ]
+        }
+      ],
+      "latestDepth": "failed",
+      "newlyPassing": false,
+      "fork": "not run: depth gate failed",
+      "selected": false,
+      "reasons": [
+        "$6 swap calldata is not replayable SWAP",
+        "cannot compute share price from recorded reference, output and multiplier",
+        "executionMode is not SWAP",
+        "no quoted route",
+        "Ghost market: almost no trading on BNB Chain"
+      ]
+    },
+    {
+      "token": "MSTRon",
+      "ticker": "MSTR",
+      "kind": "ondo",
+      "address": "0x7313ea16493b2f55054df0131a3a14b043ec8992",
+      "role": "candidate",
+      "held": false,
+      "eligibleForNewAddition": true,
+      "attempts": [
+        {
+          "runId": "batch1-ondo-us-20261008T125430Z",
+          "sessionWindow": "before US regular session",
+          "capturedAtUtc": "2026-10-08T12:54:46Z",
+          "blockAtCapture": "126447489",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-ondo-us-20261008T125430Z/MSTRon.json",
+            "sha256": "ab786f3662a074b8243fc13396b04655d6f108a440254390d26cdc2c1e984a4d"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/MSTRon.batch1-ondo-us-20261008T125430Z.json",
+            "sha256": "95b4ee83b0978574cd051f4bd53f3731eb8482c5ac83f026e74f06e974815b18"
+          },
+          "factsPassed": true,
+          "reference": {
+            "source": "authenticated /api/v1/dex/market/rwa/tokens",
+            "tokenContractAddress": "0x7313ea16493b2f55054df0131a3a14b043ec8992",
+            "binanceChainId": "56",
+            "tokenSymbol": "MSTRon",
+            "underlyingTicker": "MSTR",
+            "referencePricePerTokenUsd": "149.754545",
+            "tokenToShareRatio": "1",
+            "decimals": 18,
+            "referencePricePerShareUsd": "149.754545"
+          },
+          "referenceObservation": null,
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            },
+            "$6/guard": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "$6 swap calldata is not replayable SWAP",
+            "cannot compute share price from recorded reference, output and multiplier",
+            "executionMode is not SWAP",
+            "no quoted route"
+          ]
+        },
+        {
+          "runId": "batch1-ondo-us-20261008T133359Z",
+          "sessionWindow": "US regular session",
+          "capturedAtUtc": "2026-10-08T13:34:18Z",
+          "blockAtCapture": "126452757",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-ondo-us-20261008T133359Z/MSTRon.json",
+            "sha256": "e06bbe1270f8182ba06f6a98eef8ef2007b90bcb8f07673f2a4614fc59c052c7"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/MSTRon.batch1-ondo-us-20261008T133359Z.json",
+            "sha256": "95ee27e32bdabd38e6bc294bea72099f638026310d4c9cf9967491849947ca2a"
+          },
+          "factsPassed": true,
+          "reference": {
+            "source": "authenticated /api/v1/dex/market/rwa/tokens",
+            "tokenContractAddress": "0x7313ea16493b2f55054df0131a3a14b043ec8992",
+            "binanceChainId": "56",
+            "tokenSymbol": "MSTRon",
+            "underlyingTicker": "MSTR",
+            "referencePricePerTokenUsd": "149.4975",
+            "tokenToShareRatio": "1",
+            "decimals": 18,
+            "referencePricePerShareUsd": "149.4975"
+          },
+          "referenceObservation": null,
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            },
+            "$6/guard": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "$6 swap calldata is not replayable SWAP",
+            "cannot compute share price from recorded reference, output and multiplier",
+            "executionMode is not SWAP",
+            "no quoted route"
+          ]
+        }
+      ],
+      "latestDepth": "failed",
+      "newlyPassing": false,
+      "fork": "not run: depth gate failed",
+      "selected": false,
+      "reasons": [
+        "$6 swap calldata is not replayable SWAP",
+        "cannot compute share price from recorded reference, output and multiplier",
+        "executionMode is not SWAP",
+        "no quoted route"
+      ]
+    },
+    {
+      "token": "SNDKon",
+      "ticker": "SNDK",
+      "kind": "ondo",
+      "address": "0x4fd67cb8cfedc718bac984b5936abe3330d0a2a4",
+      "role": "candidate",
+      "held": false,
+      "eligibleForNewAddition": true,
+      "attempts": [
+        {
+          "runId": "batch1-ondo-us-20261008T125430Z",
+          "sessionWindow": "before US regular session",
+          "capturedAtUtc": "2026-10-08T12:55:15Z",
+          "blockAtCapture": "126447552",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-ondo-us-20261008T125430Z/SNDKon.json",
+            "sha256": "1319f308d38b3331ac9590f2274106052d3f59faca4ff84a47a56d26d3855aa5"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/SNDKon.batch1-ondo-us-20261008T125430Z.json",
+            "sha256": "8adc0890c34a544a313e9b839577a557675cfbb7a581996dbb01fd176027968e"
+          },
+          "factsPassed": true,
+          "reference": {
+            "source": "authenticated /api/v1/dex/market/rwa/tokens",
+            "tokenContractAddress": "0x4fd67cb8cfedc718bac984b5936abe3330d0a2a4",
+            "binanceChainId": "56",
+            "tokenSymbol": "SNDKon",
+            "underlyingTicker": "SNDK",
+            "referencePricePerTokenUsd": "1671.015",
+            "tokenToShareRatio": "1",
+            "decimals": 18,
+            "referencePricePerShareUsd": "1671.015"
+          },
+          "referenceObservation": null,
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "SWAP",
+              "premiumPct": "834.06700676817541711944660591109477654468151818917537568384699197875703507630135",
+              "pass": false,
+              "reasons": [
+                "absolute premium exceeds 1.5%"
+              ]
+            },
+            "$6/guard": {
+              "mode": "SWAP",
+              "premiumPct": "834.06700676817541711944660591109477654468151818917537568384699197875703507630135",
+              "pass": false,
+              "reasons": [
+                "absolute premium exceeds 1.5%"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "absolute premium exceeds 1.5%"
+          ]
+        },
+        {
+          "runId": "batch1-ondo-us-20261008T133359Z",
+          "sessionWindow": "US regular session",
+          "capturedAtUtc": "2026-10-08T13:34:46Z",
+          "blockAtCapture": "126452818",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-ondo-us-20261008T133359Z/SNDKon.json",
+            "sha256": "a699e25bfe68b59847e4a1719f257cf81715e56e97444eb341243f430ecfbb68"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/SNDKon.batch1-ondo-us-20261008T133359Z.json",
+            "sha256": "48dc667faa44b3c52f9d24d8b79f17e2d6bd870e62dd646f26c3ad9a4229253c"
+          },
+          "factsPassed": true,
+          "reference": {
+            "source": "authenticated /api/v1/dex/market/rwa/tokens",
+            "tokenContractAddress": "0x4fd67cb8cfedc718bac984b5936abe3330d0a2a4",
+            "binanceChainId": "56",
+            "tokenSymbol": "SNDKon",
+            "underlyingTicker": "SNDK",
+            "referencePricePerTokenUsd": "1674.49",
+            "tokenToShareRatio": "1",
+            "decimals": 18,
+            "referencePricePerShareUsd": "1674.49"
+          },
+          "referenceObservation": null,
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "SWAP",
+              "premiumPct": "832.12857605284154855379970628461683141004782776659453947073053962781664086857831",
+              "pass": false,
+              "reasons": [
+                "absolute premium exceeds 1.5%"
+              ]
+            },
+            "$6/guard": {
+              "mode": "SWAP",
+              "premiumPct": "832.12857605284154855379970628461683141004782776659453947073053962781664086857831",
+              "pass": false,
+              "reasons": [
+                "absolute premium exceeds 1.5%"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "absolute premium exceeds 1.5%"
+          ]
+        }
+      ],
+      "latestDepth": "failed",
+      "newlyPassing": false,
+      "fork": "not run: depth gate failed",
+      "selected": false,
+      "reasons": [
+        "absolute premium exceeds 1.5%"
+      ]
+    },
+    {
+      "token": "HOODon",
+      "ticker": "HOOD",
+      "kind": "ondo",
+      "address": "0x19601179a60f55ff6636f5d1a8b6671053bd60a8",
+      "role": "candidate",
+      "held": false,
+      "eligibleForNewAddition": true,
+      "attempts": [
+        {
+          "runId": "batch1-ondo-us-20261008T125430Z",
+          "sessionWindow": "before US regular session",
+          "capturedAtUtc": "2026-10-08T12:54:30Z",
+          "blockAtCapture": "126447453",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-ondo-us-20261008T125430Z/HOODon.json",
+            "sha256": "c42a68515ed164700e07c274a359b605fc8227d9a0bf03ee04fa21f3f13bd68f"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/HOODon.batch1-ondo-us-20261008T125430Z.json",
+            "sha256": "54faba7f9546a4f4acbf523a1d96a562d1b48458ee1e8829b856e94748ac346e"
+          },
+          "factsPassed": true,
+          "reference": {
+            "source": "authenticated /api/v1/dex/market/rwa/tokens",
+            "tokenContractAddress": "0x19601179a60f55ff6636f5d1a8b6671053bd60a8",
+            "binanceChainId": "56",
+            "tokenSymbol": "HOODon",
+            "underlyingTicker": "HOOD",
+            "referencePricePerTokenUsd": "107.248125",
+            "tokenToShareRatio": "1",
+            "decimals": 18,
+            "referencePricePerShareUsd": "107.248125"
+          },
+          "referenceObservation": null,
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            },
+            "$6/guard": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "$6 swap calldata is not replayable SWAP",
+            "cannot compute share price from recorded reference, output and multiplier",
+            "executionMode is not SWAP",
+            "no quoted route"
+          ]
+        },
+        {
+          "runId": "batch1-ondo-us-20261008T133359Z",
+          "sessionWindow": "US regular session",
+          "capturedAtUtc": "2026-10-08T13:34:00Z",
+          "blockAtCapture": "126452717",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-ondo-us-20261008T133359Z/HOODon.json",
+            "sha256": "0ec31faf13d43288c3c93522533f5fa44356264d6b4d554f86eccd40bc00bb15"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/HOODon.batch1-ondo-us-20261008T133359Z.json",
+            "sha256": "2fea1e4ca0ad5dd39758369b7fea6c5ddb11165585bc92a4b8634349be4cb263"
+          },
+          "factsPassed": true,
+          "reference": {
+            "source": "authenticated /api/v1/dex/market/rwa/tokens",
+            "tokenContractAddress": "0x19601179a60f55ff6636f5d1a8b6671053bd60a8",
+            "binanceChainId": "56",
+            "tokenSymbol": "HOODon",
+            "underlyingTicker": "HOOD",
+            "referencePricePerTokenUsd": "107.04",
+            "tokenToShareRatio": "1",
+            "decimals": 18,
+            "referencePricePerShareUsd": "107.04"
+          },
+          "referenceObservation": null,
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            },
+            "$6/guard": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "$6 swap calldata is not replayable SWAP",
+            "cannot compute share price from recorded reference, output and multiplier",
+            "executionMode is not SWAP",
+            "no quoted route"
+          ]
+        }
+      ],
+      "latestDepth": "failed",
+      "newlyPassing": false,
+      "fork": "not run: depth gate failed",
+      "selected": false,
+      "reasons": [
+        "$6 swap calldata is not replayable SWAP",
+        "cannot compute share price from recorded reference, output and multiplier",
+        "executionMode is not SWAP",
+        "no quoted route"
+      ]
+    },
+    {
+      "token": "MSFTon",
+      "ticker": "MSFT",
+      "kind": "ondo",
+      "address": "0x6bfe75d1ad432050ea973c3a3dcd88f02e2444c3",
+      "role": "candidate",
+      "held": false,
+      "eligibleForNewAddition": true,
+      "attempts": [
+        {
+          "runId": "batch1-ondo-us-20261008T125430Z",
+          "sessionWindow": "before US regular session",
+          "capturedAtUtc": "2026-10-08T12:55:08Z",
+          "blockAtCapture": "126447538",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-ondo-us-20261008T125430Z/MSFTon.json",
+            "sha256": "b72375e14ccde2353d1caeae21a07ffc45d6611d971ab4ac0b40e8d423fb9f07"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/MSFTon.batch1-ondo-us-20261008T125430Z.json",
+            "sha256": "f025d6a5b86851855697b9d1294e7d85c75ede64df54b9391be7a1ba6a5587b6"
+          },
+          "factsPassed": true,
+          "reference": {
+            "source": "authenticated /api/v1/dex/market/rwa/tokens",
+            "tokenContractAddress": "0x6bfe75d1ad432050ea973c3a3dcd88f02e2444c3",
+            "binanceChainId": "56",
+            "tokenSymbol": "MSFTon",
+            "underlyingTicker": "MSFT",
+            "referencePricePerTokenUsd": "531.3125257336044",
+            "tokenToShareRatio": "1.005730856892783903",
+            "decimals": 18,
+            "referencePricePerShareUsd": "528.28500000000005548566459659590259295195529852226494391632960992727376897210458"
+          },
+          "referenceObservation": null,
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "SWAP",
+              "premiumPct": "297869015.79735551335365765260941465371073250525877810364190484106859240998580504",
+              "pass": false,
+              "reasons": [
+                "absolute premium exceeds 1.5%"
+              ]
+            },
+            "$6/guard": {
+              "mode": "SWAP",
+              "premiumPct": "297869015.79735551335365765260941465371073250525877810364190484106859240998580504",
+              "pass": false,
+              "reasons": [
+                "absolute premium exceeds 1.5%"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "absolute premium exceeds 1.5%"
+          ]
+        },
+        {
+          "runId": "batch1-ondo-us-20261008T133359Z",
+          "sessionWindow": "US regular session",
+          "capturedAtUtc": "2026-10-08T13:34:39Z",
+          "blockAtCapture": "126452804",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-ondo-us-20261008T133359Z/MSFTon.json",
+            "sha256": "a0636f507b2ba90588e258fe04b296773255e9deb31a260632b9c5a4171363df"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/MSFTon.batch1-ondo-us-20261008T133359Z.json",
+            "sha256": "f1ec31a9999b8bb3dfbfed93fbeebe661a211e809b492cf2e8937a9eeee3d8f5"
+          },
+          "factsPassed": true,
+          "reference": {
+            "source": "authenticated /api/v1/dex/market/rwa/tokens",
+            "tokenContractAddress": "0x6bfe75d1ad432050ea973c3a3dcd88f02e2444c3",
+            "binanceChainId": "56",
+            "tokenSymbol": "MSFTon",
+            "underlyingTicker": "MSFT",
+            "referencePricePerTokenUsd": "535.4175841830653",
+            "tokenToShareRatio": "1.005730856892783903",
+            "decimals": 18,
+            "referencePricePerShareUsd": "532.36666699999995745247249029987767732358960936212051008549419572498591835667132"
+          },
+          "referenceObservation": null,
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "SWAP",
+              "premiumPct": "295494235.22656344631367388871467494089869916507546425339098546647443741880129647",
+              "pass": false,
+              "reasons": [
+                "absolute premium exceeds 1.5%"
+              ]
+            },
+            "$6/guard": {
+              "mode": "SWAP",
+              "premiumPct": "295494235.22656344631367388871467494089869916507546425339098546647443741880129647",
+              "pass": false,
+              "reasons": [
+                "absolute premium exceeds 1.5%"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "absolute premium exceeds 1.5%"
+          ]
+        }
+      ],
+      "latestDepth": "failed",
+      "newlyPassing": false,
+      "fork": "not run: depth gate failed",
+      "selected": false,
+      "reasons": [
+        "absolute premium exceeds 1.5%"
+      ]
+    },
+    {
+      "token": "INTCon",
+      "ticker": "INTC",
+      "kind": "ondo",
+      "address": "0xa528caaa2f96090e379d43f90834c75df54d6e74",
+      "role": "candidate",
+      "held": false,
+      "eligibleForNewAddition": true,
+      "attempts": [
+        {
+          "runId": "batch1-ondo-us-20261008T125430Z",
+          "sessionWindow": "before US regular session",
+          "capturedAtUtc": "2026-10-08T12:54:36Z",
+          "blockAtCapture": "126447465",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-ondo-us-20261008T125430Z/INTCon.json",
+            "sha256": "a034166293a68622479c367d5dde15670fb211937c81e8d2720526b0326feda0"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/INTCon.batch1-ondo-us-20261008T125430Z.json",
+            "sha256": "68991df797f138a004e45a4d9c11e80411faad9ed7cf1f5bbf2ad65858bac883"
+          },
+          "factsPassed": true,
+          "reference": {
+            "source": "authenticated /api/v1/dex/market/rwa/tokens",
+            "tokenContractAddress": "0xa528caaa2f96090e379d43f90834c75df54d6e74",
+            "binanceChainId": "56",
+            "tokenSymbol": "INTCon",
+            "underlyingTicker": "INTC",
+            "referencePricePerTokenUsd": "110.358333",
+            "tokenToShareRatio": "1",
+            "decimals": 18,
+            "referencePricePerShareUsd": "110.358333"
+          },
+          "referenceObservation": null,
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            },
+            "$6/guard": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "$6 swap calldata is not replayable SWAP",
+            "cannot compute share price from recorded reference, output and multiplier",
+            "executionMode is not SWAP",
+            "no quoted route"
+          ]
+        },
+        {
+          "runId": "batch1-ondo-us-20261008T133359Z",
+          "sessionWindow": "US regular session",
+          "capturedAtUtc": "2026-10-08T13:34:06Z",
+          "blockAtCapture": "126452731",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-ondo-us-20261008T133359Z/INTCon.json",
+            "sha256": "f15db49a5e901d2a3c4bf972648d9920b2580eb3f822505d4e1f3df725f98e22"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/INTCon.batch1-ondo-us-20261008T133359Z.json",
+            "sha256": "5cba68934db395b77a6bdc50e64c403d65a88393746830ae1af73ab82ae15770"
+          },
+          "factsPassed": true,
+          "reference": {
+            "source": "authenticated /api/v1/dex/market/rwa/tokens",
+            "tokenContractAddress": "0xa528caaa2f96090e379d43f90834c75df54d6e74",
+            "binanceChainId": "56",
+            "tokenSymbol": "INTCon",
+            "underlyingTicker": "INTC",
+            "referencePricePerTokenUsd": "110.4",
+            "tokenToShareRatio": "1",
+            "decimals": 18,
+            "referencePricePerShareUsd": "110.4"
+          },
+          "referenceObservation": null,
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            },
+            "$6/guard": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "$6 swap calldata is not replayable SWAP",
+            "cannot compute share price from recorded reference, output and multiplier",
+            "executionMode is not SWAP",
+            "no quoted route"
+          ]
+        }
+      ],
+      "latestDepth": "failed",
+      "newlyPassing": false,
+      "fork": "not run: depth gate failed",
+      "selected": false,
+      "reasons": [
+        "$6 swap calldata is not replayable SWAP",
+        "cannot compute share price from recorded reference, output and multiplier",
+        "executionMode is not SWAP",
+        "no quoted route"
+      ]
+    },
+    {
+      "token": "METAon",
+      "ticker": "META",
+      "kind": "ondo",
+      "address": "0xd7df5863a3e742f0c767768cdfcb63f09e0422f6",
+      "role": "candidate",
+      "held": false,
+      "eligibleForNewAddition": true,
+      "attempts": [
+        {
+          "runId": "batch1-ondo-us-20261008T125430Z",
+          "sessionWindow": "before US regular session",
+          "capturedAtUtc": "2026-10-08T12:54:41Z",
+          "blockAtCapture": "126447476",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-ondo-us-20261008T125430Z/METAon.json",
+            "sha256": "bc259afcc71496db4baeabb337c33d4a144f07bbafa89cd25ee1a9187b12b2c6"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/METAon.batch1-ondo-us-20261008T125430Z.json",
+            "sha256": "e685a37b312858d7dd3a4564262a845db68d209d67e54865dec1486d3b98881b"
+          },
+          "factsPassed": true,
+          "reference": {
+            "source": "authenticated /api/v1/dex/market/rwa/tokens",
+            "tokenContractAddress": "0xd7df5863a3e742f0c767768cdfcb63f09e0422f6",
+            "binanceChainId": "56",
+            "tokenSymbol": "METAon",
+            "underlyingTicker": "META",
+            "referencePricePerTokenUsd": "722.1206214679077",
+            "tokenToShareRatio": "1.002826918305349555",
+            "decimals": 18,
+            "referencePricePerShareUsd": "720.08500000000006550265434737641699772342534212939431558524109473148093852425833"
+          },
+          "referenceObservation": null,
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            },
+            "$6/guard": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "$6 swap calldata is not replayable SWAP",
+            "cannot compute share price from recorded reference, output and multiplier",
+            "executionMode is not SWAP",
+            "no quoted route"
+          ]
+        },
+        {
+          "runId": "batch1-ondo-us-20261008T133359Z",
+          "sessionWindow": "US regular session",
+          "capturedAtUtc": "2026-10-08T13:34:12Z",
+          "blockAtCapture": "126452745",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-ondo-us-20261008T133359Z/METAon.json",
+            "sha256": "797863b49526ba60a8151160a557e176403253216d904b30c5c4c0b727eacb12"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/METAon.batch1-ondo-us-20261008T133359Z.json",
+            "sha256": "392b1c6478ebf87f8181bd8eeef0b92a7b89453ee9a0016952703446f75bc9b7"
+          },
+          "factsPassed": true,
+          "reference": {
+            "source": "authenticated /api/v1/dex/market/rwa/tokens",
+            "tokenContractAddress": "0xd7df5863a3e742f0c767768cdfcb63f09e0422f6",
+            "binanceChainId": "56",
+            "tokenSymbol": "METAon",
+            "underlyingTicker": "META",
+            "referencePricePerTokenUsd": "726.2723249096917",
+            "tokenToShareRatio": "1.002826918305349555",
+            "decimals": 18,
+            "referencePricePerShareUsd": "724.22499999999991875978445246187903538589156826072428617570845384762076341462043"
+          },
+          "referenceObservation": null,
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            },
+            "$6/guard": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "$6 swap calldata is not replayable SWAP",
+            "cannot compute share price from recorded reference, output and multiplier",
+            "executionMode is not SWAP",
+            "no quoted route"
+          ]
+        }
+      ],
+      "latestDepth": "failed",
+      "newlyPassing": false,
+      "fork": "not run: depth gate failed",
+      "selected": false,
+      "reasons": [
+        "$6 swap calldata is not replayable SWAP",
+        "cannot compute share price from recorded reference, output and multiplier",
+        "executionMode is not SWAP",
+        "no quoted route"
+      ]
+    },
+    {
+      "token": "MRNAon",
+      "ticker": "MRNA",
+      "kind": "ondo",
+      "address": "0x01486675da0764ee780ea7cb65c33062e9b2d28c",
+      "role": "candidate",
+      "held": false,
+      "eligibleForNewAddition": true,
+      "attempts": [
+        {
+          "runId": "batch1-ondo-us-20261008T125430Z",
+          "sessionWindow": "before US regular session",
+          "capturedAtUtc": "2026-10-08T12:54:57Z",
+          "blockAtCapture": "126447513",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-ondo-us-20261008T125430Z/MRNAon.json",
+            "sha256": "fb8d375d3c43555460e6dbaea5588395fda7f4632263a1fb046e5183b13ae0a1"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/MRNAon.batch1-ondo-us-20261008T125430Z.json",
+            "sha256": "5d9b9bd0a9e46a04e03ff88e624d08bd4cc2c6ceb29986b8558819acecbf1b45"
+          },
+          "factsPassed": true,
+          "reference": {
+            "source": "authenticated /api/v1/dex/market/rwa/tokens",
+            "tokenContractAddress": "0x01486675da0764ee780ea7cb65c33062e9b2d28c",
+            "binanceChainId": "56",
+            "tokenSymbol": "MRNAon",
+            "underlyingTicker": "MRNA",
+            "referencePricePerTokenUsd": "196.05",
+            "tokenToShareRatio": "1",
+            "decimals": 18,
+            "referencePricePerShareUsd": "196.05"
+          },
+          "referenceObservation": null,
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            },
+            "$6/guard": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "$6 swap calldata is not replayable SWAP",
+            "cannot compute share price from recorded reference, output and multiplier",
+            "executionMode is not SWAP",
+            "no quoted route"
+          ]
+        },
+        {
+          "runId": "batch1-ondo-us-20261008T133359Z",
+          "sessionWindow": "US regular session",
+          "capturedAtUtc": "2026-10-08T13:34:29Z",
+          "blockAtCapture": "126452781",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-ondo-us-20261008T133359Z/MRNAon.json",
+            "sha256": "b3dac2d5e46e82e9c4f8fe66bd5afaba0351ab8a339ef40fb99f3123f5af4054"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/MRNAon.batch1-ondo-us-20261008T133359Z.json",
+            "sha256": "459fe8d454796d8a9d8e2cd93b206b801d6ba71a113f6d13e68fae158f9e2fc6"
+          },
+          "factsPassed": true,
+          "reference": {
+            "source": "authenticated /api/v1/dex/market/rwa/tokens",
+            "tokenContractAddress": "0x01486675da0764ee780ea7cb65c33062e9b2d28c",
+            "binanceChainId": "56",
+            "tokenSymbol": "MRNAon",
+            "underlyingTicker": "MRNA",
+            "referencePricePerTokenUsd": "195.3",
+            "tokenToShareRatio": "1",
+            "decimals": 18,
+            "referencePricePerShareUsd": "195.3"
+          },
+          "referenceObservation": null,
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            },
+            "$6/guard": {
+              "mode": "ERROR",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "executionMode is not SWAP",
+                "no quoted route",
+                "$6 swap calldata is not replayable SWAP",
+                "cannot compute share price from recorded reference, output and multiplier"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "$6 swap calldata is not replayable SWAP",
+            "cannot compute share price from recorded reference, output and multiplier",
+            "executionMode is not SWAP",
+            "no quoted route"
+          ]
+        }
+      ],
+      "latestDepth": "failed",
+      "newlyPassing": false,
+      "fork": "not run: depth gate failed",
+      "selected": false,
+      "reasons": [
+        "$6 swap calldata is not replayable SWAP",
+        "cannot compute share price from recorded reference, output and multiplier",
+        "executionMode is not SWAP",
+        "no quoted route"
+      ]
+    },
+    {
+      "token": "SOXSB",
+      "ticker": "SOXS",
+      "kind": "bstock",
+      "address": "0xe28cd11c99af2df76bb8ada4cd0ef3904378280f",
+      "role": "candidate",
+      "held": true,
+      "eligibleForNewAddition": false,
+      "attempts": [
+        {
+          "runId": "batch1-bstock-us-20261008T125128Z",
+          "sessionWindow": "before US regular session",
+          "capturedAtUtc": "2026-10-08T12:52:28Z",
+          "blockAtCapture": "126447180",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-bstock-us-20261008T125128Z/SOXSB.json",
+            "sha256": "3749630b265ba4987e88e056d3141cf89f6fbb0be7b12ad1d100a579ec52e886"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/SOXSB.batch1-bstock-us-20261008T125128Z.json",
+            "sha256": "0f7404f198c43a0c6b25cd5dc9ef0b356ff1c13b545af568a8fe62aa3d8ddc37"
+          },
+          "factsPassed": true,
+          "reference": null,
+          "referenceObservation": {
+            "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+            "sourceField": "stockInfo.price",
+            "attemptedAtUtc": "2026-10-08T12:52:31Z",
+            "capturedAtUtc": "2026-10-08T12:52:31Z",
+            "pricePerShareUsd": null
+          },
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$6/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "no independent reference price"
+          ]
+        },
+        {
+          "runId": "batch1-bstock-us-20261008T133231Z",
+          "sessionWindow": "US regular session",
+          "capturedAtUtc": "2026-10-08T13:33:33Z",
+          "blockAtCapture": "126452655",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-bstock-us-20261008T133231Z/SOXSB.json",
+            "sha256": "5453736cafabebeba92ad1105cbada738e87d4333878711ccada770bbbd71fb0"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/SOXSB.batch1-bstock-us-20261008T133231Z.json",
+            "sha256": "33e865d3fcfb2bfb6ab8a74a819dc2ea4f7c041e27c5e4a5a62f05fc7bf81f8b"
+          },
+          "factsPassed": true,
+          "reference": null,
+          "referenceObservation": {
+            "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+            "sourceField": "stockInfo.price",
+            "attemptedAtUtc": "2026-10-08T13:33:36Z",
+            "capturedAtUtc": "2026-10-08T13:33:36Z",
+            "pricePerShareUsd": null
+          },
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$6/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "no independent reference price"
+          ]
+        }
+      ],
+      "latestDepth": "failed",
+      "newlyPassing": false,
+      "fork": "not run: depth gate failed",
+      "selected": false,
+      "reasons": [
+        "no independent reference price",
+        "held leveraged/inverse product; no owner approval"
+      ]
+    },
+    {
+      "token": "SQQQB",
+      "ticker": "SQQQ",
+      "kind": "bstock",
+      "address": "0x25e572b466d152604d9e6c3e53b432b978825342",
+      "role": "candidate",
+      "held": true,
+      "eligibleForNewAddition": false,
+      "attempts": [
+        {
+          "runId": "batch1-bstock-us-20261008T125128Z",
+          "sessionWindow": "before US regular session",
+          "capturedAtUtc": "2026-10-08T12:52:35Z",
+          "blockAtCapture": "126447195",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-bstock-us-20261008T125128Z/SQQQB.json",
+            "sha256": "9d46e5c517091c70b52e6df7c2c19379d2225ee975238297c573fb569a9e97a0"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/SQQQB.batch1-bstock-us-20261008T125128Z.json",
+            "sha256": "5b064bb034bc0225cb26d2529f20992c89b04e223e8c6d90c4d09c6cacd34be7"
+          },
+          "factsPassed": true,
+          "reference": null,
+          "referenceObservation": {
+            "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+            "sourceField": "stockInfo.price",
+            "attemptedAtUtc": "2026-10-08T12:52:37Z",
+            "capturedAtUtc": "2026-10-08T12:52:37Z",
+            "pricePerShareUsd": null
+          },
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$6/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "no independent reference price"
+          ]
+        },
+        {
+          "runId": "batch1-bstock-us-20261008T133231Z",
+          "sessionWindow": "US regular session",
+          "capturedAtUtc": "2026-10-08T13:33:40Z",
+          "blockAtCapture": "126452671",
+          "depthEvidence": {
+            "path": "contracts/captures/depth/batch1-bstock-us-20261008T133231Z/SQQQB.json",
+            "sha256": "4067ff6da570a3d325530540ab07dcec26e18c2f5816d6656da8a2dbe59c7544"
+          },
+          "forkCapture": {
+            "path": "contracts/captures/SQQQB.batch1-bstock-us-20261008T133231Z.json",
+            "sha256": "248293a8ff9a5a0cf4da2dc2fb5288e983f57fd525f03cf55ca9ab916388d0b1"
+          },
+          "factsPassed": true,
+          "reference": null,
+          "referenceObservation": {
+            "source": "public /bapi/defi/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai",
+            "sourceField": "stockInfo.price",
+            "attemptedAtUtc": "2026-10-08T13:33:43Z",
+            "capturedAtUtc": "2026-10-08T13:33:43Z",
+            "pricePerShareUsd": null
+          },
+          "integrity": {
+            "pass": true,
+            "grade": "A",
+            "label": "Tradable",
+            "reasons": []
+          },
+          "quotes": {
+            "$6/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$6/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/eoa": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            },
+            "$100/guard": {
+              "mode": "SWAP",
+              "premiumPct": null,
+              "pass": false,
+              "reasons": [
+                "no independent reference price"
+              ]
+            }
+          },
+          "depth": "failed",
+          "reasons": [
+            "no independent reference price"
+          ]
+        }
+      ],
+      "latestDepth": "failed",
+      "newlyPassing": false,
+      "fork": "not run: depth gate failed",
+      "selected": false,
+      "reasons": [
+        "no independent reference price",
+        "held leveraged/inverse product; no owner approval"
+      ]
+    }
+  ]
+}
