@@ -12,6 +12,7 @@
 - `apps/worker/src/jobs/autopilot.ts`
 - `apps/web/modules/autopilot/**`, `apps/web/app/dev/autopilot/**`
 - Slice A2 (2026-10-07): new `apps/web/app/api/session/autopilot/**` (policy routes) and the position collector inside `apps/worker/src/jobs/autopilot.ts`; spec `docs/prompts/wo08-autopilot-producers.md`. WO-13 comes after it.
+- Approved 2026-10-08 (`docs/prompts/wo08-total-return.md`, "Dividends by issuer"): `packages/mod-statement/src/total-return*` and `packages/mod-statement/scripts/seed-multiplier-history.ts`, `data/multiplier-history-seed.json`, `apps/web/modules/statement/**`, `apps/web/app/api/vm/total-return/**`, the `statement` job `apps/worker/src/jobs/statement.ts` (additive: history and budgeted dividend reads), and, in `apps/worker/src/jobs/prune.ts` and `apps/worker/src/prune.test.ts`, only the allowlist lines for the new kinds `multiplier-history` and `dividend-info`.
 - `packages/modkit/src/index.ts` (the `prune` function only) and `packages/modkit/src/index.test.ts` (the one evidence-protection test only). Approved 2026-10-06, tightening only: see the approval at the end of this file.
 
 ## Tasks
