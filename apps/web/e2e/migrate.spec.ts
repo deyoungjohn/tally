@@ -437,6 +437,125 @@ test.describe("Migrate review", () => {
   });
 });
 
+test("pending-forever falls to typed amount after the cap, cancel and resume work", async ({
+  page,
+}) => {
+  await flags(page, true);
+  await mockWallet(page);
+
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "tally.pendingMigrate",
+      JSON.stringify({
+        id: "test",
+        ticker: "NVDA",
+        from: "ondo",
+        to: "bstock",
+        step: 1,
+        saleHash: "0xabc",
+        createdAt: Date.now(),
+        // mock it to be 121 seconds ago
+        pollStartedAt: Date.now() - 121000,
+      }),
+    );
+  });
+
+  await page.route("**/api/receipts*", async (route) => {
+    await route.fulfill({ json: { state: "pending" } });
+  });
+
+  await page.goto("/portfolio");
+
+  // It should immediately fall back to the typed amount because of the pollStartedAt being old
+  await expect(
+    page.getByRole("dialog").filter({ hasText: "We could not confirm the amount automatically" }),
+  ).toBeVisible();
+
+  // Test that "Cancel" works
+  const cancelBtn = page.getByRole("button", { name: "Cancel" });
+  await expect(cancelBtn).toBeVisible();
+  await cancelBtn.click();
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+});
+
+test("failed sale says it did not go through and clears", async ({ page }) => {
+  await flags(page, true);
+  await mockWallet(page);
+
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "tally.pendingMigrate",
+      JSON.stringify({
+        id: "test",
+        ticker: "NVDA",
+        from: "ondo",
+        to: "bstock",
+        step: 1,
+        saleHash: "0xabc",
+        createdAt: Date.now(),
+        pollStartedAt: Date.now(),
+      }),
+    );
+  });
+
+  await page.route("**/api/receipts*", async (route) => {
+    await route.fulfill({ json: { state: "failed" } });
+  });
+
+  await page.goto("/portfolio");
+
+  await expect(
+    page
+      .getByRole("dialog")
+      .filter({ hasText: "The sale transaction failed and did not go through." }),
+  ).toBeVisible({ timeout: 10000 });
+
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+});
+
+test("Migrate appears only for stocks with both issuers enabled", async ({ page }) => {
+  await flags(page, true);
+  await mockWallet(page);
+  const part = (symbol: string, issuer: string, address: string) => ({
+    ticker: "NFLX",
+    symbol,
+    issuer,
+    address,
+    tokens: 10,
+    shares: 10,
+    valueUsd: 500,
+    multiplier: 1,
+    grade: "A",
+  });
+  await page.route("**/api/portfolio*", (route) =>
+    route.fulfill({
+      json: {
+        address: USER,
+        asOf: new Date().toISOString(),
+        groups: [
+          {
+            ticker: "NFLX",
+            shares: 20,
+            valueUsd: 1000,
+            referencePrice: 50,
+            parts: [part("NFLXon", "ondo", "0x01"), part("NFLXB", "bstock", "0x02")],
+          },
+        ],
+        totalValueUsd: 1000,
+        wallet: { usdt: 10, bnb: 0.1 },
+        failed: [],
+      },
+    }),
+  );
+  await page.goto("/portfolio");
+  await expect(page.getByTestId("group-NFLX")).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByTestId("migrate-NFLXon")).toHaveCount(0);
+  await expect(page.getByTestId("migrate-NFLXB")).toHaveCount(0);
+  // Buy more names an enabled issuer only (NFLX is enabled for Ondo).
+  await expect(page.getByRole("link", { name: /Buy more NFLXon/ })).toBeVisible();
+});
+
 test.describe("Migrate stocks tab on the Trade page", () => {
   test.use({ viewport: { width: 1280, height: 800 } });
 

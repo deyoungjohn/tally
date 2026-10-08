@@ -34,6 +34,10 @@ export function useMigrateFlow() {
   const [reviewing, setReviewing] = useState<MigrateReview | null>(null);
   const [auto, setAuto] = useState(false);
   const acted = useRef("");
+  const [receiptState, setReceiptState] = useState<"pending" | "failed" | "unreconciled" | null>(
+    null,
+  );
+  const [waitElapsedMs, setWaitElapsedMs] = useState(0);
 
   useEffect(() => {
     const saved = readPendingMigrate();
@@ -109,6 +113,8 @@ export function useMigrateFlow() {
     setPm(null);
     setStep("idle");
     setWaitingReceipt(false);
+    setReceiptState(null);
+    setWaitElapsedMs(0);
     sell.close();
   }, [sell]);
 
@@ -176,11 +182,12 @@ export function useMigrateFlow() {
           setPm(updated);
         }
       } else if (sell.phase.name === "confirmed") {
-        const updated = { ...pm, saleHash: sell.phase.hash };
+        const updated = { ...pm, saleHash: sell.phase.hash, pollStartedAt: Date.now() };
         writePendingMigrate(updated);
         setPm(updated);
         setStep("interstitial");
         setWaitingReceipt(true);
+        setReceiptState("pending");
       }
     }
   }, [pm, step, sell.phase]);
@@ -190,15 +197,38 @@ export function useMigrateFlow() {
       const controller = new AbortController();
       let timer: ReturnType<typeof setTimeout> | undefined;
 
-      const poll = async (retries = 0) => {
+      let startMs = pm.pollStartedAt;
+      if (!startMs) {
+        startMs = Date.now();
+        const updated = { ...pm, pollStartedAt: startMs };
+        writePendingMigrate(updated);
+        setPm(updated);
+      }
+
+      setReceiptState("pending");
+      const updateElapsed = () => {
+        setWaitElapsedMs(Date.now() - startMs!);
+      };
+      updateElapsed();
+      const intervalTimer = setInterval(updateElapsed, 1000);
+
+      const poll = async () => {
         if (!pm.saleHash) return;
+
+        if (Date.now() - startMs! > 120_000) {
+          setWaitingReceipt(false);
+          setSource("wallet");
+          setStep("interstitial");
+          return;
+        }
+
         try {
           const res = await fetch(`/api/receipts?hash=${pm.saleHash}`, {
             signal: controller.signal,
           });
           if (res.status === 404) {
-            if (flags.receipts && retries < 24) {
-              timer = setTimeout(() => poll(retries + 1), 5000);
+            if (flags.receipts) {
+              timer = setTimeout(poll, 5000);
               return;
             }
             setWaitingReceipt(false);
@@ -220,22 +250,40 @@ export function useMigrateFlow() {
                 setStep("interstitial");
                 return;
               }
+            } else if (data.state === "failed") {
+              setWaitingReceipt(false);
+              setReceiptState("failed");
+              return;
+            } else if (data.state === "unreconciled") {
+              // Keep polling, it might reconcile soon
             }
           }
 
-          timer = setTimeout(() => poll(retries + 1), 5000);
-        } catch {
-          timer = setTimeout(() => poll(retries + 1), 5000);
+          timer = setTimeout(poll, 5000);
+        } catch (e) {
+          if ((e instanceof Error && e.name === "AbortError") || controller.signal.aborted) return;
+          timer = setTimeout(poll, 5000);
         }
       };
-      poll(0);
+      poll();
 
       return () => {
         controller.abort();
         clearTimeout(timer);
+        clearInterval(intervalTimer);
       };
     }
-  }, [step, pm, waitingReceipt, wallet.address, flags.receipts]);
+  }, [step, pm, waitingReceipt, flags.receipts]);
+
+  const checkAgain = useCallback(() => {
+    if (pm) {
+      const updated = { ...pm, pollStartedAt: Date.now() };
+      writePendingMigrate(updated);
+      setPm(updated);
+      setWaitingReceipt(true);
+      setReceiptState("pending");
+    }
+  }, [pm]);
 
   const resumeStep2 = useCallback(
     (manualUsdt?: string) => {
@@ -308,6 +356,9 @@ export function useMigrateFlow() {
     resumeStep2,
     waitingReceipt,
     source,
+    receiptState,
+    waitElapsedMs,
+    checkAgain,
     onBuyDone,
     onBuySigning,
   };

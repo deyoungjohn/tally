@@ -108,11 +108,24 @@ test.describe("amount rules and errors", () => {
     await expect(page.getByTestId("buy-button")).toBeDisabled();
   });
 
-  test("a stock ShareGuard isn't set up for can be compared but not bought", async ({ page }) => {
+  test("NFLX is enabled for Ondo only: bStock is listed but never offered, and the recorded Ondo row is not executable", async ({
+    page,
+  }) => {
     await mockWallet(page);
     await page.goto("/trade/NFLX");
-    await expect(page.getByTestId("buy-button")).toContainText("Quotes only for now");
+    await expect(page.getByTestId("row-NFLXB")).toContainText("Not enabled yet");
+    // In the recorded fixtures NFLXon is a ghost market (not executable) and NFLXB is not enabled, so nothing can be bought.
     await expect(page.getByTestId("buy-button")).toBeDisabled();
+  });
+
+  test("an unenabled ticker is still refused by the trade-plan route", async ({ request }) => {
+    const response = await request.post("/api/trade/plan", {
+      data: { ticker: "DJT", issuer: "bstock", usd: 6, user: USER },
+    });
+    expect(response.status()).toBe(409);
+    expect(await response.json()).toMatchObject({
+      error: { kind: "not_buyable", message: "DJT can't be bought through Tally yet." },
+    });
   });
 
   test("'price moved' from the plan shows the plain message and offers a new quote", async ({
@@ -465,5 +478,36 @@ test.describe("trade stages event regression (WO-01)", () => {
     for (const ev of events) {
       expect(ev.intentId).toBe(intentId);
     }
+  });
+});
+
+test.describe("per-issuer enablement", () => {
+  test.use({ viewport: { width: 1280, height: 900 } });
+
+  test("an issuer that is not enabled is listed as disabled, never offered to buy", async ({
+    page,
+  }) => {
+    await page.goto("/trade/NFLX");
+    const on = page.getByTestId("row-NFLXon");
+    const b = page.getByTestId("row-NFLXB");
+    await expect(on).toBeVisible({ timeout: 20_000 });
+    await expect(b).toContainText("Not enabled yet");
+    await expect(b.getByRole("button", { name: /NFLXB/ })).toBeDisabled();
+    await expect(b.locator(".chip-best")).toHaveCount(0);
+  });
+
+  test("the stock picker has a search box that filters the list", async ({ page }) => {
+    await page.goto("/trade/NVDA");
+    await page.getByTestId("stock-picker").click();
+    const search = page.getByTestId("stock-search");
+    await expect(search).toBeVisible();
+    await search.fill("tsm");
+    await expect(page.getByRole("option", { name: /TSM/ })).toBeVisible();
+    await expect(page.getByRole("option", { name: /AAPL/ })).toHaveCount(0);
+    await search.fill("zzzz");
+    await expect(page.getByTestId("stock-search-empty")).toBeVisible();
+    await search.fill("tsla");
+    await page.getByRole("option", { name: /TSLA/ }).click();
+    await expect(page).toHaveURL(/\/trade\/TSLA/);
   });
 });

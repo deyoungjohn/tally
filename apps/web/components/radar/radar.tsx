@@ -11,7 +11,7 @@ import { nameOf, tokenPair } from "@/lib/tickers";
 import { FlagBadge, GradeBadge, LiquidityBadge, TokenLogo } from "@/components/trade/badges";
 import { useJson } from "@/lib/hooks/use-json";
 import { ISSUER_LABEL, fmtUsd } from "@/lib/format";
-import { isBuyable } from "@/lib/tickers";
+import { isTokenBuyable, issuersOf } from "@/lib/tickers";
 import { Tip } from "@/components/ui/tooltip";
 import { LearnMore } from "@/components/learn-more";
 import { useModuleFlagsState } from "@/lib/hooks/use-flags";
@@ -93,7 +93,7 @@ export function RadarRowCard({ r }: { r: RadarRow }) {
         </div>
         <div className="flex flex-col items-end gap-2">
           <GradeBadge grade={r.grade} />
-          {r.executable && isBuyable(r.ticker) ? (
+          {r.executable && isTokenBuyable(r.ticker, r.issuer) ? (
             <Link
               href={`/trade/${r.ticker}`}
               className="inline-flex min-h-[44px] items-center gap-1 text-[14px] text-blue"
@@ -101,7 +101,7 @@ export function RadarRowCard({ r }: { r: RadarRow }) {
               Buy <ArrowRight size={13} aria-hidden />
             </Link>
           ) : (
-            <span className="t-meta">{r.executable ? "Compare only" : "Not buyable"}</span>
+            <span className="t-meta">{r.executable ? "Not enabled yet" : "Not buyable"}</span>
           )}
         </div>
       </div>
@@ -114,7 +114,10 @@ function radarSuggestions(rows: RadarRow[]): MorphingSearchItem[] {
   const byTicker = new Map<string, RadarRow[]>();
   for (const r of rows) byTicker.set(r.ticker, [...(byTicker.get(r.ticker) ?? []), r]);
   const tickers = [...byTicker.entries()]
-    .sort(([a], [b]) => Number(isBuyable(b)) - Number(isBuyable(a)) || a.localeCompare(b))
+    .sort(
+      ([a], [b]) =>
+        Number(issuersOf(b).length > 0) - Number(issuersOf(a).length > 0) || a.localeCompare(b),
+    )
     .map(([ticker, list]): MorphingSearchItem => {
       const issuers = [...new Set(list.map((r) => ISSUER_LABEL[r.issuer]))].join(", ");
       return {

@@ -56,6 +56,14 @@ it("empty pie VM explains missing observations and never claims a live source", 
     reason: expect.stringContaining("Empty pie"),
   });
 });
+it("default templates use the expanded product list while Mag 7 stays a preview", async () => {
+  const vm = await loadPies();
+  const mag7 = vm.templates.templates.find((template) => template.id === "mag7-preview")!;
+  expect(mag7.unavailable).toEqual([]);
+  expect(mag7.executable).toBe(false);
+  expect(vm.empty).toBe(true);
+  expect(vm.plan.legs).toEqual([]);
+});
 it("below-threshold VM shows current vs target drift and no legs", () => {
   const input = {
     ...base,

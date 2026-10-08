@@ -17,7 +17,8 @@ import { useJson } from "@/lib/hooks/use-json";
 import { MIN_SELL_USDT } from "@tally/config";
 import { Tip } from "@/components/ui/tooltip";
 import { ISSUER_LABEL, fmtUsd } from "@/lib/format";
-import { isBuyable, tokenPair } from "@/lib/tickers";
+import { tokenPair } from "@/lib/tickers";
+import { buyMoreToken, canMigrateTicker } from "./enablement";
 import { companyName } from "./company-name";
 import {
   SmallBalancesLink,
@@ -44,6 +45,10 @@ export function HoldingGroup({
   onSell?: (p: Part) => void;
   onMigrate?: (p: Part) => void;
 }) {
+  const buyMore = buyMoreToken(
+    g.ticker,
+    g.parts.map((p) => ({ ...p, valueUsd: p.valueUsd ?? 0 })),
+  );
   return (
     <li className="panel list-none p-5" data-testid={`group-${g.ticker}`}>
       <div className="flex items-center gap-3">
@@ -139,7 +144,7 @@ export function HoldingGroup({
                     )
                   ) : null}
 
-                  {onMigrate ? (
+                  {onMigrate && canMigrateTicker(p.ticker) ? (
                     <OndoGate ticker={p.ticker} issuer={p.issuer}>
                       {(ondoClosed) => {
                         let reason: string | null = null;
@@ -147,8 +152,6 @@ export function HoldingGroup({
                           reason = "No market to exit this token on BNB Chain";
                         } else if (ondoClosed) {
                           reason = ondoClosed;
-                        } else if (!isBuyable(p.ticker)) {
-                          reason = `${p.ticker} can't be bought through Tally yet.`;
                         } else if (p.valueUsd !== null && p.valueUsd < MIN_SELL_USDT) {
                           reason =
                             "Too small to migrate: the buy needs at least 6 USDT. You can sell to USDT instead.";
@@ -190,15 +193,12 @@ export function HoldingGroup({
             </li>
           ))}
       </ul>
-      {example ? null : (
+      {example || !buyMore ? null : (
         <Link
           href={`/trade/${g.ticker}`}
           className="mt-3 inline-flex min-h-[44px] items-center gap-1 text-[14px] text-blue"
         >
-          Buy more{" "}
-          {[...g.parts].sort((a, b) => (b.valueUsd ?? 0) - (a.valueUsd ?? 0))[0]?.symbol ??
-            g.ticker}{" "}
-          <ArrowRight size={13} aria-hidden />
+          Buy more {buyMore.symbol} <ArrowRight size={13} aria-hidden />
         </Link>
       )}
     </li>

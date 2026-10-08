@@ -274,9 +274,13 @@ export function SelectValue({ placeholder, className }: SelectValueProps) {
 export interface SelectContentProps {
   className?: string;
   children: ReactNode;
+  /** Shown above the list (a search box). An element marked `data-select-search` takes focus when the panel opens. Added by Tally. */
+  header?: ReactNode;
+  /** Caps the list's height in px; it scrolls inside. Added by Tally, for long lists. */
+  maxListHeight?: number;
 }
 
-export function SelectContent({ className, children }: SelectContentProps) {
+export function SelectContent({ className, children, header, maxListHeight }: SelectContentProps) {
   const ctx = useSelectContext("SelectContent");
   const innerRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
@@ -292,6 +296,16 @@ export function SelectContent({ className, children }: SelectContentProps) {
     observer.observe(node);
     return () => observer.disconnect();
   });
+
+  // The search box takes focus once the panel has unfolded (it is inert while it opens).
+  useEffect(() => {
+    if (!open || !header) return;
+    const t = window.setTimeout(
+      () => innerRef.current?.querySelector<HTMLElement>("[data-select-search]")?.focus(),
+      ctx.reduce ? 0 : 260,
+    );
+    return () => window.clearTimeout(t);
+  }, [open, header, ctx.reduce]);
 
   // On open, flip upward when there isn't room below and there's more above.
   useLayoutEffect(() => {
@@ -384,7 +398,10 @@ export function SelectContent({ className, children }: SelectContentProps) {
         animate={open ? "show" : "hidden"}
         className="p-1"
       >
-        <Glide pillClassName="!rounded-lg">{children}</Glide>
+        {header}
+        <div style={maxListHeight ? { maxHeight: maxListHeight, overflowY: "auto" } : undefined}>
+          <Glide pillClassName="!rounded-lg">{children}</Glide>
+        </div>
       </motion.div>
     </motion.div>
   );
@@ -393,11 +410,19 @@ export function SelectContent({ className, children }: SelectContentProps) {
 export interface SelectItemProps {
   value: string;
   disabled?: boolean;
+  /** Keeps the item mounted (its label stays registered) but not shown, for filtering. Added by Tally. */
+  hidden?: boolean;
   className?: string;
   children: ReactNode;
 }
 
-export function SelectItem({ value, disabled = false, className, children }: SelectItemProps) {
+export function SelectItem({
+  value,
+  disabled = false,
+  hidden = false,
+  className,
+  children,
+}: SelectItemProps) {
   const ctx = useSelectContext("SelectItem");
   const selected = ctx.value === value;
   const label = typeof children === "string" ? children : value;
@@ -408,7 +433,7 @@ export function SelectItem({ value, disabled = false, className, children }: Sel
   }, [ctx.register, ctx.unregister, value, label]);
 
   return (
-    <motion.li variants={ctx.reduce ? undefined : ITEM_VARIANTS}>
+    <motion.li variants={ctx.reduce ? undefined : ITEM_VARIANTS} hidden={hidden}>
       <button
         type="button"
         data-glide

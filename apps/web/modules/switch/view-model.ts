@@ -1,5 +1,5 @@
 import type { Address } from "@tally/core";
-import { isBuyable } from "../../lib/tickers";
+import { isTokenBuyable } from "../../lib/tickers";
 
 export interface MigrateVM {
   state: "ready" | "needs_funds" | "empty" | "error";
@@ -52,9 +52,9 @@ export async function loadMigrateSheet(params?: {
   if (fromIssuer === "xstocks") {
     eligible = false;
     availabilityReason = "No market to exit this token on BNB Chain";
-  } else if (!isBuyable(ticker)) {
+  } else if (!isTokenBuyable(ticker, toIssuer)) {
     eligible = false;
-    availabilityReason = `${ticker} can't be bought through Tally yet.`;
+    availabilityReason = `${toSymbol} isn’t enabled in Tally yet`;
   } else if (usdtExpected && BigInt(usdtExpected) < 6000000000000000000n) {
     eligible = false;
     availabilityReason =
