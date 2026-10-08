@@ -9,7 +9,7 @@ curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash - && sudo apt-ge
 sudo corepack enable && sudo corepack prepare pnpm@10.28.0 --activate
 sudo mkdir -p /etc/tally /var/lib/tally && sudo chown "$USER":"$USER" /var/lib/tally
 curl -fsSL -o /tmp/cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb && sudo dpkg -i /tmp/cloudflared.deb   # arm64 build on Graviton: check `uname -m`
-git clone https://github.com/deyoungjohn/tally.git ~/Projects/tally && cd ~/Projects/tally
+git clone https://github.com/deyoungjohn/tally.git ~/tally && cd ~/tally
 pnpm install --frozen-lockfile
 ```
 
@@ -17,7 +17,7 @@ Create `/etc/tally/tally.env` (root-only, mode 600) from the names in `deploy/ta
 
 ## Day to day
 
-Run as your normal user, from `~/Projects/tally`, never with sudo:
+Run as your normal user, from `~/tally`, never with sudo:
 
 | Command | What it does |
 |---|---|
@@ -67,8 +67,8 @@ Nothing restarts a crashed process by itself. Set this up once so no one has to 
 2. `crontab -e`, then add (first run `echo $PATH` and paste its output in place of `<PATH>`, so cron can find `node` and `pnpm`):
    ```cron
    PATH=<PATH>
-   * * * * * cd ~/Projects/tally && ./deploy/restart.sh --ensure >> ~/.tally-run/ensure.log 2>&1
-   @reboot sleep 45 && cd ~/Projects/tally && ./deploy/restart.sh --ensure >> ~/.tally-run/ensure.log 2>&1
+   * * * * * cd ~/tally && ./deploy/restart.sh --ensure >> ~/.tally-run/ensure.log 2>&1
+   @reboot sleep 45 && cd ~/tally && ./deploy/restart.sh --ensure >> ~/.tally-run/ensure.log 2>&1
    ```
 
 What it does, every minute: if the web server does not answer, restart it; start any wanted worker that is not running; stay silent when everything is fine. It never runs two copies at once and respects the memory limit.
