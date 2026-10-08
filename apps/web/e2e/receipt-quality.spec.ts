@@ -182,3 +182,51 @@ test.describe("receipt and quality pages: flags off", () => {
     expect((await request.get("/quality")).status()).toBe(404);
   });
 });
+
+test.describe("migrate permalink page: real server, signed out", () => {
+  test.describe.configure({ mode: "serial" });
+  test.use({ viewport: { width: 1280, height: 900 } });
+  let server: VmServer;
+  test.beforeAll(async () => {
+    server = await startVmServer({
+      port: 3107, // new port
+      seed: "receipts",
+      flags: { FEATURE_RECEIPTS: "1", FEATURE_SWITCH: "1" },
+    });
+  });
+  test.afterAll(() => server?.stop());
+
+  test("a pair of random hashes renders 'not a Migrate' message", async ({ page }) => {
+    const sellHash = "0x" + "1".repeat(64);
+    const buyHash = "0x" + "2".repeat(64);
+    await page.goto(`${server.url}/receipt/migrate/${sellHash}/${buyHash}`);
+    await expect(page.locator("text=These two transactions are not a Migrate")).toBeVisible({
+      timeout: 20_000,
+    });
+    const sellLink = page.getByRole("link", { name: "View Sale Receipt" });
+    await expect(sellLink).toHaveAttribute("href", `/receipt/${sellHash}`);
+    const buyLink = page.getByRole("link", { name: "View Buy Receipt" });
+    await expect(buyLink).toHaveAttribute("href", `/receipt/${buyHash}`);
+  });
+
+  for (const w of [375, 768, 1280] as const) {
+    test(`screenshots of 'not a migrate' at ${w}px with reduced motion`, async ({ browser }) => {
+      const sellHash = "0x" + "1".repeat(64);
+      const buyHash = "0x" + "2".repeat(64);
+      const ctx = await browser.newContext({
+        viewport: { width: w, height: 900 },
+        reducedMotion: "reduce",
+      });
+      const page = await ctx.newPage();
+      await page.goto(`${server.url}/receipt/migrate/${sellHash}/${buyHash}`);
+      await expect(page.locator("text=These two transactions are not a Migrate")).toBeVisible({
+        timeout: 20_000,
+      });
+      await page.screenshot({
+        path: `test-results/migrate-permalink-not-a-migrate-${w}.png`,
+        fullPage: true,
+      });
+      await ctx.close();
+    });
+  }
+});
