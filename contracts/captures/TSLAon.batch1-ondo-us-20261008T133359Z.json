@@ -1,0 +1,36 @@
+{
+  "token": "TSLAon",
+  "tokenAddress": "0x2494b603319d4d9f9715c9f4496d9e0364b59d93",
+  "tokenIn": "0x55d398326f99059fF775485246999027B3197955",
+  "amountIn": "6000000000000000000",
+  "multiplierSource": "feed",
+  "multiplier": "1000000000000000000",
+  "multiplierFrom": "public RWA API sharesMultiplier",
+  "referencePrice": "373.595",
+  "capturedAtUtc": "2026-10-08T13:34:37Z",
+  "blockAtCapture": "126452792",
+  "eoa": {
+    "user": "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
+    "replayable": "false",
+    "error": "ApiError (http=200, code=40374)",
+    "router": "",
+    "data": "0x",
+    "approveTarget": "",
+    "value": "0",
+    "minReceive": "0",
+    "toTokenAmount": "0",
+    "mode": "ERROR"
+  },
+  "guard": {
+    "user": "0xcb634955B8A7DF7B106f7AB47C9759B26206b777",
+    "replayable": "false",
+    "error": "ApiError (http=200, code=40374)",
+    "router": "",
+    "data": "0x",
+    "approveTarget": "",
+    "value": "0",
+    "minReceive": "0",
+    "toTokenAmount": "0",
+    "mode": "ERROR"
+  }
+}

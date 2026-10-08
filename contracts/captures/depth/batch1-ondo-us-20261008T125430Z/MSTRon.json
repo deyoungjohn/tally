@@ -1,0 +1,249 @@
+{
+  "schema": 1,
+  "token": "MSTRon",
+  "tokenAddress": "0x7313ea16493b2f55054df0131a3a14b043ec8992",
+  "ticker": "MSTR",
+  "kind": "ondo",
+  "role": "candidate",
+  "held": false,
+  "capturedAtUtc": "2026-10-08T12:54:46Z",
+  "premiumLimitPct": "1.5",
+  "reference": {
+    "source": "authenticated /api/v1/dex/market/rwa/tokens",
+    "tokenContractAddress": "0x7313ea16493b2f55054df0131a3a14b043ec8992",
+    "binanceChainId": "56",
+    "tokenSymbol": "MSTRon",
+    "underlyingTicker": "MSTR",
+    "referencePricePerTokenUsd": "149.754545",
+    "tokenToShareRatio": "1",
+    "decimals": 18,
+    "referencePricePerShareUsd": "149.754545"
+  },
+  "integrityEvidence": {
+    "source": "pnpm --silent tally facts MSTR --json",
+    "asOf": "2026-10-08T12:54:49.430Z",
+    "inspection": {
+      "symbol": "MSTRon",
+      "issuer": "ondo",
+      "address": "0x7313ea16493b2f55054df0131a3a14b043ec8992",
+      "executable": true,
+      "readings": {
+        "list": "1000000000000000000",
+        "api": "1000000000000000000"
+      },
+      "multiplier": {
+        "value": "1000000000000000000",
+        "source": "api",
+        "degraded": false,
+        "maxDeviationPpm": 0,
+        "disagree": false
+      },
+      "facts": {
+        "status": {
+          "kind": "open",
+          "reasonCode": "TRADING",
+          "reasonMsg": null,
+          "session": "premarket"
+        },
+        "notes": {},
+        "listedTokenPrice": 149.754545,
+        "onchainVolume24hUsd": 65726.25229804013,
+        "attestation": {
+          "reportDate": "2026-10-02",
+          "url": "[endpoint omitted]"
+        },
+        "multiplierBaseline": {
+          "value": "1000000000000000000",
+          "at": 1791412070442
+        }
+      },
+      "bounds": {
+        "outcome": "pass",
+        "detail": "1 vs baseline 1 (seen 2026-10-07): unchanged",
+        "validation": {
+          "outcome": "not-needed",
+          "inputs": {},
+          "summary": "multiplier unchanged: price check not needed"
+        }
+      },
+      "referencePrice": {
+        "price": 149.754545,
+        "session": "premarket"
+      },
+      "integrity": {
+        "score": 90,
+        "grade": "A",
+        "flags": [],
+        "reasons": [
+          {
+            "id": "attestation",
+            "outcome": "deduct",
+            "points": 10,
+            "inputs": {
+              "reportDate": "2026-10-02",
+              "ageDays": 6.54,
+              "url": "[endpoint omitted]",
+              "now": "2026-10-08T12:54:48.788Z"
+            },
+            "summary": "report 2026-10-02, age 6.5d > 3d \u2192 \u221210",
+            "reason": "Latest reserve attestation is 6 days old."
+          }
+        ],
+        "checks": [
+          {
+            "id": "multiplier-sources",
+            "outcome": "pass",
+            "points": 0,
+            "inputs": {
+              "onchain": "\u2013",
+              "api": "1",
+              "list": "1",
+              "maxDeviationPpm": 0,
+              "used": "api"
+            },
+            "summary": "onchain \u2013, api 1, list 1; max difference 0 ppm \u2264 1000, using api \u2192 pass"
+          },
+          {
+            "id": "ondo-bounds",
+            "outcome": "pass",
+            "points": 0,
+            "inputs": {
+              "detail": "1 vs baseline 1 (seen 2026-10-07): unchanged"
+            },
+            "summary": "1 vs baseline 1 (seen 2026-10-07): unchanged \u2192 pass"
+          },
+          {
+            "id": "multiplier-validation",
+            "outcome": "skipped",
+            "points": 0,
+            "inputs": {},
+            "summary": "multiplier unchanged: price check not needed \u2192 skipped"
+          },
+          {
+            "id": "premium",
+            "outcome": "skipped",
+            "points": 0,
+            "inputs": {
+              "premium": 0,
+              "basis": "listed price",
+              "session": "premarket"
+            },
+            "summary": "premium +0.00% (listed price); session premarket, the 2% rule applies in regular hours only \u2192 skipped"
+          },
+          {
+            "id": "onchain-volume",
+            "outcome": "pass",
+            "points": 0,
+            "inputs": {
+              "onchainVolume24hUsd": 65726.25229804013
+            },
+            "summary": "$65,726 in 24h \u2265 $1,000 \u2192 pass"
+          },
+          {
+            "id": "status",
+            "outcome": "pass",
+            "points": 0,
+            "inputs": {
+              "kind": "open",
+              "reasonCode": "TRADING",
+              "reasonMsg": null
+            },
+            "summary": "open (TRADING), session premarket \u2192 pass"
+          },
+          {
+            "id": "attestation",
+            "outcome": "deduct",
+            "points": 10,
+            "inputs": {
+              "reportDate": "2026-10-02",
+              "ageDays": 6.54,
+              "url": "[endpoint omitted]",
+              "now": "2026-10-08T12:54:48.788Z"
+            },
+            "summary": "report 2026-10-02, age 6.5d > 3d \u2192 \u221210",
+            "reason": "Latest reserve attestation is 6 days old."
+          },
+          {
+            "id": "unit-trap",
+            "outcome": "pass",
+            "points": 0,
+            "inputs": {},
+            "summary": "multipliers within 1.25\u00d7 of the other issuers' \u2192 pass"
+          }
+        ],
+        "unitTrap": false
+      }
+    }
+  },
+  "quotes": {
+    "6": {
+      "eoa": {
+        "quote": {
+          "user": "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
+          "replayable": "false",
+          "error": "ApiError (http=200, code=40374)",
+          "router": "",
+          "data": "0x",
+          "approveTarget": "",
+          "value": "0",
+          "minReceive": "0",
+          "toTokenAmount": "0",
+          "mode": "ERROR"
+        },
+        "assessment": {
+          "amountInUsdtE18": "6000000000000000000",
+          "premiumPct": null,
+          "quotedPricePerShareUsd": null,
+          "sharesOut": null,
+          "pass": false,
+          "reasons": [
+            "executionMode is not SWAP",
+            "no quoted route",
+            "$6 swap calldata is not replayable SWAP",
+            "cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      },
+      "guard": {
+        "quote": {
+          "user": "0xcb634955B8A7DF7B106f7AB47C9759B26206b777",
+          "replayable": "false",
+          "error": "ApiError (http=200, code=40374)",
+          "router": "",
+          "data": "0x",
+          "approveTarget": "",
+          "value": "0",
+          "minReceive": "0",
+          "toTokenAmount": "0",
+          "mode": "ERROR"
+        },
+        "assessment": {
+          "amountInUsdtE18": "6000000000000000000",
+          "premiumPct": null,
+          "quotedPricePerShareUsd": null,
+          "sharesOut": null,
+          "pass": false,
+          "reasons": [
+            "executionMode is not SWAP",
+            "no quoted route",
+            "$6 swap calldata is not replayable SWAP",
+            "cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      }
+    }
+  },
+  "errors": [],
+  "forkCapture": "captures/MSTRon.batch1-ondo-us-20261008T125430Z.json",
+  "gates": {
+    "depth": "failed",
+    "fork": "pending",
+    "enablement": "not approved"
+  },
+  "integrityAssessment": {
+    "pass": true,
+    "grade": "A",
+    "label": "Tradable",
+    "reasons": []
+  }
+}

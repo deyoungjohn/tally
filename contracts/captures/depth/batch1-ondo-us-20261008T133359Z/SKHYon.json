@@ -1,0 +1,268 @@
+{
+  "schema": 1,
+  "token": "SKHYon",
+  "tokenAddress": "0x4268f2bfb23a7496504aa5ed1ee325248586299f",
+  "ticker": "SKHY",
+  "kind": "ondo",
+  "role": "candidate",
+  "held": false,
+  "capturedAtUtc": "2026-10-08T13:34:24Z",
+  "premiumLimitPct": "1.5",
+  "reference": {
+    "source": "authenticated /api/v1/dex/market/rwa/tokens",
+    "tokenContractAddress": "0x4268f2bfb23a7496504aa5ed1ee325248586299f",
+    "binanceChainId": "56",
+    "tokenSymbol": "SKHYon",
+    "underlyingTicker": "SKHY",
+    "referencePricePerTokenUsd": "176.834",
+    "tokenToShareRatio": "1",
+    "decimals": 18,
+    "referencePricePerShareUsd": "176.834"
+  },
+  "integrityEvidence": {
+    "source": "pnpm --silent tally facts SKHY --json",
+    "asOf": "2026-10-08T13:34:26.829Z",
+    "inspection": {
+      "symbol": "SKHYon",
+      "issuer": "ondo",
+      "address": "0x4268f2bfb23a7496504aa5ed1ee325248586299f",
+      "executable": false,
+      "blockedReason": "Ghost market: almost no trading on BNB Chain",
+      "readings": {
+        "list": "1000000000000000000",
+        "api": "1000000000000000000"
+      },
+      "multiplier": {
+        "value": "1000000000000000000",
+        "source": "api",
+        "degraded": false,
+        "maxDeviationPpm": 0,
+        "disagree": false
+      },
+      "facts": {
+        "status": {
+          "kind": "open",
+          "reasonCode": "TRADING",
+          "reasonMsg": null,
+          "session": "regular"
+        },
+        "notes": {},
+        "listedTokenPrice": 176.834,
+        "onchainVolume24hUsd": 843.0433755187167,
+        "attestation": {
+          "reportDate": "2026-10-02",
+          "url": "[endpoint omitted]"
+        },
+        "multiplierBaseline": {
+          "value": "1000000000000000000",
+          "at": 1791413442041
+        },
+        "multiplierChangedAt": 1783753254316
+      },
+      "bounds": {
+        "outcome": "pass",
+        "detail": "1 vs baseline 1 (seen 2026-10-07): unchanged",
+        "validation": {
+          "outcome": "not-needed",
+          "inputs": {},
+          "summary": "multiplier unchanged: price check not needed"
+        }
+      },
+      "referencePrice": {
+        "price": 176.834,
+        "session": "regular"
+      },
+      "integrity": {
+        "score": 50,
+        "grade": "D",
+        "flags": [
+          "ghost"
+        ],
+        "reasons": [
+          {
+            "id": "onchain-volume",
+            "outcome": "deduct",
+            "points": 40,
+            "flag": "ghost",
+            "inputs": {
+              "onchainVolume24hUsd": 843.0433755187167
+            },
+            "summary": "$843 in 24h < $1,000 \u2192 \u221240",
+            "reason": "Almost no trading on BNB Chain ($843 in 24h). Prices can be stale."
+          },
+          {
+            "id": "attestation",
+            "outcome": "deduct",
+            "points": 10,
+            "inputs": {
+              "reportDate": "2026-10-02",
+              "ageDays": 6.57,
+              "url": "[endpoint omitted]",
+              "now": "2026-10-08T13:34:26.199Z"
+            },
+            "summary": "report 2026-10-02, age 6.6d > 3d \u2192 \u221210",
+            "reason": "Latest reserve attestation is 6 days old."
+          }
+        ],
+        "checks": [
+          {
+            "id": "multiplier-sources",
+            "outcome": "pass",
+            "points": 0,
+            "inputs": {
+              "onchain": "\u2013",
+              "api": "1",
+              "list": "1",
+              "maxDeviationPpm": 0,
+              "used": "api"
+            },
+            "summary": "onchain \u2013, api 1, list 1; max difference 0 ppm \u2264 1000, using api \u2192 pass"
+          },
+          {
+            "id": "ondo-bounds",
+            "outcome": "pass",
+            "points": 0,
+            "inputs": {
+              "detail": "1 vs baseline 1 (seen 2026-10-07): unchanged"
+            },
+            "summary": "1 vs baseline 1 (seen 2026-10-07): unchanged \u2192 pass"
+          },
+          {
+            "id": "multiplier-validation",
+            "outcome": "skipped",
+            "points": 0,
+            "inputs": {},
+            "summary": "multiplier unchanged: price check not needed \u2192 skipped"
+          },
+          {
+            "id": "premium",
+            "outcome": "pass",
+            "points": 0,
+            "inputs": {
+              "premium": 0,
+              "basis": "listed price",
+              "session": "regular"
+            },
+            "summary": "premium +0.00% (listed price) in a regular session, within \u00b12% \u2192 pass"
+          },
+          {
+            "id": "onchain-volume",
+            "outcome": "deduct",
+            "points": 40,
+            "flag": "ghost",
+            "inputs": {
+              "onchainVolume24hUsd": 843.0433755187167
+            },
+            "summary": "$843 in 24h < $1,000 \u2192 \u221240",
+            "reason": "Almost no trading on BNB Chain ($843 in 24h). Prices can be stale."
+          },
+          {
+            "id": "status",
+            "outcome": "pass",
+            "points": 0,
+            "inputs": {
+              "kind": "open",
+              "reasonCode": "TRADING",
+              "reasonMsg": null
+            },
+            "summary": "open (TRADING), session regular \u2192 pass"
+          },
+          {
+            "id": "attestation",
+            "outcome": "deduct",
+            "points": 10,
+            "inputs": {
+              "reportDate": "2026-10-02",
+              "ageDays": 6.57,
+              "url": "[endpoint omitted]",
+              "now": "2026-10-08T13:34:26.199Z"
+            },
+            "summary": "report 2026-10-02, age 6.6d > 3d \u2192 \u221210",
+            "reason": "Latest reserve attestation is 6 days old."
+          },
+          {
+            "id": "unit-trap",
+            "outcome": "pass",
+            "points": 0,
+            "inputs": {},
+            "summary": "multipliers within 1.25\u00d7 of the other issuers' \u2192 pass"
+          }
+        ],
+        "unitTrap": false
+      }
+    }
+  },
+  "quotes": {
+    "6": {
+      "eoa": {
+        "quote": {
+          "user": "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
+          "replayable": "false",
+          "error": "ApiError (http=200, code=40374)",
+          "router": "",
+          "data": "0x",
+          "approveTarget": "",
+          "value": "0",
+          "minReceive": "0",
+          "toTokenAmount": "0",
+          "mode": "ERROR"
+        },
+        "assessment": {
+          "amountInUsdtE18": "6000000000000000000",
+          "premiumPct": null,
+          "quotedPricePerShareUsd": null,
+          "sharesOut": null,
+          "pass": false,
+          "reasons": [
+            "executionMode is not SWAP",
+            "no quoted route",
+            "$6 swap calldata is not replayable SWAP",
+            "cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      },
+      "guard": {
+        "quote": {
+          "user": "0xcb634955B8A7DF7B106f7AB47C9759B26206b777",
+          "replayable": "false",
+          "error": "ApiError (http=200, code=40374)",
+          "router": "",
+          "data": "0x",
+          "approveTarget": "",
+          "value": "0",
+          "minReceive": "0",
+          "toTokenAmount": "0",
+          "mode": "ERROR"
+        },
+        "assessment": {
+          "amountInUsdtE18": "6000000000000000000",
+          "premiumPct": null,
+          "quotedPricePerShareUsd": null,
+          "sharesOut": null,
+          "pass": false,
+          "reasons": [
+            "executionMode is not SWAP",
+            "no quoted route",
+            "$6 swap calldata is not replayable SWAP",
+            "cannot compute share price from recorded reference, output and multiplier"
+          ]
+        }
+      }
+    }
+  },
+  "errors": [],
+  "forkCapture": "captures/SKHYon.batch1-ondo-us-20261008T133359Z.json",
+  "gates": {
+    "depth": "failed",
+    "fork": "pending",
+    "enablement": "not approved"
+  },
+  "integrityAssessment": {
+    "pass": false,
+    "grade": "D",
+    "label": "Not Tradable",
+    "reasons": [
+      "Ghost market: almost no trading on BNB Chain"
+    ]
+  }
+}
