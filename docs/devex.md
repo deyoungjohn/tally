@@ -62,9 +62,15 @@ This file collects **evidence only**: what we observed while building Tally on B
 | 35 | Next.js 16 renamed middleware to `proxy.ts`; behind a Cloudflare tunnel the request URL is `https://localhost:3000`, so a rewrite fails with `EPROTO`. | CLAUDE.md, `e2e/region-gate-tunnel.spec.ts` |
 | 36 | Tailwind's build kept only the prefixed `-webkit-backdrop-filter` when both forms were written, and Chrome ignores the prefixed form alone, so every blurred surface lost its blur in production. | CLAUDE.md (Round 5 note) |
 | 37 | GeckoTerminal's free API lists pools with volume and liquidity per pair and worked without a key (about 30 requests a minute), which filled the Ondo gap that Binance's K-Line leaves. | `docs/prompts/wo09-shareguard-expansion.md` |
+| 38 | The public dynamic endpoint returned `stockInfo.price` null for all ten bStock tokens tried at 02:31 UTC on 8 Oct (outside US hours), so there was no independent per-share price to check a DEX quote against. `tokenInfo.price` was present but is the DEX price itself. Whether the field fills in during the US session is not yet known. | `contracts/captures/depth/bstock-reference-outside-us-20261008.json` |
+| 39 | 10 of the 28 bStock tokens in Batch 1 were not in the authenticated RWA list at all in both capture runs ("must contain exactly one matching BSC token"), including AAPLB, which ShareGuard already supports, and two held ETF tokens (SOXSB, SQQQB). This is the truncation in item 11 showing up per token. | `contracts/captures/depth/batch1-20261008T000326Z/` (error stage `reference`) |
+| 40 | For seven Ondo tokens the quote API returned HTTP 200 with an error code and no route: `40374` for HOODon, INTCon, METAon, MSTRon and SKHYon, `40367` for MRNAon and TSLAon (their integrity reading was "Paused for session transition"). Neither code is in the notes we hold, and the message text was not recorded. Other Ondo tokens quoted normally in the same minute. | `contracts/captures/depth/batch1-20261008T000326Z/*.json` (`quotes.6.eoa.quote.error`) |
+| 41 | Two Ondo tokens (MSFTon, SNDKon) quoted with an absolute premium over 1.5% against the reference price per share at the same moment as tokens quoting under 0.1%. | the same run, assessment reasons |
+| 42 | The first Batch 1 run hit `42900` (HTTP 429) once, on the reference lookup for MRNAon; the second run did not. | `contracts/captures/depth/batch1-20261007T233708Z/MRNAon.json` |
 
 ## Open items to verify before citing
 
 - Item 27 (attestation) and the exact limit behind item 8 are unproven.
 - Item 34 comes from public pages and a README, not from running the product.
+- Items 38 to 42 are one overnight capture (00:03 UTC); items 38 and 40 may change in the US session. Item 40 does not know the error messages.
 - Counts in items 11, 18 and 19 are snapshots from 2026-10-02 and 2026-10-07 and will change.
