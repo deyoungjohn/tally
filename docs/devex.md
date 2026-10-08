@@ -67,10 +67,12 @@ This file collects **evidence only**: what we observed while building Tally on B
 | 40 | For seven Ondo tokens the quote API returned HTTP 200 with an error code and no route: `40374` for HOODon, INTCon, METAon, MSTRon and SKHYon, `40367` for MRNAon and TSLAon (their integrity reading was "Paused for session transition"). Neither code is in the notes we hold, and the message text was not recorded. Other Ondo tokens quoted normally in the same minute. | `contracts/captures/depth/batch1-20261008T000326Z/*.json` (`quotes.6.eoa.quote.error`) |
 | 41 | Two Ondo tokens (MSFTon, SNDKon) quoted with an absolute premium over 1.5% against the reference price per share at the same moment as tokens quoting under 0.1%. | the same run, assessment reasons |
 | 42 | The first Batch 1 run hit `42900` (HTTP 429) once, on the reference lookup for MRNAon; the second run did not. | `contracts/captures/depth/batch1-20261007T233708Z/MRNAon.json` |
+| 43 | The public dynamic endpoint's `stockInfo.price` stayed null for the same ten bStock tokens at 13:32 UTC, shortly after the US open, as it was at 02:31 UTC, so the null is not explained by time of day. Those tokens have no independent per-share price from the public API; the authenticated list that has one omits them (item 39). | `contracts/captures/depth/batch-2-us-session-results.json` (run `batch1-bstock-us-20261008T133231Z`) |
+| 44 | Two Ondo tokens produced absurd premiums against the independent reference in the US-session run: MSFTon +295,494,235% and SNDKon +832% (from the recorded raw output, multiplier, decimals and reference price). A premium that large means one of the three inputs is inconsistent for those tokens; which one is not yet known. | the same results file |
 
 ## Open items to verify before citing
 
 - Item 27 (attestation) and the exact limit behind item 8 are unproven.
 - Item 34 comes from public pages and a README, not from running the product.
-- Items 38 to 42 are one overnight capture (00:03 UTC); items 38 and 40 may change in the US session. Item 40 does not know the error messages.
+- Items 38 to 42 are one overnight capture (00:03 UTC); item 43 shows item 38 did not change in the US session; item 40 (`40374`) persisted too. Item 40 does not know the error messages. Item 44's cause is unknown.
 - Counts in items 11, 18 and 19 are snapshots from 2026-10-02 and 2026-10-07 and will change.
