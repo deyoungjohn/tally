@@ -63,7 +63,8 @@ export async function loadMigrateReceipt(
     if (buyTx && buyTx.input) {
       const decoded = decodeFunctionData({ abi: SHAREGUARD_ABI, data: buyTx.input as `0x${string}` });
       if (decoded.functionName === "swapForShares" || decoded.functionName === "swapForSharesWithFeed") {
-        buyMinShares = (decoded.args as any)[3].toString();
+        const args = decoded.args as readonly unknown[];
+        buyMinShares = String(args[3]);
       }
     }
   } catch (e) {

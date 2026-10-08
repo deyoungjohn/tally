@@ -14,8 +14,6 @@ test.describe("Migrate Receipt Permalink", () => {
       await page.goto("/dev/migrate-receipt");
       
       // Check it renders correctly
-      const fs = require('fs');
-      fs.writeFileSync('page.html', await page.content());
       await expect(page.getByText("10 NVDAB = 10 shares to 10 NVDAon = 10 shares")).toBeVisible();
       await expect(page.getByText("Share-true comparison")).toBeVisible();
       

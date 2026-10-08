@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Share2, Copy } from "lucide-react";
+import { Check, Copy } from "lucide-react";
 
 export function ShareReceiptButton({ sellHash, buyHash }: { sellHash: string; buyHash: string }) {
   const [copied, setCopied] = useState(false);
@@ -27,7 +27,7 @@ export function ShareReceiptButton({ sellHash, buyHash }: { sellHash: string; bu
       await navigator.clipboard.writeText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
+    } catch {
       // ignore
     }
   };
