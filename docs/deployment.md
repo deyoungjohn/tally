@@ -80,6 +80,16 @@ Limits, so you know what is not covered:
 - **A worker that is alive but stuck** is not restarted. Jobs have timeouts, and `/api/modules/health` shows a stale job, but nothing acts on it.
 - **Nobody is told.** Check `./deploy/restart.sh --status` or `tail ~/.tally-run/ensure.log`.
 
+## Disk (the EC2 filled up on 8 Oct 2026)
+
+Check `df -h /` after every restart. The store is `/var/lib/tally/tally.db`; it must stay well under 2 GB. The `flow` snapshots are about 1 MB each, so until the shorter flow retention is merged (`docs/prompts/wo04-flow-retention.md`) the store grows about 1 GB an hour. Until then, run this hourly (cron, as root) to drop old flow rows; readers only use the newest row per token, and the file stops growing because SQLite reuses the freed pages:
+
+```bash
+sudo sqlite3 /var/lib/tally/tally.db "DELETE FROM snapshots WHERE kind IN ('flow','flow-traders','flow-holders','flow-pools') AND observed_at < (strftime('%s','now') - 3600) * 1000 AND id NOT IN (SELECT max(id) FROM snapshots WHERE kind IN ('flow','flow-traders','flow-holders','flow-pools') GROUP BY kind, key);"
+```
+
+Never delete `tally.db` itself: it also holds Telegram link codes, Guardian settings, Autopilot policies and decisions, and receipts. To see what is big: `sudo sqlite3 -readonly /var/lib/tally/tally.db "SELECT kind, count(*), round(sum(length(payload))/1048576.0,1) AS mb FROM snapshots GROUP BY kind ORDER BY mb DESC;"`. To shrink the file after a big delete, stop the workers (`./deploy/restart.sh --stop`), run `sudo sqlite3 /var/lib/tally/tally.db "VACUUM;"` (needs free space about the size of the live data), then restart. Never run workers as root or with a temporary data directory: two stray root `collect-registry` workers held 4 GB of `/tmp` copies for three days.
+
 ## Checks after a restart
 
 1. Read the `checking the env` block: a `MISSING` line is a feature that will not work. A warning about `TALLY_FIXTURES`, `TALLY_ALLOW_MISSING_GEO` or `TALLY_DEV_PREVIEWS` means something dev-only is on in production: unset it.
