@@ -198,7 +198,8 @@ export function useMigrateFlow() {
           }
 
           timer = setTimeout(poll, 5000);
-        } catch {
+        } catch (e) {
+          if ((e instanceof Error && e.name === "AbortError") || controller.signal.aborted) return;
           timer = setTimeout(poll, 5000);
         }
       };

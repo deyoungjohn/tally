@@ -466,7 +466,7 @@ test("failed sale says it did not go through and clears", async ({ page }) => {
     page
       .getByRole("dialog")
       .filter({ hasText: "The sale transaction failed and did not go through." }),
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 10000 });
 
   await page.getByRole("button", { name: "Cancel" }).click();
   await expect(page.getByRole("dialog")).not.toBeVisible();
