@@ -1,17 +1,12 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
-import Link from "next/link";
-import { MIN_SELL_USDT } from "@tally/config";
-import { Button } from "@/components/motion/button";
 import { TokenLogo } from "@/components/trade/badges";
 import type { SellTarget } from "@/components/trade/use-sell-flow";
 import { Tip } from "@/components/ui/tooltip";
 import { ISSUER_LABEL } from "@/lib/format";
-import { buyMoreToken, canMigrateTicker } from "./enablement";
 import { companyName } from "./company-name";
+import { RowActions } from "./row-actions";
 import { isSmallUsd, type SmallBalance } from "./small-balances";
-import { useOndoClosedReason } from "@/components/trade/ondo-gate";
 import type {
   HeadlineHoldingVM,
   IssuerHoldingVM,
@@ -35,14 +30,8 @@ function IssuerRow({
 }) {
   const sharesKnown = h.balanceShares !== "unavailable";
   const worth = Number.parseFloat(h.valueUsd);
-  const sellable =
-    !!onSell &&
-    (h.rowActionsSlot.issuer === "ondo" || h.rowActionsSlot.issuer === "bstock") &&
-    sharesKnown;
-  const tooSmall = Number.isFinite(worth) && worth < MIN_SELL_USDT;
   // The view model's own row-action metadata says what a row action acts on (token, issuer, balance, ticker).
   const action = h.rowActionsSlot;
-  const ondoClosed = useOndoClosedReason(action.ticker ?? ticker, action.issuer ?? "");
 
   const openSell = () =>
     onSell?.({
@@ -54,7 +43,7 @@ function IssuerRow({
       probeUsd: Number.isFinite(worth) ? worth : null,
     });
 
-  const openMigrate = () =>
+  const openMigrate = (to: "ondo" | "bstock") =>
     onMigrate?.(
       {
         ticker: action.ticker ?? ticker,
@@ -63,7 +52,7 @@ function IssuerRow({
         probeShares: Number.parseFloat(action.balanceShares ?? "0"),
         probeUsd: Number.isFinite(worth) ? worth : null,
       },
-      action.issuer === "ondo" ? "bstock" : "ondo",
+      to,
     );
 
   return (
@@ -104,82 +93,15 @@ function IssuerRow({
         <span className="t-meta w-full">Converted at today&apos;s share ratio.</span>
       ) : null}
 
-      {onSell || onMigrate ? (
-        <div className="flex gap-2">
-          {sellable ? (
-            tooSmall ? (
-              <Tip
-                text={`This holding is worth ${usd(h.valueUsd)}, below the $${MIN_SELL_USDT} minimum sale.`}
-              >
-                <span className="inline-flex">
-                  <Button
-                    variant="glassy"
-                    className="!h-9 !px-4 text-[14.5px]"
-                    disabled
-                    aria-label={`Sell ${h.tokenSymbol} (below the $${MIN_SELL_USDT} minimum sale)`}
-                    data-testid={`sell-${h.tokenSymbol}`}
-                  >
-                    Sell
-                  </Button>
-                </span>
-              </Tip>
-            ) : (
-              <Button
-                variant="glassy"
-                className="!h-9 !px-4 text-[14.5px]"
-                onClick={openSell}
-                aria-label={`Sell ${h.tokenSymbol}`}
-                data-testid={`sell-${h.tokenSymbol}`}
-              >
-                Sell
-              </Button>
-            )
-          ) : null}
-
-          {onMigrate && canMigrateTicker(action.ticker ?? ticker)
-            ? (() => {
-                let reason: string | null = null;
-                if (action.issuer === "xstocks") {
-                  reason = "No market to exit this token on BNB Chain";
-                } else if (ondoClosed) {
-                  reason = ondoClosed;
-                } else if (tooSmall) {
-                  reason =
-                    "Too small to migrate: the buy needs at least 6 USDT. You can sell to USDT instead.";
-                }
-
-                if (reason) {
-                  return (
-                    <Tip text={reason}>
-                      <span className="inline-flex">
-                        <Button
-                          variant="glassy"
-                          className="!h-9 !px-4 text-[14.5px]"
-                          disabled
-                          aria-label="Migrate (disabled)"
-                          data-testid={`migrate-${h.tokenSymbol}`}
-                        >
-                          Migrate
-                        </Button>
-                      </span>
-                    </Tip>
-                  );
-                }
-                return (
-                  <Button
-                    variant="glassy"
-                    className="!h-9 !px-4 text-[14.5px]"
-                    onClick={openMigrate}
-                    aria-label={`Migrate ${h.tokenSymbol}`}
-                    data-testid={`migrate-${h.tokenSymbol}`}
-                  >
-                    Migrate
-                  </Button>
-                );
-              })()
-            : null}
-        </div>
-      ) : null}
+      <RowActions
+        ticker={action.ticker ?? ticker}
+        issuer={action.issuer}
+        symbol={h.tokenSymbol}
+        valueUsd={Number.isFinite(worth) ? worth : null}
+        sharesKnown={sharesKnown}
+        onSell={onSell ? openSell : undefined}
+        onMigrate={onMigrate ? (to) => openMigrate(to) : undefined}
+      />
     </li>
   );
 }
@@ -224,11 +146,9 @@ function Group({
 }) {
   const known = g.issuers.some((i) => i.balanceShares !== "unavailable");
   const held = heldIssuers(g);
-  // "Buy more" names the largest holding whose issuer is enabled for buying; with none, there is no link.
-  const buyMore = buyMoreToken(
-    g.ticker,
-    held.map((i) => ({ ...i, issuer: i.issuer ?? "", valueUsd: worthOf(i.valueUsd) })),
-  );
+  // Cost figures are shown only when they are known: a stock whose cost can't be worked out simply has no cost lines.
+  const avgKnown = usd(g.avgCostPerShareUsd) !== "unknown";
+  const pnlKnown = usd(g.unrealizedPnlUsd) !== "unknown";
   return (
     <li className="panel list-none p-5" data-testid={`group-${g.ticker}`}>
       <div className="flex items-center gap-3">
@@ -238,7 +158,7 @@ function Group({
             className="mono text-[19px] font-bold leading-tight"
             data-testid={`symbols-${g.ticker}`}
           >
-            {held.map((i) => i.tokenSymbol).join(" · ")}
+            {held.map((i) => i.tokenSymbol).join(" & ")}
           </p>
           <p className="text-[13.5px] font-light text-fg2">{companyName(g.ticker)}</p>
         </div>
@@ -252,19 +172,25 @@ function Group({
           <p className="t-meta">shares · ≈ {usd(g.totalValueUsd)}</p>
         </div>
       </div>
-      <dl className="mt-3">
-        <div className="detail-row">
-          <dt>Average cost per share</dt>
-          <dd>{usd(g.avgCostPerShareUsd)}</dd>
-        </div>
-        <div className="detail-row">
-          <dt>Unrealized gain or loss</dt>
-          <dd className={pnlClass(g.unrealizedPnlUsd)}>
-            {usd(g.unrealizedPnlUsd)}
-            {g.avgCostPerShareUsd === "-" ? "" : ` (${g.unrealizedPnlPercent}%)`}
-          </dd>
-        </div>
-      </dl>
+      {avgKnown || pnlKnown ? (
+        <dl className="mt-3">
+          {avgKnown ? (
+            <div className="detail-row">
+              <dt>Average cost per share</dt>
+              <dd>{usd(g.avgCostPerShareUsd)}</dd>
+            </div>
+          ) : null}
+          {pnlKnown ? (
+            <div className="detail-row">
+              <dt>Unrealized gain or loss</dt>
+              <dd className={pnlClass(g.unrealizedPnlUsd)}>
+                {usd(g.unrealizedPnlUsd)}
+                {g.avgCostPerShareUsd === "-" ? "" : ` (${g.unrealizedPnlPercent}%)`}
+              </dd>
+            </div>
+          ) : null}
+        </dl>
+      ) : null}
       <ul className="m-0 mt-3 grid list-none gap-2 p-0">
         {held.map((h) => (
           <IssuerRow
@@ -276,14 +202,6 @@ function Group({
           />
         ))}
       </ul>
-      {buyMore ? (
-        <Link
-          href={`/trade/${g.ticker}`}
-          className="mt-3 inline-flex min-h-[44px] items-center gap-1 text-[14px] text-blue"
-        >
-          Buy more {buyMore.tokenSymbol} <ArrowRight size={13} aria-hidden />
-        </Link>
-      ) : null}
     </li>
   );
 }

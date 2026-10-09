@@ -7,9 +7,9 @@
 import type { ReactNode } from "react";
 import type { QuoteDto } from "@/lib/dto";
 import { useJson } from "@/lib/hooks/use-json";
+import { ONDO_CLOSED_TIP } from "./ondo-closed";
 
-export const ONDO_CLOSED_TIP =
-  "Ondo tokens can only be sold while the US market is open. Outside those hours Ondo asks for a signed order, which Tally can't send yet. Try again when the market reopens.";
+export { ONDO_CLOSED_TIP };
 
 /** The reason Ondo selling is shut right now, or null (open, not an Ondo token, or unknown). */
 export function useOndoClosedReason(ticker: string, issuer: string): string | null {

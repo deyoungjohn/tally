@@ -312,8 +312,11 @@ test.describe("signed-in changes", () => {
     await expect(page.getByText("$25 of NVDA")).toHaveCount(0);
     await block.getByTestId("stock-picker").click();
     // Plain comparison options retain ticker-only labels as the list grows.
+    // NVDA is pinned first, then A to Z.
     await expect(page.getByRole("option")).toHaveText(
-      GENERATED_BUYABLE_TICKERS.map((entry) => entry.ticker),
+      GENERATED_BUYABLE_TICKERS.map((entry) => entry.ticker).sort(
+        (a, b) => Number(b === "NVDA") - Number(a === "NVDA") || a.localeCompare(b),
+      ),
     );
     for (const { ticker } of GENERATED_BUYABLE_TICKERS)
       await expect(page.getByRole("option", { name: ticker, exact: true })).toBeVisible();

@@ -50,12 +50,17 @@ export interface TradeCardProps {
     text: string;
     onText: (s: string) => void;
     heldShares: number;
+    /** The token count of the same holding, for the slider (a token is not exactly a share). */
+    heldTokens?: number;
     /** The token symbol being sold (NVDAB, NVDAon). */
     symbol?: string;
     usdOut: number | null;
     onSell: () => void;
   };
 }
+
+/** A token count, up to six places, no trailing zeros. */
+const fmtTokenCount = (n: number) => String(Number(n.toFixed(6)));
 
 const floorTo = (n: number, places: number) => {
   const f = 10 ** places;
@@ -285,10 +290,10 @@ export function TradeCard(p: TradeCardProps) {
           <PercentSlider
             value={sellPercent}
             onChange={onSellPercent}
-            label={`${sym} shares`}
+            label={`${sym} tokens`}
             available={
               p.sell!.heldShares > 0
-                ? `${fmtShares(p.sell!.heldShares)} shares in your wallet`
+                ? `${fmtTokenCount(p.sell!.heldTokens ?? p.sell!.heldShares)} tokens`
                 : undefined
             }
             disabled={p.sell!.heldShares <= 0}
@@ -299,9 +304,7 @@ export function TradeCard(p: TradeCardProps) {
             value={buyPercent}
             onChange={onBuyPercent}
             label="USDT"
-            available={
-              p.usdtBalance != null ? `${fmtUsd(p.usdtBalance)} USDT in your wallet` : undefined
-            }
+            available={p.usdtBalance != null ? `${fmtUsd(p.usdtBalance)} USDT` : undefined}
             disabled={!p.authenticated || !p.usdtBalance || (p.unit === "shares" && !p.row)}
             testId="trade-slider"
           />

@@ -13,6 +13,16 @@ import { MIN_SELL_USDT } from "@tally/config";
 import { createSellIntent, fetchSellPlan, postSellReceiptHint } from "../../lib/trade-plan/sell";
 import type { SellIntent } from "../../lib/trade-plan/sell";
 import { explainSellError, planGotWorse, type SellFailure } from "../../lib/sell/view";
+import { ONDO_CLOSED_TIP } from "./ondo-closed";
+import { notifyPortfolioChanged } from "../../lib/hooks/portfolio-changed";
+
+/** The plain reason for a failed sale. Ondo tokens sell only while the US market is open: say that, not the router's wording. */
+function explainFor(e: unknown, t: SellTarget | null): SellFailure {
+  const f = explainSellError(e);
+  if (t?.issuer === "ondo" && /signed order/i.test(f.message))
+    return { ...f, message: ONDO_CLOSED_TIP };
+  return f;
+}
 
 export interface SellTarget {
   ticker: string;
@@ -228,7 +238,7 @@ export function useSellFlow() {
 
   const failAs = useCallback((e: unknown, id: number, keepForm = true) => {
     if (id !== runId.current) return;
-    const failure = explainSellError(e);
+    const failure = explainFor(e, targetRef.current);
     if (failure.kind === "refused" || failure.kind === "region")
       return setPhase({ name: "refused", failure });
     // The old plan was for different inputs: keeping it would leave a Confirm button on screen for a sale that was just refused.
@@ -346,7 +356,7 @@ export function useSellFlow() {
       if (initialText) setInputs({ text: initialText, all: false });
     } catch (e) {
       if (id !== runId.current) return;
-      const failure = explainSellError(e);
+      const failure = explainFor(e, targetRef.current);
       // The opening check can fail for reasons about the amount (below the minimum, a tiny shortfall): those are not refusals.
       if (
         failure.kind === "refused" ||
@@ -360,7 +370,8 @@ export function useSellFlow() {
         // exact balance, so it is read from the holdings route; the plan then says in words why the sale can't go ahead.
         rawBalance.current = await readRawBalance(t, w.address);
         if (id !== runId.current) return;
-        setPhase({ name: "form", plan: null, refreshing: false });
+        // Whatever the check said stays on screen: a sale that is declined always shows why.
+        setPhase({ name: "form", plan: null, refreshing: false, failure: explainFor(e, t) });
         if (initialText) setInputs({ text: initialText, all: false });
       }
     }
@@ -638,6 +649,12 @@ export function useSellFlow() {
       });
     void watch(pending.hash, id, pending.fee, pending.intent?.minUsdtOut);
   }, [watch, wallet.ready, wallet.authenticated, wallet.address]);
+
+  // A confirmed sale changes the wallet: Portfolio (holdings, activity, statement) reads again now.
+  const sold = phase.name === "confirmed";
+  useEffect(() => {
+    if (sold) notifyPortfolioChanged();
+  }, [sold]);
 
   const belowMinimum = target ? isBelowMinimum(target, inputs) : false;
   return {

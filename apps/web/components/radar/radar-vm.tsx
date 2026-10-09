@@ -106,22 +106,11 @@ function GradeRow({ g, ticker }: { g: RadarGradeDisplay; ticker: string }) {
           {g.executable !== false && !g.ghost && isTokenBuyable(ticker, g.issuer) ? (
             <Link
               href={`/trade/${ticker}`}
-              className="inline-flex min-h-[44px] items-center gap-1 text-[14px] text-blue"
+              className="inline-flex min-h-[44px] items-center gap-1 text-[14px] link-text"
             >
               Buy <ArrowRight size={13} aria-hidden />
             </Link>
-          ) : (
-            <span
-              className="t-meta"
-              title={
-                g.executable === false || g.ghost
-                  ? (g.executableReason ?? undefined)
-                  : "This issuer is not enabled yet."
-              }
-            >
-              {g.executable === false || g.ghost ? "Not buyable" : "Not enabled yet"}
-            </span>
-          )}
+          ) : null}
         </div>
       </div>
     </li>

@@ -14,6 +14,12 @@ import { BUYABLE_TICKERS } from "@/lib/tickers";
 import { TokenLogo } from "./badges";
 
 /** The five stocks Tally can buy, in beUI's Select (glass trigger and panel, unfolding animation). */
+/** NVDA first (the default stock, so the highlight never has to travel to it), then A to Z by ticker. */
+const ORDERED = [...BUYABLE_TICKERS].sort(
+  (a, b) =>
+    Number(b.ticker === "NVDA") - Number(a.ticker === "NVDA") || a.ticker.localeCompare(b.ticker),
+);
+
 export function StockPicker({
   value,
   onChange,
@@ -28,7 +34,7 @@ export function StockPicker({
 }) {
   const [query, setQuery] = useState("");
   const needle = query.trim().toLowerCase();
-  const matches = BUYABLE_TICKERS.filter(
+  const matches = ORDERED.filter(
     (t) => !needle || `${t.ticker} ${t.name}`.toLowerCase().includes(needle),
   );
   const matchSet = new Set(matches.map((t) => t.ticker));
@@ -76,7 +82,7 @@ export function StockPicker({
             No stock matches that.
           </li>
         ) : null}
-        {BUYABLE_TICKERS.map((t) => (
+        {ORDERED.map((t) => (
           <SelectItem key={t.ticker} value={t.ticker} hidden={!matchSet.has(t.ticker)}>
             {plain ? t.ticker : `${t.name} · ${t.ticker}`}
           </SelectItem>

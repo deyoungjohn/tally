@@ -493,10 +493,14 @@ test.describe("sell", () => {
     const sheet = await openSheet(page);
     await sheet.getByTestId("sell-all").click();
     await expect(sheet.getByTestId("sell-all")).toHaveText("Selling all");
+    // Choosing it again keeps it: the slider stays at 100% instead of flipping to 0.
+    await sheet.getByTestId("sell-all").click();
+    await expect(sheet.getByTestId("sell-all")).toHaveText("Selling all");
+    await expect(sheet.getByTestId("sell-slider-input")).toHaveValue("100");
     await expect(sheet.getByTestId("sell-shares")).toBeEditable();
     await sheet.getByTestId("sell-shares").fill("0.025");
     await expect(sheet.getByTestId("sell-all")).toHaveText("Sell all");
-    await expect(sheet.getByTestId("sell-slider-available")).toContainText("shares in your wallet");
+    await expect(sheet.getByTestId("sell-slider-available")).toContainText("tokens");
     const slider = sheet.getByTestId("sell-slider-input");
     await slider.fill("50");
     await expect(sheet.getByTestId("sell-shares")).not.toHaveValue("0.01");

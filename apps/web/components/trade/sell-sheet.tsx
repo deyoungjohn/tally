@@ -7,8 +7,8 @@ import { Button } from "@/components/motion/button";
 import { Modal } from "@/components/motion/modal";
 import { Segmented } from "@/components/motion/segmented";
 import { PercentSlider } from "@/components/ui/percent-slider";
-import { fmtShares, fmtUsd, shortHash } from "@/lib/format";
-import { bnbText, sharesText, toSellSheet, tokensText, usdtText } from "@/lib/sell/view";
+import { fmtUsd, shortHash } from "@/lib/format";
+import { bnbText, fromE18, sharesText, toSellSheet, tokensText, usdtText } from "@/lib/sell/view";
 import { SELL_TOLERANCES, parseShares, type useSellFlow } from "./use-sell-flow";
 import { ReceiptLink } from "@/components/receipts/receipt-link";
 
@@ -164,6 +164,12 @@ function FormView({ flow, isMigrate }: { flow: Flow; isMigrate?: boolean }) {
     : heldShares > 0 && typed !== null
       ? Math.min(100, (typed / heldShares) * 100)
       : 0;
+  // The token count of the whole holding: the plan's own raw balance when there is one, else the displayed amount.
+  const heldTokensText = plan
+    ? fromE18(plan.balances.tokens, 6)
+    : heldShares > 0
+      ? String(Number(heldShares.toFixed(6)))
+      : "";
   const held = heldShares > 0 ? String(Math.floor(heldShares * 1e8) / 1e8) : "";
   const onPercent = (p: number) => {
     if (p >= 100) return flow.sellAll();
@@ -197,7 +203,8 @@ function FormView({ flow, isMigrate }: { flow: Flow; isMigrate?: boolean }) {
             variant={inputs.all ? "primary" : "glassy"}
             type="button"
             aria-pressed={inputs.all}
-            onClick={() => (inputs.all ? flow.setInputs({ all: false, text: "" }) : flow.sellAll())}
+            // Choosing "all" again keeps it: the slider stays at 100% (the amount is changed by typing or by the slider).
+            onClick={() => (inputs.all ? undefined : flow.sellAll())}
             data-testid="sell-all"
           >
             {inputs.all ? "Selling all" : "Sell all"}
@@ -208,8 +215,8 @@ function FormView({ flow, isMigrate }: { flow: Flow; isMigrate?: boolean }) {
       <PercentSlider
         value={percent}
         onChange={onPercent}
-        label={target.symbol}
-        available={heldShares > 0 ? `${fmtShares(heldShares)} shares in your wallet` : undefined}
+        label={`${target.symbol} tokens`}
+        available={heldTokensText ? `${heldTokensText} tokens` : undefined}
         disabled={heldShares <= 0}
         testId="sell-slider"
       />
@@ -347,7 +354,17 @@ function FormView({ flow, isMigrate }: { flow: Flow; isMigrate?: boolean }) {
         </Notice>
       ) : null}
       {!view && !busy && !phase.failure && !flow.belowMinimum ? (
-        <p className="t-meta">Enter a number of shares, or choose Sell all.</p>
+        inputs.all || inputs.text !== "" ? (
+          // An amount is chosen but no quote came back, and nothing said why: say so, with a way to ask again.
+          <Notice tone="amber" testId="sell-no-quote">
+            We couldn&apos;t get a quote for this sale right now. Nothing was sent.{" "}
+            <button type="button" className="link-text" onClick={() => void flow.refresh()}>
+              Try again
+            </button>
+          </Notice>
+        ) : (
+          <p className="t-meta">Enter a number of shares, or choose Sell all.</p>
+        )
       ) : null}
 
       <p className="t-meta" data-testid="sell-risk">

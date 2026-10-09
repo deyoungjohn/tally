@@ -128,7 +128,7 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
                       href={`https://bscscan.com/tx/${pm.saleHash}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-xs text-[#F18F01] underline shrink-0"
+                      className="link-text text-xs shrink-0"
                     >
                       BscScan
                     </a>
@@ -248,7 +248,7 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
                       href={`/receipt/${pm.saleHash}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="underline hover:text-black"
+                      className="link-text"
                     >
                       Sale Receipt
                     </a>
@@ -258,7 +258,7 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
                       href={`/receipt/${pm.buyHash}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="underline hover:text-black"
+                      className="link-text"
                     >
                       Buy Receipt
                     </a>

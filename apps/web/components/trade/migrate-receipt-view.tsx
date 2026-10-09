@@ -122,7 +122,7 @@ export function MigrateReceiptView({ vm }: { vm: MigrateReceiptVM }) {
               href={`/receipt/${vm.giveUp.txHash}`}
               target="_blank"
               rel="noreferrer"
-              className="text-xs underline hover:text-white/80"
+              className="link-text text-xs"
             >
               Sale Receipt
             </a>
@@ -130,7 +130,7 @@ export function MigrateReceiptView({ vm }: { vm: MigrateReceiptVM }) {
               href={`https://bscscan.com/tx/${vm.giveUp.txHash}`}
               target="_blank"
               rel="noreferrer"
-              className="text-xs underline hover:text-white/80"
+              className="link-text text-xs"
             >
               BscScan
             </a>
@@ -234,7 +234,7 @@ export function MigrateReceiptView({ vm }: { vm: MigrateReceiptVM }) {
               href={`/receipt/${vm.receive.txHash}`}
               target="_blank"
               rel="noreferrer"
-              className="text-xs underline hover:text-white/80"
+              className="link-text text-xs"
             >
               Buy Receipt
             </a>
@@ -242,7 +242,7 @@ export function MigrateReceiptView({ vm }: { vm: MigrateReceiptVM }) {
               href={`https://bscscan.com/tx/${vm.receive.txHash}`}
               target="_blank"
               rel="noreferrer"
-              className="text-xs underline hover:text-white/80"
+              className="link-text text-xs"
             >
               BscScan
             </a>

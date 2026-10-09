@@ -18,7 +18,7 @@ export function PercentSlider({
   onChange: (percent: number) => void;
   /** What the percentage is of, e.g. "USDT" or "NVDAB". */
   label: string;
-  /** The full amount the slider is a share of, e.g. "12.5 USDT" or "0.0257 NVDAB (≈ 0.0257 shares)". */
+  /** The full amount the slider is a share of: just the number, e.g. "12.5 USDT" or "0.0257 tokens". */
   available?: ReactNode;
   disabled?: boolean;
   testId?: string;
@@ -28,7 +28,7 @@ export function PercentSlider({
     <div className="grid gap-1" data-testid={testId}>
       <div className="flex items-baseline justify-between gap-3">
         <label htmlFor={`${testId}-input`} className="t-meta">
-          Use <b className="num text-fg">{v}%</b> of your {label}
+          <b className="num text-fg">{v}%</b>
         </label>
         {available ? (
           <span className="t-meta text-right" data-testid={`${testId}-available`}>

@@ -40,7 +40,7 @@ export function SiteFooter() {
               <ul className="mt-3 grid gap-2">
                 {c.links.map(([label, href]) => (
                   <li key={label}>
-                    <Link href={href} className="text-sm text-fg2 no-underline hover:text-fg">
+                    <Link href={href} className="link-text text-sm">
                       {label}
                     </Link>
                   </li>

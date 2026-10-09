@@ -1,6 +1,8 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
+import { useEffect } from "react";
+import { notifyPortfolioChanged } from "@/lib/hooks/portfolio-changed";
 import { SPRING_SWAP } from "@/lib/ease";
 import { ProgressIsland, ReceiptModal, ReviewSheet, SignInSheet, TopUpSheet } from "./flow-sheets";
 import type { FlowPhase, useTradeFlow } from "./use-trade-flow";
@@ -52,6 +54,11 @@ export function ActionLabel({ text }: { text: string }) {
 /** Everything a buy shows besides the page itself: the progress pill, sign-in, top-up and review. Used by Home and Trade. */
 export function TradeFlowLayer({ flow }: { flow: ReturnType<typeof useTradeFlow> }) {
   const { phase } = flow;
+  // A finished buy changes the wallet: Portfolio (holdings, activity, statement) reads again now.
+  const done = phase.name === "done";
+  useEffect(() => {
+    if (done) notifyPortfolioChanged();
+  }, [done]);
   const params = flow.params.current;
   return (
     <>

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ApiError } from "@/lib/dto";
+import { PORTFOLIO_URL, onPortfolioChanged } from "./portfolio-changed";
 
 const cacheListeners = new Set<() => void>();
 
@@ -39,6 +40,12 @@ export function useJson<T>(url: string | null, opts: { refreshMs?: number } = {}
       cacheListeners.delete(onReset);
     };
   }, []);
+
+  // A finished transaction refreshes the portfolio views at once.
+  useEffect(() => {
+    if (!url || !PORTFOLIO_URL.test(url)) return;
+    return onPortfolioChanged(() => setN((x) => x + 1));
+  }, [url]);
 
   useEffect(() => {
     if (!url) {

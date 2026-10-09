@@ -19,9 +19,34 @@ function downloadCsv(vm: StatementVM) {
   URL.revokeObjectURL(url);
 }
 
-export function StatementVmView({ vm }: { vm: StatementVM }) {
+/** A token in the wallet that the statement feed has no record of (received from another wallet, or bought outside Tally). */
+export interface UntrackedToken {
+  key: string;
+  symbol: string;
+  ticker: string;
+  issuer: "ondo" | "bstock" | "xstocks";
+  address: string;
+  shares: string;
+  valueUsd: string;
+}
+
+export function StatementVmView({
+  vm,
+  valueToday,
+  recent = [],
+  untracked = [],
+  wallet,
+}: {
+  vm: StatementVM;
+  /** The wallet's value right now, counting every tokenized stock (the same total the Portfolio card shows). */
+  valueToday?: string;
+  /** Verified transactions the feed does not have yet, from Activity. */
+  recent?: StatementVM["lines"];
+  untracked?: UntrackedToken[];
+  wallet?: string | null;
+}) {
   // The table lists tokenized stocks only. A line with no issuer is not one (for example BNB or USDT moving as part of a swap).
-  const lines = vm.lines.filter((l) => l.issuer !== null);
+  const lines = [...recent, ...vm.lines].filter((l) => l.issuer !== null);
   const anyRealized = vm.lines.some((l) => l.realizedPnlUsd !== undefined);
   return (
     <div className="grid gap-4" data-testid="vm-statement">
@@ -29,18 +54,20 @@ export function StatementVmView({ vm }: { vm: StatementVM }) {
         <dl>
           <div className="detail-row">
             <dt>Value today</dt>
-            <dd data-testid="st-value">{usd(vm.totalValueUsd)}</dd>
+            <dd data-testid="st-value">{usd(valueToday ?? vm.totalValueUsd)}</dd>
           </div>
           <div className="detail-row">
             <dt>Cost basis</dt>
             <dd data-testid="st-cost">{usd(vm.totalCostBasisUsd)}</dd>
           </div>
-          <div className="detail-row">
-            <dt>Unrealized gain or loss</dt>
-            <dd className={signed(vm.totalUnrealizedPnlUsd)} data-testid="st-unrealized">
-              {usd(vm.totalUnrealizedPnlUsd)}
-            </dd>
-          </div>
+          {untracked.length === 0 ? (
+            <div className="detail-row">
+              <dt>Unrealized gain or loss</dt>
+              <dd className={signed(vm.totalUnrealizedPnlUsd)} data-testid="st-unrealized">
+                {usd(vm.totalUnrealizedPnlUsd)}
+              </dd>
+            </div>
+          ) : null}
           <div className="detail-row">
             <dt>Realized gain or loss</dt>
             <dd className={signed(vm.totalRealizedPnlUsd)} data-testid="st-realized">
@@ -48,6 +75,14 @@ export function StatementVmView({ vm }: { vm: StatementVM }) {
             </dd>
           </div>
         </dl>
+        {untracked.length > 0 ? (
+          <p className="t-meta mt-2" data-testid="st-untracked-note">
+            {untracked.length === 1 ? "1 token has" : `${untracked.length} tokens have`} no trade
+            record (received from another wallet, or bought outside Tally). They are counted in
+            Value today and listed below as received; their cost is unknown, so the unrealized
+            figure is left out.
+          </p>
+        ) : null}
         {anyRealized ? null : (
           <p className="t-meta mt-2" data-testid="st-realized-reason">
             No sale in this statement could be matched to a cost, so no realized figure is shown.
@@ -78,7 +113,7 @@ export function StatementVmView({ vm }: { vm: StatementVM }) {
         </ul>
       ) : null}
 
-      {lines.length > 0 ? (
+      {lines.length > 0 || untracked.length > 0 ? (
         <div className="glass min-w-0 overflow-x-auto p-2" data-testid="st-table">
           <table className="w-full min-w-[620px] border-collapse text-left text-[14px]">
             <caption className="sr-only">Buys and sells, in shares</caption>
@@ -103,7 +138,7 @@ export function StatementVmView({ vm }: { vm: StatementVM }) {
                       const symbol = l.issuer ? tokenSymbol(l.ticker, l.issuer) : l.ticker;
                       return l.txHash ? (
                         <a
-                          className="font-bold text-blue"
+                          className="font-bold link-text"
                           href={`https://bscscan.com/tx/${l.txHash}`}
                           target="_blank"
                           rel="noreferrer"
@@ -125,6 +160,31 @@ export function StatementVmView({ vm }: { vm: StatementVM }) {
                   <td className="num px-3 py-2 text-right">
                     {l.realizedPnlUsd !== undefined ? usd(l.realizedPnlUsd) : "–"}
                   </td>
+                </tr>
+              ))}
+              {untracked.map((t) => (
+                <tr
+                  key={t.key}
+                  className="border-t border-white/[0.06]"
+                  data-testid={`st-received-${t.symbol}`}
+                >
+                  <td className="px-3 py-2">–</td>
+                  <td className="px-3 py-2">Received</td>
+                  <td className="px-3 py-2">
+                    <a
+                      className="link-text font-bold"
+                      href={`https://bscscan.com/token/${t.address}${wallet ? `?a=${wallet}` : ""}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`${t.symbol}: view on BscScan (opens in a new tab)`}
+                    >
+                      {t.symbol}
+                    </a>
+                  </td>
+                  <td className="num px-3 py-2 text-right">{t.shares}</td>
+                  <td className="num px-3 py-2 text-right">unknown</td>
+                  <td className="num px-3 py-2 text-right">${t.valueUsd}</td>
+                  <td className="num px-3 py-2 text-right">–</td>
                 </tr>
               ))}
             </tbody>

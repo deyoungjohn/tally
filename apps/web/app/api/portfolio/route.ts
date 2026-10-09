@@ -8,11 +8,11 @@ export const dynamic = "force-dynamic";
 
 const query = z.object({ address: z.string().regex(/^0x[0-9a-fA-F]{40}$/) });
 
-/** Tickers a wallet holds besides the picker's, so no held stock is left out. Cached for a few seconds: the scan reads every registry token. */
+/** Tickers a wallet holds besides the picker's, so no held stock is left out. Cached for two seconds: the scan reads every registry token. */
 const heldCache = new Map<string, { at: number; tickers: string[] }>();
 async function heldTickers(address: `0x${string}`): Promise<string[]> {
   const hit = heldCache.get(address.toLowerCase());
-  if (hit && Date.now() - hit.at < 20_000) return hit.tickers;
+  if (hit && Date.now() - hit.at < 2_000) return hit.tickers;
   try {
     const engine = await getEngine();
     const report = await engine.holdings(address);

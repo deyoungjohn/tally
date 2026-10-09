@@ -120,7 +120,7 @@ function BellButton({ address }: { address: string }) {
           <Link
             href="/guardian"
             onClick={() => setOpen(false)}
-            className="mt-4 inline-flex min-h-[44px] items-center text-[14.5px] text-orange-text"
+            className="mt-4 inline-flex min-h-[44px] items-center text-[14.5px] link-text"
           >
             Open Guardian
           </Link>
