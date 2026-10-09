@@ -414,4 +414,156 @@ describe("additive view-model fields (WO-12 decisions 2026-10-06)", () => {
       .holdings[0]!.issuers[0]!;
     expect("sharesUnavailableReason" in row).toBe(false);
   });
+
+  describe("portfolio suggestions integration (WO-03 / wo03-portfolio-suggestions.md)", () => {
+    it("suggestions field is always present on PortfolioVM across all states", () => {
+      const emptyVM = buildPortfolioVM(null);
+      expect(emptyVM.suggestions).toBeDefined();
+      expect(emptyVM.suggestions.state).toBe("unavailable");
+      expect(emptyVM.suggestions.items).toEqual([]);
+
+      const errorVM = buildPortfolioVM(null, { error: "Something failed" });
+      expect(errorVM.suggestions).toBeDefined();
+      expect(errorVM.suggestions.state).toBe("unavailable");
+
+      const readyVM = buildPortfolioVM(
+        statement({
+          walletAddress: WALLET,
+          holdings: [
+            base({ ticker: "A", tokenBalanceUsdE18: 10n * E18 }),
+            base({ ticker: "B", tokenBalanceUsdE18: 10n * E18 }),
+            base({ ticker: "C", tokenBalanceUsdE18: 10n * E18 }),
+          ],
+        }),
+      );
+      expect(readyVM.suggestions).toBeDefined();
+      expect(readyVM.suggestions.state).toBe("none_needed");
+      expect(readyVM.suggestions.count).toBe(0);
+      expect(readyVM.suggestions.items).toEqual([]);
+    });
+
+    it("loadPortfolio reads radar snapshots from store to populate suggestions", async () => {
+      const { openStore } = await import("@tally/modkit");
+      const store = openStore(":memory:");
+      const now = Date.now();
+
+      try {
+        // Seed radar grade snapshots for 3 buyable assets
+        // NVDAB (0x02fca66c1d1afb4e2a7884261eb00f63598a7436)
+        store.put({
+          kind: "radar",
+          key: "0x02fca66c1d1afb4e2a7884261eb00f63598a7436",
+          source: "engine",
+          observedAt: now,
+          data: {
+            ticker: "NVDA",
+            address: "0x02fca66c1d1afb4e2a7884261eb00f63598a7436",
+            symbol: "NVDAB",
+            issuer: "bstock",
+            score: 95,
+            grade: "A",
+            reasons: ["Strong on-chain depth"],
+            ghost: false,
+            rawVolume24hUsd: 500_000n * E18,
+          },
+        });
+        // AAPLB (0x431a3bee82e2ca41e49895cbece5bb0f76a89b7a)
+        store.put({
+          kind: "radar",
+          key: "0x431a3bee82e2ca41e49895cbece5bb0f76a89b7a",
+          source: "engine",
+          observedAt: now,
+          data: {
+            ticker: "AAPL",
+            address: "0x431a3bee82e2ca41e49895cbece5bb0f76a89b7a",
+            symbol: "AAPLB",
+            issuer: "bstock",
+            score: 92,
+            grade: "A",
+            reasons: ["High daily volume"],
+            ghost: false,
+            rawVolume24hUsd: 400_000n * E18,
+          },
+        });
+        // TSLAB (0x5b1910eaad6450e50f816082aa078c41f10c292f)
+        store.put({
+          kind: "radar",
+          key: "0x5b1910eaad6450e50f816082aa078c41f10c292f",
+          source: "engine",
+          observedAt: now,
+          data: {
+            ticker: "TSLA",
+            address: "0x5b1910eaad6450e50f816082aa078c41f10c292f",
+            symbol: "TSLAB",
+            issuer: "bstock",
+            score: 88,
+            grade: "B",
+            reasons: ["Active retail flow"],
+            ghost: false,
+            rawVolume24hUsd: 300_000n * E18,
+          },
+        });
+
+        // 1. Empty wallet: holds 0 -> suggests 3
+        const emptyVM = await loadPortfolio({ walletAddress: WALLET, store, now });
+        expect(emptyVM.suggestions.state).toBe("ok");
+        expect(emptyVM.suggestions.count).toBe(3);
+        expect(emptyVM.suggestions.items).toHaveLength(3);
+        expect(emptyVM.suggestions.items.every((i) => i.label === "Liquid")).toBe(true);
+
+        // 2. Wallet holds 1 non-dust token (NVDA) -> suggests 2 (excluding NVDA)
+        const stmtWithNvda = statement({
+          walletAddress: WALLET,
+          holdings: [
+            base({
+              ticker: "NVDA",
+              tokenContractAddress: "0x02fca66c1d1afb4e2a7884261eb00f63598a7436",
+              tokenSymbol: "NVDAB",
+              tokenBalanceUsdE18: 100n * E18,
+            }),
+          ],
+        });
+        store.put({
+          kind: "statement",
+          key: WALLET.toLowerCase(),
+          source: "engine",
+          observedAt: now,
+          data: stmtWithNvda,
+        });
+
+        const oneHeldVM = await loadPortfolio({ walletAddress: WALLET, store, now });
+        expect(oneHeldVM.suggestions.state).toBe("ok");
+        expect(oneHeldVM.suggestions.count).toBe(2);
+        expect(oneHeldVM.suggestions.items).toHaveLength(2);
+        expect(oneHeldVM.suggestions.items.some((i) => i.ticker === "NVDA")).toBe(false);
+
+        // 3. Stale radar snapshot -> unavailable
+        const staleStore = openStore(":memory:");
+        staleStore.put({
+          kind: "radar",
+          key: "0x02fca66c1d1afb4e2a7884261eb00f63598a7436",
+          source: "engine",
+          observedAt: now - 100 * 60_000, // 100 min old (> 60 min RADAR_MAX_AGE_MS)
+          data: {
+            ticker: "NVDA",
+            address: "0x02fca66c1d1afb4e2a7884261eb00f63598a7436",
+            symbol: "NVDAB",
+            issuer: "bstock",
+            score: 95,
+            grade: "A",
+            reasons: ["Old snapshot"],
+            ghost: false,
+            rawVolume24hUsd: 500_000n * E18,
+          },
+        });
+        const staleVM = await loadPortfolio({ walletAddress: WALLET, store: staleStore, now });
+        expect(staleVM.suggestions.state).toBe("unavailable");
+        expect(staleVM.suggestions.count).toBe(0);
+        expect(staleVM.suggestions.items).toEqual([]);
+        staleStore.close();
+      } finally {
+        store.close();
+      }
+    });
+  });
 });

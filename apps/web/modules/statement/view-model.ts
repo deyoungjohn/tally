@@ -2,16 +2,32 @@ import {
   formatUnits,
   formatUsd,
   exportStatementCsv,
+  buildPortfolioSuggestions,
   type Issuer,
   type Statement,
   type HoldingRowActionMeta,
+  type PortfolioSuggestions,
+  type PortfolioSuggestionItem,
+  type PortfolioSuggestionsState,
+  type CandidateTokenInput,
 } from "@tally/mod-statement";
 import { flags as getFlags, type ModuleName } from "@tally/config";
 import type { SnapshotStore } from "@tally/modkit";
+import { GENERATED_BUYABLE_ASSETS } from "../../lib/buyable.generated";
+import { isTokenBuyable, nameOf } from "../../lib/tickers";
+import { RADAR_MAX_AGE_MS, FLOW_MAX_AGE_MS, type FlowAggregate } from "@tally/mod-flow";
+import type { RadarGradeSnapshot } from "../flow/view-model";
 
 export type PortfolioTab = "holdings" | "activity" | "statement";
 
-export type { HoldingRowActionMeta };
+export type {
+  HoldingRowActionMeta,
+  PortfolioSuggestions,
+  PortfolioSuggestionItem,
+  PortfolioSuggestionsState,
+};
+export type PortfolioSuggestionsVM = PortfolioSuggestions;
+export type PortfolioSuggestionItemVM = PortfolioSuggestionItem;
 
 export interface IssuerHoldingVM {
   issuer: Issuer | null;
@@ -55,6 +71,8 @@ export interface PortfolioVM {
   realizedKnown?: boolean;
   availableTabs: PortfolioTab[];
   activeTab: PortfolioTab;
+  /** Additive (WO-03 / wo03-portfolio-suggestions.md). Suggestions for wallets holding fewer than 3 stocks. */
+  suggestions: PortfolioSuggestionsVM;
   stale: boolean;
   ageMs: number | null;
   source: string | null;
@@ -119,6 +137,7 @@ export function buildPortfolioVM(
     ageMs?: number | null;
     source?: string | null;
     error?: string | null;
+    suggestions?: PortfolioSuggestionsVM;
   },
 ): PortfolioVM {
   const activeFlags = { ...getFlags(), ...(opts?.flags ?? {}) };
@@ -131,6 +150,16 @@ export function buildPortfolioVM(
   const ageMs = opts?.ageMs ?? null;
   const source = opts?.source ?? stmt?.source ?? null;
 
+  const suggestions =
+    opts?.suggestions ??
+    buildPortfolioSuggestions({
+      walletAddress,
+      held: stmt?.holdings ?? [],
+      candidates: [],
+      radarMissing: true,
+      isFixture: opts?.source?.includes("fixture") || process.env.TALLY_FIXTURES === "1",
+    });
+
   if (opts?.error) {
     return {
       state: "error",
@@ -142,6 +171,7 @@ export function buildPortfolioVM(
       realizedKnown: false,
       availableTabs,
       activeTab: "holdings",
+      suggestions,
       stale,
       ageMs,
       source,
@@ -161,6 +191,7 @@ export function buildPortfolioVM(
       realizedKnown: false,
       availableTabs,
       activeTab: "holdings",
+      suggestions,
       stale,
       ageMs,
       source,
@@ -236,6 +267,7 @@ export function buildPortfolioVM(
     realizedKnown: stmt.trades.some((t) => t.realizedPnlUsdE18 !== undefined),
     availableTabs,
     activeTab: "holdings",
+    suggestions,
     stale,
     ageMs,
     source,
@@ -371,33 +403,104 @@ export function buildStatementVM(
   };
 }
 
+/**
+ * Reads Radar grade snapshots and flow-aggregate snapshots from the store
+ * to build candidate tokens for portfolio suggestions (no network calls, no full tape).
+ */
+export function loadSuggestionsFromStore(
+  store: SnapshotStore,
+  held: Parameters<typeof buildPortfolioSuggestions>[0]["held"],
+  walletAddress?: string | null,
+  now = Date.now(),
+): PortfolioSuggestionsVM {
+  let anyRadarRowFound = false;
+  let anyRadarRowStale = false;
+  const isFixture = process.env.TALLY_FIXTURES === "1";
+
+  const candidates: CandidateTokenInput[] = [];
+
+  for (const asset of GENERATED_BUYABLE_ASSETS) {
+    if (!isTokenBuyable(asset.ticker, asset.kind)) continue;
+
+    const radarSnap = store.latest<RadarGradeSnapshot>("radar", asset.address.toLowerCase(), {
+      maxAgeMs: RADAR_MAX_AGE_MS,
+      now,
+    });
+
+    if (!radarSnap) continue;
+    anyRadarRowFound = true;
+    if (radarSnap.stale) anyRadarRowStale = true;
+
+    const flowSnap = store.latest<FlowAggregate>("flow-aggregate", asset.address.toLowerCase(), {
+      maxAgeMs: FLOW_MAX_AGE_MS,
+      now,
+    });
+
+    const realVolumeUsd = flowSnap?.data?.windows?.["24h"]?.realVolumeUsd;
+    const rawVolume24hUsd = radarSnap.data.rawVolume24hUsd;
+    const cleanedVolumeUsd = realVolumeUsd ?? rawVolume24hUsd ?? 0n;
+
+    candidates.push({
+      ticker: asset.ticker,
+      symbol: asset.symbol,
+      issuer: asset.kind,
+      name: nameOf(asset.ticker),
+      address: asset.address,
+      grade: radarSnap.data.grade,
+      score: radarSnap.data.score,
+      ghost: radarSnap.data.ghost,
+      stale: radarSnap.stale,
+      cleanedVolumeUsd,
+      reason: radarSnap.data.reasons?.[0] ?? "Liquid on-chain",
+    });
+  }
+
+  return buildPortfolioSuggestions({
+    walletAddress,
+    held,
+    candidates,
+    radarMissing: !anyRadarRowFound,
+    radarStale: anyRadarRowStale,
+    isFixture,
+  });
+}
+
 /** Server/component loader for portfolio view model */
 export async function loadPortfolio(opts?: {
   walletAddress?: string;
   store?: SnapshotStore;
   flags?: Partial<Record<ModuleName, boolean>>;
+  now?: number;
 }): Promise<PortfolioVM> {
   const wallet = opts?.walletAddress;
-  if (!wallet) {
-    return buildPortfolioVM(null, { flags: opts?.flags });
-  }
+  const store = opts?.store;
+  const now = opts?.now ?? Date.now();
 
-  if (opts?.store) {
-    const snap = opts.store.latest<Statement>("statement", wallet.toLowerCase(), {
+  let stmt: Statement | null = null;
+  let snapInfo: { stale?: boolean; ageMs?: number | null; source?: string | null } = {};
+
+  if (wallet && store) {
+    const snap = store.latest<Statement>("statement", wallet.toLowerCase(), {
       maxAgeMs: 300_000,
+      now,
     });
     if (snap) {
-      return buildPortfolioVM(snap.data, {
-        walletAddress: wallet,
-        flags: opts.flags,
-        stale: snap.stale,
-        ageMs: snap.ageMs,
-        source: snap.source,
-      });
+      stmt = snap.data;
+      snapInfo = { stale: snap.stale, ageMs: snap.ageMs, source: snap.source };
     }
   }
 
-  return buildPortfolioVM(null, { walletAddress: wallet, flags: opts?.flags });
+  const heldInput = stmt?.holdings ?? [];
+  const suggestions = store ? loadSuggestionsFromStore(store, heldInput, wallet, now) : undefined;
+
+  return buildPortfolioVM(stmt, {
+    walletAddress: wallet,
+    flags: opts?.flags,
+    stale: snapInfo.stale,
+    ageMs: snapInfo.ageMs,
+    source: snapInfo.source,
+    suggestions,
+  });
 }
 
 /** Server/component loader for statement view model */
