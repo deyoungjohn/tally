@@ -8,9 +8,9 @@ export const dynamic = "force-dynamic";
 
 const query = z.object({ address: z.string().regex(/^0x[0-9a-fA-F]{40}$/) });
 
-/** Tickers a wallet holds besides the picker's, so no held stock is left out. Cached for two seconds: the scan reads every registry token. */
+/** Tickers a wallet holds. Cached for two seconds: the scan reads every registry token. Returns null when scan fails. */
 const heldCache = new Map<string, { at: number; tickers: string[] }>();
-async function heldTickers(address: `0x${string}`): Promise<string[]> {
+async function heldTickers(address: `0x${string}`): Promise<string[] | null> {
   const hit = heldCache.get(address.toLowerCase());
   if (hit && Date.now() - hit.at < 2_000) return hit.tickers;
   try {
@@ -21,7 +21,7 @@ async function heldTickers(address: `0x${string}`): Promise<string[]> {
     return tickers;
   } catch {
     // The picker's stocks are still read; the page does not fail because the wider scan did.
-    return [];
+    return null;
   }
 }
 
@@ -31,11 +31,18 @@ export async function GET(req: NextRequest) {
   try {
     const q = query.parse(Object.fromEntries(req.nextUrl.searchParams));
     const engine = await getEngine();
+    const t0 = Date.now();
     const held = await heldTickers(q.address as `0x${string}`);
-    const tickers = [...new Set([...PICKER_TICKERS.map((t) => t.ticker), ...held])];
-    const report = await engine.portfolio(q.address as `0x${string}`, tickers);
-    // The BNB price lets the page leave out a balance worth under $1; without it nothing is hidden.
-    const bnbUsd = await engine.ports.chain.bnbUsd().catch(() => null);
+    const tickers = held !== null ? held : PICKER_TICKERS.map((t) => t.ticker);
+    const [report, bnbUsd] = await Promise.all([
+      engine.portfolio(q.address as `0x${string}`, tickers),
+      engine.ports.chain.bnbUsd().catch(() => null),
+    ]);
+    const ms = Date.now() - t0;
+    const stats = (report as { stats?: { inspected: number; cacheHits: number } }).stats;
+    console.log(
+      `[portfolio] tickers=${tickers.length} inspected=${stats?.inspected ?? tickers.length} hits=${stats?.cacheHits ?? 0} time=${ms}ms`,
+    );
     return json({ ...report, bnbUsd });
   } catch (e) {
     return errorResponse(e);

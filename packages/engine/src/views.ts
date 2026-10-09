@@ -46,21 +46,55 @@ const toRow = (ticker: string, t: TokenInspection): RadarRow => ({
   unitTrap: t.integrity.unitTrap,
 });
 
-/** Trap radar: every token of the given tickers with its integrity grade (blueprint §7.5). One ticker at a time, to respect the API's pacing. */
-export function radarFor(ports: EnginePorts, now: () => number, ttlMs = 120_000) {
+/** Runs an async mapper over items with at most `limit` tasks running concurrently, preserving item order. */
+export async function mapConcurrent<T, R>(
+  items: readonly T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  if (items.length === 0) return [];
+  const max = Math.max(1, limit);
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+  const workers = Array.from({ length: Math.min(max, items.length) }, async () => {
+    while (nextIndex < items.length) {
+      const idx = nextIndex++;
+      results[idx] = await fn(items[idx]!, idx);
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
+
+/** Trap radar: every token of the given tickers with its integrity grade (blueprint §7.5). Bounded concurrency of 4 at a time. */
+export function radarFor(
+  ports: EnginePorts,
+  now: () => number,
+  ttlMs = 120_000,
+  inspect?: (ticker: string) => Promise<TokenInspection[]>,
+) {
   const cache = new TtlCache<RadarReport>(ttlMs, now);
+  const doInspect = inspect ?? ((t: string) => inspectTicker(ports, t));
   return (tickers: readonly string[]) =>
     cache.get(tickers.join(","), async () => {
       const rows: RadarRow[] = [];
       const failed: RadarReport["failed"] = [];
-      for (const t of tickers) {
+      const inspected = await mapConcurrent(tickers, 4, async (t) => {
         try {
-          for (const tok of await inspectTicker(ports, t)) rows.push(toRow(t, tok));
+          const toks = await doInspect(t);
+          return { ticker: t, toks };
         } catch (e) {
-          failed.push({
+          return {
             ticker: t,
-            message: e instanceof Error ? e.message.slice(0, 160) : String(e),
-          });
+            error: e instanceof Error ? e.message.slice(0, 160) : String(e),
+          };
+        }
+      });
+      for (const item of inspected) {
+        if (item.error) {
+          failed.push({ ticker: item.ticker, message: item.error });
+        } else if (item.toks) {
+          for (const tok of item.toks) rows.push(toRow(item.ticker, tok));
         }
       }
       return { asOf: new Date(now()).toISOString(), rows, failed };
@@ -96,6 +130,11 @@ export interface PortfolioReport {
   totalValueUsd: number;
   wallet: { usdt: number; bnb: number };
   failed: { ticker: string; message: string }[];
+  /** Observability counts (non-enumerable on returned instance to preserve byte-identical serialization). */
+  stats?: {
+    inspected: number;
+    cacheHits: number;
+  };
 }
 
 export interface WalletToken {
@@ -186,51 +225,92 @@ export async function portfolioFor(
   address: Address,
   tickers: readonly string[],
   now: () => number,
+  inspect?: (
+    ticker: string,
+  ) => Promise<{ toks: TokenInspection[]; cached?: boolean } | TokenInspection[]>,
 ): Promise<PortfolioReport> {
-  const failed: PortfolioReport["failed"] = [];
-  const groups: PortfolioReport["groups"] = [];
-  const [bal] = await Promise.all([chain.balances(address)]);
-  for (const ticker of tickers) {
+  const balPromise = chain.balances(address);
+  const doInspect =
+    inspect ?? (async (t: string) => ({ toks: await inspectTicker(ports, t), cached: false }));
+
+  let inspectedCount = 0;
+  let cacheHitsCount = 0;
+
+  const inspectedResults = await mapConcurrent(tickers, 4, async (ticker) => {
     try {
-      const toks = await inspectTicker(ports, ticker);
-      const balances = await chain.erc20Balances(
-        address,
-        toks.map((t) => t.address),
-      );
-      const ref = toks[0]?.referencePrice?.price ?? null;
-      const parts: Holding[] = [];
-      toks.forEach((t, i) => {
-        const raw = balances[i] ?? 0n;
-        if (raw === 0n || !t.multiplier) return;
-        const tokens = Number(raw) / E18;
-        const multiplier = Number(t.multiplier.value) / E18;
-        const shares = tokens * multiplier;
-        parts.push({
-          ticker,
-          symbol: t.symbol,
-          issuer: t.issuer,
-          address: t.address,
-          tokens,
-          multiplier,
-          shares,
-          valueUsd: ref === null ? null : shares * ref,
-          grade: t.integrity.grade,
-        });
-      });
-      if (parts.length === 0) continue;
-      const shares = parts.reduce((a, p) => a + p.shares, 0);
-      groups.push({
-        ticker,
-        shares,
-        valueUsd: ref === null ? null : shares * ref,
-        referencePrice: ref,
-        parts,
-      });
+      const res = await doInspect(ticker);
+      const toks = Array.isArray(res) ? res : res.toks;
+      const isCached = !Array.isArray(res) && Boolean(res.cached);
+      if (isCached) {
+        cacheHitsCount++;
+      } else {
+        inspectedCount++;
+      }
+      return { ticker, toks };
     } catch (e) {
-      failed.push({ ticker, message: e instanceof Error ? e.message.slice(0, 160) : String(e) });
+      inspectedCount++;
+      return {
+        ticker,
+        error: e instanceof Error ? e.message.slice(0, 160) : String(e),
+      };
+    }
+  });
+
+  const failed: PortfolioReport["failed"] = [];
+  const successful: { ticker: string; toks: TokenInspection[] }[] = [];
+  for (const item of inspectedResults) {
+    if (item.error) {
+      failed.push({ ticker: item.ticker, message: item.error });
+    } else if (item.toks) {
+      successful.push({ ticker: item.ticker, toks: item.toks });
     }
   }
-  return {
+
+  // One erc20Balances call for all the tokens of all inspected tickers instead of one per ticker
+  const allTokenAddresses = successful.flatMap((s) => s.toks.map((t) => t.address));
+  const balances =
+    allTokenAddresses.length > 0 ? await chain.erc20Balances(address, allTokenAddresses) : [];
+  const balanceMap = new Map<string, bigint>();
+  allTokenAddresses.forEach((addr, i) => {
+    balanceMap.set(addr.toLowerCase(), balances[i] ?? 0n);
+  });
+
+  const groups: PortfolioReport["groups"] = [];
+  for (const s of successful) {
+    const ref = s.toks[0]?.referencePrice?.price ?? null;
+    const parts: Holding[] = [];
+    s.toks.forEach((t) => {
+      const raw = balanceMap.get(t.address.toLowerCase()) ?? 0n;
+      if (raw === 0n || !t.multiplier) return;
+      const tokens = Number(raw) / E18;
+      const multiplier = Number(t.multiplier.value) / E18;
+      const shares = tokens * multiplier;
+      parts.push({
+        ticker: s.ticker,
+        symbol: t.symbol,
+        issuer: t.issuer,
+        address: t.address,
+        tokens,
+        multiplier,
+        shares,
+        valueUsd: ref === null ? null : shares * ref,
+        grade: t.integrity.grade,
+      });
+    });
+    if (parts.length === 0) continue;
+    const shares = parts.reduce((a, p) => a + p.shares, 0);
+    groups.push({
+      ticker: s.ticker,
+      shares,
+      valueUsd: ref === null ? null : shares * ref,
+      referencePrice: ref,
+      parts,
+    });
+  }
+
+  const bal = await balPromise;
+
+  const report: PortfolioReport = {
     address,
     asOf: new Date(now()).toISOString(),
     groups,
@@ -238,4 +318,13 @@ export async function portfolioFor(
     wallet: { usdt: Number(bal.usdt) / E18, bnb: Number(bal.bnb) / E18 },
     failed,
   };
+
+  Object.defineProperty(report, "stats", {
+    value: { inspected: inspectedCount, cacheHits: cacheHitsCount },
+    enumerable: false,
+    writable: true,
+    configurable: true,
+  });
+
+  return report;
 }
