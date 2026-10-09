@@ -16,6 +16,9 @@ import {
 import type { RwaPrice, RwaToken } from "@tally/binance";
 import { errorMessage, type Latest, type SnapshotStore } from "@tally/modkit";
 import { BUYABLE_TICKERS } from "../../lib/tickers";
+import { buildPiesPageVM, type PiesPageOptions, type PiesPageVM } from "./basket-view-model";
+export { buildPiesPageVM } from "./basket-view-model";
+export type { PiesPageVM, PiesPageOptions, BasketBuyPlanVM, BasketVM } from "./basket-view-model";
 
 export interface SnapshotMeta {
   stale: boolean;
@@ -44,6 +47,13 @@ function serialise<T>(data: T): Serializable<T> {
   ) as Serializable<T>;
 }
 const defaultMeta: SnapshotMeta = { stale: false, ageMs: null, source: null, error: null };
+
+export async function loadPiesPage(options: PiesPageOptions = {}): Promise<PiesPageVM> {
+  return buildPiesPageVM({
+    ...options,
+    fixtures: options.fixtures ?? process.env.TALLY_FIXTURES === "1",
+  });
+}
 const state = (empty: boolean, reason: string | null, meta: SnapshotMeta): VMState => ({
   ...meta,
   state: meta.error ? "error" : empty ? "empty" : "ready",
