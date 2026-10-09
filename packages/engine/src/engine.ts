@@ -126,6 +126,8 @@ export interface Engine {
   health(): Promise<HealthReport>;
   /** Raw ports, for tests. */
   ports: EnginePorts;
+  /** Shared 30-second TTL cache for inspectTicker results across portfolio, radar, and facts. */
+  inspectCache?: TtlCache<TokenInspection[]>;
 }
 
 interface BuildOptions {
@@ -245,7 +247,16 @@ function build(o: BuildOptions): Engine {
     now,
     onWarn: o.onWarn,
   };
-  const radar = radarFor(ports, now);
+  const inspectCache = new TtlCache<TokenInspection[]>(30_000, now);
+  const cachedInspect = async (ticker: string) => {
+    let loaded = false;
+    const toks = await inspectCache.get(ticker.toUpperCase(), async () => {
+      loaded = true;
+      return inspectTicker(ports, ticker);
+    });
+    return { toks, cached: !loaded };
+  };
+  const radar = radarFor(ports, now, 120_000, async (t) => (await cachedInspect(t)).toks);
   return {
     paceWorkerRequests: pace?.configure,
     collectors: new BinanceCollectors(client),
@@ -254,7 +265,8 @@ function build(o: BuildOptions): Engine {
     ports,
     health,
     radar,
-    portfolio: (address, tickers) => portfolioFor(ports, o.tradeChain, address, tickers, now),
+    portfolio: (address, tickers) =>
+      portfolioFor(ports, o.tradeChain, address, tickers, now, cachedInspect),
     holdings: (address) => holdingsFor(ports, o.tradeChain, address, now),
     sharesOf: (address, tickers) => sharesOf(ports, o.tradeChain, address, tickers, o.onWarn),
     pauseState: (tokenAddress) => pauseState(o.tradeChain, tokenAddress, now),
@@ -265,8 +277,9 @@ function build(o: BuildOptions): Engine {
       prepareSell: (req) => prepareSell(sellDeps, req),
       guardRouter: (stock) => readGuardRouter(o.tradeChain, stock),
     },
-    facts: (ticker) => inspectTicker(ports, ticker),
+    facts: (ticker) => inspectCache.get(ticker.toUpperCase(), () => inspectTicker(ports, ticker)),
     quote,
+    inspectCache,
   };
 }
 
