@@ -18,6 +18,10 @@ export function useJson<T>(url: string | null, opts: { refreshMs?: number } = {}
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [n, setN] = useState(0);
+  // The id of the request that is still in flight (0 = none). A timed refresh must never abort it: if a slow endpoint takes
+  // longer than `refreshMs`, aborting and restarting on every tick means no request ever finishes (a page stuck loading).
+  const inflight = useRef(0);
+  const requestId = useRef(0);
 
   const prevUrlRef = useRef(url);
   useEffect(() => {
@@ -53,6 +57,8 @@ export function useJson<T>(url: string | null, opts: { refreshMs?: number } = {}
       return;
     }
     const ctl = new AbortController();
+    const id = ++requestId.current;
+    inflight.current = id;
     setLoading(true);
     fetch(url, { signal: ctl.signal, cache: "no-store" })
       .then(async (r) => {
@@ -66,6 +72,7 @@ export function useJson<T>(url: string | null, opts: { refreshMs?: number } = {}
           setError(e instanceof Error ? e.message : "Something went wrong.");
       })
       .finally(() => {
+        if (inflight.current === id) inflight.current = 0;
         if (!ctl.signal.aborted) setLoading(false);
       });
     return () => ctl.abort();
@@ -75,7 +82,8 @@ export function useJson<T>(url: string | null, opts: { refreshMs?: number } = {}
   useEffect(() => {
     if (!url || !refreshMs) return;
     const tick = () => {
-      if (document.visibilityState === "visible") setN((x) => x + 1);
+      // Skip while a request is still running: let it finish instead of throwing its answer away.
+      if (document.visibilityState === "visible" && inflight.current === 0) setN((x) => x + 1);
     };
     const id = window.setInterval(tick, refreshMs);
     document.addEventListener("visibilitychange", tick);
