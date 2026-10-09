@@ -818,6 +818,20 @@ test.describe("other assets: wallet.usdt and wallet.bnb only, from /api/portfoli
   });
 });
 
+test("the transfers route is read-only, validates the address and answers with a 90-day history shape", async ({
+  page,
+}) => {
+  const bad = await page.request.get("/api/transfers?address=nope");
+  expect(bad.status()).toBeGreaterThanOrEqual(400);
+  const res = await page.request.get(`/api/transfers?address=${WALLET}`);
+  expect(res.status()).toBe(200);
+  const body = await res.json();
+  expect(body.days).toBe(90);
+  expect(Array.isArray(body.transfers)).toBe(true);
+  expect(Array.isArray(body.incomplete)).toBe(true);
+  expect((await page.request.post(`/api/transfers?address=${WALLET}`)).status()).toBe(405);
+});
+
 /* ------------------------------------------- wallet registration for the worker */
 
 test.describe("active wallet registration (verified route, called after sign-in)", () => {

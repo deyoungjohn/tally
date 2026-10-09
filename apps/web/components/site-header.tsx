@@ -24,7 +24,6 @@ export const NAV_LINKS = [
 const MODULE_LINKS: { href: string; label: string; flag: ModuleName }[] = [
   { href: "/guardian", label: "Guardian", flag: "guardian" },
   { href: "/pies", label: "Pies", flag: "pies" },
-  { href: "/quality", label: "Quality", flag: "quality" },
 ];
 
 export function Logo() {

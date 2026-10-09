@@ -86,8 +86,10 @@ test.describe("receipt and quality pages: real server, signed out", () => {
     });
   });
 
-  test("quality says when data is thin and shows the table", async ({ page }) => {
-    await page.goto(`${server.url}/quality`);
+  test("Live fills (the Trade page tab) says when data is thin and shows the table", async ({
+    page,
+  }) => {
+    await page.goto(`${server.url}/trade?tab=fills`);
     await expect(page.getByTestId("quality-table")).toBeVisible({ timeout: 20_000 });
     // The pending/excluded counts line is gone from the page.
     await expect(page.getByText("Pending attempts excluded")).toHaveCount(0);
@@ -99,6 +101,16 @@ test.describe("receipt and quality pages: real server, signed out", () => {
     await expect(page.getByTestId("quality-live")).toContainText("Updates every 5s");
   });
 
+  test("the old /quality address redirects to the Live fills tab", async ({ page }) => {
+    await page.goto(`${server.url}/quality`);
+    await expect(page).toHaveURL(/\/trade\?tab=fills/);
+    await expect(page.getByTestId("quality-table")).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole("radio", { name: "Live fills" })).toBeChecked();
+    await expect(
+      page.getByRole("navigation", { name: "Primary" }).getByRole("link", { name: "Quality" }),
+    ).toHaveCount(0);
+  });
+
   test("the quality page polls /api/vm/quality, which answers the module's view model", async ({
     page,
   }) => {
@@ -108,7 +120,7 @@ test.describe("receipt and quality pages: real server, signed out", () => {
     expect(body.module).toBe("quality");
     expect(body.vm.state).toBe("ready");
     const polled = page.waitForRequest("**/api/vm/quality", { timeout: 20_000 });
-    await page.goto(`${server.url}/quality`);
+    await page.goto(`${server.url}/trade?tab=fills`);
     await polled;
   });
 
@@ -145,7 +157,7 @@ test.describe("receipt and quality pages: real server, signed out", () => {
         ["stale", `/receipt/${STALE_HASH}`, "vm-stale"],
         ["pending", `/receipt/${PENDING_HASH}`, "receipt-pending"],
         ["empty", `/receipt/${UNKNOWN_HASH}`, "vm-empty"],
-        ["quality", "/quality", "quality-table"],
+        ["quality", "/trade?tab=fills", "quality-table"],
       ];
       for (const [name, path, id] of shots) {
         await page.goto(`${server.url}${path}`);
@@ -183,8 +195,8 @@ test.describe("receipt and quality pages: module degraded", () => {
       timeout: 20_000,
     });
     await expect(page.getByTestId("receipt-step-Received")).toHaveCount(0);
-    await page.goto(`${server.url}/quality`);
-    await expect(page.getByTestId("vm-degraded")).toContainText("Quality is catching up", {
+    await page.goto(`${server.url}/trade?tab=fills`);
+    await expect(page.getByTestId("vm-degraded")).toContainText("Live fills is catching up", {
       timeout: 20_000,
     });
   });

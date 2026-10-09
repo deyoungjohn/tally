@@ -10,6 +10,7 @@ import { useJson } from "@/lib/hooks/use-json";
 import { useModuleFlags } from "@/lib/hooks/use-flags";
 import type { PortfolioReport } from "@tally/engine";
 import { Segmented } from "@/components/motion/segmented";
+import { LiveFills } from "./live-fills";
 import { MigrateSheet } from "./migrate-sheet";
 import { MigrateTab } from "./migrate-tab";
 import { SellSheet } from "./sell-sheet";
@@ -27,34 +28,47 @@ import { Sparkline } from "./sparkline";
 import { MIN_USD, TradeCard, type Unit } from "./trade-card";
 import { useTradeFlow, type FlowParams } from "./use-trade-flow";
 
-type TradeTab = "trade" | "migrate";
+type TradeTab = "trade" | "migrate" | "fills";
 
 /** The Trade page. With the `switch` flag on it has two tabs: the trade card, and "Migrate stocks". Both stay mounted so typed amounts survive a tab change. */
 export function TradeClient(props: { ticker: string; initialUsd?: number }) {
   const flags = useModuleFlags();
   const migrateOn = flags.switch === true;
+  const fillsOn = flags.quality === true;
   const [tab, setTab] = useState<TradeTab>("trade");
+  // `/trade?tab=fills` (the old Quality address redirects here) opens the Live fills tab.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("tab") === "fills") setTab("fills");
+  }, []);
   const migrate = useMigrateFlow();
-  const active: TradeTab = migrateOn ? tab : "trade";
+  const active: TradeTab =
+    tab === "migrate" && migrateOn ? "migrate" : tab === "fills" && fillsOn ? "fills" : "trade";
+  const options: { value: TradeTab; label: string }[] = [
+    { value: "trade", label: "Buy & sell" },
+    ...(migrateOn ? [{ value: "migrate" as const, label: "Migrate stocks" }] : []),
+    ...(fillsOn ? [{ value: "fills" as const, label: "Live fills" }] : []),
+  ];
   return (
     <>
-      {migrateOn ? (
+      {options.length > 1 ? (
         <div className="wrap flex justify-center pt-8 min-[561px]:pt-12">
           <Segmented
             size="lg"
             label="Trade sections"
             value={active}
             onChange={setTab}
-            options={[
-              { value: "trade", label: "Buy & sell" },
-              { value: "migrate", label: "Migrate stocks" },
-            ]}
+            options={options}
           />
         </div>
       ) : null}
       <div hidden={active !== "trade"}>
-        <TradeInner {...props} tabbed={migrateOn} />
+        <TradeInner {...props} tabbed={options.length > 1} />
       </div>
+      {fillsOn ? (
+        <div hidden={active !== "fills"}>
+          <LiveFills active={active === "fills"} />
+        </div>
+      ) : null}
       {migrateOn ? (
         <>
           <div hidden={active !== "migrate"}>

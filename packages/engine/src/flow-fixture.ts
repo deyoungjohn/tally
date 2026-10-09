@@ -39,6 +39,31 @@ export function fixtureFlowChain(): FlowChain {
     async blockNumber() {
       return BigInt(readFlowRecording()._meta.toBlock);
     },
+    async incomingTransfers(token, wallet, fromBlock, toBlock) {
+      const row = Object.values(readFlowRecording().tokens).find(
+        (r) => r.address.toLowerCase() === token.toLowerCase(),
+      );
+      const recipient = wallet.toLowerCase().slice(2);
+      const transfers = (row?.logs ?? [])
+        .filter(
+          (l) =>
+            l.topics.length === 3 &&
+            l.topics[2]!.toLowerCase().endsWith(recipient) &&
+            BigInt(l.blockNumber) >= fromBlock &&
+            BigInt(l.blockNumber) <= toBlock,
+        )
+        .map((l) => ({
+          token,
+          from: `0x${l.topics[1]!.slice(26)}`,
+          amount: BigInt(l.data),
+          blockNumber: BigInt(l.blockNumber),
+          transactionHash: l.transactionHash,
+          logIndex: Number(BigInt(l.logIndex)),
+          timestampMs: Number(BigInt(l.blockTimestamp)) * 1000,
+        }))
+        .sort((a, b) => (a.blockNumber > b.blockNumber ? -1 : 1));
+      return { transfers, complete: true };
+    },
     async transferLogs(token, fromBlock, toBlock): Promise<TransferLog[]> {
       if (toBlock < fromBlock || toBlock - fromBlock + 1n > 10_000n)
         throw new RangeError("Transfer window must contain 1..10000 blocks");

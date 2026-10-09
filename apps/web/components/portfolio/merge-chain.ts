@@ -139,6 +139,9 @@ export function untrackedTokens(
   issuer: "ondo" | "bstock" | "xstocks";
   address: string;
   shares: string;
+  /** Token count and shares per token, to turn a transferred token amount into shares. */
+  tokens: number;
+  sharesPerToken: number;
   valueUsd: string;
 }[] {
   if (!chain) return [];
@@ -155,6 +158,8 @@ export function untrackedTokens(
       issuer: p.issuer,
       address: p.address,
       shares: String(Number(p.shares.toFixed(6))),
+      tokens: p.tokens,
+      sharesPerToken: p.tokens > 0 ? p.shares / p.tokens : 0,
       valueUsd: money(p.valueUsd ?? 0),
     }));
 }
