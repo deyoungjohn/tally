@@ -1,5 +1,6 @@
 export interface PendingMigrate {
   id: string;
+  wallet?: string;
   ticker: string;
   from: "ondo" | "bstock";
   to: "ondo" | "bstock";
@@ -29,23 +30,55 @@ export interface PendingMigrate {
     minShares: string;
   };
   pollStartedAt?: number;
+  source?: "chain" | "receipt" | "wallet";
+  isFixture?: boolean;
 }
 
 export const MIGRATE_STORAGE_KEY = "tally.pendingMigrate";
 const TWENTY_FOUR_HOURS_MS = 24 * 60 * 60 * 1000;
 
-export function readPendingMigrate(): PendingMigrate | null {
+export function readPendingMigrate(currentWallet?: string | null): PendingMigrate | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem(MIGRATE_STORAGE_KEY);
     if (!raw) return null;
-    const pm = JSON.parse(raw) as PendingMigrate;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") {
+      localStorage.removeItem(MIGRATE_STORAGE_KEY);
+      return null;
+    }
+    const pm = parsed as PendingMigrate;
+
+    // Discard old shape safely (missing wallet or invalid createdAt)
+    if (!pm.wallet || typeof pm.wallet !== "string" || !pm.createdAt) {
+      localStorage.removeItem(MIGRATE_STORAGE_KEY);
+      return null;
+    }
+
+    // Expire after 24 hours
     if (Date.now() - pm.createdAt > TWENTY_FOUR_HOURS_MS) {
       localStorage.removeItem(MIGRATE_STORAGE_KEY);
       return null;
     }
+
+    // Ignore and remove a saved migration for a different wallet
+    if (currentWallet && pm.wallet.toLowerCase() !== currentWallet.toLowerCase()) {
+      localStorage.removeItem(MIGRATE_STORAGE_KEY);
+      return null;
+    }
+
+    // If wallet was explicitly passed as null or empty, don't return an unauthenticated migration
+    if (currentWallet === null || currentWallet === "") {
+      return null;
+    }
+
     return pm;
   } catch {
+    try {
+      localStorage.removeItem(MIGRATE_STORAGE_KEY);
+    } catch {
+      // ignore
+    }
     return null;
   }
 }
