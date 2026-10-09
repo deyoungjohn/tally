@@ -684,7 +684,7 @@ test.describe("other assets: wallet.usdt and wallet.bnb only, from /api/portfoli
     await expect(page.getByTestId("total-value")).toHaveText("$123.16");
   });
 
-  test("a token held on chain but missing from the statement feed is still shown, labelled", async ({
+  test("a token held on chain but missing from the statement feed is counted in the list and the total", async ({
     page,
   }) => {
     await run(page, {
@@ -712,11 +712,18 @@ test.describe("other assets: wallet.usdt and wallet.bnb only, from /api/portfoli
         ],
       }),
     });
-    const extra = page.getByTestId("chain-only-holdings");
-    await expect(extra).toBeVisible({ timeout: 20_000 });
-    await expect(extra).toContainText("TSMon");
-    await expect(extra).toContainText("TSMC");
-    await expect(page.getByTestId("group-NVDA")).toBeVisible();
+    // No separate section: TSM is a holding like the others, listed first because it is worth the most, and in the total.
+    await expect(page.getByTestId("group-TSM")).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByTestId("group-TSM")).toContainText("TSMon");
+    await expect(page.getByTestId("chain-only-holdings")).toHaveCount(0);
+    await expect(page.getByText("Also in your wallet")).toHaveCount(0);
+    await expect(page.getByTestId("total-value")).toHaveText("$423.16");
+    const order = await page
+      .getByTestId("vm-holdings")
+      .locator("> li")
+      .evaluateAll((els) => els.map((e) => e.getAttribute("data-testid")));
+    expect(order[0]).toBe("group-TSM");
+    expect(order).toContain("group-NVDA");
   });
 
   test("other assets under $1 are not shown, with no way to show them", async ({ page }) => {

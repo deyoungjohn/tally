@@ -67,6 +67,40 @@ test.describe("radar view model: real route on a seeded server", () => {
     expect(homeText).toBe(radarText);
   });
 
+  test("cards load on demand: a first page, more as the end comes near, columns stay put", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.route("**/api/vm/radar*", async (route) => {
+      const res = await route.fetch();
+      const body = await res.json();
+      const base = body.vm.cards[0];
+      body.vm.cards = Array.from({ length: 70 }, (_, i) => ({
+        ...base,
+        ticker: `ZZ${String(i).padStart(2, "0")}`,
+        flowPanel: null,
+        grades: base.grades.map((g: { address: string; symbol: string }) => ({
+          ...g,
+          address: `${g.address.slice(0, 30)}${String(i).padStart(10, "0")}`,
+          symbol: `ZZ${String(i).padStart(2, "0")}on`,
+        })),
+      }));
+      await route.fulfill({ response: res, json: body });
+    });
+    await page.goto(`${server.url}/radar`);
+    const list = page.getByTestId("radar-masonry");
+    await expect(list).toBeVisible({ timeout: 20_000 });
+    await expect(list).toHaveAttribute("data-shown", "24");
+    const first = await page.getByTestId("radarvm-card-ZZ00").boundingBox();
+    await page.getByTestId("radar-more").getByRole("button", { name: "Show more" }).click();
+    await expect(list).toHaveAttribute("data-shown", "48");
+    // Scrolling to the end loads the rest by itself.
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await expect(list).toHaveAttribute("data-shown", "70", { timeout: 10_000 });
+    const again = await page.getByTestId("radarvm-card-ZZ00").boundingBox();
+    expect(Math.abs(first!.x - again!.x)).toBeLessThan(2);
+  });
+
   test("large trades in a flow panel are a plain table", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.route("**/api/vm/radar*", async (route) => {

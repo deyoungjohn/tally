@@ -266,7 +266,7 @@ test.describe("signed-in changes", () => {
     await expect(page.getByTestId("home-action")).toContainText("Buy NVDA");
     await expect(page.getByTestId("home-card").getByTestId("returning-user")).toHaveCount(0);
     await page.getByTestId("home-card").getByTestId("stock-picker").click();
-    await page.getByRole("option", { name: /^Apple · AAPLon \/ AAPLB/ }).click();
+    await page.getByRole("option", { name: /^Apple · AAPL$/ }).click();
     await expect(page.getByTestId("home-action")).toContainText("Buy AAPL");
     await mockWallet(page);
     await page.goto("/");

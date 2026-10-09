@@ -4,10 +4,11 @@
 
 import { ArrowRight, Info } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { RadarCardDisplay, RadarDisplay, RadarGradeDisplay } from "@/app/api/vm/radar/display";
 import type { FlowPanelDisplay } from "@/modules/flow/view-model";
 import { MorphingSearch, type MorphingSearchItem } from "@/components/motion/morphing-search";
+import { Button } from "@/components/motion/button";
 import { Segmented } from "@/components/motion/segmented";
 import { HowWeGradeLink } from "./how-we-grade-link";
 import { FlagBadge, GradeBadge, LiquidityBadge, TokenLogo } from "@/components/trade/badges";
@@ -344,8 +345,9 @@ function FlowView({ cards }: { cards: RadarCardDisplay[] }) {
 
 function TickerCard({ card, grades }: { card: RadarCardDisplay; grades: RadarGradeDisplay[] }) {
   return (
-    <li
-      className="panel radar-card mb-3 block w-full break-inside-avoid list-none p-4"
+    <div
+      role="listitem"
+      className="panel radar-card block w-full p-4"
       data-testid={`radarvm-card-${card.ticker}`}
     >
       <div className="mb-3 flex items-center gap-3">
@@ -357,7 +359,7 @@ function TickerCard({ card, grades }: { card: RadarCardDisplay; grades: RadarGra
           <GradeRow key={g.address} g={g} ticker={card.ticker} />
         ))}
       </ul>
-    </li>
+    </div>
   );
 }
 
@@ -391,6 +393,90 @@ export function Stats({ grades }: { grades: RadarGradeDisplay[] }) {
         </div>
       ))}
     </dl>
+  );
+}
+
+const PAGE = 24;
+
+/** How many columns fit: one on a phone, two from 761px, three from 1100px (matches the old CSS columns). */
+function useColumnCount() {
+  const [n, setN] = useState(1);
+  useEffect(() => {
+    const two = window.matchMedia("(min-width: 761px)");
+    const three = window.matchMedia("(min-width: 1100px)");
+    const update = () => setN(three.matches ? 3 : two.matches ? 2 : 1);
+    update();
+    two.addEventListener("change", update);
+    three.addEventListener("change", update);
+    return () => {
+      two.removeEventListener("change", update);
+      three.removeEventListener("change", update);
+    };
+  }, []);
+  return n;
+}
+
+/**
+ * The cards, loaded on demand: the first page at once, the next page whenever the end comes near (and by a button, for
+ * keyboards). Cards are dealt into columns one by one, so adding more never moves the ones already on screen, and each
+ * card keeps its own height.
+ */
+function RadarMasonry({
+  cards,
+}: {
+  cards: { card: RadarCardDisplay; grades: RadarGradeDisplay[] }[];
+}) {
+  const [limit, setLimit] = useState(PAGE);
+  const cols = useColumnCount();
+  const end = useRef<HTMLDivElement>(null);
+  const more = limit < cards.length;
+  useEffect(() => {
+    const el = end.current;
+    if (!more || !el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting))
+          setLimit((l) => Math.min(l + PAGE, cards.length));
+      },
+      { rootMargin: "800px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [more, limit, cards.length]);
+  const shown = cards.slice(0, limit);
+  const columns = Array.from({ length: cols }, (_, c) => shown.filter((_, i) => i % cols === c));
+  return (
+    <>
+      <div
+        role="list"
+        className="mt-3 flex items-start gap-3"
+        data-testid="radar-masonry"
+        data-shown={shown.length}
+      >
+        {columns.map((col, c) => (
+          <div key={c} role="presentation" className="flex min-w-0 flex-1 flex-col gap-3">
+            {col.map(({ card, grades }) => (
+              <TickerCard key={card.ticker} card={card} grades={grades} />
+            ))}
+          </div>
+        ))}
+      </div>
+      {more ? (
+        <div ref={end} className="mt-4 flex flex-col items-center gap-2" data-testid="radar-more">
+          <p className="t-meta" aria-live="polite">
+            Showing {shown.length} of {cards.length} stocks
+          </p>
+          <Button
+            variant="glassy"
+            onClick={() => setLimit((l) => Math.min(l + PAGE, cards.length))}
+          >
+            Show more
+          </Button>
+        </div>
+      ) : cards.length > PAGE ? (
+        <p className="t-meta mt-4 text-center">All {cards.length} stocks shown.</p>
+      ) : null}
+    </>
   );
 }
 
@@ -528,14 +614,7 @@ export function RadarVmBody() {
           </div>
           <HowWeGradeLink />
 
-          <ul
-            className="m-0 mt-3 columns-1 gap-3 p-0 min-[761px]:columns-2 min-[1100px]:columns-3"
-            data-testid="radar-masonry"
-          >
-            {cards.map(({ card, grades }) => (
-              <TickerCard key={card.ticker} card={card} grades={grades} />
-            ))}
-          </ul>
+          <RadarMasonry key={`${filter}|${q}`} cards={cards} />
           {cards.length === 0 ? (
             <p className="mt-6 text-fg2">Nothing matches that filter.</p>
           ) : null}

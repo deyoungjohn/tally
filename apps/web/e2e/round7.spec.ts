@@ -289,7 +289,13 @@ test.describe("round 7", () => {
   }) => {
     await page.goto("/trade/NVDA");
     await expect(page.getByTestId("trade-card")).toBeVisible();
-    await expect(page.locator("main")).not.toContainText(/\bNVDA\b(?!on|B)/);
+    // The stock picker reads "NVIDIA · NVDA" by design (the owner asked for the ticker there); everything else uses token names.
+    const text = await page.locator("main").evaluate((el) => {
+      const copy = el.cloneNode(true) as HTMLElement;
+      copy.querySelectorAll('[data-testid="stock-picker"]').forEach((n) => n.remove());
+      return copy.innerText;
+    });
+    expect(text).not.toMatch(/\bNVDA\b(?!on|B)/);
   });
 
   test("a verified sale shows USDT received with Guaranteed at least right under it, in the same unit", async ({

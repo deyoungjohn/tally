@@ -104,16 +104,6 @@ export function MigrateReceiptView({ vm }: { vm: MigrateReceiptVM }) {
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-white/60">Simulated at gas limit</span>
-              <span>
-                {vm.giveUp.simulation === true
-                  ? "yes"
-                  : vm.giveUp.simulation === false
-                    ? "no"
-                    : "Not recorded"}
-              </span>
-            </div>
-            <div className="flex justify-between">
               <span className="text-white/60">Value</span>
               <span>0 BNB</span>
             </div>

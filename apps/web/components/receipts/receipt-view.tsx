@@ -156,6 +156,8 @@ export function ReceiptView({
 
   const status = vm.status ? STATUS[vm.status] : null;
   const sell = vm.kind === "sell";
+  // A sale records no simulation output, so its ladder has no "Simulated" step.
+  const ladder = sell ? vm.ladder.filter((s) => s.stage !== "Simulated") : vm.ladder;
   const trusted = vm.comparisonTrust === "recorded";
   const minimum = sell ? vm.signedMinimumShares : dec(vm.signedMinimumShares);
   const multiplier = fmtE18(vm.evidence.multiplier);
@@ -202,9 +204,9 @@ export function ReceiptView({
       {vm.ladder.length ? (
         <ol
           className="m-0 mt-6 grid max-w-[640px] list-none gap-3 p-0"
-          aria-label="Quote, simulation, received"
+          aria-label={sell ? "Quote, received" : "Quote, simulation, received"}
         >
-          {vm.ladder.map((s, i) => (
+          {ladder.map((s, i) => (
             <Step key={s.stage} stage={s} step={i + 1} sell={sell} />
           ))}
         </ol>
@@ -232,7 +234,7 @@ export function ReceiptView({
               </dd>
             </div>
           ) : null}
-          {diffSim ? (
+          {diffSim && !sell ? (
             <div>
               <dt className="t-meta">Received vs simulation</dt>
               <dd className="m-0">{diffSim}</dd>
