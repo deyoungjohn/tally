@@ -654,6 +654,11 @@ body {
   color: #fff;
   font-weight: 700;
   line-height: 1;
+  user-select: none;
+}
+/* The letter is drawn by CSS, so it is never part of the page text (copying, search, screen readers). */
+.token-icon-fallback::after {
+  content: attr(data-letter);
 }
 .detail-row {
   display: flex;

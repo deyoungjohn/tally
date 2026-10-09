@@ -45,9 +45,8 @@ export function TokenIcon({
       aria-hidden
       style={{ ...box, fontSize: Math.round(size * 0.46) }}
       className={cn("token-icon token-icon-fallback", className)}
+      data-letter={fallbackLetter(t)}
       data-testid={`token-icon-${t}`}
-    >
-      {fallbackLetter(t)}
-    </span>
+    />
   );
 }
