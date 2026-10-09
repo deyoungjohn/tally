@@ -1,7 +1,6 @@
 "use client";
 
-import { ArrowRight, Lock, Wallet } from "lucide-react";
-import Link from "next/link";
+import { Lock, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { PortfolioReport } from "@tally/engine";
 import { Button, ButtonLink } from "@/components/motion/button";
@@ -14,11 +13,9 @@ import { useModuleFlagsState } from "@/lib/hooks/use-flags";
 import { PortfolioVmPanel } from "./portfolio-vm";
 import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { useJson } from "@/lib/hooks/use-json";
-import { MIN_SELL_USDT } from "@tally/config";
-import { Tip } from "@/components/ui/tooltip";
-import { ISSUER_LABEL, fmtUsd } from "@/lib/format";
+import { ISSUER_LABEL } from "@/lib/format";
 import { tokenPair } from "@/lib/tickers";
-import { buyMoreToken, canMigrateTicker } from "./enablement";
+import { RowActions } from "./row-actions";
 import { companyName } from "./company-name";
 import {
   SmallBalancesLink,
@@ -26,7 +23,6 @@ import {
   otherAssetsShown,
   type SmallBalance,
 } from "./small-balances";
-import { OndoGate } from "@/components/trade/ondo-gate";
 import { LiveNumber, LiveShares, LiveUsd } from "@/components/motion/live";
 import { LearnMore } from "@/components/learn-more";
 
@@ -45,10 +41,6 @@ export function HoldingGroup({
   onSell?: (p: Part) => void;
   onMigrate?: (p: Part) => void;
 }) {
-  const buyMore = buyMoreToken(
-    g.ticker,
-    g.parts.map((p) => ({ ...p, valueUsd: p.valueUsd ?? 0 })),
-  );
   return (
     <li className="panel list-none p-5" data-testid={`group-${g.ticker}`}>
       <div className="flex items-center gap-3">
@@ -61,7 +53,7 @@ export function HoldingGroup({
             {[...g.parts]
               .sort((a, b) => (b.valueUsd ?? 0) - (a.valueUsd ?? 0))
               .map((x) => x.symbol)
-              .join(" · ")}
+              .join(" & ")}
           </p>
           <p className="text-[13.5px] font-light text-fg2">{companyName(g.ticker)}</p>
         </div>
@@ -111,96 +103,19 @@ export function HoldingGroup({
                   <LiveShares value={p.shares} />
                 </b>
               </span>
-              {onSell || onMigrate ? (
-                <div className="flex gap-2">
-                  {onSell && p.issuer !== "xstocks" ? (
-                    p.valueUsd !== null && p.valueUsd < MIN_SELL_USDT ? (
-                      // Worth less than the smallest sale: unclickable, and the tooltip says why.
-                      <Tip
-                        text={`This holding is worth ${fmtUsd(p.valueUsd)}, below the $${MIN_SELL_USDT} minimum sale.`}
-                      >
-                        <span className="inline-flex">
-                          <Button
-                            variant="glassy"
-                            className="!h-9 !px-4 text-[14.5px]"
-                            disabled
-                            aria-label={`Sell ${p.symbol} (below the ${MIN_SELL_USDT} minimum sale)`}
-                            data-testid={`sell-${p.symbol}`}
-                          >
-                            Sell
-                          </Button>
-                        </span>
-                      </Tip>
-                    ) : (
-                      <Button
-                        variant="glassy"
-                        className="!h-9 !px-4 text-[14.5px]"
-                        onClick={() => onSell(p)}
-                        aria-label={`Sell ${p.symbol}`}
-                        data-testid={`sell-${p.symbol}`}
-                      >
-                        Sell
-                      </Button>
-                    )
-                  ) : null}
-
-                  {onMigrate && canMigrateTicker(p.ticker) ? (
-                    <OndoGate ticker={p.ticker} issuer={p.issuer}>
-                      {(ondoClosed) => {
-                        let reason: string | null = null;
-                        if (p.issuer === "xstocks") {
-                          reason = "No market to exit this token on BNB Chain";
-                        } else if (ondoClosed) {
-                          reason = ondoClosed;
-                        } else if (p.valueUsd !== null && p.valueUsd < MIN_SELL_USDT) {
-                          reason =
-                            "Too small to migrate: the buy needs at least 6 USDT. You can sell to USDT instead.";
-                        }
-
-                        if (reason) {
-                          return (
-                            <Tip text={reason}>
-                              <span className="inline-flex">
-                                <Button
-                                  variant="glassy"
-                                  className="!h-9 !px-4 text-[14.5px]"
-                                  disabled
-                                  aria-label="Migrate (disabled)"
-                                  data-testid={`migrate-${p.symbol}`}
-                                >
-                                  Migrate
-                                </Button>
-                              </span>
-                            </Tip>
-                          );
-                        }
-                        return (
-                          <Button
-                            variant="glassy"
-                            className="!h-9 !px-4 text-[14.5px]"
-                            onClick={() => onMigrate(p)}
-                            aria-label={`Migrate ${p.symbol}`}
-                            data-testid={`migrate-${p.symbol}`}
-                          >
-                            Migrate
-                          </Button>
-                        );
-                      }}
-                    </OndoGate>
-                  ) : null}
-                </div>
-              ) : null}
+              {example ? null : (
+                <RowActions
+                  ticker={p.ticker}
+                  issuer={p.issuer}
+                  symbol={p.symbol}
+                  valueUsd={p.valueUsd}
+                  onSell={onSell ? () => onSell(p) : undefined}
+                  onMigrate={onMigrate ? () => onMigrate(p) : undefined}
+                />
+              )}
             </li>
           ))}
       </ul>
-      {example || !buyMore ? null : (
-        <Link
-          href={`/trade/${g.ticker}`}
-          className="mt-3 inline-flex min-h-[44px] items-center gap-1 text-[14px] text-blue"
-        >
-          Buy more {buyMore.symbol} <ArrowRight size={13} aria-hidden />
-        </Link>
-      )}
     </li>
   );
 }

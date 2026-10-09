@@ -23,7 +23,7 @@ const TX = [
 function Ext({ href, children }: { href: string; children: React.ReactNode }) {
   return (
     <a
-      className="inline-flex min-h-[44px] items-center gap-1.5 text-blue"
+      className="inline-flex min-h-[44px] items-center gap-1.5 link-text"
       href={href}
       target="_blank"
       rel="noreferrer"

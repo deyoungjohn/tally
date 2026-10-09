@@ -311,7 +311,7 @@ function TradeInner({
                   <p className="font-semibold">{phase.message}</p>
                   {phase.txHash ? (
                     <a
-                      className="mono mt-1 inline-block text-[13.5px] text-blue"
+                      className="mono mt-1 inline-block text-[13.5px] link-text"
                       href={`https://bscscan.com/tx/${phase.txHash}`}
                       target="_blank"
                       rel="noreferrer"
@@ -359,6 +359,7 @@ function TradeInner({
                 text: sellText,
                 onText: setSellText,
                 heldShares: holding?.shares ?? 0,
+                heldTokens: holding?.tokens,
                 symbol: holding?.symbol,
                 usdOut:
                   row?.usdPerShare !== undefined && Number(sellText) > 0

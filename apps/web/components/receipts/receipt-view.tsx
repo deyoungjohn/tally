@@ -142,7 +142,7 @@ export function ReceiptView({
         >
           {bscscan ? (
             <a
-              className="mt-3 inline-flex min-h-[44px] items-center gap-1.5 text-blue"
+              className="mt-3 inline-flex min-h-[44px] items-center gap-1.5 link-text"
               href={bscscan}
               target="_blank"
               rel="noreferrer"
@@ -276,7 +276,7 @@ export function ReceiptView({
         </dl>
         {bscscan ? (
           <a
-            className="mt-3 inline-flex min-h-[44px] items-center gap-1.5 text-blue"
+            className="mt-3 inline-flex min-h-[44px] items-center gap-1.5 link-text"
             href={bscscan}
             target="_blank"
             rel="noreferrer"
@@ -302,7 +302,7 @@ export function ReceiptView({
       <div className="mt-6 flex flex-wrap gap-3">
         <ButtonLink href="/trade">Compare a stock</ButtonLink>
         {qualityOn ? (
-          <Link href="/quality" className="inline-flex min-h-[44px] items-center text-blue">
+          <Link href="/quality" className="inline-flex min-h-[44px] items-center link-text">
             How Tally&apos;s fills compare
           </Link>
         ) : null}

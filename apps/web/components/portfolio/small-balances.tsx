@@ -42,7 +42,7 @@ export function SmallBalancesLink({ items }: { items: SmallBalance[] }) {
         type="button"
         onClick={() => setOpen(true)}
         data-testid="show-small-balances"
-        className="mt-3 inline-flex min-h-[44px] items-center text-[14px] text-orange-text underline-offset-2 hover:underline"
+        className="mt-3 inline-flex min-h-[44px] items-center text-[14px] link-text"
       >
         Show small token balances
       </button>

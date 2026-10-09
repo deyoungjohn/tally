@@ -37,10 +37,10 @@ export default async function Page({
                   They might be from different wallets, out of order, or involve different assets.
                 </p>
                 <div className="flex flex-col gap-3">
-                  <a href={`/receipt/${sellHash}`} className="text-orange-500 hover:underline">
+                  <a href={`/receipt/${sellHash}`} className="link-text">
                     View Sale Receipt
                   </a>
-                  <a href={`/receipt/${buyHash}`} className="text-orange-500 hover:underline">
+                  <a href={`/receipt/${buyHash}`} className="link-text">
                     View Buy Receipt
                   </a>
                 </div>

@@ -12,7 +12,8 @@ import type { PortfolioTab, PortfolioVM, StatementVM } from "@/modules/statement
 import type { ActivityVM } from "@/modules/receipts/view-model";
 import type { PortfolioReport } from "@tally/engine";
 import { LiveNumber, LiveUsd } from "@/components/motion/live";
-import { mergeChainHoldings } from "./merge-chain";
+import { mergeChainHoldings, untrackedTokens } from "./merge-chain";
+import { recentLines } from "./recent-lines";
 import { SmallBalancesLink, otherAssetsShown, type SmallBalance } from "./small-balances";
 import { ActivityVmView } from "./activity-vm";
 import { HoldingsVm, smallBalancesOf } from "./holdings-vm";
@@ -88,7 +89,7 @@ export function PortfolioVmPanel({
   }, [refreshKey, reload]);
   // "Other assets": only `wallet.usdt` and `wallet.bnb` from the engine route (plain wallet balances). Its holdings groups,
   // shares and values are the float-based numbers the view model replaces, so they are never read or shown here.
-  const balances = useJson<Pick<PortfolioReport, "wallet" | "asOf" | "groups">>(
+  const balances = useJson<Pick<PortfolioReport, "wallet" | "asOf" | "groups" | "failed">>(
     `/api/portfolio?address=${q}`,
     { refreshMs: 30_000 },
   );
@@ -113,10 +114,28 @@ export function PortfolioVmPanel({
     tab === "statement" ? `/api/vm/statement?address=${q}` : null,
   );
   const activity = useJson<VmEnvelope<ActivityVM>>(
-    tab === "activity" ? `/api/vm/activity?address=${q}` : null,
+    tab === "activity" || tab === "statement" ? `/api/vm/activity?address=${q}` : null,
   );
 
   const env = feedEnv && mergedVm ? { ...feedEnv, vm: mergedVm } : feedEnv;
+  // The Statement tab: tokens the feed never saw, and verified transactions it does not have yet.
+  const untracked = useMemo(
+    () =>
+      feedEnv?.vm && !feedEnv.fixtures ? untrackedTokens(feedEnv.vm, balances.data ?? null) : [],
+    [feedEnv, balances.data],
+  );
+  const recent = useMemo(
+    () =>
+      recentLines(
+        activity.data?.vm ?? null,
+        new Set(
+          (statement.data?.vm?.lines ?? []).flatMap((l) =>
+            l.txHash ? [l.txHash.toLowerCase()] : [],
+          ),
+        ),
+      ),
+    [activity.data, statement.data],
+  );
   // Balances under $1 stay out of the list; the link below it opens them in a dialog.
   const small: SmallBalance[] = vm ? smallBalancesOf(vm) : [];
   return (
@@ -164,7 +183,15 @@ export function PortfolioVmPanel({
               error={statement.error}
               emptyTitle="No statement yet"
             >
-              {(v) => <StatementVmView vm={v} />}
+              {(v) => (
+                <StatementVmView
+                  vm={v}
+                  valueToday={vm?.state === "ready" ? vm.totalValueUsd : undefined}
+                  recent={recent}
+                  untracked={untracked}
+                  wallet={address}
+                />
+              )}
             </TabBody>
           ) : null}
 

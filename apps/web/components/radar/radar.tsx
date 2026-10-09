@@ -96,13 +96,11 @@ export function RadarRowCard({ r }: { r: RadarRow }) {
           {r.executable && isTokenBuyable(r.ticker, r.issuer) ? (
             <Link
               href={`/trade/${r.ticker}`}
-              className="inline-flex min-h-[44px] items-center gap-1 text-[14px] text-blue"
+              className="inline-flex min-h-[44px] items-center gap-1 text-[14px] link-text"
             >
               Buy <ArrowRight size={13} aria-hidden />
             </Link>
-          ) : (
-            <span className="t-meta">{r.executable ? "Not enabled yet" : "Not buyable"}</span>
-          )}
+          ) : null}
         </div>
       </div>
     </li>
