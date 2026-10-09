@@ -141,4 +141,53 @@ describe("useJson (WO-01 wallet cache reset)", () => {
 
     act(() => root.unmount());
   });
+
+  it("a timed refresh never aborts a request that is still running (slow endpoint, short interval)", async () => {
+    vi.useFakeTimers();
+    try {
+      let started = 0;
+      let aborted = 0;
+      let hookState: ReturnType<typeof useJson<{ ok: boolean }>> = null!;
+      globalThis.fetch = vi
+        .fn()
+        .mockImplementation((_url: string, init: { signal: AbortSignal }) => {
+          started++;
+          return new Promise((resolve, reject) => {
+            init.signal.addEventListener("abort", () => {
+              aborted++;
+              reject(Object.assign(new Error("aborted"), { name: "AbortError" }));
+            });
+            // The endpoint needs 25 s; the page refreshes every 10 s.
+            setTimeout(() => resolve({ ok: true, json: async () => ({ ok: true }) }), 25_000);
+          });
+        });
+      const { mockEl, mockDoc } = createMockContainer();
+      (globalThis as unknown as { document: unknown }).document = {
+        ...mockDoc,
+        visibilityState: "visible",
+      };
+      const root = createRoot(mockEl as unknown as Parameters<typeof createRoot>[0]);
+      function TestComp() {
+        hookState = useJson<{ ok: boolean }>("/api/portfolio?address=0x1", { refreshMs: 10_000 });
+        return null;
+      }
+      await act(async () => {
+        root.render(createElement(TestComp));
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(26_000);
+      });
+      expect(aborted).toBe(0);
+      expect(started).toBe(1);
+      expect(hookState.data).toEqual({ ok: true });
+      // Once it has finished, the next tick refreshes again.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(10_000);
+      });
+      expect(started).toBe(2);
+      act(() => root.unmount());
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
