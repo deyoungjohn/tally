@@ -138,6 +138,7 @@ Live $6 proofs run on the Seoul EC2 with the buyer wallet configured there (`con
 ## Environment (`/etc/tally/tally.env`, root-only)
 
 Names only here:
+- `./deploy/restart.sh` refuses to start (and says which names are missing or look like a wrong spelling) when `BINANCE_W3_API_KEY`, `BINANCE_W3_API_SECRET` or `TALLY_DATA_DIR` is unset, and warns about `BSC_RPC_PRIMARY` and `NEXT_PUBLIC_PRIVY_APP_ID`. The Binance names are `BINANCE_W3_*`, not `BINANCE_WEB3_*` (that spelling once left the web server without credentials on 8 Oct).
 - Always: `NEXT_PUBLIC_PRIVY_APP_ID`, `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME` (both public, baked in at build time: load the file before building), `BINANCE_W3_API_KEY`, `BINANCE_W3_API_SECRET`, `BSC_RPC_PRIMARY` (not `BSC_RPC_URL`), `FEED_SIGNER_PK`, `TALLY_DATA_DIR` (same value for the web app and every worker; writable).
 - `TALLY_APP_ORIGIN`: the exact browser origin. A quick tunnel changes it on every restart, so update it and restart.
 - Guardian and wallet registration: `PRIVY_APP_SECRET` (server only), `TELEGRAM_BOT_TOKEN`.

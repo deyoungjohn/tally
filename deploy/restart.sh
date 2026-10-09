@@ -187,6 +187,28 @@ if [[ "$ACTION" == "ensure" && -f "$RUN_DIR/stopped" ]]; then exit 0; fi   # you
 [[ "$ACTION" == "ensure" ]] || echo "==> loading $ENV_FILE"
 load_env
 
+# A wrong or missing variable name once left the web server running with no Binance credentials for hours (BINANCE_WEB3_* instead of
+# BINANCE_W3_*), so refuse to start anything until the names the code reads are present. Not needed to look or to stop.
+check_env() {
+  [[ "${TALLY_FIXTURES:-}" == "1" ]] && return 0
+  local missing=() v
+  for v in BINANCE_W3_API_KEY BINANCE_W3_API_SECRET TALLY_DATA_DIR; do
+    [[ -n "${!v:-}" ]] || missing+=("$v")
+  done
+  # Missing but survivable (public RPC fallback; sign-in is off without the Privy id): warn, still start.
+  for v in BSC_RPC_PRIMARY NEXT_PUBLIC_PRIVY_APP_ID; do
+    [[ -n "${!v:-}" ]] || echo "$(stamp) WARNING: $v is not set in $ENV_FILE" >&2
+  done
+  (( ${#missing[@]} == 0 )) && return 0
+  echo "$(stamp) REFUSING TO START: missing in $ENV_FILE: ${missing[*]}" >&2
+  # Names that look like the right ones but are not what the code reads (names only, never values).
+  local similar; similar=$(compgen -v | grep -E '^(BINANCE_|BSC_RPC|PRIVY|TALLY_DATA)' | grep -vxE 'BINANCE_W3_API_KEY|BINANCE_W3_API_SECRET|BSC_RPC_PRIMARY|TALLY_DATA_DIR' || true)
+  [[ -n "$similar" ]] && echo "   set in the file but not read by Tally: $(echo $similar | tr '\n' ' ')" >&2
+  echo "   fix the names in $ENV_FILE (see docs/deployment.md, Environment), then run ./deploy/restart.sh" >&2
+  exit 1
+}
+case "$ACTION" in status|stop) ;; *) check_env ;; esac
+
 case "$ACTION" in
   status) show_status; exit 0 ;;
   stop)
