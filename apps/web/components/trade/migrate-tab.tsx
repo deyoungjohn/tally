@@ -17,6 +17,7 @@ import { tokenSymbol } from "@/lib/tickers";
 import { canMigrateTicker } from "@/components/portfolio/enablement";
 import { companyName } from "@/components/portfolio/company-name";
 import { OndoGate } from "./ondo-gate";
+import { ONDO_CLOSED_MIGRATE_TIP } from "./ondo-closed";
 import type { useMigrateFlow } from "./use-migrate-flow";
 
 type Part = PortfolioReport["groups"][number]["parts"][number];
@@ -24,7 +25,7 @@ type Part = PortfolioReport["groups"][number]["parts"][number];
 /** Why a holding cannot be migrated, or null when it can. */
 function blocked(p: Part, ondoClosed: string | null): string | null {
   if (p.issuer === "xstocks") return "No market to exit this token on BNB Chain.";
-  if (ondoClosed) return ondoClosed;
+  if (ondoClosed) return p.issuer === "ondo" ? ondoClosed : ONDO_CLOSED_MIGRATE_TIP;
   if (p.valueUsd !== null && p.valueUsd < MIN_SELL_USDT)
     return `Too small to migrate: the sale must be at least $${MIN_SELL_USDT} and the buy at least 6 USDT.`;
   return null;
@@ -71,7 +72,7 @@ export function MigrateTab({ flow }: { flow: ReturnType<typeof useMigrateFlow> }
       ) : (
         <ul className="m-0 mt-6 grid max-w-[720px] list-none gap-3 p-0">
           {parts.map((p) => (
-            <OndoGate key={p.address} ticker={p.ticker} issuer={p.issuer}>
+            <OndoGate key={p.address} ticker={p.ticker} issuer="ondo">
               {(ondoClosed) => {
                 const to = p.issuer === "ondo" ? "bstock" : "ondo";
                 const reason = blocked(p, ondoClosed);
