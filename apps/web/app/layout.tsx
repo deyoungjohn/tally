@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import type { ReactNode } from "react";
 import { BackToTop } from "@/components/back-to-top";
 import { SiteFooter } from "@/components/site-footer";
@@ -9,15 +9,16 @@ import { ReceiptsMount } from "@/components/receipts-mount";
 import { ActiveWalletRegistrar } from "@/components/wallet/active-wallet-registrar";
 import "./globals.css";
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+// Bundled with the app (SIL Open Font License, see app/fonts/LICENSE.md): a build must never depend on Google being reachable.
+const inter = localFont({
+  src: "./fonts/Inter-latin-variable.woff2",
+  weight: "100 900",
   variable: "--font-inter",
   display: "swap",
 });
-const jetbrains = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["500"],
+const jetbrains = localFont({
+  src: "./fonts/JetBrainsMono-latin-500.woff2",
+  weight: "500",
   variable: "--font-jetbrains",
   display: "swap",
 });
