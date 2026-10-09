@@ -75,7 +75,8 @@ export function MigrateReceiptModal({
           {
             hash: pm.saleHash || "",
             tokenSymbol: fromSymbol,
-            isFixture: pm.saleHash?.startsWith("0xf1") || false,
+            // Only the server says a result is fixture data. A real transaction hash that happens to start with 0xf1 is not.
+            isFixture: Boolean(pm.isFixture),
             multiplier: pm.sourceMultiplier,
             sellGuaranteedUsdt: pm.sellPlan?.guaranteedUsdt,
             sellTokensSpent,
@@ -95,7 +96,7 @@ export function MigrateReceiptModal({
           {
             hash: pm.buyHash || "",
             tokenSymbol: toSymbol,
-            isFixture: pm.buyHash?.startsWith("0xf1") || false,
+            isFixture: Boolean(pm.isFixture),
             multiplier: pm.destMultiplier,
             buyMinShares: pm.buyPlan?.minShares,
             buyTokensReceived,
