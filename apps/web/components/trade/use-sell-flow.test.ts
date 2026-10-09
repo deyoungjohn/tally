@@ -51,6 +51,7 @@ const storage = new Map<string, string>();
 };
 
 let wallet = {
+  ready: true,
   authenticated: true,
   address: "0x1111111111111111111111111111111111111111" as `0x${string}`,
   sendTx: vi.fn(),
@@ -168,6 +169,7 @@ beforeEach(() => {
   receiptsReply = "ok";
   fetchSellPlan.mockReset();
   wallet = {
+    ready: true,
     authenticated: true,
     address: "0x1111111111111111111111111111111111111111",
     sendTx: vi.fn().mockResolvedValue(HASH),
@@ -525,12 +527,63 @@ describe("useSellFlow", () => {
       stubStatus("success");
       storage.set(
         "tally.pendingSell",
-        JSON.stringify({ hash: HASH, ticker: "NVDA", symbol: "NVDAB", at: Date.now() }),
+        JSON.stringify({
+          hash: HASH,
+          ticker: "NVDA",
+          symbol: "NVDAB",
+          at: Date.now(),
+          wallet: wallet.address,
+        }),
       );
       const h = mount();
       await flush();
       expect(hints).toHaveLength(0);
       expect(h.flow().phase.name).toBe("confirmed");
+      h.unmount();
+    });
+
+    it("a pending sale for a different wallet is ignored and deleted from storage", async () => {
+      stubStatus("pending");
+      const differentWallet = "0x9999999999999999999999999999999999999999";
+      storage.set(
+        "tally.pendingSell",
+        JSON.stringify({
+          hash: HASH,
+          ticker: "NVDA",
+          symbol: "NVDAB",
+          at: Date.now(),
+          wallet: differentWallet,
+        }),
+      );
+      const h = mount();
+      await flush();
+      expect(hints).toHaveLength(0);
+      expect(h.flow().phase.name).toBe("idle");
+      // Pending sell for different wallet was wiped out
+      expect(storage.get("tally.pendingSell")).toBeUndefined();
+      h.unmount();
+    });
+
+    it("a pending sale when unauthenticated is ignored and deleted from storage", async () => {
+      stubStatus("pending");
+      const oldAuthenticated = wallet.authenticated;
+      wallet.authenticated = false;
+      storage.set(
+        "tally.pendingSell",
+        JSON.stringify({
+          hash: HASH,
+          ticker: "NVDA",
+          symbol: "NVDAB",
+          at: Date.now(),
+          wallet: wallet.address,
+        }),
+      );
+      const h = mount();
+      await flush();
+      expect(hints).toHaveLength(0);
+      expect(h.flow().phase.name).toBe("idle");
+      expect(storage.get("tally.pendingSell")).toBeUndefined();
+      wallet.authenticated = oldAuthenticated;
       h.unmount();
     });
   });

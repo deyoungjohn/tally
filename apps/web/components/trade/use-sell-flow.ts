@@ -85,6 +85,7 @@ interface Pending {
   ticker: string;
   symbol: string;
   at: number;
+  wallet?: string;
   intent?: PendingIntent;
   /** The plan's fee estimate and the gas limit it was for, to turn the gas actually used into dollars. */
   fee?: { usd: number; limit: string };
@@ -560,6 +561,7 @@ export function useSellFlow() {
         ticker: t.ticker,
         symbol: t.symbol,
         at: Date.now(),
+        wallet: w.address,
         intent: {
           id: intent.id,
           issuer: intent.issuer,
@@ -604,10 +606,21 @@ export function useSellFlow() {
     setPhase({ name: "idle" });
   }, []);
 
-  // A sell that was sent before a reload keeps being watched.
+  // A sell that was sent before a reload keeps being watched (bound to the signed-in wallet).
   useEffect(() => {
+    if (wallet.ready === false) return;
     const pending = readPending();
     if (!pending) return;
+    const currentAddress = wallet.address?.toLowerCase();
+    const pendingWallet = (pending.wallet ?? pending.intent?.user)?.toLowerCase();
+    if (
+      !wallet.authenticated ||
+      !currentAddress ||
+      (pendingWallet && pendingWallet !== currentAddress)
+    ) {
+      writePending(null);
+      return;
+    }
     const id = ++runId.current;
     setTarget({
       ticker: pending.ticker,
@@ -624,7 +637,7 @@ export function useSellFlow() {
         isResumed: true,
       });
     void watch(pending.hash, id, pending.fee, pending.intent?.minUsdtOut);
-  }, [watch]);
+  }, [watch, wallet.ready, wallet.authenticated, wallet.address]);
 
   const belowMinimum = target ? isBelowMinimum(target, inputs) : false;
   return {

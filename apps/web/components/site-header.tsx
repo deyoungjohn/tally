@@ -130,6 +130,9 @@ function AccountButton({
               <span className="flex items-center gap-2">
                 <span className="dot-live" aria-hidden />
                 <span className="mono text-[15px]">{shortAddress(address)}</span>
+                <span className="text-xs text-[var(--fg2)]">
+                  {wallet.embedded ? "Embedded" : "External wallet"}
+                </span>
               </span>
               <ChevronUp size={14} aria-hidden />
             </>
@@ -214,6 +217,10 @@ function AccountButton({
           role="menu"
           className="glass glass-pop absolute right-0 top-[calc(100%+8px)] z-50 grid min-w-[220px] gap-1 p-2"
         >
+          <div className="flex items-center justify-between px-3 py-1.5 text-xs text-[var(--fg2)] border-b border-[var(--border)] mb-1">
+            <span className="mono">{shortAddress(address)}</span>
+            <span>{wallet.embedded ? "Embedded" : "External wallet"}</span>
+          </div>
           <button
             role="menuitem"
             type="button"

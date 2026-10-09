@@ -1,9 +1,17 @@
 "use client";
 
-import { PrivyProvider, usePrivy, useSendTransaction, useWallets } from "@privy-io/react-auth";
-import { useEffect, useMemo, useRef } from "react";
+import {
+  PrivyProvider,
+  useConnectWallet,
+  usePrivy,
+  useSendTransaction,
+  useWallets,
+} from "@privy-io/react-auth";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createWalletClient, custom, toHex, type Hex } from "viem";
 import { bsc } from "viem/chains";
+import { resetJsonCache } from "@/lib/hooks/use-json";
+import { pickWallet } from "./pick-wallet";
 import type { TallyWallet } from "./wallet-context";
 
 /**
@@ -40,23 +48,58 @@ const isUserRejection = (e: unknown) =>
   typeof e === "object" && e !== null && (e as { code?: number }).code === 4001;
 
 function Bridge({ onChange }: { onChange: (w: TallyWallet) => void }) {
-  const { ready, authenticated, login, logout, connectWallet, exportWallet, getAccessToken } =
-    usePrivy();
+  const { user, ready, authenticated, login, logout, exportWallet, getAccessToken } = usePrivy();
   const { wallets } = useWallets();
+  const [explicitAddress, setExplicitAddress] = useState<string | null>(null);
+
+  const { connectWallet } = useConnectWallet({
+    onSuccess: (connected) => {
+      setExplicitAddress(connected.wallet.address);
+    },
+  });
+
   const { sendTransaction } = useSendTransaction();
 
-  // A wallet the user connected on purpose (top-up tier 2) wins over the embedded one. Only meaningful while `authenticated`.
-  const wallet = authenticated
-    ? (wallets.find((w) => w.walletClientType !== "privy") ??
-      wallets.find((w) => w.walletClientType === "privy"))
-    : undefined;
+  // Reset explicit external wallet selection & cached JSON data whenever the Privy user ID changes
+  const userId = user?.id;
+  const lastUserId = useRef(userId);
+  useEffect(() => {
+    if (lastUserId.current !== undefined && lastUserId.current !== userId) {
+      setExplicitAddress(null);
+      resetJsonCache();
+    }
+    lastUserId.current = userId;
+  }, [userId]);
+
+  // Pure wallet selection: only uses external wallet if explicitly connected in this session
+  const wallet = pickWallet({ authenticated, wallets, explicitAddress });
 
   // Privy hands back NEW function objects on every render. If they were dependencies of the value pushed to the app, every
   // render would publish a new value, re-render the app, re-render this bridge and loop forever (React error #185). So the
   // functions live in refs and the published value depends only on primitives.
+  const handleLogout = async () => {
+    setExplicitAddress(null);
+    resetJsonCache();
+    for (const w of wallets) {
+      if (w.walletClientType !== "privy") {
+        try {
+          void w.disconnect();
+        } catch {
+          /* a failure must not block the logout */
+        }
+      }
+    }
+    try {
+      await live.current.logout();
+    } catch {
+      /* fine */
+    }
+  };
+
   const live = useRef({
     login,
     logout,
+    handleLogout,
     connectWallet,
     exportWallet,
     getAccessToken,
@@ -66,6 +109,7 @@ function Bridge({ onChange }: { onChange: (w: TallyWallet) => void }) {
   live.current = {
     login,
     logout,
+    handleLogout,
     connectWallet,
     exportWallet,
     getAccessToken,
@@ -82,11 +126,12 @@ function Bridge({ onChange }: { onChange: (w: TallyWallet) => void }) {
       address,
       embedded,
       login: () => live.current.login(),
-      logout: () => void live.current.logout(),
+      logout: () => void live.current.handleLogout(),
       connectExternal: () => live.current.connectWallet(),
       exportWallet: () => {
         const w = live.current.wallet;
-        if (w) void live.current.exportWallet({ address: w.address });
+        if (w && w.walletClientType === "privy")
+          void live.current.exportWallet({ address: w.address });
       },
       async getAccessToken() {
         try {
@@ -118,7 +163,11 @@ function Bridge({ onChange }: { onChange: (w: TallyWallet) => void }) {
           const provider = await w.getEthereumProvider();
           const chainHex = (await provider.request({ method: "eth_chainId" })) as string;
           if (parseInt(chainHex, 16) !== 56) await w.switchChain(56);
-          const wc = createWalletClient({ account: from, chain: bsc, transport: custom(provider) });
+          const wc = createWalletClient({
+            account: from,
+            chain: bsc,
+            transport: custom(provider),
+          });
           return await wc.sendTransaction({
             to: tx.to,
             data: tx.data,
