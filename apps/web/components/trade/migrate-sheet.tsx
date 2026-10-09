@@ -68,9 +68,15 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
   // After a verified sale the buy follows at once: its own review (with Confirm) is the next dialog. Only when the proceeds had
   // to be typed in by hand does this step wait for the person.
   useEffect(() => {
-    if (step === "interstitial" && source === "receipt" && !waitingReceipt && pm?.usdtReceived)
+    if (
+      step === "interstitial" &&
+      (source === "receipt" || source === "chain") &&
+      !waitingReceipt &&
+      receiptState !== "underMinimum" &&
+      pm?.usdtReceived
+    )
       resumeStep2();
-  }, [step, source, waitingReceipt, pm?.usdtReceived, resumeStep2]);
+  }, [step, source, waitingReceipt, receiptState, pm?.usdtReceived, resumeStep2]);
 
   if (!pm) return null;
 
@@ -101,7 +107,13 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
           className="max-w-[520px]"
         >
           <div className="mt-4 grid gap-4">
-            {step === "interstitial" && waitingReceipt ? (
+            {step === "interstitial" &&
+            (waitingReceipt ||
+              (pm.saleHash &&
+                !pm.usdtReceived &&
+                receiptState !== "failed" &&
+                receiptState !== "underMinimum" &&
+                source !== "wallet")) ? (
               <div className="flex flex-col gap-3 rounded-lg border border-black/10 bg-white p-4">
                 <div className="flex items-center gap-3">
                   <Loader2 className="h-5 w-5 motion-safe:animate-spin text-black" />
@@ -135,7 +147,28 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
                   <p>No buy is offered.</p>
                 </div>
                 <div className="flex justify-end">
-                  <Button onClick={cancel}>Cancel</Button>
+                  <Button onClick={cancel} className="bg-white text-black border border-black/10">
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : step === "interstitial" && receiptState === "underMinimum" ? (
+              <div className="grid gap-4">
+                <div className="rounded-lg border border-black/10 bg-white p-4 space-y-2 text-sm text-black">
+                  <p>
+                    The sale confirmed for{" "}
+                    {pm.usdtReceived
+                      ? formatUnits(BigInt(roundDownToCent(pm.usdtReceived)), 18)
+                      : "?"}{" "}
+                    USDT{pm.isFixture ? " (fixture data)" : ""}, which is under the 6 USDT minimum
+                    required to buy.
+                  </p>
+                  <p>Your USDT is in your wallet. No buy was placed.</p>
+                </div>
+                <div className="flex justify-end">
+                  <Button onClick={cancel} className="bg-white text-black border border-black/10">
+                    Done
+                  </Button>
                 </div>
               </div>
             ) : step === "interstitial" ? (
@@ -152,7 +185,9 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
                       {pm.usdtReceived
                         ? formatUnits(BigInt(roundDownToCent(pm.usdtReceived)), 18)
                         : "?"}{" "}
-                      USDT. Not bought yet. Your USDT is in your wallet.
+                      USDT{source === "chain" ? " (from the chain)" : ""}
+                      {pm.isFixture ? " (fixture data)" : ""}. Not bought yet. Your USDT is in your
+                      wallet.
                     </p>
                   )}
                   {source === "wallet" ? (
@@ -236,7 +271,7 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
                   {pm.usdtReceived
                     ? formatUnits(BigInt(roundDownToCent(pm.usdtReceived)), 18)
                     : "?"}{" "}
-                  USDT.
+                  USDT{pm.isFixture ? " (fixture data)" : ""}.
                 </p>
                 <div className="flex justify-center mt-2">
                   <Button onClick={cancel} className="bg-white text-black border border-black/10">

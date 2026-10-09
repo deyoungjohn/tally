@@ -5,6 +5,73 @@ import { buildMigrateReceipt, MigrateReceiptVM } from "../migrate/receipt-vm";
 import { decodeFunctionData } from "viem";
 import { SHAREGUARD_ABI } from "@tally/chain";
 
+export interface ParsedSaleLeg {
+  usdtReceived: bigint;
+  tokensSpent: bigint;
+  stockToken: string;
+}
+
+export function parseSaleLeg(
+  sellReceipt: {
+    sender: string;
+    logs: readonly {
+      address: string;
+      topics: readonly string[];
+      data: string;
+    }[];
+  },
+  registryTokens: readonly { address: string }[],
+): ParsedSaleLeg | null {
+  const sender = sellReceipt.sender.toLowerCase();
+  let sellUsdtReceived = 0n;
+  const sellStockTransfers: { address: string; value: bigint }[] = [];
+
+  for (const log of sellReceipt.logs) {
+    const decoded = decodeTransfer(
+      log as { address: string; topics: readonly `0x${string}`[]; data: `0x${string}` },
+    );
+    if (!decoded.ok) continue;
+
+    const t = decoded.value;
+    if (log.address.toLowerCase() === USDT_BSC.toLowerCase()) {
+      if (t.to.toLowerCase() === sender) {
+        sellUsdtReceived += t.value;
+      }
+    } else {
+      if (t.from.toLowerCase() === sender) {
+        sellStockTransfers.push({ address: log.address.toLowerCase(), value: t.value });
+      }
+    }
+  }
+
+  const registryTokenAddresses = new Set(registryTokens.map((t) => t.address.toLowerCase()));
+  const transferredRegistryTokens = Array.from(
+    new Set(sellStockTransfers.map((t) => t.address)),
+  ).filter((addr) => registryTokenAddresses.has(addr));
+
+  if (transferredRegistryTokens.length !== 1) {
+    return null;
+  }
+  if (sellUsdtReceived <= 0n) {
+    return null;
+  }
+
+  const sellStockToken = transferredRegistryTokens[0]!;
+  const sellTokensSpent = sellStockTransfers
+    .filter((t) => t.address === sellStockToken)
+    .reduce((sum, t) => sum + t.value, 0n);
+
+  if (sellTokensSpent <= 0n) {
+    return null;
+  }
+
+  return {
+    usdtReceived: sellUsdtReceived,
+    tokensSpent: sellTokensSpent,
+    stockToken: sellStockToken,
+  };
+}
+
 export type MigratePageResult =
   | { state: "ready"; vm: MigrateReceiptVM }
   | { state: "not_a_migrate"; sellHash: string; buyHash: string };
@@ -68,24 +135,15 @@ export async function loadMigrateReceipt(
     return { state: "not_a_migrate", sellHash, buyHash };
 
   // Parse Sell Leg
-  let sellUsdtReceived = 0n;
-  const sellStockTransfers: { address: string; value: bigint }[] = [];
+  const tokens = (await engine.ports.registry.all?.()) ?? [];
+  const parsedSale = parseSaleLeg(sellReceipt, tokens);
+  if (!parsedSale) return { state: "not_a_migrate", sellHash, buyHash };
 
-  for (const log of sellReceipt.logs) {
-    const decoded = decodeTransfer(log);
-    if (!decoded.ok) continue;
-
-    const t = decoded.value;
-    if (log.address.toLowerCase() === USDT_BSC.toLowerCase()) {
-      if (t.to.toLowerCase() === sender) {
-        sellUsdtReceived += t.value;
-      }
-    } else {
-      if (t.from.toLowerCase() === sender) {
-        sellStockTransfers.push({ address: log.address.toLowerCase(), value: t.value });
-      }
-    }
-  }
+  const {
+    usdtReceived: sellUsdtReceived,
+    tokensSpent: sellTokensSpent,
+    stockToken: sellStockToken,
+  } = parsedSale;
 
   // Parse Buy Leg
   const fill = buyReceipt.fill;
@@ -118,22 +176,6 @@ export async function loadMigrateReceipt(
   const buyStockToken = fill.stock.toLowerCase();
 
   if (sellUsdtReceived < buyUsdtSpent) return { state: "not_a_migrate", sellHash, buyHash };
-
-  // They must be different issuers but same ticker
-  const tokens = (await engine.ports.registry.all?.()) ?? [];
-  const registryTokenAddresses = new Set(tokens.map((t) => t.address.toLowerCase()));
-
-  // Filter transferred tokens to only registry tokens
-  const transferredRegistryTokens = Array.from(
-    new Set(sellStockTransfers.map((t) => t.address)),
-  ).filter((addr) => registryTokenAddresses.has(addr));
-  if (transferredRegistryTokens.length !== 1) {
-    return { state: "not_a_migrate", sellHash, buyHash };
-  }
-  const sellStockToken = transferredRegistryTokens[0]!;
-  const sellTokensSpent = sellStockTransfers
-    .filter((t) => t.address === sellStockToken)
-    .reduce((sum, t) => sum + t.value, 0n);
 
   const sellDef = tokens.find(
     (t: { address: string; ticker: string; issuer: string }) =>

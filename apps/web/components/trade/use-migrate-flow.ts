@@ -9,6 +9,7 @@ import {
   writePendingMigrate,
   clearPendingMigrate,
 } from "../../lib/migrate/state";
+import { fetchSaleStatus } from "../../lib/migrate/poll";
 
 import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { useModuleFlags } from "@/lib/hooks/use-flags";
@@ -23,30 +24,49 @@ export type MigrateStep = 1 | 2 | "interstitial" | "done" | "idle";
 
 export function useMigrateFlow() {
   const flags = useModuleFlags();
+  const flagsRef = useRef(flags.receipts);
+  useEffect(() => {
+    flagsRef.current = flags.receipts;
+  }, [flags.receipts]);
+
   const sell = useSellFlow();
   const wallet = useTallyWallet();
   const [pm, setPm] = useState<PendingMigrate | null>(null);
   const [step, setStep] = useState<MigrateStep>("idle");
   const [waitingReceipt, setWaitingReceipt] = useState(false);
-  const [source, setSource] = useState<"receipt" | "wallet" | null>(null);
+  const [source, setSource] = useState<"receipt" | "wallet" | "chain" | null>(null);
   // Migrate starts with a review dialog (what you sell, what you receive, the costs). Confirming it sells the whole holding by
   // itself: "auto" drives the sell flow's own steps (sell all, approve, sign) so nobody has to click through its form.
   const [reviewing, setReviewing] = useState<MigrateReview | null>(null);
   const [auto, setAuto] = useState(false);
   const acted = useRef("");
-  const [receiptState, setReceiptState] = useState<"pending" | "failed" | "unreconciled" | null>(
-    null,
-  );
+  const [receiptState, setReceiptState] = useState<
+    "pending" | "failed" | "unreconciled" | "underMinimum" | null
+  >(null);
+  const terminalStateRef = useRef(false);
   const [waitElapsedMs, setWaitElapsedMs] = useState(0);
 
   useEffect(() => {
-    const saved = readPendingMigrate();
+    if (!wallet.address) return;
+    if (pm) {
+      if (pm.wallet && pm.wallet.toLowerCase() !== wallet.address.toLowerCase()) {
+        terminalStateRef.current = false;
+        setPm(null);
+        setStep("idle");
+      }
+      return;
+    }
+    const saved = readPendingMigrate(wallet.address);
     if (saved) {
       setPm(saved);
+      if (saved.source) setSource(saved.source);
       if (saved.step === 1) {
         if (saved.saleHash) {
           setStep("interstitial");
-          if (!saved.usdtReceived) setWaitingReceipt(true);
+          if (!saved.usdtReceived) {
+            setWaitingReceipt(true);
+            setReceiptState("pending");
+          }
         } else {
           setStep(1);
         }
@@ -58,7 +78,7 @@ export function useMigrateFlow() {
         }
       }
     }
-  }, []);
+  }, [wallet.address, pm]);
 
   const begin = useCallback(
     async (target: SellTarget, toIssuer: "ondo" | "bstock") => {
@@ -77,6 +97,7 @@ export function useMigrateFlow() {
 
       const newPm: PendingMigrate = {
         id: "mig-" + Date.now(),
+        wallet: wallet.address,
         ticker: target.ticker,
         from: target.issuer,
         to: toIssuer,
@@ -107,6 +128,7 @@ export function useMigrateFlow() {
   }, [reviewing, begin]);
 
   const cancel = useCallback(() => {
+    terminalStateRef.current = false;
     setAuto(false);
     setReviewing(null);
     clearPendingMigrate();
@@ -192,17 +214,30 @@ export function useMigrateFlow() {
     }
   }, [pm, step, sell.phase]);
 
+  const saleHash = pm?.saleHash;
+  const usdtReceived = pm?.usdtReceived;
+  const pollStartedAt = pm?.pollStartedAt;
+
   useEffect(() => {
-    if (step === "interstitial" && pm && pm.saleHash && !pm.usdtReceived && waitingReceipt) {
+    if (
+      step === "interstitial" &&
+      saleHash &&
+      !usdtReceived &&
+      waitingReceipt &&
+      !terminalStateRef.current
+    ) {
       const controller = new AbortController();
       let timer: ReturnType<typeof setTimeout> | undefined;
 
-      let startMs = pm.pollStartedAt;
+      let startMs = pollStartedAt;
       if (!startMs) {
         startMs = Date.now();
-        const updated = { ...pm, pollStartedAt: startMs };
-        writePendingMigrate(updated);
-        setPm(updated);
+        setPm((prev) => {
+          if (!prev) return null;
+          const updated = { ...prev, pollStartedAt: startMs };
+          writePendingMigrate(updated);
+          return updated;
+        });
       }
 
       setReceiptState("pending");
@@ -213,59 +248,84 @@ export function useMigrateFlow() {
       const intervalTimer = setInterval(updateElapsed, 1000);
 
       const poll = async () => {
-        if (!pm.saleHash) return;
-
-        if (Date.now() - startMs! > 120_000) {
-          setWaitingReceipt(false);
-          setSource("wallet");
-          setStep("interstitial");
-          return;
-        }
+        if (!saleHash || terminalStateRef.current) return;
 
         try {
-          const res = await fetch(`/api/receipts?hash=${pm.saleHash}`, {
-            signal: controller.signal,
-          });
-          if (res.status === 404) {
-            if (flags.receipts) {
-              timer = setTimeout(poll, 5000);
-              return;
-            }
+          const res = await fetchSaleStatus(
+            saleHash,
+            startMs!,
+            Boolean(flagsRef.current),
+            (input, init) => fetch(input, { ...init, signal: controller.signal }),
+          );
+
+          if (controller.signal.aborted && res.state === "pending") return;
+
+          if (res.state === "confirmed") {
+            terminalStateRef.current = true;
+            setPm((prev) => {
+              if (!prev) return null;
+              const updated = {
+                ...prev,
+                usdtReceived: res.usdtReceivedRaw,
+                step: 2 as const,
+                source: res.source,
+                isFixture: res.fixture ?? false,
+              };
+              writePendingMigrate(updated);
+              return updated;
+            });
+            setWaitingReceipt(false);
+            setReceiptState(null);
+            setSource(res.source);
+            setStep("interstitial");
+            return;
+          }
+
+          if (res.state === "underMinimum") {
+            terminalStateRef.current = true;
+            clearPendingMigrate();
+            setWaitingReceipt(false);
+            setReceiptState("underMinimum");
+            setSource(res.source);
+            setPm((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    usdtReceived: res.usdtReceivedRaw,
+                    source: res.source,
+                    isFixture: res.fixture ?? false,
+                  }
+                : null,
+            );
+            return;
+          }
+
+          if (res.state === "failed") {
+            terminalStateRef.current = true;
+            clearPendingMigrate();
+            setWaitingReceipt(false);
+            setReceiptState("failed");
+            return;
+          }
+
+          if (res.state === "unrecognised" || res.state === "timeout") {
             setWaitingReceipt(false);
             setSource("wallet");
             setStep("interstitial");
             return;
           }
 
-          if (res.ok) {
-            const data = await res.json();
-            if (data.state === "reconciled" && data.usdtReceivedRaw) {
-              const raw = BigInt(data.usdtReceivedRaw);
-              if (raw >= 6000000000000000000n) {
-                const updated = { ...pm, usdtReceived: data.usdtReceivedRaw, step: 2 as const };
-                writePendingMigrate(updated);
-                setPm(updated);
-                setWaitingReceipt(false);
-                setSource("receipt");
-                setStep("interstitial");
-                return;
-              }
-            } else if (data.state === "failed") {
-              setWaitingReceipt(false);
-              setReceiptState("failed");
-              return;
-            } else if (data.state === "unreconciled") {
-              // Keep polling, it might reconcile soon
-            }
+          if (!controller.signal.aborted && !terminalStateRef.current) {
+            timer = setTimeout(poll, 5000);
           }
-
-          timer = setTimeout(poll, 5000);
         } catch (e) {
           if ((e instanceof Error && e.name === "AbortError") || controller.signal.aborted) return;
-          timer = setTimeout(poll, 5000);
+          if (!terminalStateRef.current) {
+            timer = setTimeout(poll, 5000);
+          }
         }
       };
-      poll();
+      void poll();
 
       return () => {
         controller.abort();
@@ -273,10 +333,11 @@ export function useMigrateFlow() {
         clearInterval(intervalTimer);
       };
     }
-  }, [step, pm, waitingReceipt, flags.receipts]);
+  }, [step, saleHash, usdtReceived, pollStartedAt, waitingReceipt]);
 
   const checkAgain = useCallback(() => {
     if (pm) {
+      terminalStateRef.current = false;
       const updated = { ...pm, pollStartedAt: Date.now() };
       writePendingMigrate(updated);
       setPm(updated);
