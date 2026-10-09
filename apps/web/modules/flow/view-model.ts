@@ -1,17 +1,16 @@
 import {
-  aggregateFlow,
   ghostInput,
   extendIntegrity,
   FLOW_MAX_AGE_MS,
   RADAR_MAX_AGE_MS,
   type FlowAggregate,
-  type FlowSnapshot,
+  type GhostCheck,
   type FlowToken,
   type FlowWindow,
   type FlowTrade,
 } from "@tally/mod-flow";
 import type { Integrity } from "@tally/core";
-import { openStore, type SnapshotStore } from "@tally/modkit";
+import { openStore, type Latest, type SnapshotStore } from "@tally/modkit";
 
 export interface FlowPanelVM {
   ticker: string;
@@ -86,6 +85,28 @@ interface LoadOptions {
   store?: SnapshotStore;
   now?: number;
   tokens?: readonly FlowToken[];
+  /** One aggregate read per token, shared by the Radar grade and its panel. */
+  aggregates?: Map<string, Latest<FlowAggregate> | null>;
+}
+function readAggregate(store: SnapshotStore, address: string, now: number, options: LoadOptions) {
+  const key = address.toLowerCase();
+  if (options.aggregates?.has(key)) return options.aggregates.get(key)!;
+  const snapshot = store.latest<FlowAggregate>("flow-aggregate", key, {
+    maxAgeMs: FLOW_MAX_AGE_MS,
+    now,
+  });
+  options.aggregates?.set(key, snapshot);
+  return snapshot;
+}
+
+function ageAggregate(aggregate: FlowAggregate, now: number): FlowAggregate {
+  // Windows come from the 60s worker, so may lag by one interval. Absolute trade
+  // time still gives the exact current age without decoding or scanning the tape.
+  return {
+    ...aggregate,
+    lastRealTradeAgeMs:
+      aggregate.lastRealTradeAt === null ? null : Math.max(0, now - aggregate.lastRealTradeAt),
+  };
 }
 const empty = (ticker: string, error: string | null = null): FlowPanelVM => ({
   ticker,
@@ -123,16 +144,13 @@ export async function loadFlow(ticker = "NVDA", options: LoadOptions = {}): Prom
     const issuers: FlowPanelVM["issuers"] = [];
     const missing: string[] = [];
     for (const token of tokens.filter((t) => t.ticker.toUpperCase() === ticker.toUpperCase())) {
-      const snapshot = store.latest<FlowSnapshot>("flow", token.address.toLowerCase(), {
-        maxAgeMs: FLOW_MAX_AGE_MS,
-        now,
-      });
+      const snapshot = readAggregate(store, token.address, now, options);
       if (!snapshot) {
         missing.push(`${token.symbol}: no flow observation`);
         continue;
       }
       issuers.push({
-        ...aggregateFlow(snapshot.data, now),
+        ...ageAggregate(snapshot.data, now),
         source: snapshot.source,
         sourceLabel: snapshot.source === "chain-logs" ? "from chain logs" : "from Binance",
         stale: snapshot.stale,
@@ -191,6 +209,7 @@ export async function loadRadar(
       store.latest<FlowToken[]>("flow-registry", "bsc", { maxAgeMs: FLOW_MAX_AGE_MS, now })?.data ??
       [];
     const cards = new Map<string, RadarCardVM>();
+    const aggregates = new Map<string, Latest<FlowAggregate> | null>();
     for (const token of tokens) {
       const snapshot = store.latest<RadarGradeSnapshot>("radar", token.address.toLowerCase(), {
         maxAgeMs: RADAR_MAX_AGE_MS,
@@ -201,14 +220,31 @@ export async function loadRadar(
       let gradeBasis: "engine" | "cleaned flow" = "engine";
       let cleanedFlowUsd24h: string | null = null;
       if (flowEnabled && grade.flowActive !== false) {
-        const flow = store.latest<FlowSnapshot>("flow", token.address.toLowerCase(), {
-          maxAgeMs: FLOW_MAX_AGE_MS,
-          now,
-        });
+        const flow = readAggregate(store, token.address, now, { aggregates });
         if (flow && grade.integrity) {
-          const aggregate = aggregateFlow(flow.data, now);
+          const aggregate = ageAggregate(flow.data, now);
+          const ghost = store.latest<GhostCheck>("flow-ghost", token.address.toLowerCase(), {
+            maxAgeMs: FLOW_MAX_AGE_MS,
+            now,
+          });
+          const input = ghostInput(aggregate, flow.stale);
+          // Collection can publish ghost before the aggregate worker catches up.
+          // Reuse its inputs only when they agree with the displayed aggregate.
+          const matchedGhost =
+            ghost?.observedAt === flow.observedAt &&
+            ghost.data.inputs.realVolume24hUsd === input.realVolume24hUsd &&
+            ghost.data.inputs.reason === input.reason;
           cleanedFlowUsd24h = aggregate.windows["24h"].realVolumeUsd?.toString() ?? null;
-          const integrity = extendIntegrity(grade.integrity, ghostInput(aggregate, flow.stale));
+          const integrity = extendIntegrity(
+            grade.integrity,
+            matchedGhost
+              ? {
+                  ...ghost.data.inputs,
+                  lastRealTradeAgeMs: input.lastRealTradeAgeMs,
+                  stale: flow.stale,
+                }
+              : input,
+          );
           grade = {
             ...grade,
             integrity,
@@ -256,6 +292,7 @@ export async function loadRadar(
         card.flowPanel = await loadFlow(card.ticker, {
           store,
           now,
+          aggregates,
           tokens: tokens.filter((t) =>
             card.grades.some((g) => g.address === t.address && g.flowActive !== false),
           ),

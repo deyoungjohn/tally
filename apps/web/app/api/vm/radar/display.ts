@@ -1,4 +1,8 @@
-import { displayFlow, type FlowPanelDisplay, type RadarVM } from "@/modules/flow/view-model";
+import {
+  displayFlow,
+  type FlowPanelDisplay,
+  type RadarVM,
+} from "../../../../modules/flow/view-model";
 
 /** What `/api/vm/radar` sends: the Radar view model with every bigint turned into a decimal string and no engine internals. */
 export interface RadarGradeDisplay {

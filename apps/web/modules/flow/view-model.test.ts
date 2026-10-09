@@ -3,6 +3,7 @@ import { gradeIntegrity, E18 } from "@tally/core";
 import { openStore } from "@tally/modkit";
 import {
   aggregateFlow,
+  checkGhost,
   extendIntegrity,
   ghostInput,
   WINDOWS,
@@ -24,6 +25,20 @@ const token: FlowToken = {
   multiplier: 10n ** 18n,
 };
 const now = 1800000000000;
+function putFlow(
+  store: ReturnType<typeof openStore>,
+  data: FlowSnapshot,
+  observedAt: number,
+  source = "binance",
+) {
+  const aggregate = aggregateFlow(data, now);
+  for (const [kind, payload] of [
+    ["flow", data],
+    ["flow-aggregate", aggregate],
+    ["flow-ghost", checkGhost(ghostInput(aggregate))],
+  ] as const)
+    store.put({ kind, key: data.token.address, source, observedAt, data: payload });
+}
 function seed(store: ReturnType<typeof openStore>, ageMs: number, source = "binance") {
   const data: FlowSnapshot = {
     token,
@@ -41,7 +56,7 @@ function seed(store: ReturnType<typeof openStore>, ageMs: number, source = "bina
     observedAt: now - ageMs,
     data: [token],
   });
-  store.put({ kind: "flow", key: token.address, source, observedAt: now - ageMs, data });
+  putFlow(store, data, now - ageMs, source);
   store.put<RadarGradeSnapshot>({
     kind: "radar",
     key: token.address,
@@ -244,13 +259,7 @@ it("Radar uses extendIntegrity exactly for ghost, non-ghost and clamped-at-zero 
             source: "binance",
           },
         ];
-        store.put({
-          kind: "flow",
-          key: token.address,
-          source: "binance",
-          observedAt: now,
-          data: snapshot,
-        });
+        putFlow(store, snapshot, now);
         const row = store.latest<RadarGradeSnapshot>("radar", token.address, {
           maxAgeMs: 900000,
           now,
@@ -341,13 +350,7 @@ it("the panel shows unknown concentration when a holders row has a null percenta
       },
     ];
     snapshot.holdersReason = null;
-    store.put({
-      kind: "flow",
-      key: token.address,
-      source: "binance",
-      observedAt: now,
-      data: snapshot,
-    });
+    putFlow(store, snapshot, now);
     const vm = await loadFlow("NVDA", { store, now });
     expect(vm.issuers[0]!.top10ConcentrationPercent).toBeNull();
     const html = renderToStaticMarkup(React.createElement(FlowContent, { panel: displayFlow(vm) }));
@@ -455,19 +458,109 @@ it("cleanedFlowUsd24h is the flow aggregate's own 24h volume as an E18 string, a
       coverageStartMs: now - 7 * 86_400_000,
       notes: [],
     };
-    store.put({
-      kind: "flow",
-      key: token.address,
-      source: "binance",
-      observedAt: now - 1000,
-      data: covered,
-    });
+    putFlow(store, covered, now - 1000);
     const grade = (await loadRadar({ store, now, flowEnabled: true })).cards[0]!.grades[0]!;
     expect(grade.cleanedFlowUsd24h).toBe((750n * E18).toString());
     expect(grade.gradeBasis).toBe("cleaned flow");
     // With flow off, the grade is not cleaned-flow and carries no cleaned volume.
     const off = (await loadRadar({ store, now, flowEnabled: false })).cards[0]!.grades[0]!;
     expect(off.cleanedFlowUsd24h).toBeNull();
+  } finally {
+    store.close();
+  }
+});
+
+it("Radar and flow panels read one aggregate per token and never decode a tape", async () => {
+  const store = openStore(":memory:");
+  try {
+    seed(store, 1000, "chain-logs");
+    const aggregate = store.latest("flow-aggregate", token.address, { maxAgeMs: 900000, now })!;
+    const read = vi.spyOn(store, "latest");
+    const radar = await loadRadar({ store, now, flowEnabled: true });
+    expect(radar.cards[0]!.flowPanel?.issuers[0]).toMatchObject({
+      ...(aggregate.data as object),
+      observedAt: now - 1000,
+      ageMs: 1000,
+      stale: false,
+      sourceLabel: "from chain logs",
+    });
+    expect(read.mock.calls.filter(([kind]) => kind === "flow")).toHaveLength(0);
+    expect(read.mock.calls.filter(([kind]) => kind === "flow-aggregate")).toHaveLength(1);
+    expect(read.mock.calls.filter(([kind]) => kind === "flow-ghost")).toHaveLength(1);
+    await loadFlow("NVDA", { store, now });
+    expect(read.mock.calls.filter(([kind]) => kind === "flow")).toHaveLength(0);
+  } finally {
+    store.close();
+  }
+});
+
+it("a missing aggregate shows no flow observation even when a full tape exists", async () => {
+  const store = openStore(":memory:");
+  try {
+    seed(store, 0);
+    store.expire({ kind: "flow-aggregate", olderThanMs: now + 1 });
+    const read = vi.spyOn(store, "latest");
+    const radar = await loadRadar({ store, now, flowEnabled: true });
+    expect(radar.cards[0]!.grades[0]!.gradeBasis).toBe("engine");
+    expect(radar.cards[0]!.flowPanel).toMatchObject({
+      state: "empty",
+      reason: "NVDAB: no flow observation",
+    });
+    expect(read.mock.calls.some(([kind]) => kind === "flow")).toBe(false);
+  } finally {
+    store.close();
+  }
+});
+
+it("materialized windows stay unchanged while last-trade age uses its absolute time", async () => {
+  const store = openStore(":memory:");
+  try {
+    seed(store, 0);
+    const tape = store.latest<FlowSnapshot>("flow", token.address, { maxAgeMs: 900000, now })!.data;
+    tape.coverageStartMs = now - WINDOWS["7d"];
+    tape.trades = [
+      {
+        id: "boundary",
+        txHash: "hash",
+        wallet: "wallet",
+        side: "buy",
+        shares: E18,
+        usd: 2000n * E18,
+        pricePerShare: 2000n * E18,
+        priceReason: null,
+        source: "binance",
+        at: now - WINDOWS["1h"] + 1,
+      },
+    ];
+    putFlow(store, tape, now);
+    const computed = aggregateFlow(tape, now);
+    const panel = await loadFlow("NVDA", { store, now: now + 59000 });
+    expect(panel.issuers[0]!.windows).toEqual(computed.windows);
+    expect(panel.issuers[0]!.whalePrints).toEqual(computed.whalePrints);
+    expect(panel.issuers[0]!.lastRealTradeAgeMs).toBe(now + 59000 - tape.trades[0]!.at);
+    expect(panel.issuers[0]!.ageMs).toBe(59000);
+    expect(aggregateFlow(tape, now + 59000).windows["1h"].buys).toBe(0);
+  } finally {
+    store.close();
+  }
+});
+
+it("an unmatched or missing ghost row cannot disagree with the displayed aggregate", async () => {
+  const store = openStore(":memory:");
+  try {
+    seed(store, 0);
+    store.put({
+      kind: "flow-ghost",
+      key: token.address,
+      observedAt: now,
+      source: "fixture",
+      data: checkGhost({ realVolume24hUsd: 0n, lastRealTradeAgeMs: 0, reason: null }),
+    });
+    const vm = await loadRadar({ store, now, flowEnabled: true });
+    expect(vm.cards[0]!.grades[0]!.ghost).toBe(false);
+    expect(vm.cards[0]!.grades[0]!.gradeBasis).toBe("engine");
+    store.expire({ kind: "flow-ghost", olderThanMs: now + 1 });
+    expect(await loadRadar({ store, now, flowEnabled: true })).toEqual(vm);
   } finally {
     store.close();
   }
