@@ -130,7 +130,11 @@ test.describe("radar view model: real route on a seeded server", () => {
     await expect(page.getByTestId("vm-fixture-label")).toContainText("not live");
     await expect(page.getByTestId("radarvm-basis-NVDAon")).toContainText("cleaned flow");
     await expect(page.getByTestId("radarvm-cleaned-NVDAon")).toContainText("$1,633 cleaned flow");
-    await expect(page.getByTestId("radarvm-NVDAx")).toContainText("Not buyable");
+    // Tokens that cannot be bought carry no Buy link and no label at all.
+    await expect(page.getByTestId("radarvm-NVDAx")).not.toContainText("Not buyable");
+    await expect(page.getByTestId("radarvm-NVDAx").getByRole("link", { name: /Buy/ })).toHaveCount(
+      0,
+    );
     await expect(page.getByTestId("radarvm-basis-NVDAx")).toContainText("raw volume");
     await page.getByTestId("radarvm-basis-NVDAon").hover();
     await expect(page.getByRole("tooltip")).toContainText("can differ on purpose");

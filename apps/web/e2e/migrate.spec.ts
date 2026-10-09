@@ -306,7 +306,7 @@ test("blocks ineligible cases", async ({ page }) => {
   // Hover over the TSLAB disabled button to check the tooltip reason
   await migrateDustBtn.hover({ force: true });
   await expect(page.getByRole("tooltip")).toContainText(
-    "Too small to migrate: the buy needs at least 6 USDT. You can sell to USDT instead.",
+    "This holding is worth $2.00, below the $5 minimum sale.",
   );
 });
 
@@ -552,8 +552,9 @@ test("Migrate appears only for stocks with both issuers enabled", async ({ page 
   await expect(page.getByTestId("group-NFLX")).toBeVisible({ timeout: 20_000 });
   await expect(page.getByTestId("migrate-NFLXon")).toHaveCount(0);
   await expect(page.getByTestId("migrate-NFLXB")).toHaveCount(0);
-  // Buy more names an enabled issuer only (NFLX is enabled for Ondo).
-  await expect(page.getByRole("link", { name: /Buy more NFLXon/ })).toBeVisible();
+  // Buy more is on for the enabled issuer (NFLX: Ondo) and off, with a reason, for the other.
+  await expect(page.getByTestId("buy-more-NFLXon")).toBeVisible();
+  await expect(page.getByTestId("buy-more-NFLXB")).toBeDisabled();
 });
 
 test.describe("Migrate stocks tab on the Trade page", () => {

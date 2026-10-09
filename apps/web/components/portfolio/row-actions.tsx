@@ -12,7 +12,6 @@ import { isTokenBuyable } from "@/lib/tickers";
 import { canMigrateTicker } from "./enablement";
 
 const SMALL = "!h-9 !px-4 text-[14.5px]";
-const MIN_BUY_USDT = 6;
 
 function Disabled({ label, reason, testId }: { label: string; reason: string; testId: string }) {
   return (
@@ -80,8 +79,6 @@ export function RowActions({
       "The share multiplier for this token couldn't be read, so it can't be migrated.";
   else if (Number.isFinite(worth) && worth < MIN_SELL_USDT)
     migrateReason = `This holding is worth ${worthText}, below the $${MIN_SELL_USDT} minimum sale.`;
-  else if (Number.isFinite(worth) && worth < MIN_BUY_USDT)
-    migrateReason = `The proceeds would be under the ${MIN_BUY_USDT} USDT minimum for the buy.`;
 
   return (
     <div className="flex flex-wrap gap-2" data-testid={`actions-${symbol}`}>

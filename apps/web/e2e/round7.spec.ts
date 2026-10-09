@@ -171,12 +171,9 @@ test.describe("round 7", () => {
     await flags(page, { sell: true });
     await page.goto("/trade/NVDA");
     await page.getByTestId("flip-button").click();
-    await expect(page.getByTestId("trade-slider-available")).toContainText(
-      "shares in your wallet",
-      {
-        timeout: 20_000,
-      },
-    );
+    await expect(page.getByTestId("trade-slider-available")).toContainText("tokens", {
+      timeout: 20_000,
+    });
     await page.locator("#amount").fill("0.01"); // about $2.3
     await expect(page.getByTestId("sell-button")).toBeDisabled();
     await expect(page.getByTestId("sell-button")).toContainText("Minimum sale is $5");

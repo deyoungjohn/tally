@@ -319,16 +319,7 @@ async function stubPortfolio(page: Page, body: unknown, delayMs = 0) {
   await flags(page, { statement: true, receipts: true, sell: true });
   // The chain read behind "Also in your wallet": none by default, so these tests see only the view model.
   await page.route("**/api/portfolio?*", (route) =>
-    route.fulfill({
-      json: {
-        address: WALLET,
-        asOf: new Date().toISOString(),
-        groups: [],
-        totalValueUsd: 0,
-        wallet: { usdt: 0, bnb: 0 },
-        failed: [],
-      },
-    }),
+    route.fulfill({ status: 500, json: { error: { kind: "internal", message: "no chain read" } } }),
   );
   await page.route("**/api/vm/portfolio*", async (route) => {
     if (delayMs) await new Promise((r) => setTimeout(r, delayMs));
@@ -358,7 +349,7 @@ test.describe("portfolio view model: states (stubbed routes)", () => {
     await page.unroute("**/api/vm/portfolio*");
     await page.route("**/api/vm/portfolio*", (route) => route.fulfill({ json: env(both) }));
     await page.reload();
-    await expect(page.getByTestId("symbols-NVDA")).toHaveText("NVDAB · NVDAon", {
+    await expect(page.getByTestId("symbols-NVDA")).toHaveText("NVDAB & NVDAon", {
       timeout: 20_000,
     });
   });
@@ -462,6 +453,69 @@ test.describe("portfolio view model: states (stubbed routes)", () => {
     await expect(page.getByTestId("group-NVDA")).toHaveCount(0);
   });
 
+  test("a holding's buttons come in the order Buy more, Migrate, Sell, and the cost lines are hidden when unknown", async ({
+    page,
+  }) => {
+    await mockWallet(page);
+    const vm = holdingVm();
+    vm.holdings[0]!.avgCostPerShareUsd = "-";
+    vm.holdings[0]!.unrealizedPnlUsd = "-";
+    await stubPortfolio(page, env(vm));
+    await flags(page, { statement: true, receipts: true, sell: true, switch: true });
+    await page.goto("/portfolio");
+    const row = page.getByTestId("vm-issuer-NVDAB");
+    await expect(row).toBeVisible({ timeout: 20_000 });
+    const labels = await row.getByRole("button").allTextContents();
+    const links = await row.getByRole("link").allTextContents();
+    expect([...links, ...labels].map((t) => t.trim())).toEqual(["Buy more", "Migrate", "Sell"]);
+    await expect(page.getByTestId("group-NVDA")).not.toContainText("Average cost per share");
+    await expect(page.getByTestId("group-NVDA")).not.toContainText("Unrealized gain or loss");
+  });
+
+  test("the chain's live balance beats the feed's older one, and a sold-out token disappears", async ({
+    page,
+  }) => {
+    await mockWallet(page);
+    await stubPortfolio(page, env(holdingVm()));
+    // NVDAon is gone from the chain read (sold); NVDAB is now worth $50.
+    await page.route("**/api/portfolio?*", (route) =>
+      route.fulfill({
+        json: {
+          address: WALLET,
+          asOf: new Date().toISOString(),
+          groups: [
+            {
+              ticker: "NVDA",
+              shares: 0.2,
+              valueUsd: 50,
+              referencePrice: 250,
+              parts: [
+                {
+                  ticker: "NVDA",
+                  symbol: "NVDAB",
+                  issuer: "bstock",
+                  address: "0x02fca66c1d1afb4e2a7884261eb00f63598a7436",
+                  tokens: 0.2,
+                  multiplier: 1,
+                  shares: 0.2,
+                  valueUsd: 50,
+                  grade: "A",
+                },
+              ],
+            },
+          ],
+          totalValueUsd: 50,
+          wallet: { usdt: 12.5, bnb: 0.5 },
+          failed: [],
+        },
+      }),
+    );
+    await page.goto("/portfolio");
+    await expect(page.getByTestId("symbols-NVDA")).toHaveText("NVDAB", { timeout: 20_000 });
+    await expect(page.getByTestId("vm-value-NVDAB")).toContainText("$50.00");
+    await expect(page.getByTestId("total-value")).toHaveText("$50.00");
+  });
+
   test("an unknown multiplier reads unknown, with no Sell", async ({ page }) => {
     await mockWallet(page);
     const vm = holdingVm();
@@ -472,7 +526,9 @@ test.describe("portfolio view model: states (stubbed routes)", () => {
     await expect(page.getByTestId("vm-issuer-NVDAon")).toContainText("unknown", {
       timeout: 20_000,
     });
-    await expect(page.getByTestId("sell-NVDAon")).toHaveCount(0);
+    // Shown but disabled, with the reason in its label and tooltip.
+    await expect(page.getByTestId("sell-NVDAon")).toBeDisabled();
+    await expect(page.getByTestId("sell-NVDAon")).toHaveAttribute("aria-label", /multiplier/);
     await expect(page.getByTestId("sell-NVDAB")).toBeEnabled();
   });
 
@@ -580,14 +636,8 @@ test.describe("portfolio view model: states (stubbed routes)", () => {
       let body: unknown = env(holdingVm());
       await page.route("**/api/portfolio?*", (route) =>
         route.fulfill({
-          json: {
-            address: WALLET,
-            asOf: new Date().toISOString(),
-            groups: [],
-            totalValueUsd: 0,
-            wallet: { usdt: 0, bnb: 0 },
-            failed: [],
-          },
+          status: 500,
+          json: { error: { kind: "internal", message: "no chain read" } },
         }),
       );
       await page.route("**/api/vm/portfolio*", (route) => route.fulfill({ json: body }));
@@ -653,7 +703,11 @@ test.describe("other assets: wallet.usdt and wallet.bnb only, from /api/portfoli
     ],
     totalValueUsd: 98765.43,
     wallet: { usdt: 12.5, bnb: 0.00123 },
-    failed: [],
+    // The chain could not read these stocks, so the feed's own numbers for them stand.
+    failed: [
+      { ticker: "NVDA", message: "x" },
+      { ticker: "TSLA", message: "x" },
+    ],
     ...over,
   });
   const run = async (
