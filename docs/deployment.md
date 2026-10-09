@@ -148,9 +148,38 @@ Names only here:
 
 ## Tunnel and domain
 
-Today: a Cloudflare quick tunnel in a separate terminal or tmux, `cloudflared tunnel --url http://localhost:3000`. It prints `https://<random>.trycloudflare.com`; add that URL under Privy dashboard → Settings → Allowed origins and set `TALLY_APP_ORIGIN` to it. It adds `cf-ipcountry` but not `cf-region-code`. The origin must be reachable only through the tunnel (the rate limiter and the region gate trust Cloudflare's headers); keep the EC2 security group closed to inbound web ports.
+Until the named tunnel below is running (retire this afterwards): a Cloudflare quick tunnel in a separate terminal or tmux, `cloudflared tunnel --url http://localhost:3000`. It prints `https://<random>.trycloudflare.com`; add that URL under Privy dashboard → Settings → Allowed origins and set `TALLY_APP_ORIGIN` to it. It adds `cf-ipcountry` but not `cf-region-code`. The origin must be reachable only through the tunnel (the rate limiter and the region gate trust Cloudflare's headers); keep the EC2 security group closed to inbound web ports.
 
-Planned: a fixed domain bought before submission, DNS on Cloudflare, a **named tunnel** run as a service so it restarts itself, the app on `app.<domain>` and the MCP on `mcp.<domain>` pointing at `127.0.0.1`. Not set up yet: when it is, write the exact steps here.
+**Fixed domain: `tallyprotocol.xyz` (bought 9 Oct 2026, Namecheap registrar only; no SSL, Premium DNS, hosting or email add-ons).** Cloudflare runs the DNS and issues the certificate (free Universal SSL), so browsers see a valid HTTPS padlock. The app is `https://app.tallyprotocol.xyz`; the apex and `www` redirect to it until a landing page exists; the MCP will be `mcp.tallyprotocol.xyz` (do not add it until the MCP global cap has landed).
+
+1. **Cloudflare (free plan):** dashboard, Add a site, `tallyprotocol.xyz`, Free plan. Delete any Namecheap parking records it imports. Note the two nameservers it gives you.
+2. **Namecheap:** Domain List, Manage, Nameservers, choose Custom DNS, paste the two Cloudflare nameservers, save (green tick). Wait for Cloudflare's "active" email (minutes to a few hours). Check: `dig NS tallyprotocol.xyz +short` shows the Cloudflare names.
+3. **EC2, named tunnel** (run as your normal user; `cloudflared` is already installed):
+   ```bash
+   cloudflared tunnel login                      # prints a URL: open it in your browser, pick tallyprotocol.xyz, authorise
+   cloudflared tunnel create tally               # prints the tunnel ID (a UUID) and writes ~/.cloudflared/<UUID>.json
+   cloudflared tunnel route dns tally app.tallyprotocol.xyz   # creates the proxied DNS record for you
+   ```
+   Create `/etc/cloudflared/config.yml` (replace `<UUID>`):
+   ```yaml
+   tunnel: <UUID>
+   credentials-file: /etc/cloudflared/<UUID>.json
+   ingress:
+     - hostname: app.tallyprotocol.xyz
+       service: http://localhost:3000
+     - service: http_status:404
+   ```
+   ```bash
+   sudo mkdir -p /etc/cloudflared && sudo cp ~/.cloudflared/<UUID>.json /etc/cloudflared/
+   sudo nano /etc/cloudflared/config.yml                      # paste the file above
+   sudo cloudflared service install && sudo systemctl enable --now cloudflared
+   sudo systemctl status cloudflared --no-pager | head -8     # active (running)
+   ```
+   Then stop the old quick tunnel (the tmux window running `cloudflared tunnel --url ...`). The credentials JSON is a secret: never commit or paste it.
+4. **Cloudflare dashboard settings:** SSL/TLS, Overview: mode Full. Edge Certificates: Always Use HTTPS on, Automatic HTTPS Rewrites on, Minimum TLS 1.2. Rules, Transform Rules, Managed Transforms: turn on "Add visitor location headers" (gives `cf-region-code`). The DNS record for `app` must show the orange cloud (proxied): the region gate and the rate limiter trust Cloudflare's headers.
+5. **Apex and `www` to the app:** DNS: add `A tallyprotocol.xyz 192.0.2.1` and `CNAME www tallyprotocol.xyz`, both proxied (the address is a placeholder that is never contacted). Rules, Redirect Rules: if the hostname is `tallyprotocol.xyz` or `www.tallyprotocol.xyz`, redirect (dynamic) to `concat("https://app.tallyprotocol.xyz", http.request.uri.path)` with status 302 (a temporary redirect, until the landing page exists).
+6. **App settings:** in `/etc/tally/tally.env` set `TALLY_APP_ORIGIN=https://app.tallyprotocol.xyz`; in the Privy dashboard, Settings, Allowed origins: add `https://app.tallyprotocol.xyz` (remove the old `trycloudflare.com` entries). Then `./deploy/restart.sh` (no rebuild needed: only `NEXT_PUBLIC_*` values are baked in).
+7. **Check:** `curl -sI https://app.tallyprotocol.xyz/api/health` answers 200 with `server: cloudflare`; the browser shows the padlock; sign in with Google works (a wrong Privy origin is the usual failure); open it on a phone. The EC2 security group must stay closed to inbound web ports: the site is reachable only through the tunnel.
 
 ## Hosting the MCP over HTTP (WO-05 slice C)
 
