@@ -37,7 +37,15 @@ export async function GET(req: NextRequest) {
     const engine = await getEngine();
     const held = await engine.holdings(address);
     const tokens = held.tokens.slice(0, MAX_TOKENS);
-    const latest = await engine.chain.blockNumber();
+    // No block number (provider down, or no recording in fixture mode): every token is reported incomplete, the page keeps undated rows.
+    const latest = await engine.chain.blockNumber().catch(() => null);
+    if (latest === null)
+      return json({
+        address,
+        days: 90,
+        transfers: [],
+        incomplete: tokens.map((t) => t.address),
+      });
     const span = WINDOW_BLOCKS < INCOMING_MAX_BLOCKS ? WINDOW_BLOCKS : INCOMING_MAX_BLOCKS;
     const from = latest >= span ? latest - span + 1n : 0n;
     const results = await Promise.all(
