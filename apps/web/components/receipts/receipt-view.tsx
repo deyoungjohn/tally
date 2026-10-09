@@ -302,8 +302,8 @@ export function ReceiptView({
       <div className="mt-6 flex flex-wrap gap-3">
         <ButtonLink href="/trade">Compare a stock</ButtonLink>
         {qualityOn ? (
-          <Link href="/quality" className="inline-flex min-h-[44px] items-center link-text">
-            How Tally&apos;s fills compare
+          <Link href="/trade?tab=fills" className="inline-flex min-h-[44px] items-center link-text">
+            Live fills
           </Link>
         ) : null}
       </div>

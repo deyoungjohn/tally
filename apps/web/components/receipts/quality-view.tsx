@@ -108,12 +108,12 @@ export function QualityView({ vm: initial, fixtures }: { vm: QualityVM; fixtures
   );
 
   if (vm.state === "error" || vm.state === "disabled")
-    return <VmEmpty title="Quality is unavailable" reason={vm.reason ?? "Couldn't load."} />;
+    return <VmEmpty title="Live fills are unavailable" reason={vm.reason ?? "Couldn't load."} />;
   if (vm.state === "empty")
     return (
       <VmEmpty
         title="No fills recorded yet"
-        reason={vm.reason ?? "Quality has no observations yet."}
+        reason={vm.reason ?? "Live fills has no observations yet."}
       />
     );
   return (

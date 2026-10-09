@@ -40,7 +40,7 @@ test.describe("foundation boundaries", () => {
     );
     await page.goto("/dev");
     const nav = page.getByRole("navigation", { name: "Primary" });
-    for (const name of ["Portfolio", "Radar", "Guardian", "Pies", "Quality"])
+    for (const name of ["Portfolio", "Radar", "Guardian", "Pies"])
       await expect(nav.getByRole("link", { name, exact: true })).toBeVisible();
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth - innerWidth),

@@ -90,8 +90,8 @@ export function ActivityVmView({ vm }: { vm: ActivityVM }) {
       </ul>
       {vm.truncated ? <p className="t-meta">Showing up to 1000 latest transactions.</p> : null}
       {flags.quality ? (
-        <Link href="/quality" className="inline-flex min-h-[44px] items-center link-text">
-          How Tally&apos;s fills compare with their quotes
+        <Link href="/trade?tab=fills" className="inline-flex min-h-[44px] items-center link-text">
+          Live fills: how fills compare with quotes
         </Link>
       ) : null}
     </div>
