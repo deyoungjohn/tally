@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { USDT_BSC } from "@tally/config";
 import { BelowMinimumError, type Address, type ConsolidatedQuote } from "@tally/core";
-import { prepareSell, type SellDeps } from "./sell";
+import type { QuoteItem } from "@tally/binance";
+import { isRfqRoute, pickSellRoute, prepareSell, type SellDeps } from "./sell";
 import { fixtureTradeChain, fixtureWallet } from "./trade-fixture";
 
 const USER = "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7" as Address;
@@ -422,5 +423,161 @@ describe("prepareSell engine logic", () => {
     expect(plan.status).toBe("needs_approval");
     expect(plan.warnings.some((w) => w.includes("token allowance"))).toBe(true);
     expect(warnings.some((w) => w.includes("token allowance"))).toBe(true);
+  });
+
+  describe("route choice and RFQ expiry preference", () => {
+    function makeRoute(dexName: string, toTokenAmount: string, quoteId = "qid"): QuoteItem {
+      return {
+        quoteId,
+        executionMode: "SWAP",
+        vendorName: "LiquidMesh",
+        fromTokenAmount: "25654736000000000",
+        toTokenAmount,
+        approveTarget: ROUTER,
+        priceImpactPercent: "0.0001",
+        fromToken: {
+          tokenContractAddress: NVDAB,
+          tokenSymbol: "NVDAB",
+          decimal: "18",
+          tokenUnitPrice: "233.8",
+        },
+        toToken: {
+          tokenContractAddress: USDT_BSC,
+          tokenSymbol: "USDT",
+          decimal: "18",
+          tokenUnitPrice: "1.0",
+        },
+        dexRouterList: [
+          {
+            toTokenIndex: "0",
+            fromTokenIndex: "0",
+            fromToken: {
+              tokenContractAddress: NVDAB,
+              tokenSymbol: "NVDAB",
+              decimal: "18",
+            },
+            toToken: {
+              tokenContractAddress: USDT_BSC,
+              tokenSymbol: "USDT",
+              decimal: "18",
+            },
+            dexProtocol: { dexName },
+          },
+        ],
+      } as unknown as QuoteItem;
+    }
+
+    it("identifies RFQ routes by dexName", () => {
+      expect(isRfqRoute(makeRoute("Rfq Neptunex", "1000"))).toBe(true);
+      expect(isRfqRoute(makeRoute("Rfq Halfmoon", "1000"))).toBe(true);
+      expect(isRfqRoute(makeRoute("Pancakeswap V4", "1000"))).toBe(false);
+      expect(isRfqRoute(makeRoute("Elfomofi", "1000"))).toBe(false);
+    });
+
+    it("prefers pool route when its output is within 0.5% of best RFQ output", () => {
+      const pool = makeRoute("Pancakeswap V4", "9960000000000000000", "pool-1");
+      const rfq = makeRoute("Rfq Neptunex", "10000000000000000000", "rfq-1");
+      const res = pickSellRoute([pool, rfq]);
+      expect(res).toEqual({ route: pool, rfq: false });
+    });
+
+    it("prefers pool route when its output is exactly 0.5% below best RFQ output", () => {
+      const pool = makeRoute("Pancakeswap V4", "9950000000000000000", "pool-1");
+      const rfq = makeRoute("Rfq Neptunex", "10000000000000000000", "rfq-1");
+      const res = pickSellRoute([pool, rfq]);
+      expect(res).toEqual({ route: pool, rfq: false });
+    });
+
+    it("uses RFQ route and flags rfq: true when RFQ is better by more than 0.5%", () => {
+      const pool = makeRoute("Pancakeswap V4", "9940000000000000000", "pool-1");
+      const rfq = makeRoute("Rfq Neptunex", "10000000000000000000", "rfq-1");
+      const res = pickSellRoute([pool, rfq]);
+      expect(res).toEqual({ route: rfq, rfq: true });
+    });
+
+    it("uses RFQ route and flags rfq: true when only RFQ route exists", () => {
+      const rfq = makeRoute("Rfq Halfmoon", "10000000000000000000", "rfq-1");
+      const res = pickSellRoute([rfq]);
+      expect(res).toEqual({ route: rfq, rfq: true });
+    });
+
+    it("uses pool route and flags rfq: false when only pool route exists", () => {
+      const pool = makeRoute("Pancakeswap V3", "10000000000000000000", "pool-1");
+      const res = pickSellRoute([pool]);
+      expect(res).toEqual({ route: pool, rfq: false });
+    });
+
+    it("returns undefined when routes array is empty", () => {
+      expect(pickSellRoute([])).toBeUndefined();
+    });
+
+    it("prepareSell sets plan.rfq = true and warning when RFQ route is chosen", async () => {
+      const rfq = makeRoute("Rfq Neptunex", "6000000000000000000");
+      const deps = createMockDeps({
+        api: {
+          ...createMockDeps().api,
+          async quoteRoutes() {
+            return [rfq];
+          },
+        },
+      });
+
+      const plan = await prepareSell(deps, {
+        ticker: "NVDA",
+        issuer: "bstock",
+        tokens: "25654736000000000",
+        user: USER,
+      });
+
+      expect(plan.rfq).toBe(true);
+      expect(plan.warnings).toContain(
+        "Market-maker quotes expire in a few seconds. Confirm promptly.",
+      );
+    });
+
+    it("prepareSell does not set plan.rfq when pool route within 0.5% is chosen", async () => {
+      const rfq = makeRoute("Rfq Neptunex", "6000000000000000000");
+      const pool = makeRoute("Pancakeswap V4", "5980000000000000000"); // within 0.33%
+      const deps = createMockDeps({
+        api: {
+          ...createMockDeps().api,
+          async quoteRoutes() {
+            return [rfq, pool];
+          },
+        },
+      });
+
+      const plan = await prepareSell(deps, {
+        ticker: "NVDA",
+        issuer: "bstock",
+        tokens: "25654736000000000",
+        user: USER,
+      });
+
+      expect(plan.rfq).toBeUndefined();
+      expect(plan.warnings).not.toContain(
+        "Market-maker quotes expire in a few seconds. Confirm promptly.",
+      );
+    });
+
+    it("prepareSell throws route_failed when no routes returned", async () => {
+      const deps = createMockDeps({
+        api: {
+          ...createMockDeps().api,
+          async quoteRoutes() {
+            return [];
+          },
+        },
+      });
+
+      await expect(
+        prepareSell(deps, {
+          ticker: "NVDA",
+          issuer: "bstock",
+          tokens: "25654736000000000",
+          user: USER,
+        }),
+      ).rejects.toThrow("No route was returned for this sell.");
+    });
   });
 });

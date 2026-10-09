@@ -56,6 +56,7 @@ interface PlanOver {
   gasLimit?: string;
   data?: string;
   warnings?: string[];
+  rfq?: boolean;
 }
 function plan(o: PlanOver = {}) {
   const status = o.status ?? "ready";
@@ -83,6 +84,7 @@ function plan(o: PlanOver = {}) {
     vendor: "LiquidMesh",
     balances: { tokens: RAW_BALANCE, bnb: "5000000000000000" },
     warnings: o.warnings ?? [],
+    rfq: o.rfq,
   };
   if (status === "needs_funds")
     return {
@@ -524,6 +526,69 @@ test.describe("sell", () => {
     }));
     const sheet = await openSheet(page);
     await expect(sheet.getByTestId("sell-refused")).toContainText("unavailable from this region");
+  });
+
+  test("reverted sale with rfq explains quote expiration, shows Try again, and clicking Try again re-plans", async ({
+    page,
+  }) => {
+    await mockWallet(page);
+    await flags(page, true);
+    // Request 1: opening check, 2: typed amount, 3: confirm, 4: retry replan
+    const bodies = await stubSell(page, (b, n) => ({
+      json:
+        n <= 3
+          ? plan({
+              rfq: true,
+              warnings: ["Market-maker quotes expire in a few seconds. Confirm promptly."],
+            })
+          : plan({ rfq: false }),
+    }));
+    await stubStatus(page, ["pending", "reverted"]);
+
+    const sheet = await openSheet(page);
+    await sheet.getByTestId("sell-shares").fill("0.025");
+    await sheet.getByTestId("sell-confirm").click();
+
+    // Reverted failure notice is shown with RFQ explanation
+    await expect(sheet.getByTestId("sell-failed")).toBeVisible({ timeout: 20_000 });
+    await expect(sheet.getByTestId("sell-failed")).toContainText(
+      "The sale did not go through, likely because the market-maker quote expired",
+    );
+    await expect(sheet.getByTestId("sell-failed")).toContainText(
+      "Market-maker quotes last a few seconds. Try again.",
+    );
+
+    // Try again button is visible and active
+    const retryBtn = sheet.getByTestId("sell-retry");
+    await expect(retryBtn).toBeVisible();
+    await expect(retryBtn).toContainText("Try again");
+
+    // Clicking Try again re-plans and returns to the form without automatic second tx
+    await retryBtn.click();
+    await expect(sheet.getByTestId("sell-plan")).toBeVisible({ timeout: 20_000 });
+    await expect(sheet.getByTestId("sell-confirm")).toBeVisible();
+    await expect(sheet.getByTestId("sell-failed")).toHaveCount(0);
+    expect(bodies.length).toBeGreaterThanOrEqual(4);
+  });
+
+  test("reverted sale without rfq explains plainly without claiming quote expiration", async ({
+    page,
+  }) => {
+    await mockWallet(page);
+    await flags(page, true);
+    await stubSell(page, () => ({ json: plan({ rfq: false }) }));
+    await stubStatus(page, ["reverted"]);
+
+    const sheet = await openSheet(page);
+    await sheet.getByTestId("sell-shares").fill("0.025");
+    await sheet.getByTestId("sell-confirm").click();
+
+    await expect(sheet.getByTestId("sell-failed")).toBeVisible({ timeout: 20_000 });
+    await expect(sheet.getByTestId("sell-failed")).toContainText(
+      "The sale did not go through. Nothing was sold; only the network fee was spent. Try again.",
+    );
+    await expect(sheet.getByTestId("sell-failed")).not.toContainText("market-maker");
+    await expect(sheet.getByTestId("sell-retry")).toBeVisible();
   });
 
   for (const w of [375, 768, 1280] as const) {
