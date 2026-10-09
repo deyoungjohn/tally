@@ -7,7 +7,7 @@ const listeners = new Set<() => void>();
 
 /** URLs whose data a transaction can change. */
 export const PORTFOLIO_URL =
-  /^\/api\/(portfolio|holdings|vm\/(portfolio|activity|statement))(\?|$)/;
+  /^\/api\/(portfolio|holdings|transfers|vm\/(portfolio|activity|statement))(\?|$)/;
 
 /** Tell every open portfolio view to read again now, and once more shortly after (the chain and the feeds settle a moment later). */
 export function notifyPortfolioChanged(): void {

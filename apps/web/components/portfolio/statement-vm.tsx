@@ -27,7 +27,18 @@ export interface UntrackedToken {
   issuer: "ondo" | "bstock" | "xstocks";
   address: string;
   shares: string;
+  tokens: number;
+  sharesPerToken: number;
   valueUsd: string;
+}
+
+/** One dated incoming transfer from `/api/transfers`. */
+export interface ReceivedRow {
+  token: string;
+  from: string;
+  tokens: string;
+  date: string;
+  txHash: string;
 }
 
 export function StatementVmView({
@@ -35,6 +46,7 @@ export function StatementVmView({
   valueToday,
   recent = [],
   untracked = [],
+  received = [],
   wallet,
 }: {
   vm: StatementVM;
@@ -43,6 +55,8 @@ export function StatementVmView({
   /** Verified transactions the feed does not have yet, from Activity. */
   recent?: StatementVM["lines"];
   untracked?: UntrackedToken[];
+  /** Dated transfers into the wallet (last 90 days). A token with none keeps one undated row. */
+  received?: ReceivedRow[];
   wallet?: string | null;
 }) {
   // The table lists tokenized stocks only. A line with no issuer is not one (for example BNB or USDT moving as part of a swap).
@@ -162,31 +176,66 @@ export function StatementVmView({
                   </td>
                 </tr>
               ))}
-              {untracked.map((t) => (
-                <tr
-                  key={t.key}
-                  className="border-t border-white/[0.06]"
-                  data-testid={`st-received-${t.symbol}`}
-                >
-                  <td className="px-3 py-2">–</td>
-                  <td className="px-3 py-2">Received</td>
-                  <td className="px-3 py-2">
-                    <a
-                      className="link-text font-bold"
-                      href={`https://bscscan.com/token/${t.address}${wallet ? `?a=${wallet}` : ""}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label={`${t.symbol}: view on BscScan (opens in a new tab)`}
+              {untracked.flatMap((t) => {
+                const dated = received.filter(
+                  (r) => r.token.toLowerCase() === t.address.toLowerCase(),
+                );
+                const token = (
+                  <a
+                    className="link-text font-bold"
+                    href={`https://bscscan.com/token/${t.address}${wallet ? `?a=${wallet}` : ""}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={`${t.symbol}: view on BscScan (opens in a new tab)`}
+                  >
+                    {t.symbol}
+                  </a>
+                );
+                if (dated.length === 0)
+                  return [
+                    <tr
+                      key={t.key}
+                      className="border-t border-white/[0.06]"
+                      data-testid={`st-received-${t.symbol}`}
                     >
-                      {t.symbol}
-                    </a>
-                  </td>
-                  <td className="num px-3 py-2 text-right">{t.shares}</td>
-                  <td className="num px-3 py-2 text-right">unknown</td>
-                  <td className="num px-3 py-2 text-right">${t.valueUsd}</td>
-                  <td className="num px-3 py-2 text-right">–</td>
-                </tr>
-              ))}
+                      <td className="px-3 py-2">–</td>
+                      <td className="px-3 py-2">Received</td>
+                      <td className="px-3 py-2">{token}</td>
+                      <td className="num px-3 py-2 text-right">{t.shares}</td>
+                      <td className="num px-3 py-2 text-right">unknown</td>
+                      <td className="num px-3 py-2 text-right">${t.valueUsd}</td>
+                      <td className="num px-3 py-2 text-right">–</td>
+                    </tr>,
+                  ];
+                return dated.map((r) => (
+                  <tr
+                    key={`${t.key}-${r.txHash}-${r.tokens}`}
+                    className="border-t border-white/[0.06]"
+                    data-testid={`st-received-${t.symbol}`}
+                  >
+                    <td className="px-3 py-2">{r.date.slice(0, 10)}</td>
+                    <td className="px-3 py-2">Received</td>
+                    <td className="px-3 py-2">
+                      {token}
+                      <a
+                        className="link-text t-meta block"
+                        href={`https://bscscan.com/tx/${r.txHash}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`${t.symbol}: view transfer on BscScan (opens in a new tab)`}
+                      >
+                        from {r.from.slice(0, 6)}…{r.from.slice(-4)}
+                      </a>
+                    </td>
+                    <td className="num px-3 py-2 text-right">
+                      {String(Number((Number(r.tokens) * t.sharesPerToken).toFixed(6)))}
+                    </td>
+                    <td className="num px-3 py-2 text-right">unknown</td>
+                    <td className="num px-3 py-2 text-right">–</td>
+                    <td className="num px-3 py-2 text-right">–</td>
+                  </tr>
+                ));
+              })}
             </tbody>
           </table>
         </div>

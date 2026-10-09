@@ -153,3 +153,58 @@ it("raw recorded logs retain NodeReal timestamps and send a Transfer-only 10000-
   expect(logs[0]!.blockNumber).toBe(BigInt(recorded.sample[0]!.blockNumber));
   expect(request).toHaveBeenCalledTimes(1);
 });
+
+const TOKEN = "0x" + "1".repeat(40);
+const WALLET = "0x" + "a".repeat(40);
+const topic = (a: string) => "0x" + a.slice(2).padStart(64, "0");
+it("incomingTransfers filters by indexed recipient, halves the span on refusal and sorts newest first", async () => {
+  const seen: { from: string; to: string; topics: unknown[] }[] = [];
+  const request = vi.fn(async ({ method, params }: { method: string; params?: unknown[] }) => {
+    if (method !== "eth_getLogs") throw new Error("unexpected");
+    const f = (params as { fromBlock: string; toBlock: string; topics: unknown[] }[])[0]!;
+    seen.push({ from: f.fromBlock, to: f.toBlock, topics: f.topics });
+    if (BigInt(f.toBlock) - BigInt(f.fromBlock) + 1n > 100_000n) throw new Error("range too large");
+    return [
+      {
+        address: TOKEN,
+        topics: [
+          "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+          topic("0x" + "b".repeat(40)),
+          topic(WALLET),
+        ],
+        data: "0x" + (5n * 10n ** 18n).toString(16),
+        blockNumber: f.toBlock,
+        transactionHash: "0x" + "c".repeat(64),
+        logIndex: "0x1",
+        blockTimestamp: "0x64",
+        removed: false,
+      },
+    ];
+  });
+  const client = createPublicClient({ transport: custom({ request }) });
+  const chain = flowChainFromClients([client as PublicClient], vi.fn());
+  const r = await chain.incomingTransfers(TOKEN, WALLET, 0n, 1_000_000n);
+  expect(r.complete).toBe(true);
+  expect(r.transfers.length).toBeGreaterThan(3);
+  expect(r.transfers[0]!.blockNumber).toBeGreaterThan(r.transfers.at(-1)!.blockNumber);
+  expect(r.transfers[0]!.amount).toBe(5n * 10n ** 18n);
+  expect(r.transfers[0]!.from).toBe("0x" + "b".repeat(40));
+  expect(seen.at(-1)!.topics[2]).toBe(topic(WALLET));
+  await expect(chain.incomingTransfers(TOKEN, "0x1", 0n, 1n)).rejects.toThrow("Invalid address");
+  await expect(chain.incomingTransfers(TOKEN, WALLET, 0n, 3_000_000n)).rejects.toThrow(RangeError);
+});
+it("incomingTransfers reports an incomplete scan when the provider refuses every span", async () => {
+  const dead = createPublicClient({
+    transport: custom(
+      {
+        request: async () => {
+          throw new Error("nope");
+        },
+      },
+      { retryCount: 0 },
+    ),
+  });
+  const chain = flowChainFromClients([dead as PublicClient], vi.fn());
+  const r = await chain.incomingTransfers(TOKEN, WALLET, 0n, 1_000_000n);
+  expect(r).toEqual({ transfers: [], complete: false });
+});

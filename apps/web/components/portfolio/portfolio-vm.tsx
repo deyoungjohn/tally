@@ -17,7 +17,7 @@ import { recentLines } from "./recent-lines";
 import { SmallBalancesLink, otherAssetsShown, type SmallBalance } from "./small-balances";
 import { ActivityVmView } from "./activity-vm";
 import { HoldingsVm, smallBalancesOf } from "./holdings-vm";
-import { StatementVmView } from "./statement-vm";
+import { StatementVmView, type ReceivedRow } from "./statement-vm";
 import { VmDegraded, VmEmpty, VmFreshness, VmSkeleton, usd, type VmEnvelope } from "./vm-shared";
 
 const TAB_LABEL: Record<PortfolioTab, string> = {
@@ -124,6 +124,9 @@ export function PortfolioVmPanel({
       feedEnv?.vm && !feedEnv.fixtures ? untrackedTokens(feedEnv.vm, balances.data ?? null) : [],
     [feedEnv, balances.data],
   );
+  const transfers = useJson<{ transfers: ReceivedRow[] }>(
+    tab === "statement" && untracked.length > 0 && address ? `/api/transfers?address=${q}` : null,
+  );
   const recent = useMemo(
     () =>
       recentLines(
@@ -189,6 +192,7 @@ export function PortfolioVmPanel({
                   valueToday={vm?.state === "ready" ? vm.totalValueUsd : undefined}
                   recent={recent}
                   untracked={untracked}
+                  received={transfers.data?.transfers ?? []}
                   wallet={address}
                 />
               )}
