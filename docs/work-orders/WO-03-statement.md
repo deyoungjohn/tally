@@ -9,6 +9,7 @@
 
 ## Owns
 
+- Approved 2026-10-09 (`docs/prompts/wo03-portfolio-speed.md`): `apps/web/app/api/portfolio/route.ts`; in `packages/engine/src/views.ts` only `portfolioFor` (and `radarFor` concurrency if the prompt's condition holds) and the engine-side cache of `inspectTicker`; their tests.
 - `packages/mod-statement/**`
 - `apps/web/modules/statement/**`, `apps/web/app/dev/statement/**`
 - `apps/worker/src/jobs/statement.ts`

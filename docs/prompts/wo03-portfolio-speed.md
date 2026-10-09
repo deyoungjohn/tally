@@ -1,0 +1,15 @@
+# WO-03 follow-up (urgent): the Portfolio takes 15 to 20 seconds to show values
+
+Same worktree and branch as WO-03 (fast-forward to `main` first). No new branch; commit, push, keep an open PR with the latest push.
+
+## What regressed (read the code, confirm with numbers)
+`GET /api/portfolio` (`apps/web/app/api/portfolio/route.ts`) builds its ticker list from `PICKER_TICKERS` plus the wallet's held tickers, then `portfolioFor` (`packages/engine/src/views.ts`) walks that list **one ticker at a time**: for each, `inspectTicker` (multiplier reads from the list, the API and the chain, market facts, the integrity log) and then a separate `erc20Balances` RPC call. The output only keeps tickers where the wallet holds a balance (`if (parts.length === 0) continue`), so every zero-balance ticker is pure wasted work. When PR 59 grew `PICKER_TICKERS` from 6 to 21 tickers, the loop got about 3.5 times longer. There is no cache either (Radar's version caches for 120 s; the portfolio's does not).
+
+## Do
+1. **Inspect only what the wallet holds.** The route already runs the holdings scan (`engine.holdings(address)`, every registry token in multicall chunks). Make `heldTickers` return `null` when the scan fails and an empty list when it succeeded with nothing held. Use the held tickers only when the scan succeeded (an empty wallet then returns instantly with just its BNB and USDT); fall back to `PICKER_TICKERS` only when the scan failed, as today.
+2. **Cache the wallet-independent part.** Inspection of a ticker does not depend on the wallet: cache `inspectTicker` results per ticker for 30 seconds inside the engine (the same `TtlCache` helper as the radar), shared by concurrent requests (store the promise, drop it on failure). Wallet balances stay uncached.
+3. **Bounded concurrency** for the tickers that still need inspecting: at most 4 at a time (the client already paces Binance calls at 4 per second; do not raise it), one `erc20Balances` call for all the tokens of all inspected tickers instead of one per ticker.
+4. **Radar:** measure only. `radarFor` walks 21 tickers serially with a 120 s cache, so its first load is slow after every restart. Report the timing in the PR; make the smallest safe change only if it is the same 4-way bounded concurrency and its tests; the Radar page's snapshot (`/api/vm/radar`) is not yours.
+5. **Observability:** one log line per portfolio request in the web log with the number of tickers inspected, cache hits and milliseconds (counts and timing only, no addresses).
+6. **Tests:** a fake-ports test that a wallet holding one of 21 tickers inspects exactly one; an empty wallet inspects none; scan failure falls back to the picker list; the shared promise is reused by two concurrent calls and dropped after a failure; the response shape is byte-identical for a held position (compare against the existing fixtures). Existing portfolio and e2e tests stay green.
+7. Report before and after numbers (fixture mode is fine, plus the call counts), and the real `FULL=1 bash scripts/review-pack.sh <branch>` output.
