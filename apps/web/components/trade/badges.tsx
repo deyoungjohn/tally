@@ -51,14 +51,6 @@ export function LiquidityBadge({ grade }: { grade: Grade }) {
   );
 }
 
-export function TokenLogo({ ticker }: { ticker: string }) {
-  return (
-    <span className="token-logo" aria-hidden>
-      {ticker === "USDT" ? "₮" : ticker.slice(0, 2)}
-    </span>
-  );
-}
-
 /** Colour is never the only signal (DESIGN §2.1): every badge carries words, and paused/ghost carry an icon. */
 const SESSION_TIP: Record<string, string> = {
   regular: "US stock markets are open, so the reference price is live.",

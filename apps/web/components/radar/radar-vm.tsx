@@ -2,6 +2,7 @@
 // The Radar body built from the flow module's view models (`RadarVM` for the grade cards, `FlowPanelVM` for the ticker
 // detail), reached through /api/vm/radar. Four designed states: loading, empty (with the reason), stale, degraded.
 
+import { TokenIcon } from "@/components/ui/token-icon";
 import { ArrowRight, Info } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -11,7 +12,7 @@ import { MorphingSearch, type MorphingSearchItem } from "@/components/motion/mor
 import { Button } from "@/components/motion/button";
 import { Segmented } from "@/components/motion/segmented";
 import { HowWeGradeLink } from "./how-we-grade-link";
-import { FlagBadge, GradeBadge, LiquidityBadge, TokenLogo } from "@/components/trade/badges";
+import { FlagBadge, GradeBadge, LiquidityBadge } from "@/components/trade/badges";
 import { Tip } from "@/components/ui/tooltip";
 import { useJson } from "@/lib/hooks/use-json";
 import { ISSUER_LABEL } from "@/lib/format";
@@ -340,7 +341,7 @@ function TickerCard({ card, grades }: { card: RadarCardDisplay; grades: RadarGra
       data-testid={`radarvm-card-${card.ticker}`}
     >
       <div className="mb-3 flex items-center gap-3">
-        <TokenLogo ticker={card.ticker} />
+        <TokenIcon ticker={card.ticker} size={32} />
         <p className="flex-1 font-semibold">{nameOf(card.ticker)}</p>
       </div>
       <ul className="m-0 grid list-none gap-3 p-0">

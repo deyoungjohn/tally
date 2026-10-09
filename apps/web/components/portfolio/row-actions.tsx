@@ -6,6 +6,7 @@
 import { Button, ButtonLink } from "@/components/motion/button";
 import { Tip } from "@/components/ui/tooltip";
 import { useOndoClosedReason } from "@/components/trade/ondo-gate";
+import { ONDO_CLOSED_MIGRATE_TIP } from "@/components/trade/ondo-closed";
 import { MIN_SELL_USDT } from "@tally/config";
 import { fmtUsd } from "@/lib/format";
 import { isTokenBuyable } from "@/lib/tickers";
@@ -52,6 +53,8 @@ export function RowActions({
   onMigrate?: (to: "ondo" | "bstock") => void;
 }) {
   const closed = useOndoClosedReason(ticker, issuer ?? "");
+  // A bStock holding migrates INTO Ondo: its buy leg needs the Ondo market open too, or the sale would leave USDT with no buy.
+  const ondoDestinationClosed = useOndoClosedReason(ticker, issuer === "bstock" ? "ondo" : "");
   const tradable = issuer === "ondo" || issuer === "bstock";
   const worth = valueUsd ?? Number.NaN;
   const worthText = Number.isFinite(worth) ? fmtUsd(worth) : "unknown";
@@ -74,6 +77,7 @@ export function RowActions({
   let migrateReason: string | null = null;
   if (!tradable) migrateReason = "There is no market to exit this token on BNB Chain.";
   else if (closed) migrateReason = closed;
+  else if (ondoDestinationClosed) migrateReason = ONDO_CLOSED_MIGRATE_TIP;
   else if (!sharesKnown)
     migrateReason =
       "The share multiplier for this token couldn't be read, so it can't be migrated.";

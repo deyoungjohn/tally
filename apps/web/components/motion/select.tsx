@@ -413,6 +413,8 @@ export interface SelectItemProps {
   /** Keeps the item mounted (its label stays registered) but not shown, for filtering. Added by Tally. */
   hidden?: boolean;
   className?: string;
+  /** Shown before the label (a token icon). Added by Tally. */
+  icon?: ReactNode;
   children: ReactNode;
 }
 
@@ -421,6 +423,7 @@ export function SelectItem({
   disabled = false,
   hidden = false,
   className,
+  icon,
   children,
 }: SelectItemProps) {
   const ctx = useSelectContext("SelectItem");
@@ -448,7 +451,14 @@ export function SelectItem({
           className,
         )}
       >
-        {children}
+        {icon ? (
+          <span className="flex min-w-0 items-center gap-2.5">
+            {icon}
+            <span className="min-w-0">{children}</span>
+          </span>
+        ) : (
+          children
+        )}
         {selected ? <Check className="h-3.5 w-3.5 shrink-0" /> : null}
       </button>
     </motion.li>

@@ -3,6 +3,7 @@
 // same stock from the other issuer). The two steps and their confirmations are `useMigrateFlow` / `MigrateSheet`; this
 // tab only lists what can be moved and starts the flow. Shown only when the `switch` flag is on.
 
+import { TokenIcon } from "@/components/ui/token-icon";
 import { ArrowRight, Lock } from "lucide-react";
 import type { PortfolioReport } from "@tally/engine";
 import { MIN_SELL_USDT } from "@tally/config";
@@ -15,8 +16,8 @@ import { ISSUER_LABEL } from "@/lib/format";
 import { tokenSymbol } from "@/lib/tickers";
 import { canMigrateTicker } from "@/components/portfolio/enablement";
 import { companyName } from "@/components/portfolio/company-name";
-import { TokenLogo } from "./badges";
 import { OndoGate } from "./ondo-gate";
+import { ONDO_CLOSED_MIGRATE_TIP } from "./ondo-closed";
 import type { useMigrateFlow } from "./use-migrate-flow";
 
 type Part = PortfolioReport["groups"][number]["parts"][number];
@@ -24,7 +25,7 @@ type Part = PortfolioReport["groups"][number]["parts"][number];
 /** Why a holding cannot be migrated, or null when it can. */
 function blocked(p: Part, ondoClosed: string | null): string | null {
   if (p.issuer === "xstocks") return "No market to exit this token on BNB Chain.";
-  if (ondoClosed) return ondoClosed;
+  if (ondoClosed) return p.issuer === "ondo" ? ondoClosed : ONDO_CLOSED_MIGRATE_TIP;
   if (p.valueUsd !== null && p.valueUsd < MIN_SELL_USDT)
     return `Too small to migrate: the sale must be at least $${MIN_SELL_USDT} and the buy at least 6 USDT.`;
   return null;
@@ -71,14 +72,14 @@ export function MigrateTab({ flow }: { flow: ReturnType<typeof useMigrateFlow> }
       ) : (
         <ul className="m-0 mt-6 grid max-w-[720px] list-none gap-3 p-0">
           {parts.map((p) => (
-            <OndoGate key={p.address} ticker={p.ticker} issuer={p.issuer}>
+            <OndoGate key={p.address} ticker={p.ticker} issuer="ondo">
               {(ondoClosed) => {
                 const to = p.issuer === "ondo" ? "bstock" : "ondo";
                 const reason = blocked(p, ondoClosed);
                 return (
                   <li className="panel p-4" data-testid={`migrate-row-${p.symbol}`}>
                     <div className="flex flex-wrap items-center gap-3">
-                      <TokenLogo ticker={p.ticker} />
+                      <TokenIcon ticker={p.ticker} size={32} />
                       <div className="min-w-0 flex-1">
                         <p className="mono text-[19px] font-bold leading-tight">{p.symbol}</p>
                         <p className="text-[13.5px] font-light text-fg2">
