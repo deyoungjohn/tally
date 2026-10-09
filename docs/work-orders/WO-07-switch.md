@@ -12,6 +12,7 @@
 
 ## Owns
 
+- Approved 2026-10-09 (`docs/prompts/wo07-sell-rfq-expiry.md`): `packages/engine/src/sell.ts` (route choice only) and its test; `apps/web/components/trade/sell-sheet.tsx`, `apps/web/components/trade/use-sell-flow.ts` and their tests (confirm path and the reverted-sale message); `apps/web/e2e/sell.spec.ts`. `pickBest`, ShareGuard and the buy path are off limits.
 - `contracts/test/ShareGuardSwitch.t.sol` (fork tests J, K), new captures in `contracts/captures/`
 - `apps/web/modules/switch/**` (row-action view models for Portfolio), `apps/web/app/dev/switch/**`
 - New files `apps/web/lib/trade-plan/sell.ts` and `apps/web/lib/trade-plan/switch.ts` only (the rest of `trade-plan/` is WO-01's; reuse it, don't edit it)
