@@ -228,6 +228,21 @@ describe("health (blueprint §14)", () => {
     const h = await createFixtureEngine({ blockRegion: true, tradeChain: approved() }).health();
     expect(h.binance).toBe("region_block");
   });
+  it("a failed chain read says why, with every URL (and so every key) removed", async () => {
+    const chain = {
+      ...approved(),
+      blockNumber: async () => {
+        throw new Error(
+          "HTTP request failed.\n\nURL: https://rpc.example.com/v1/SECRETKEY123\nDetails: rate limit exceeded",
+        );
+      },
+    };
+    const h = await createFixtureEngine({ tradeChain: chain }).health();
+    expect(h.rpcBlock).toBeNull();
+    expect(h.rpcDetail).toContain("rate limit exceeded");
+    expect(h.rpcDetail).toContain("<url>");
+    expect(h.rpcDetail).not.toMatch(/SECRETKEY|rpc\.example\.com|https?:/);
+  });
 });
 
 describe("radar and portfolio views", () => {
