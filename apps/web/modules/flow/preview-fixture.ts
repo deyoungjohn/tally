@@ -2,7 +2,7 @@
 import { gradeIntegrity } from "@tally/core";
 import { openStore } from "@tally/modkit";
 import { createFixtureEngine } from "../../../../packages/engine/src/engine";
-import { fixed, type FlowToken } from "@tally/mod-flow";
+import { aggregateFlow, fixed, type FlowSnapshot, type FlowToken } from "@tally/mod-flow";
 import { collectFlow } from "../../../worker/src/jobs/collect-flow";
 import type { RadarGradeSnapshot } from "./view-model";
 
@@ -43,7 +43,21 @@ async function seed() {
       observedAt: now,
       data: tokens,
     });
-    for (const token of tokens)
+    for (const token of tokens) {
+      const snapshot = store.latest<FlowSnapshot>("flow", token.address, {
+        maxAgeMs: 900_000,
+        now,
+      });
+      if (snapshot) {
+        store.put({
+          kind: "flow-aggregate",
+          key: snapshot.key,
+          source: snapshot.source,
+          observedAt: snapshot.observedAt,
+          notes: snapshot.notes,
+          data: aggregateFlow(snapshot.data, now),
+        });
+      }
       store.put<RadarGradeSnapshot>({
         kind: "radar",
         key: token.address,
@@ -64,6 +78,7 @@ async function seed() {
           }),
         },
       });
+    }
     store.health.report("flow", { ok: true, now });
   } finally {
     store.close();

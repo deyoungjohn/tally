@@ -4,7 +4,13 @@
  */
 import { gradeIntegrity } from "@tally/core";
 import { openStore } from "@tally/modkit";
-import type { FlowSnapshot, FlowToken } from "@tally/mod-flow";
+import {
+  aggregateFlow,
+  checkGhost,
+  ghostInput,
+  type FlowSnapshot,
+  type FlowToken,
+} from "@tally/mod-flow";
 import type { RadarGradeSnapshot } from "../modules/flow/view-model";
 
 const E18 = 10n ** 18n;
@@ -116,6 +122,18 @@ async function main() {
       observedAt: now - 60_000,
       data: flow,
     });
+    const aggregate = aggregateFlow(flow, now);
+    for (const [kind, data] of [
+      ["flow-aggregate", aggregate],
+      ["flow-ghost", checkGhost(ghostInput(aggregate))],
+    ] as const)
+      store.put({
+        kind,
+        key: NVDA_ON.address,
+        source: "binance",
+        observedAt: now - 60_000,
+        data,
+      });
     // A ghost market (under $1,000 in 24h).
     store.put({
       kind: "radar",
