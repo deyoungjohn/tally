@@ -50,13 +50,16 @@ describe("pnpm tokens:icons checker", () => {
       return { code: x.status, err: x.stderr.toString() };
     }
   };
-  it("passes a 128 px PNG named like a ticker", () => {
-    expect(run("test-fixtures/token-icons-good").code).toBe(0);
+  it("passes a PNG and lossy, lossless and alpha WebP files named like tickers, and a 256 px WebP", () => {
+    const r = run("test-fixtures/token-icons-good");
+    expect(r.err).toBe("");
+    expect(r.code).toBe(0);
   });
   it("fails wrong size, bad name, not an image and over 10 KB", () => {
     const r = run("test-fixtures/token-icons-bad");
     expect(r.code).toBe(1);
-    expect(r.err).toContain("WRONG.png: 64 x 64 must be 128 x 128");
+    expect(r.err).toContain("WRONG.png: 64 x 64 must be square, 128 to 512 px");
+    expect(r.err).toContain("WIDE.webp: 128 x 64 must be square");
     expect(r.err).toContain("good.png: name must look like");
     expect(r.err).toContain("FAKE.png: not a PNG or WebP");
     expect(r.err).toContain("BIG.png:");
