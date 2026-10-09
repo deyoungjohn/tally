@@ -33,7 +33,8 @@ export function Logo() {
       className="flex items-center gap-2.5 text-fg no-underline"
       aria-label="Tally home"
     >
-      <span aria-hidden className="sphere block h-7 w-7" />
+      {/* eslint-disable-next-line @next/next/no-img-element -- a 1 KB static SVG */}
+      <img src="/logo.svg" alt="" width={28} height={28} className="block h-7 w-7" />
       <span className="text-[18px] font-bold tracking-[-0.03em]">Tally</span>
     </Link>
   );
