@@ -3,6 +3,7 @@
 // same stock from the other issuer). The two steps and their confirmations are `useMigrateFlow` / `MigrateSheet`; this
 // tab only lists what can be moved and starts the flow. Shown only when the `switch` flag is on.
 
+import { TokenIcon } from "@/components/ui/token-icon";
 import { ArrowRight, Lock } from "lucide-react";
 import type { PortfolioReport } from "@tally/engine";
 import { MIN_SELL_USDT } from "@tally/config";
@@ -15,7 +16,6 @@ import { ISSUER_LABEL } from "@/lib/format";
 import { tokenSymbol } from "@/lib/tickers";
 import { canMigrateTicker } from "@/components/portfolio/enablement";
 import { companyName } from "@/components/portfolio/company-name";
-import { TokenLogo } from "./badges";
 import { OndoGate } from "./ondo-gate";
 import type { useMigrateFlow } from "./use-migrate-flow";
 
@@ -78,7 +78,7 @@ export function MigrateTab({ flow }: { flow: ReturnType<typeof useMigrateFlow> }
                 return (
                   <li className="panel p-4" data-testid={`migrate-row-${p.symbol}`}>
                     <div className="flex flex-wrap items-center gap-3">
-                      <TokenLogo ticker={p.ticker} />
+                      <TokenIcon ticker={p.ticker} size={32} />
                       <div className="min-w-0 flex-1">
                         <p className="mono text-[19px] font-bold leading-tight">{p.symbol}</p>
                         <p className="text-[13.5px] font-light text-fg2">

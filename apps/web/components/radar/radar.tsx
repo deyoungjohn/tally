@@ -1,5 +1,6 @@
 "use client";
 
+import { TokenIcon } from "@/components/ui/token-icon";
 import { AlertTriangle, ArrowRight, Building2, Search } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -8,7 +9,7 @@ import { ButtonLink } from "@/components/motion/button";
 import { MorphingSearch, type MorphingSearchItem } from "@/components/motion/morphing-search";
 import { Segmented } from "@/components/motion/segmented";
 import { nameOf, tokenPair } from "@/lib/tickers";
-import { FlagBadge, GradeBadge, LiquidityBadge, TokenLogo } from "@/components/trade/badges";
+import { FlagBadge, GradeBadge, LiquidityBadge } from "@/components/trade/badges";
 import { useJson } from "@/lib/hooks/use-json";
 import { ISSUER_LABEL, fmtUsd } from "@/lib/format";
 import { isTokenBuyable, issuersOf } from "@/lib/tickers";
@@ -65,7 +66,7 @@ export function RadarRowCard({ r }: { r: RadarRow }) {
       data-testid={`radar-${r.symbol}`}
     >
       <div className="flex flex-wrap items-start gap-3">
-        <TokenLogo ticker={r.symbol} />
+        <TokenIcon symbol={r.symbol} size={32} />
         <div className="min-w-0 flex-1">
           <p className="flex flex-wrap items-center gap-2 font-semibold">
             {ISSUER_LABEL[r.issuer]} <span className="mono text-[13px] text-fg3">{r.symbol}</span>

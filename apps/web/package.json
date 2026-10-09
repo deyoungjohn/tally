@@ -8,7 +8,8 @@
     "start": "node .next/standalone/apps/web/server.js",
     "typecheck": "tsc -p .",
     "test": "vitest run --passWithNoTests",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "tokens:icons": "node scripts/token-icons.mjs"
   },
   "dependencies": {
     "@privy-io/node": "0.35.0",

@@ -1,5 +1,6 @@
 "use client";
 
+import { TokenIcon } from "@/components/ui/token-icon";
 import { Download } from "lucide-react";
 import { Button } from "@/components/motion/button";
 import { tokenSymbol } from "@/lib/tickers";
@@ -153,7 +154,10 @@ export function StatementVmView({
                   <td className="px-3 py-2">
                     {(() => {
                       const symbol = l.issuer ? tokenSymbol(l.ticker, l.issuer) : l.ticker;
-                      return l.txHash ? (
+                      const icon = l.issuer ? (
+                        <TokenIcon ticker={l.ticker} size={20} className="mr-2" />
+                      ) : null;
+                      const name = l.txHash ? (
                         <a
                           className="font-bold link-text"
                           href={`https://bscscan.com/tx/${l.txHash}`}
@@ -165,6 +169,12 @@ export function StatementVmView({
                         </a>
                       ) : (
                         <span className="font-bold">{symbol}</span>
+                      );
+                      return (
+                        <span className="inline-flex items-center">
+                          {icon}
+                          {name}
+                        </span>
                       );
                     })()}
                     {l.convertedAtTodaysRatio ? (
@@ -184,15 +194,18 @@ export function StatementVmView({
                   (r) => r.token.toLowerCase() === t.address.toLowerCase(),
                 );
                 const token = (
-                  <a
-                    className="link-text font-bold"
-                    href={`https://bscscan.com/token/${t.address}${wallet ? `?a=${wallet}` : ""}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label={`${t.symbol}: view on BscScan (opens in a new tab)`}
-                  >
-                    {t.symbol}
-                  </a>
+                  <span className="inline-flex items-center">
+                    <TokenIcon ticker={t.ticker} size={20} className="mr-2" />
+                    <a
+                      className="link-text font-bold"
+                      href={`https://bscscan.com/token/${t.address}${wallet ? `?a=${wallet}` : ""}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`${t.symbol}: view on BscScan (opens in a new tab)`}
+                    >
+                      {t.symbol}
+                    </a>
+                  </span>
                 );
                 if (dated.length === 0)
                   return [

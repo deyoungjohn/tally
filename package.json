@@ -16,7 +16,8 @@
     "e2e": "pnpm --filter @tally/web e2e",
     "tally": "pnpm --filter @tally/engine tally",
     "worker": "pnpm --filter @tally/worker worker",
-    "e2e:foundation": "TALLY_FOUNDATION_E2E=1 pnpm --filter @tally/web exec playwright test --config e2e/foundation.config.ts"
+    "e2e:foundation": "TALLY_FOUNDATION_E2E=1 pnpm --filter @tally/web exec playwright test --config e2e/foundation.config.ts",
+    "tokens:icons": "pnpm --filter @tally/web tokens:icons"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",

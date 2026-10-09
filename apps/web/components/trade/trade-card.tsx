@@ -1,5 +1,6 @@
 "use client";
 
+import { TokenIcon } from "@/components/ui/token-icon";
 import { ArrowUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PercentSlider } from "@/components/ui/percent-slider";
@@ -11,7 +12,6 @@ import type { RowDto } from "@/lib/dto";
 import { MIN_SELL_USDT } from "@tally/config";
 import { tokenPair } from "@/lib/tickers";
 import { ISSUER_LABEL, fmtShares, fmtUsd } from "@/lib/format";
-import { TokenLogo } from "./badges";
 import { LivePct, TrendUsd } from "@/components/motion/live";
 import { LearnMore } from "@/components/learn-more";
 import { Tip } from "@/components/ui/tooltip";
@@ -171,7 +171,7 @@ export function TradeCard(p: TradeCardProps) {
               />
             </div>
             <span className="token-pill">
-              <TokenLogo ticker={selling || p.unit !== "usd" ? sym : "USDT"} />
+              <TokenIcon ticker={selling || p.unit !== "usd" ? p.ticker : "USDT"} size={24} />
               {selling || p.unit !== "usd" ? sym : "USDT"}
             </span>
           </div>
@@ -271,7 +271,7 @@ export function TradeCard(p: TradeCardProps) {
               )}
             </p>
             <span className="token-pill">
-              <TokenLogo ticker={selling ? "USDT" : sym} />
+              <TokenIcon ticker={selling ? "USDT" : p.ticker} size={24} />
               <span className="flex flex-col items-start leading-tight">
                 <span>{selling ? "USDT" : p.unit === "usd" ? `${sym} shares` : "USDT"}</span>
                 {p.row && !selling ? (

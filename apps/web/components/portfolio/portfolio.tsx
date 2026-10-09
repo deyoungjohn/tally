@@ -1,11 +1,12 @@
 "use client";
 
+import { TokenIcon } from "@/components/ui/token-icon";
 import { Lock, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { PortfolioReport } from "@tally/engine";
 import { Button, ButtonLink } from "@/components/motion/button";
 import { ComingSoon } from "@/components/trade/coming-soon";
-import { GradeBadge, TokenLogo } from "@/components/trade/badges";
+import { GradeBadge } from "@/components/trade/badges";
 import { SellSheet } from "@/components/trade/sell-sheet";
 import { MigrateSheet } from "@/components/trade/migrate-sheet";
 import { useMigrateFlow } from "@/components/trade/use-migrate-flow";
@@ -44,7 +45,7 @@ export function HoldingGroup({
   return (
     <li className="panel list-none p-5" data-testid={`group-${g.ticker}`}>
       <div className="flex items-center gap-3">
-        <TokenLogo ticker={g.ticker} />
+        <TokenIcon ticker={g.ticker} size={32} />
         <div className="min-w-0 flex-1">
           <p
             className="mono text-[19px] font-bold leading-tight"
