@@ -641,22 +641,24 @@ body {
   font-weight: 600;
   white-space: nowrap;
 }
-.token-logo {
-  display: grid;
+.token-icon {
+  display: inline-block;
+  flex: none;
+  vertical-align: middle;
+}
+.token-icon-fallback {
+  display: inline-grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
   border-radius: 50%;
-  background: radial-gradient(
-    circle at 32% 28%,
-    #fff 0%,
-    rgba(255, 255, 255, 0.72) 45%,
-    rgba(255, 255, 255, 0.3) 100%
-  );
-  color: var(--silver-ink);
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: -0.04em;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+}
+/* The letter is drawn by CSS, so it is never part of the page text (copying, search, screen readers). */
+.token-icon-fallback::after {
+  content: attr(data-letter);
 }
 .detail-row {
   display: flex;

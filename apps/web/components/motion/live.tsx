@@ -5,6 +5,8 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { EASE_OUT } from "@/lib/ease";
 import { fmtPct, fmtShares, fmtUsd } from "@/lib/format";
+import { TREND_CLASS, usePriceTrend } from "@/lib/hooks/use-price-trend";
+import { cn } from "@/lib/utils";
 import { NumberTicker } from "./animated-number";
 
 type V = number | null | undefined;
@@ -93,5 +95,25 @@ export function LiveText({ text, className }: { text: string; className?: string
         </motion.span>
       </AnimatePresence>
     </span>
+  );
+}
+
+/** A price that turns green when it ticks up, red when it ticks down and white when it holds still. */
+export function TrendUsd({
+  value,
+  d = 2,
+  className,
+}: {
+  value: V;
+  d?: number;
+  className?: string;
+}) {
+  const trend = usePriceTrend(value);
+  return (
+    <LiveUsd
+      value={value}
+      d={d}
+      className={cn("transition-colors duration-300", TREND_CLASS[trend], className)}
+    />
   );
 }

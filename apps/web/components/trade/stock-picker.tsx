@@ -1,5 +1,6 @@
 "use client";
 
+import { TokenIcon } from "@/components/ui/token-icon";
 import {
   Select,
   SelectContent,
@@ -11,7 +12,6 @@ import { Search } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { BUYABLE_TICKERS } from "@/lib/tickers";
-import { TokenLogo } from "./badges";
 
 /** The five stocks Tally can buy, in beUI's Select (glass trigger and panel, unfolding animation). */
 /** NVDA first (the default stock, so the highlight never has to travel to it), then A to Z by ticker. */
@@ -49,7 +49,7 @@ export function StockPicker({
     >
       <SelectTrigger className="select-trigger" aria-label="Stock" data-testid="stock-picker">
         <span className="flex min-w-0 items-center gap-2.5">
-          <TokenLogo ticker={value} />
+          <TokenIcon ticker={value} size={24} />
           <SelectValue className="truncate" />
         </span>
       </SelectTrigger>
@@ -83,7 +83,12 @@ export function StockPicker({
           </li>
         ) : null}
         {ORDERED.map((t) => (
-          <SelectItem key={t.ticker} value={t.ticker} hidden={!matchSet.has(t.ticker)}>
+          <SelectItem
+            key={t.ticker}
+            value={t.ticker}
+            hidden={!matchSet.has(t.ticker)}
+            icon={<TokenIcon ticker={t.ticker} size={20} />}
+          >
             {plain ? t.ticker : `${t.name} · ${t.ticker}`}
           </SelectItem>
         ))}

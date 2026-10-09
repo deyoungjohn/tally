@@ -278,6 +278,7 @@ export function statement(options: StatementOptions): Statement {
         unrealizedPnlUsdE18: 0n,
         issuers: [],
         hasUnavailableShares: false,
+        costKnown: true,
       };
     }
     const group = holdingsByTicker[ticker]!;
@@ -291,6 +292,7 @@ export function statement(options: StatementOptions): Statement {
     }
     group.totalValueUsdE18 += h.tokenBalanceUsdE18;
     group.totalCostBasisUsdE18 += h.costBasisUsdE18;
+    if (h.costKnown === false) group.costKnown = false;
     group.issuers.push(h);
   }
 
@@ -299,16 +301,26 @@ export function statement(options: StatementOptions): Statement {
     group.avgCostPerShareUsdE18 =
       group.totalShares > 0n ? mulDiv(group.totalCostBasisUsdE18, E18, group.totalShares) : null;
     group.unrealizedPnlUsdE18 = group.totalValueUsdE18 - group.totalCostBasisUsdE18;
+    if (group.costKnown === false) {
+      group.avgCostPerShareUsdE18 = null;
+      notes.push(
+        `${group.ticker}: more tokens are held than the recorded purchases explain (received from another wallet), so its cost and gain are not shown.`,
+      );
+    }
   }
 
   // Calculate totals across all recognized holdings
   let totalValueUsdE18 = 0n;
   let totalCostBasisUsdE18 = 0n;
+  let knownValueUsdE18 = 0n;
   for (const h of holdings) {
     totalValueUsdE18 += h.tokenBalanceUsdE18;
+    // Positions with an unknowable cost stay in the value but out of the cost and gain totals.
+    if (h.costKnown === false) continue;
     totalCostBasisUsdE18 += h.costBasisUsdE18;
+    knownValueUsdE18 += h.tokenBalanceUsdE18;
   }
-  const totalUnrealizedPnlUsdE18 = totalValueUsdE18 - totalCostBasisUsdE18;
+  const totalUnrealizedPnlUsdE18 = knownValueUsdE18 - totalCostBasisUsdE18;
 
   // Realized P&L
   let apiRealizedPnlE18 = 0n;

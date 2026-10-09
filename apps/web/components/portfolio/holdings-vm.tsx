@@ -1,6 +1,6 @@
 "use client";
 
-import { TokenLogo } from "@/components/trade/badges";
+import { TokenIcon } from "@/components/ui/token-icon";
 import type { SellTarget } from "@/components/trade/use-sell-flow";
 import { Tip } from "@/components/ui/tooltip";
 import { ISSUER_LABEL } from "@/lib/format";
@@ -152,7 +152,7 @@ function Group({
   return (
     <li className="panel list-none p-5" data-testid={`group-${g.ticker}`}>
       <div className="flex items-center gap-3">
-        <TokenLogo ticker={g.ticker} />
+        <TokenIcon ticker={g.ticker} size={32} />
         <div className="min-w-0 flex-1">
           <p
             className="mono text-[19px] font-bold leading-tight"

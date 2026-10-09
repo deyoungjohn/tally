@@ -1,5 +1,6 @@
 "use client";
 
+import { TokenIcon } from "@/components/ui/token-icon";
 import { Download } from "lucide-react";
 import { Button } from "@/components/motion/button";
 import { tokenSymbol } from "@/lib/tickers";
@@ -18,6 +19,9 @@ function downloadCsv(vm: StatementVM) {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+/** In this table an unknown value is a dash, not the word. */
+const dash = (s: string) => (s === "unknown" ? "-" : s);
 
 /** A token in the wallet that the statement feed has no record of (received from another wallet, or bought outside Tally). */
 export interface UntrackedToken {
@@ -68,24 +72,24 @@ export function StatementVmView({
         <dl>
           <div className="detail-row">
             <dt>Value today</dt>
-            <dd data-testid="st-value">{usd(valueToday ?? vm.totalValueUsd)}</dd>
+            <dd data-testid="st-value">{dash(usd(valueToday ?? vm.totalValueUsd))}</dd>
           </div>
           <div className="detail-row">
             <dt>Cost basis</dt>
-            <dd data-testid="st-cost">{usd(vm.totalCostBasisUsd)}</dd>
+            <dd data-testid="st-cost">{dash(usd(vm.totalCostBasisUsd))}</dd>
           </div>
           {untracked.length === 0 ? (
             <div className="detail-row">
               <dt>Unrealized gain or loss</dt>
               <dd className={signed(vm.totalUnrealizedPnlUsd)} data-testid="st-unrealized">
-                {usd(vm.totalUnrealizedPnlUsd)}
+                {dash(usd(vm.totalUnrealizedPnlUsd))}
               </dd>
             </div>
           ) : null}
           <div className="detail-row">
             <dt>Realized gain or loss</dt>
             <dd className={signed(vm.totalRealizedPnlUsd)} data-testid="st-realized">
-              {anyRealized ? usd(vm.totalRealizedPnlUsd) : "unknown"}
+              {anyRealized ? dash(usd(vm.totalRealizedPnlUsd)) : "-"}
             </dd>
           </div>
         </dl>
@@ -150,7 +154,10 @@ export function StatementVmView({
                   <td className="px-3 py-2">
                     {(() => {
                       const symbol = l.issuer ? tokenSymbol(l.ticker, l.issuer) : l.ticker;
-                      return l.txHash ? (
+                      const icon = l.issuer ? (
+                        <TokenIcon ticker={l.ticker} size={20} className="mr-2" />
+                      ) : null;
+                      const name = l.txHash ? (
                         <a
                           className="font-bold link-text"
                           href={`https://bscscan.com/tx/${l.txHash}`}
@@ -163,14 +170,20 @@ export function StatementVmView({
                       ) : (
                         <span className="font-bold">{symbol}</span>
                       );
+                      return (
+                        <span className="inline-flex items-center">
+                          {icon}
+                          {name}
+                        </span>
+                      );
                     })()}
                     {l.convertedAtTodaysRatio ? (
                       <span className="t-meta block">Converted at today&apos;s ratio</span>
                     ) : null}
                   </td>
-                  <td className="num px-3 py-2 text-right">{sharesStr(l.amountShares)}</td>
-                  <td className="num px-3 py-2 text-right">{usd(l.pricePerShareUsd)}</td>
-                  <td className="num px-3 py-2 text-right">{usd(l.valueUsd)}</td>
+                  <td className="num px-3 py-2 text-right">{dash(sharesStr(l.amountShares))}</td>
+                  <td className="num px-3 py-2 text-right">{dash(usd(l.pricePerShareUsd))}</td>
+                  <td className="num px-3 py-2 text-right">{dash(usd(l.valueUsd))}</td>
                   <td className="num px-3 py-2 text-right">
                     {l.realizedPnlUsd !== undefined ? usd(l.realizedPnlUsd) : "–"}
                   </td>
@@ -181,15 +194,18 @@ export function StatementVmView({
                   (r) => r.token.toLowerCase() === t.address.toLowerCase(),
                 );
                 const token = (
-                  <a
-                    className="link-text font-bold"
-                    href={`https://bscscan.com/token/${t.address}${wallet ? `?a=${wallet}` : ""}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label={`${t.symbol}: view on BscScan (opens in a new tab)`}
-                  >
-                    {t.symbol}
-                  </a>
+                  <span className="inline-flex items-center">
+                    <TokenIcon ticker={t.ticker} size={20} className="mr-2" />
+                    <a
+                      className="link-text font-bold"
+                      href={`https://bscscan.com/token/${t.address}${wallet ? `?a=${wallet}` : ""}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`${t.symbol}: view on BscScan (opens in a new tab)`}
+                    >
+                      {t.symbol}
+                    </a>
+                  </span>
                 );
                 if (dated.length === 0)
                   return [
@@ -202,7 +218,7 @@ export function StatementVmView({
                       <td className="px-3 py-2">Received</td>
                       <td className="px-3 py-2">{token}</td>
                       <td className="num px-3 py-2 text-right">{t.shares}</td>
-                      <td className="num px-3 py-2 text-right">unknown</td>
+                      <td className="num px-3 py-2 text-right">-</td>
                       <td className="num px-3 py-2 text-right">${t.valueUsd}</td>
                       <td className="num px-3 py-2 text-right">–</td>
                     </tr>,
@@ -230,7 +246,7 @@ export function StatementVmView({
                     <td className="num px-3 py-2 text-right">
                       {String(Number((Number(r.tokens) * t.sharesPerToken).toFixed(6)))}
                     </td>
-                    <td className="num px-3 py-2 text-right">unknown</td>
+                    <td className="num px-3 py-2 text-right">-</td>
                     <td className="num px-3 py-2 text-right">–</td>
                     <td className="num px-3 py-2 text-right">–</td>
                   </tr>

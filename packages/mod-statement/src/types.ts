@@ -58,6 +58,8 @@ export interface Holding {
   avgCostPerShareUsdE18: bigint | null;
   pricePerShareUsdE18: bigint | null;
   unrealizedPnlUsdE18: bigint;
+  /** False when the wallet holds tokens the feed has no purchase record for (received, or bought elsewhere), so the cost is not knowable. */
+  costKnown?: boolean;
   source: string;
   rowActionsSlot?: HoldingRowActionMeta;
 }
@@ -123,6 +125,8 @@ export interface TickerHoldingsGroup {
   unrealizedPnlUsdE18: bigint;
   issuers: Holding[];
   hasUnavailableShares: boolean;
+  /** False when any issuer's cost is unknown: the group's cost and gain lines are then left out, never guessed. */
+  costKnown?: boolean;
 }
 
 export interface Statement {

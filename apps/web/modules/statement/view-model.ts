@@ -219,8 +219,8 @@ export function buildPortfolioVM(
       totalValueUsd: formatUsd(group.totalValueUsdE18),
       avgCostPerShareUsd:
         group.avgCostPerShareUsdE18 !== null ? formatUsd(group.avgCostPerShareUsdE18) : "-",
-      unrealizedPnlUsd: formatUsd(group.unrealizedPnlUsdE18),
-      unrealizedPnlPercent: pnlPct,
+      unrealizedPnlUsd: group.costKnown === false ? "-" : formatUsd(group.unrealizedPnlUsdE18),
+      unrealizedPnlPercent: group.costKnown === false ? "-" : pnlPct,
       issuers,
       rowActionsSlot,
     };

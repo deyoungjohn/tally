@@ -20,7 +20,7 @@ import { useJson } from "@/lib/hooks/use-json";
 import { useLiveQuote } from "@/lib/hooks/use-live-quote";
 import { isTokenBuyable, tokenSymbol } from "@/lib/tickers";
 import type { PortfolioReport } from "@tally/engine";
-import { LiveUsd } from "@/components/motion/live";
+import { TrendUsd } from "@/components/motion/live";
 
 /* ----------------------------------------------------------------- hero card */
 
@@ -133,7 +133,7 @@ export function HomeTradeCard() {
           <span>{ISSUER_LABEL[row.issuer]}</span>
           <span aria-hidden>·</span>
           <span className="inline-flex items-center gap-1">
-            <LiveUsd value={row.usdPerShare} /> per share
+            <TrendUsd value={row.usdPerShare} /> per share
           </span>
           {row.feeUsd === undefined ? null : (
             <>

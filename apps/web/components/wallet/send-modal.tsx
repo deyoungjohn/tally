@@ -1,5 +1,6 @@
 "use client";
 
+import { TokenIcon } from "@/components/ui/token-icon";
 import { ExternalLink, Send } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { encodeFunctionData, formatUnits, parseUnits } from "viem";
@@ -220,9 +221,12 @@ export function SendModal({ open, onClose }: { open: boolean; onClose: () => voi
                       t.address === tokenAddr && "!bg-[var(--hl)]",
                     )}
                   >
-                    <span className="min-w-0">
-                      <span className="font-semibold">{t.symbol}</span>{" "}
-                      <span className="text-[13.5px] text-fg3">{ISSUER_LABEL[t.issuer]}</span>
+                    <span className="flex min-w-0 items-center gap-2.5">
+                      <TokenIcon ticker={t.ticker} size={24} />
+                      <span className="min-w-0">
+                        <span className="font-semibold">{t.symbol}</span>{" "}
+                        <span className="text-[13.5px] text-fg3">{ISSUER_LABEL[t.issuer]}</span>
+                      </span>
                     </span>
                     <span className="num text-fg2">
                       {shownBalance(BigInt(t.balanceRaw), t.decimals)}

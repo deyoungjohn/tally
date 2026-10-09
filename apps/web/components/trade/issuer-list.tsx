@@ -1,5 +1,6 @@
 "use client";
 
+import { TokenIcon } from "@/components/ui/token-icon";
 import { ChevronDown } from "lucide-react";
 import { LayoutGroup, motion, useReducedMotion } from "motion/react";
 import { useState } from "react";
@@ -8,8 +9,8 @@ import { ISSUER_LABEL, fmtUsd } from "@/lib/format";
 import { isTokenBuyable } from "@/lib/tickers";
 import { SPRING_LAYOUT } from "@/lib/ease";
 import { cn } from "@/lib/utils";
-import { FlagBadge, GradeBadge, TokenLogo } from "./badges";
-import { LivePct, LiveShares, LiveUsd } from "@/components/motion/live";
+import { FlagBadge, GradeBadge } from "./badges";
+import { LivePct, LiveShares, TrendUsd } from "@/components/motion/live";
 import { Tip } from "@/components/ui/tooltip";
 import { LearnMore } from "@/components/learn-more";
 
@@ -95,7 +96,7 @@ function Row({
         className="flex w-full flex-col gap-1 rounded-[18px] p-4 text-left disabled:cursor-default"
       >
         <span className="flex items-center gap-3">
-          <TokenLogo ticker={r.symbol} />
+          <TokenIcon symbol={r.symbol} size={32} />
           <span className="min-w-0 flex-1">
             <span className="flex flex-wrap items-center gap-2">
               <span className="font-semibold">{ISSUER_LABEL[r.issuer]}</span>
@@ -120,7 +121,7 @@ function Row({
             </span>
             {pickable ? (
               <span className="mt-1 flex flex-wrap items-center gap-x-1.5 text-[14px] leading-none text-fg2">
-                <LiveUsd value={r.usdPerShare} className="num text-fg" />
+                <TrendUsd value={r.usdPerShare} className="num" />
                 <span>per share ·</span>
                 <Premium p={r.premium} />
               </span>

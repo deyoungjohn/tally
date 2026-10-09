@@ -68,3 +68,20 @@ export const tokenSymbol = (ticker: string, issuer: keyof typeof ISSUER_SUFFIX) 
 /** Both buyable tokens of a stock, for places that name the stock before an issuer is chosen. */
 export const tokenPair = (ticker: string) =>
   `${tokenSymbol(ticker, "ondo")} / ${tokenSymbol(ticker, "bstock")}`;
+
+/**
+ * The stock ticker behind a token symbol: NVDAon, NVDAB and NVDAx all give NVDA. Read from the registry's real tickers (the longest
+ * ticker plus an issuer suffix that spells the symbol), never from a pattern, because a ticker can itself end in B or x. A symbol that
+ * is already a ticker, or matches nothing, comes back upper-cased and unchanged.
+ */
+export function tickerOf(symbol: string, known: readonly { ticker: string }[] = BUYABLE_TICKERS) {
+  const s = symbol.trim();
+  const upper = s.toUpperCase();
+  const hit = [...known]
+    .map((k) => k.ticker)
+    .sort((a, b) => b.length - a.length)
+    .find((t) =>
+      (Object.values(ISSUER_SUFFIX) as string[]).some((suffix) => s === `${t}${suffix}`),
+    );
+  return hit ?? upper;
+}
