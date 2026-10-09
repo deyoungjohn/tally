@@ -261,16 +261,21 @@ body {
 .panel.radar-card:hover {
   border-color: var(--hl-edge);
 }
-/* Pop-up surfaces (modals, sheets, menus, dropdowns, tooltips, the search panel): the same liquid glass as the nav bar, with a
-   faint transparent black underneath so the text on them stays legible over the bright background. One token, one place. */
+/* Pop-up surfaces (modals, sheets, menus, dropdowns, tooltips, the search panel, the progress island): pure liquid glass, the same
+   as the nav bar (.site-bar): almost no fill and a light blur, so only what sits behind the surface is blurred. Modals keep their
+   full-page overlay (.overlay-backdrop) separately. One pair of tokens, one place: to go back to the darker glass, set --pop-bg to
+   linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.02)), rgba(0,0,0,.58) and --pop-blur to blur(26px) saturate(160%). */
 :root {
-  --pop-bg:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.02)),
-    rgba(0, 0, 0, 0.58);
+  --pop-bg: rgba(255, 255, 255, 0.008);
+  --pop-blur: blur(4px);
   --pop-bg-fallback: rgba(0, 0, 0, 0.88);
 }
 .glass-pop {
   background: var(--pop-bg);
+  backdrop-filter: var(--pop-blur);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 24px 60px -28px rgba(0, 0, 0, 0.7);
 }
 .overlay-backdrop {
   background: rgba(0, 0, 0, 0.72);
@@ -853,7 +858,7 @@ body {
 .select-panel {
   background: var(--pop-bg);
   border: 1px solid var(--edge);
-  backdrop-filter: blur(26px) saturate(160%);
+  backdrop-filter: var(--pop-blur);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.14),
     0 24px 60px -24px rgba(0, 0, 0, 0.9);
@@ -878,7 +883,7 @@ body {
 .island-glass {
   background: var(--pop-bg) !important;
   border: 1px solid rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(28px) saturate(170%);
+  backdrop-filter: var(--pop-blur);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.28),
     inset 0 -1px 0 rgba(0, 0, 0, 0.2),
@@ -903,7 +908,7 @@ body {
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: var(--pop-bg);
-  backdrop-filter: blur(14px) saturate(140%);
+  backdrop-filter: var(--pop-blur);
   color: var(--fg);
   font-size: 14.5px;
   line-height: 1.45;
@@ -950,7 +955,7 @@ body {
 .glass-solid {
   background: var(--pop-bg);
   border: 1px solid var(--edge);
-  backdrop-filter: blur(20px) saturate(150%);
+  backdrop-filter: var(--pop-blur);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
     0 18px 50px -20px rgba(0, 0, 0, 0.8);
