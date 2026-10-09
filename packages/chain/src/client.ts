@@ -20,11 +20,48 @@ export interface BscClientOptions {
 
 export type BscClient = PublicClient;
 
+/**
+ * viem's `fallback` transport gives up instead of trying the next endpoint when an error has code -32003 ("transaction
+ * rejected"). QuickNode answers a used-up plan with exactly that code ("daily request limit reached"), so on 9 Oct every
+ * chain read failed although three public endpoints were configured. A provider that says it is out of quota is a failed
+ * endpoint, not a rejected transaction: re-throw it without the code so the next endpoint is tried.
+ */
+const LIMIT_WORDS = /limit|quota|exceed|upgrade|capacity|too many|rate/i;
+export function limitAwareTransport(inner: Transport): Transport {
+  return (args) => {
+    const t = inner(args);
+    return {
+      ...t,
+      async request(req: Parameters<typeof t.request>[0]) {
+        try {
+          return await t.request(req);
+        } catch (e) {
+          const err = e as { code?: number; message?: string; shortMessage?: string };
+          const text = `${err.shortMessage ?? ""} ${err.message ?? ""}`;
+          if (err.code === -32003 && LIMIT_WORDS.test(text))
+            throw Object.assign(
+              new Error(
+                `RPC provider limit reached: ${text
+                  .replace(/https?:\/\/\S+/gi, "<url>")
+                  .replace(/\s+/g, " ")
+                  .trim()
+                  .slice(0, 160)}`,
+              ),
+              { name: "ProviderLimitError" },
+            );
+          throw e;
+        }
+      },
+    };
+  };
+}
+
 export function createBscClient(o: BscClientOptions = {}): BscClient {
   const urls = [...(o.primary ? [o.primary] : []), ...(o.fallbacks ?? PUBLIC_BSC_RPCS)];
-  const transports =
+  const transports = (
     o.transports ??
-    urls.map((u) => http(u, { timeout: o.timeoutMs ?? 10_000, retryCount: 1, retryDelay: 200 }));
+    urls.map((u) => http(u, { timeout: o.timeoutMs ?? 10_000, retryCount: 1, retryDelay: 200 }))
+  ).map(limitAwareTransport);
   // rank:false keeps the configured order (dedicated first) instead of probing latency.
   return createPublicClient({
     chain: bsc,

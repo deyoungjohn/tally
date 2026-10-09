@@ -23,6 +23,35 @@ const NVDAB = "0x02fca66c1d1afb4e2a7884261eb00f63598a7436" as const;
 const USER = "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7" as const;
 
 describe("failover transport (V14: publicnode started answering 403 to the EC2 box mid-run)", () => {
+  it("falls over when a provider answers -32003 'daily request limit reached' (viem would otherwise give up)", async () => {
+    const limited = custom({
+      async request() {
+        throw Object.assign(
+          new Error(
+            "daily request limit reached - upgrade your account at https://dashboard.example.io/key123",
+          ),
+          {
+            code: -32003,
+          },
+        );
+      },
+    });
+    const live = rpc((m) => (m === "eth_blockNumber" ? "0x38" : "0x"));
+    const client = createBscClient({ transports: [limited, live.transport] });
+    await expect(client.getBlockNumber()).resolves.toBe(56n);
+    expect(live.calls.map((c) => c.method)).toContain("eth_blockNumber");
+  });
+  it("a genuine -32003 that is not about a limit still stops (no hidden retries on a rejected transaction)", async () => {
+    const rejected = custom({
+      async request() {
+        throw Object.assign(new Error("transaction rejected: nonce too low"), { code: -32003 });
+      },
+    });
+    const live = rpc(() => "0x38");
+    const client = createBscClient({ transports: [rejected, live.transport] });
+    await expect(client.getBlockNumber()).rejects.toThrow();
+    expect(live.calls).toHaveLength(0);
+  });
   it("falls over to the next endpoint when the first one fails, in the configured order", async () => {
     const dead = rpc(() => {
       throw new Error("HTTP 403 Forbidden");
