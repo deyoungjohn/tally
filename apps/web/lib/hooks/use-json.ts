@@ -1,15 +1,44 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ApiError } from "@/lib/dto";
 
-/** Fetch JSON once (and again on `reload`). `url` null means "don't fetch yet". Keeps the last good data while reloading. */
+const cacheListeners = new Set<() => void>();
+
+/** Reset all cached useJson data across the app (called on wallet switch or user change). */
+export function resetJsonCache(): void {
+  for (const fn of cacheListeners) fn();
+}
+
+/** Fetch JSON once (and again on `reload`). `url` null means "don't fetch yet". Keeps the last good data while reloading the same URL. */
 export function useJson<T>(url: string | null, opts: { refreshMs?: number } = {}) {
   const { refreshMs } = opts;
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [n, setN] = useState(0);
+
+  const prevUrlRef = useRef(url);
+  useEffect(() => {
+    if (prevUrlRef.current !== url) {
+      prevUrlRef.current = url;
+      // Address or target URL changed: reset immediately so the old address's balances never show while loading
+      setData(null);
+      setError(null);
+    }
+  }, [url]);
+
+  useEffect(() => {
+    const onReset = () => {
+      setData(null);
+      setError(null);
+      setN((x) => x + 1);
+    };
+    cacheListeners.add(onReset);
+    return () => {
+      cacheListeners.delete(onReset);
+    };
+  }, []);
 
   useEffect(() => {
     if (!url) {
