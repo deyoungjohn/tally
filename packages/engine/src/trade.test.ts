@@ -1,11 +1,13 @@
+import { describe, expect, it } from "vitest";
 import { decodeFunctionData, encodeErrorResult, recoverTypedDataAddress, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { describe, expect, it } from "vitest";
-import { SHAREGUARD_DEPLOYED, USDT_BSC } from "@tally/config";
+import { LIQUIDMESH_ROUTER, SHAREGUARD_DEPLOYED, USDT_BSC } from "@tally/config";
+import type { QuoteItem } from "@tally/binance";
+import { pickMatchingRoute } from "@tally/binance";
 import { BelowMinimumError, type Address } from "@tally/core";
 import { GUARD_SOURCE, SHAREGUARD_ABI, decodeGuardRevert, feedUpdateTypedData } from "@tally/chain";
 import { createFixtureEngine } from "./engine";
-import { TradeError, type FeedSigner, type TradePlan } from "./trade";
+import { prepareTrade, TradeError, type FeedSigner, type TradeDeps, type TradePlan } from "./trade";
 import {
   FIXTURE_APPROVE_HASH,
   FIXTURE_SWAP_HASH,
@@ -270,5 +272,134 @@ describe("radar and portfolio views", () => {
     expect(g.shares).toBeCloseTo(g.parts[0]!.shares + g.parts[1]!.shares, 12);
     expect(p.totalValueUsd).toBeGreaterThan(5);
     expect(p.wallet.usdt).toBe(12);
+  });
+});
+
+describe("buy route choice and RFQ handling", () => {
+  function makeRoute(dexName: string, toTokenAmount: string, quoteId = "q-1"): QuoteItem {
+    return {
+      quoteId,
+      toTokenAmount,
+      fromTokenAmount: "6000000000000000000",
+      executionMode: "SWAP",
+      vendorName: "LiquidMesh",
+      approveTarget: "0xB44446b0c8E56988c34f7Ff73Ae904982b5FdDA5",
+      dexRouterList: [
+        {
+          toTokenIndex: "0",
+          toToken: { tokenSymbol: "NVDAB" },
+          dexProtocol: { dexName },
+        },
+      ],
+      fromToken: { tokenUnitPrice: "1" },
+      toToken: {
+        tokenContractAddress: "0x02fca66c1d1afb4e2a7884261eb00f63598a7436",
+        tokenSymbol: "NVDAB",
+        tokenUnitPrice: "100",
+      },
+    } as unknown as QuoteItem;
+  }
+
+  function mockTradeDeps(routes: QuoteItem[]): TradeDeps {
+    return {
+      guard: SHAREGUARD_DEPLOYED,
+      api: {
+        async quoteRoutes() {
+          return routes;
+        },
+        async swap(p) {
+          return {
+            executionMode: "SWAP",
+            quoteId: p.quoteId,
+            tx: {
+              to: LIQUIDMESH_ROUTER,
+              data: ("0xswapdata_" + p.quoteId) as Hex,
+            },
+          } as unknown as ReturnType<TradeDeps["api"]["swap"]>;
+        },
+        async simulate() {
+          return { status: "SUCCESS" } as unknown as ReturnType<TradeDeps["api"]["simulate"]>;
+        },
+      },
+      chain: approved(),
+      quote: async () =>
+        ({
+          ticker: "NVDA",
+          rows: [
+            {
+              issuer: "bstock",
+              symbol: "NVDAB",
+              address: "0x02fca66c1d1afb4e2a7884261eb00f63598a7436" as Address,
+              executable: true,
+              multiplier: { value: 1000778000000000000n, at: Date.now() },
+            },
+          ],
+        }) as unknown as ReturnType<TradeDeps["quote"]>,
+      reference: async () => ({ price: 233.8 }),
+      bnbUsd: async () => 600,
+    };
+  }
+
+  it("sets plan.rfq = true and warning when RFQ route is chosen", async () => {
+    const rfq = makeRoute("Rfq Neptunex", "25654736000000000", "rfq-1");
+    const deps = mockTradeDeps([rfq]);
+    const plan = await prepareTrade(deps, { ticker: "NVDA", issuer: "bstock", usd: 6, user: USER });
+
+    expect(plan.rfq).toBe(true);
+    expect(plan.warnings).toContain(
+      "Market-maker quotes expire in a few seconds. Confirm promptly.",
+    );
+    expect(plan.tokensOut).toBe("25654736000000000");
+    // Floor is still computed exactly as quotedShares * (1 - tolerancePct)
+    const quoted = BigInt(plan.quotedShares);
+    expect(BigInt(plan.minShares)).toBe((quoted * 9900n) / 10000n);
+    // Guard calldata encodes the chosen route's swap data
+    expect(plan.tx!.data.toLowerCase()).toContain("swapdata_rfq-1");
+  });
+
+  it("prefers pool route when its output is within 0.5% of RFQ and does not set plan.rfq", async () => {
+    const rfq = makeRoute("Rfq Neptunex", "25654736000000000", "rfq-1");
+    // 0.3% below RFQ -> within 0.5% threshold
+    const pool = makeRoute("Pancakeswap V4", "25577771792000000", "pool-1");
+    const deps = mockTradeDeps([rfq, pool]);
+    const plan = await prepareTrade(deps, { ticker: "NVDA", issuer: "bstock", usd: 6, user: USER });
+
+    expect(plan.rfq).toBeUndefined();
+    expect(plan.warnings).not.toContain(
+      "Market-maker quotes expire in a few seconds. Confirm promptly.",
+    );
+    expect(plan.tokensOut).toBe("25577771792000000");
+    expect(plan.tx!.data.toLowerCase()).toContain("swapdata_pool-1");
+  });
+
+  it("chooses RFQ route when RFQ output is better than pool by more than 0.5%", async () => {
+    const rfq = makeRoute("Rfq Neptunex", "25654736000000000", "rfq-1");
+    // 1% below RFQ -> exceeds 0.5% threshold
+    const pool = makeRoute("Pancakeswap V4", "25398188640000000", "pool-1");
+    const deps = mockTradeDeps([rfq, pool]);
+    const plan = await prepareTrade(deps, { ticker: "NVDA", issuer: "bstock", usd: 6, user: USER });
+
+    expect(plan.rfq).toBe(true);
+    expect(plan.warnings).toContain(
+      "Market-maker quotes expire in a few seconds. Confirm promptly.",
+    );
+    expect(plan.tokensOut).toBe("25654736000000000");
+    expect(plan.tx!.data.toLowerCase()).toContain("swapdata_rfq-1");
+  });
+
+  it("card quote (adapters pickMatchingRoute) and buy plan select the identical route and output", async () => {
+    const rfq = makeRoute("Rfq Neptunex", "25654736000000000", "rfq-1");
+    const pool = makeRoute("Pancakeswap V4", "25577771792000000", "pool-1");
+    const routes = [rfq, pool];
+
+    // Card quote chooser from @tally/binance
+    const cardRoute = pickMatchingRoute(routes);
+    // Plan chooser from prepareTrade
+    const deps = mockTradeDeps(routes);
+    const plan = await prepareTrade(deps, { ticker: "NVDA", issuer: "bstock", usd: 6, user: USER });
+
+    expect(cardRoute).toBe(pool);
+    expect(plan.tokensOut).toBe(pool.toTokenAmount);
+    expect(plan.rfq).toBeUndefined();
   });
 });
