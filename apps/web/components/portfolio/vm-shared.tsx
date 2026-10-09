@@ -28,6 +28,9 @@ export function VmSkeleton({ rows = 2, label = "Loading" }: { rows?: number; lab
   );
 }
 
+/** The three reasons the health logic writes itself; anything else is a worker's raw error text. */
+const PLAIN_REASON = /^(No successful update yet|Worker update is overdue|Latest update failed)$/;
+
 /** The module is down or has never updated: a designed card, no data, no guess. */
 export function VmDegraded({
   name,
@@ -49,8 +52,14 @@ export function VmDegraded({
       <p className="flex items-center gap-2 font-semibold">
         <AlertTriangle size={18} className="text-amber" aria-hidden /> {name} is catching up
       </p>
-      <p className="mt-2 text-fg2">
-        {reason ?? "No successful update yet."}
+      {/* A worker's own error text ("database is locked", "start collect-flow first") is for the logs, not for visitors:
+          it stays in the hover title and the page says something plain. */}
+      <p className="mt-2 text-fg2" title={reason ?? undefined}>
+        {reason
+          ? PLAIN_REASON.test(reason)
+            ? reason
+            : "Waiting for fresh data."
+          : "No successful update yet."}
         {age ? ` Last good update ${age}.` : ""}
       </p>
     </section>
