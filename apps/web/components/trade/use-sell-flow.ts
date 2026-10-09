@@ -59,7 +59,13 @@ export type SellPhase =
       floorUsdt: string | null;
       bscscan: string;
     }
-  | { name: "failed"; failure: SellFailure; hash?: string; bscscan?: string };
+  | {
+      name: "failed";
+      failure: SellFailure;
+      hash?: string;
+      bscscan?: string;
+      canRetry?: boolean;
+    };
 
 export interface SellInputs {
   /** What the person typed, in shares. Ignored while `all` is set. */
@@ -96,6 +102,7 @@ interface Pending {
   symbol: string;
   at: number;
   wallet?: string;
+  rfq?: boolean;
   intent?: PendingIntent;
   /** The plan's fee estimate and the gas limit it was for, to turn the gas actually used into dollars. */
   fee?: { usd: number; limit: string };
@@ -276,7 +283,7 @@ export function useSellFlow() {
   );
 
   const watch = useCallback(
-    async (hash: string, id: number, fee?: Pending["fee"], floorUsdt?: string) => {
+    async (hash: string, id: number, fee?: Pending["fee"], floorUsdt?: string, rfq?: boolean) => {
       setPhase({ name: "mining", hash, slow: false });
       try {
         const s = await waitForTx(hash, id, () =>
@@ -294,17 +301,22 @@ export function useSellFlow() {
             floorUsdt: floorUsdt ?? null,
             bscscan: s.bscscan,
           });
-        else
+        else {
+          const isRfq = Boolean(rfq);
+          const message = isRfq
+            ? "The sale did not go through, likely because the market-maker quote expired. Nothing was sold; only the network fee was spent. Market-maker quotes last a few seconds. Try again."
+            : "The sale did not go through. Nothing was sold; only the network fee was spent. Try again.";
           setPhase({
             name: "failed",
             hash,
             bscscan: s.bscscan,
+            canRetry: true,
             failure: {
               kind: "failed",
-              message:
-                "The sale didn't go through, so your tokens stayed put. Only the network fee was spent.",
+              message,
             },
           });
+        }
       } catch (e) {
         if ((e as { kind?: string }).kind === "cancelled") return;
         setPhase({
@@ -422,7 +434,7 @@ export function useSellFlow() {
   }, [plan, failAs]);
 
   // Quotes refresh themselves for as long as the sheet is open: a person's job is to confirm, not to ask for a new quote.
-  const [retry, setRetry] = useState(0);
+  const [autoRetry, setAutoRetry] = useState(0);
   const formPlan = phase.name === "form" ? phase.plan : null;
   const formRefreshing = phase.name === "form" ? phase.refreshing : false;
   useEffect(() => {
@@ -441,10 +453,10 @@ export function useSellFlow() {
               : cur,
           );
         })
-        .catch(() => setRetry((n) => n + 1)); // keep showing the last quote and try again
+        .catch(() => setAutoRetry((n) => n + 1)); // keep showing the last quote and try again
     }, wait);
     return () => clearTimeout(timer);
-  }, [formPlan, formRefreshing, retry, plan, setPhase]);
+  }, [formPlan, formRefreshing, autoRetry, plan, setPhase]);
 
   /** Sends the plan's approval for the exact amount, waits for it to mine, then asks for a new plan. */
   const approve = useCallback(async () => {
@@ -573,6 +585,7 @@ export function useSellFlow() {
         symbol: t.symbol,
         at: Date.now(),
         wallet: w.address,
+        rfq: fresh.rfq,
         intent: {
           id: intent.id,
           issuer: intent.issuer,
@@ -591,6 +604,7 @@ export function useSellFlow() {
         id,
         fresh.tx.feeUsd === null ? undefined : { usd: fresh.tx.feeUsd, limit: fresh.tx.gasLimit },
         fresh.minUsdtOut,
+        fresh.rfq,
       );
     } catch (e) {
       if (id !== runId.current || (e as { kind?: string }).kind === "cancelled") return;
@@ -607,6 +621,20 @@ export function useSellFlow() {
       failAs(e, id);
     }
   }, [phase, plan, watch, failAs]);
+
+  const retry = useCallback(async () => {
+    const t = targetRef.current;
+    if (!t) return;
+    const id = ++runId.current;
+    setPhase({ name: "form", plan: null, refreshing: true });
+    try {
+      const p = await plan(t, inputsRef.current);
+      if (id !== runId.current) return;
+      setPhase({ name: "form", plan: p, refreshing: false });
+    } catch (e) {
+      failAs(e, id);
+    }
+  }, [plan, failAs, setPhase]);
 
   const close = useCallback(() => {
     runId.current++;
@@ -633,12 +661,14 @@ export function useSellFlow() {
       return;
     }
     const id = ++runId.current;
-    setTarget({
+    const targetObj = {
       ticker: pending.ticker,
       issuer: pending.intent?.issuer ?? "bstock",
       symbol: pending.symbol,
       probeShares: 0,
-    });
+    };
+    targetRef.current = targetObj;
+    setTarget(targetObj);
     const resumed = intentOf(pending);
     if (resumed)
       postSellReceiptHint({
@@ -647,7 +677,7 @@ export function useSellFlow() {
         attempt: 1,
         isResumed: true,
       });
-    void watch(pending.hash, id, pending.fee, pending.intent?.minUsdtOut);
+    void watch(pending.hash, id, pending.fee, pending.intent?.minUsdtOut, pending.rfq);
   }, [watch, wallet.ready, wallet.authenticated, wallet.address]);
 
   // A confirmed sale changes the wallet: Portfolio (holdings, activity, statement) reads again now.
@@ -665,6 +695,7 @@ export function useSellFlow() {
     sellAll,
     open,
     refresh,
+    retry,
     approve,
     confirm,
     close,

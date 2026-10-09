@@ -353,9 +353,9 @@ describe("useSellFlow", () => {
     h.unmount();
   });
 
-  it("a reverted sale ends in a plain failure with the hash, and says the tokens stayed put", async () => {
+  it("a reverted sale without rfq explains plainly that nothing was sold and offers retry", async () => {
     stubStatus("reverted");
-    fetchSellPlan.mockResolvedValue(plan());
+    fetchSellPlan.mockResolvedValue(plan({ rfq: false }));
     const h = mount();
     await openAndType(h);
     await act(async () => void (await h.flow().confirm()));
@@ -364,7 +364,44 @@ describe("useSellFlow", () => {
     expect(p.name).toBe("failed");
     if (p.name === "failed") {
       expect(p.hash).toBe(HASH);
-      expect(p.failure.message).toMatch(/tokens stayed put/);
+      expect(p.canRetry).toBe(true);
+      expect(p.failure.message).toBe(
+        "The sale did not go through. Nothing was sold; only the network fee was spent. Try again.",
+      );
+    }
+    h.unmount();
+  });
+
+  it("a reverted sale with rfq explains that the market-maker quote likely expired and offers retry", async () => {
+    stubStatus("reverted");
+    fetchSellPlan.mockResolvedValue(plan({ rfq: true }));
+    const h = mount();
+    await openAndType(h);
+    await act(async () => void (await h.flow().confirm()));
+    await flush();
+    const p = h.flow().phase;
+    expect(p.name).toBe("failed");
+    if (p.name === "failed") {
+      expect(p.hash).toBe(HASH);
+      expect(p.canRetry).toBe(true);
+      expect(p.failure.message).toBe(
+        "The sale did not go through, likely because the market-maker quote expired. Nothing was sold; only the network fee was spent. Market-maker quotes last a few seconds. Try again.",
+      );
+    }
+
+    // A single, user-triggered retry: re-plans and returns to form without automatic second tx
+    const freshPlan = plan({ quotedUsdtOut: "2350000000000000000" });
+    fetchSellPlan.mockResolvedValueOnce(freshPlan);
+    wallet.sendTx.mockClear();
+
+    await act(async () => void (await h.flow().retry()));
+    await flush();
+
+    expect(wallet.sendTx).not.toHaveBeenCalled();
+    const nextPhase = h.flow().phase;
+    expect(nextPhase.name).toBe("form");
+    if (nextPhase.name === "form") {
+      expect(nextPhase.plan?.quotedUsdtOut).toBe("2350000000000000000");
     }
     h.unmount();
   });

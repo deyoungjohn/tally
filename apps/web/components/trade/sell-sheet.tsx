@@ -140,6 +140,11 @@ export function SellSheet({ flow, isMigrate }: { flow: Flow; isMigrate?: boolean
               {phase.failure.message}
             </Notice>
             {phase.hash ? <HashLink hash={phase.hash} href={phase.bscscan} /> : null}
+            {phase.canRetry ? (
+              <Button onClick={flow.retry} data-testid="sell-retry">
+                Try again
+              </Button>
+            ) : null}
             <Button variant="glassy" onClick={flow.close}>
               Close
             </Button>
