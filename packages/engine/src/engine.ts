@@ -77,6 +77,8 @@ export interface HealthReport {
   binance: "ok" | "region_block" | "auth" | "error";
   binanceDetail?: string;
   rpcBlock: number | null;
+  /** Why the chain reads failed (a short message with every URL removed), so a null `rpcBlock` is never a silent failure. */
+  rpcDetail?: string;
   guard: { address: Address; paused: boolean | null };
   feedSigner: "configured" | "missing";
   /** Age of the guard's stored Ondo multiplier, in hours; the guard refuses Ondo buys past `maxAgeHours` unless a signed update rides along. */
@@ -223,7 +225,13 @@ function build(o: BuildOptions): Engine {
       ),
       o.tradeChain.blockNumber().then(
         (n) => void (r.rpcBlock = Number(n)),
-        () => undefined,
+        (e: unknown) => {
+          // Provider errors can carry the endpoint URL (and its key): keep the words, drop every URL.
+          r.rpcDetail = (e instanceof Error ? e.message : String(e))
+            .replace(/https?:\/\/\S+/gi, "<url>")
+            .replace(/\s+/g, " ")
+            .slice(0, 200);
+        },
       ),
       o.tradeChain.readGuard(ONDO_PROBE, LIQUIDMESH_ROUTER).then(
         (g) => {

@@ -124,6 +124,17 @@ A batch that contains Ondo tokens needs fresh seeds, recorded immediately before
 
 After the batches, from the repo root: `python3 contracts/tools/gen_buyable.py --check` and `python3 contracts/tools/list_enabled.py --snapshot "contracts/captures/depth/batch-1-after-owner-$(date -u +%Y%m%dT%H%M%SZ).json"` (the comparison must report `pass: true`). A new batch needs a new manifest and a new approval; the script refuses any token outside its pinned list.
 
+**Batch 2 (six bStock tokens: AMZNB, NFLXB, GMEB, BMNRB, MRNAB, FLNCB; no seeds).** A separate pinned scope: the script checks the manifest and every evidence file against recorded hashes before doing anything, and verifies the exact configuration afterwards. In `contracts/`, with the same `OWNER`, `OWNER_ACCOUNT` and `--rpc-url bsc` as above:
+
+```bash
+forge script script/AddAssets.s.sol:AddAssets --sig 'previewBstockBatch2()' --rpc-url bsc -vv      # keyless, nothing signed
+forge script script/AddAssets.s.sol:AddAssets --sig 'runBstockBatch2()' --rpc-url bsc --sender "$OWNER" -vv   # dry run
+forge script script/AddAssets.s.sol:AddAssets --sig 'runBstockBatch2()' --rpc-url bsc --sender "$OWNER" --account "$OWNER_ACCOUNT" --broadcast -vv
+forge script script/AddAssets.s.sol:AddAssets --sig 'verifyBstockBatch2()' --rpc-url bsc -vv       # read-only check afterwards
+```
+
+Rollback of one token (dry run first, then add `--account "$OWNER_ACCOUNT" --broadcast`): `forge script script/AddAssets.s.sol:AddAssets --sig 'rollbackBstockBatch2(address)' "$STOCK" --rpc-url bsc --sender "$OWNER" -vv`. After the broadcast, ask Agent 09 to add the six to the generated product list (`gen_buyable.py`), which also changes the issuer map the Migrate check uses.
+
 Live $6 proofs run on the Seoul EC2 with the buyer wallet configured there (`contracts/tools/guarded_buy.py`, `--send` spends real funds); run each token once without `--send` first. The Ondo proof uses the feed value seeded by the owner step, so no signer key is needed.
 
 ## Checks after a restart
@@ -140,6 +151,7 @@ Live $6 proofs run on the Seoul EC2 with the buyer wallet configured there (`con
 Names only here:
 - `./deploy/restart.sh` refuses to start (and says which names are missing or look like a wrong spelling) when `BINANCE_W3_API_KEY`, `BINANCE_W3_API_SECRET` or `TALLY_DATA_DIR` is unset, and warns about `BSC_RPC_PRIMARY` and `NEXT_PUBLIC_PRIVY_APP_ID`. The Binance names are `BINANCE_W3_*`, not `BINANCE_WEB3_*` (that spelling once left the web server without credentials on 8 Oct).
 - Always: `NEXT_PUBLIC_PRIVY_APP_ID`, `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME` (both public, baked in at build time: load the file before building), `BINANCE_W3_API_KEY`, `BINANCE_W3_API_SECRET`, `BSC_RPC_PRIMARY` (not `BSC_RPC_URL`), `FEED_SIGNER_PK`, `TALLY_DATA_DIR` (same value for the web app and every worker; writable).
+- RPC providers (the chain reads, receipts, holdings and the Flow collector): `BSC_RPC_PRIMARY` is tried first, then `BSC_RPC_FALLBACKS` in order (a comma-separated list of full URLs; when it is set it REPLACES the built-in public endpoints, so end it with them: `https://bsc-dataseed.bnbchain.org,https://bsc-dataseed1.defibit.io`). `BSC_RPC_NODEREAL` and `BSC_RPC_ANKR` feed the transaction and log readers; each takes either a full URL or just the key. A provider that answers "daily request limit reached" is skipped automatically (fixed 9 Oct; a used-up QuickNode plan had stopped every chain read). `curl https://<domain>/api/health` shows `rpcBlock` (null means all endpoints failed) and `rpcDetail` (why, with URLs removed).
 - `TALLY_APP_ORIGIN`: the exact browser origin. A quick tunnel changes it on every restart, so update it and restart.
 - Guardian and wallet registration: `PRIVY_APP_SECRET` (server only), `TELEGRAM_BOT_TOKEN`.
 - Tuning: `TALLY_RATE_LIMIT_MULT`, `TALLY_WORKER_RPS`, `TALLY_MIN_FREE_MB`, `TALLY_EST_MB`, `TALLY_STAGGER_S`.
@@ -160,6 +172,8 @@ Until the named tunnel below is running (retire this afterwards): a Cloudflare q
    cloudflared tunnel create tally               # prints the tunnel ID (a UUID) and writes ~/.cloudflared/<UUID>.json
    cloudflared tunnel route dns tally app.tallyprotocol.xyz   # creates the proxied DNS record for you
    ```
+   **Check the `route dns` line it prints.** The certificate `~/.cloudflared/cert.pem` is tied to ONE Cloudflare zone, the one picked at the last `cloudflared tunnel login`. `login` refuses to run while that file exists ("existing certificate ... would overwrite"), so a server that was logged in for another domain keeps using the old zone without telling you; to switch, move it aside first (`mv ~/.cloudflared/cert.pem ~/.cloudflared/cert.pem.other`) and run `login` again. The certificate is only needed to create tunnels and DNS records, not to run one. If you own several domains and picked another, it creates `app.tallyprotocol.xyz.<other-domain>` in that zone (this happened on 9 Oct). Then delete that wrong record there and add the right one by hand in the `tallyprotocol.xyz` zone: DNS, Add record, type CNAME, name `app`, target `<UUID>.cfargotunnel.com`, proxy on (orange cloud).
+
    Create `/etc/cloudflared/config.yml` (replace `<UUID>`):
    ```yaml
    tunnel: <UUID>

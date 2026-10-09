@@ -16,7 +16,8 @@ import {
   type QuoteInput,
   type QuoteRow,
 } from "@tally/core";
-import { pickBest, toRawQuote, type BinanceApi } from "@tally/binance";
+import { toRawQuote, type BinanceApi } from "@tally/binance";
+import { pickRoute } from "./route-choice";
 import {
   decodeGuardRevert,
   decodeGuarded,
@@ -157,6 +158,7 @@ export interface TradePlan {
   };
   simulation?: { ethCall: "ok"; binance: "ok" | "skipped"; binanceNote?: string };
   warnings: string[];
+  rfq?: boolean;
 }
 
 const E18 = 10n ** 18n;
@@ -255,8 +257,12 @@ export async function prepareTrade(deps: TradeDeps, req: TradeRequest): Promise<
     amount: amountIn,
     wallet: deps.guard,
   });
-  const best = pickBest(routes);
-  if (!best) throw new TradeError("route_failed", "No route was returned for this buy.");
+  const picked = pickRoute(routes);
+  if (!picked) throw new TradeError("route_failed", "No route was returned for this buy.");
+  const best = picked.route;
+  if (picked.rfq) {
+    warnings.push("Market-maker quotes expire in a few seconds. Confirm promptly.");
+  }
   const raw = toRawQuote(best);
   if (raw.executionMode !== "SWAP")
     throw new TradeError(
@@ -377,6 +383,7 @@ export async function prepareTrade(deps: TradeDeps, req: TradeRequest): Promise<
     feedUpdate: feed !== undefined,
     balances: { usdt: bal.usdt.toString(), bnb: bal.bnb.toString() },
     warnings,
+    rfq: picked.rfq ? true : undefined,
   };
   if (bal.usdt < amountIn || bal.bnb < bnbNeeded) {
     return {
