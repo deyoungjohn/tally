@@ -289,11 +289,50 @@ describe("WO-03 Portfolio Suggestions Pure Tests", () => {
     expect(addressHash(addressA)).not.toBe(addressHash(addressB));
   });
 
-  it("stale Radar means unavailable with proper reason text", () => {
+  it("29 fresh candidates and one stale row still yields suggestions", () => {
+    const candidates: CandidateTokenInput[] = [];
+    for (let i = 1; i <= 29; i++) {
+      candidates.push({
+        ticker: `TK${i}`,
+        symbol: `TK${i}B`,
+        issuer: "bstock",
+        name: `Token ${i}`,
+        grade: "A",
+        score: 90,
+        cleanedVolumeUsd: BigInt(i * 10_000) * E18,
+        reason: "Liquid on-chain",
+      });
+    }
+    // 1 stale candidate with highest volume
+    candidates.push({
+      ticker: "STALE",
+      symbol: "STALEB",
+      issuer: "bstock",
+      name: "Stale High Volume",
+      grade: "A",
+      score: 99,
+      stale: true,
+      cleanedVolumeUsd: 1_000_000n * E18,
+      reason: "Stale row",
+    });
+
+    const res = buildPortfolioSuggestions({
+      held: [],
+      candidates,
+      walletAddress: null,
+    });
+
+    expect(res.state).toBe("ok");
+    expect(res.count).toBe(3);
+    expect(res.items).toHaveLength(3);
+    expect(res.items.some((i) => i.ticker === "STALE")).toBe(false);
+  });
+
+  it("all candidates stale means unavailable with proper reason text", () => {
+    const staleCandidates = SAMPLE_CANDIDATES.map((c) => ({ ...c, stale: true }));
     const resLive = buildPortfolioSuggestions({
       held: [],
-      candidates: SAMPLE_CANDIDATES,
-      radarStale: true,
+      candidates: staleCandidates,
       isFixture: false,
     });
     expect(resLive.state).toBe("unavailable");
@@ -303,14 +342,27 @@ describe("WO-03 Portfolio Suggestions Pure Tests", () => {
 
     const resFixture = buildPortfolioSuggestions({
       held: [],
-      candidates: SAMPLE_CANDIDATES,
-      radarStale: true,
+      candidates: staleCandidates,
       isFixture: true,
     });
     expect(resFixture.state).toBe("unavailable");
+    expect(resFixture.fixture).toBe(true);
     expect(resFixture.count).toBe(0);
     expect(resFixture.items).toEqual([]);
     expect(resFixture.reasonText).toBe(SUGGESTIONS_FIXTURE_TEXT);
+  });
+
+  it("when running on fixtures (isFixture: true), reasonText and item reasons say 'Fixture data' even in ok state", () => {
+    const res = buildPortfolioSuggestions({
+      held: [],
+      candidates: SAMPLE_CANDIDATES,
+      isFixture: true,
+    });
+    expect(res.state).toBe("ok");
+    expect(res.fixture).toBe(true);
+    expect(res.reasonText).toBe(SUGGESTIONS_FIXTURE_TEXT);
+    expect(res.items.length).toBe(3);
+    expect(res.items.every((i) => i.reason === SUGGESTIONS_FIXTURE_TEXT)).toBe(true);
   });
 
   it("missing Radar means unavailable", () => {

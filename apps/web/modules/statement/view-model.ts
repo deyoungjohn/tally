@@ -150,15 +150,24 @@ export function buildPortfolioVM(
   const ageMs = opts?.ageMs ?? null;
   const source = opts?.source ?? stmt?.source ?? null;
 
+  const isFixture = opts?.source?.includes("fixture") || process.env.TALLY_FIXTURES === "1";
   const suggestions =
     opts?.suggestions ??
-    buildPortfolioSuggestions({
-      walletAddress,
-      held: stmt?.holdings ?? [],
-      candidates: [],
-      radarMissing: true,
-      isFixture: opts?.source?.includes("fixture") || process.env.TALLY_FIXTURES === "1",
-    });
+    (walletAddress && (!stmt || stale)
+      ? {
+          count: 0,
+          items: [],
+          state: "unavailable" as const,
+          reasonText: "Your holdings are still loading",
+          ...(isFixture ? { fixture: true } : {}),
+        }
+      : buildPortfolioSuggestions({
+          walletAddress,
+          held: stmt?.holdings ?? [],
+          candidates: [],
+          radarMissing: true,
+          isFixture,
+        }));
 
   if (opts?.error) {
     return {
@@ -413,10 +422,30 @@ export function loadSuggestionsFromStore(
   walletAddress?: string | null,
   now = Date.now(),
 ): PortfolioSuggestionsVM {
-  let anyRadarRowFound = false;
-  let anyRadarRowStale = false;
   const isFixture = process.env.TALLY_FIXTURES === "1";
 
+  // If a wallet address is provided (signed-in user), verify that the statement snapshot
+  // exists in the store and is fresh. If missing or stale, holdings are unknown.
+  if (walletAddress && walletAddress.trim()) {
+    const stmtSnap = store.latest<Statement>("statement", walletAddress.toLowerCase(), {
+      maxAgeMs: 300_000,
+      now,
+    });
+    if (!stmtSnap || stmtSnap.stale) {
+      return {
+        count: 0,
+        items: [],
+        state: "unavailable",
+        reasonText: "Your holdings are still loading",
+        ...(isFixture ? { fixture: true } : {}),
+      };
+    }
+    if (!held || (Array.isArray(held) && held.length === 0 && stmtSnap.data.holdings.length > 0)) {
+      held = stmtSnap.data.holdings;
+    }
+  }
+
+  let anyRadarRowFound = false;
   const candidates: CandidateTokenInput[] = [];
 
   for (const asset of GENERATED_BUYABLE_ASSETS) {
@@ -429,7 +458,6 @@ export function loadSuggestionsFromStore(
 
     if (!radarSnap) continue;
     anyRadarRowFound = true;
-    if (radarSnap.stale) anyRadarRowStale = true;
 
     const flowSnap = store.latest<FlowAggregate>("flow-aggregate", asset.address.toLowerCase(), {
       maxAgeMs: FLOW_MAX_AGE_MS,
@@ -460,7 +488,6 @@ export function loadSuggestionsFromStore(
     held,
     candidates,
     radarMissing: !anyRadarRowFound,
-    radarStale: anyRadarRowStale,
     isFixture,
   });
 }
@@ -490,8 +517,23 @@ export async function loadPortfolio(opts?: {
     }
   }
 
-  const heldInput = stmt?.holdings ?? [];
-  const suggestions = store ? loadSuggestionsFromStore(store, heldInput, wallet, now) : undefined;
+  let suggestions: PortfolioSuggestionsVM | undefined;
+  if (store) {
+    if (wallet && (!stmt || snapInfo.stale)) {
+      const isFixture =
+        process.env.TALLY_FIXTURES === "1" || (snapInfo.source?.includes("fixture") ?? false);
+      suggestions = {
+        count: 0,
+        items: [],
+        state: "unavailable",
+        reasonText: "Your holdings are still loading",
+        ...(isFixture ? { fixture: true } : {}),
+      };
+    } else {
+      const heldInput = stmt?.holdings ?? [];
+      suggestions = loadSuggestionsFromStore(store, heldInput, wallet, now);
+    }
+  }
 
   return buildPortfolioVM(stmt, {
     walletAddress: wallet,

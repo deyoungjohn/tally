@@ -22,6 +22,7 @@ export interface PortfolioSuggestions {
   items: PortfolioSuggestionItem[];
   state: PortfolioSuggestionsState;
   reasonText: string;
+  fixture?: boolean;
 }
 
 export interface CandidateTokenInput {
@@ -176,6 +177,7 @@ export function buildPortfolioSuggestions(opts: BuildSuggestionsOptions): Portfo
       items: [],
       state: "none_needed",
       reasonText: "",
+      ...(opts.isFixture ? { fixture: true } : {}),
     };
   }
 
@@ -183,13 +185,14 @@ export function buildPortfolioSuggestions(opts: BuildSuggestionsOptions): Portfo
     ? SUGGESTIONS_FIXTURE_TEXT
     : SUGGESTIONS_CATCHING_UP_TEXT;
 
-  // Radar missing or stale check
-  if (opts.radarMissing || opts.radarStale) {
+  // Radar missing check (individual candidates carry their own stale flag)
+  if (opts.radarMissing) {
     return {
       count: 0,
       items: [],
       state: "unavailable",
       reasonText: unavailableReason,
+      ...(opts.isFixture ? { fixture: true } : {}),
     };
   }
 
@@ -212,6 +215,7 @@ export function buildPortfolioSuggestions(opts: BuildSuggestionsOptions): Portfo
       items: [],
       state: "unavailable",
       reasonText: unavailableReason,
+      ...(opts.isFixture ? { fixture: true } : {}),
     };
   }
 
@@ -254,6 +258,7 @@ export function buildPortfolioSuggestions(opts: BuildSuggestionsOptions): Portfo
       items: [],
       state: "unavailable",
       reasonText: unavailableReason,
+      ...(opts.isFixture ? { fixture: true } : {}),
     };
   }
 
@@ -273,13 +278,14 @@ export function buildPortfolioSuggestions(opts: BuildSuggestionsOptions): Portfo
     grade: c.grade as "A" | "B",
     label: "Liquid",
     volume24hUsd: formatVolumeUsdString(c.cleanedVolumeUsd),
-    reason: c.reason ?? "Liquid on-chain",
+    reason: opts.isFixture ? SUGGESTIONS_FIXTURE_TEXT : (c.reason ?? "Liquid on-chain"),
   }));
 
   return {
     count: items.length,
     items,
     state: "ok",
-    reasonText: SUGGESTIONS_REASON_TEXT,
+    reasonText: opts.isFixture ? SUGGESTIONS_FIXTURE_TEXT : SUGGESTIONS_REASON_TEXT,
+    ...(opts.isFixture ? { fixture: true } : {}),
   };
 }
