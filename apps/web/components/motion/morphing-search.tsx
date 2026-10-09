@@ -147,14 +147,32 @@ export function MorphingSearch({
   // While open, the page behind does not scroll (only the results list does).
   useEffect(() => {
     if (!locked) return;
+    let startY = 0;
+    const begin = (event: TouchEvent) => {
+      startY = event.touches[0]?.clientY ?? 0;
+    };
     const stop = (event: Event) => {
+      const list = listRef.current;
       const target = event.target;
-      if (target instanceof Node && listRef.current?.contains(target)) return;
+      if (list && target instanceof Node && list.contains(target)) {
+        // Inside the results list: let it scroll, but never hand the gesture to the page. Touch screens chain a drag to the page when the
+        // list fits (nothing to scroll) or is already at its end, so those drags are cancelled.
+        const dy =
+          event instanceof TouchEvent
+            ? (event.touches[0]?.clientY ?? startY) - startY
+            : -((event as WheelEvent).deltaY || 0);
+        const scrollable = list.scrollHeight > list.clientHeight + 1;
+        const atTop = list.scrollTop <= 0;
+        const atBottom = list.scrollTop + list.clientHeight >= list.scrollHeight - 1;
+        if (scrollable && !((dy > 0 && atTop) || (dy < 0 && atBottom))) return;
+      }
       event.preventDefault();
     };
+    document.addEventListener("touchstart", begin, { passive: true });
     document.addEventListener("wheel", stop, { passive: false });
     document.addEventListener("touchmove", stop, { passive: false });
     return () => {
+      document.removeEventListener("touchstart", begin);
       document.removeEventListener("wheel", stop);
       document.removeEventListener("touchmove", stop);
     };
