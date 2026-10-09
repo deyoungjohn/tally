@@ -124,6 +124,17 @@ A batch that contains Ondo tokens needs fresh seeds, recorded immediately before
 
 After the batches, from the repo root: `python3 contracts/tools/gen_buyable.py --check` and `python3 contracts/tools/list_enabled.py --snapshot "contracts/captures/depth/batch-1-after-owner-$(date -u +%Y%m%dT%H%M%SZ).json"` (the comparison must report `pass: true`). A new batch needs a new manifest and a new approval; the script refuses any token outside its pinned list.
 
+**Batch 2 (six bStock tokens: AMZNB, NFLXB, GMEB, BMNRB, MRNAB, FLNCB; no seeds).** A separate pinned scope: the script checks the manifest and every evidence file against recorded hashes before doing anything, and verifies the exact configuration afterwards. In `contracts/`, with the same `OWNER`, `OWNER_ACCOUNT` and `--rpc-url bsc` as above:
+
+```bash
+forge script script/AddAssets.s.sol:AddAssets --sig 'previewBstockBatch2()' --rpc-url bsc -vv      # keyless, nothing signed
+forge script script/AddAssets.s.sol:AddAssets --sig 'runBstockBatch2()' --rpc-url bsc --sender "$OWNER" -vv   # dry run
+forge script script/AddAssets.s.sol:AddAssets --sig 'runBstockBatch2()' --rpc-url bsc --sender "$OWNER" --account "$OWNER_ACCOUNT" --broadcast -vv
+forge script script/AddAssets.s.sol:AddAssets --sig 'verifyBstockBatch2()' --rpc-url bsc -vv       # read-only check afterwards
+```
+
+Rollback of one token (dry run first, then add `--account "$OWNER_ACCOUNT" --broadcast`): `forge script script/AddAssets.s.sol:AddAssets --sig 'rollbackBstockBatch2(address)' "$STOCK" --rpc-url bsc --sender "$OWNER" -vv`. After the broadcast, ask Agent 09 to add the six to the generated product list (`gen_buyable.py`), which also changes the issuer map the Migrate check uses.
+
 Live $6 proofs run on the Seoul EC2 with the buyer wallet configured there (`contracts/tools/guarded_buy.py`, `--send` spends real funds); run each token once without `--send` first. The Ondo proof uses the feed value seeded by the owner step, so no signer key is needed.
 
 ## Checks after a restart
