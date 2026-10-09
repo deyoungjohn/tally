@@ -8,6 +8,7 @@
 
 ## Owns
 
+- Approved 2026-10-09 (`docs/prompts/wo12-pies-page.md`): the new page `apps/web/app/pies/**` and `apps/web/components/pies/**` (except `use-pie-run*.ts`, which is Agent 09's), the Portfolio suggestions block, and the timing fix of `apps/web/e2e/radar-vm.spec.ts:70`.
 - `apps/web/app/**` except `apps/web/app/api/modules/**` (WO-00) and `apps/web/app/dev/**` (module previews)
 - `apps/web/components/**` except `apps/web/components/module-boundary.tsx` (WO-00)
 - `apps/web/app/globals.css`, design tokens, `apps/web/e2e/*.spec.ts` for the pages you build

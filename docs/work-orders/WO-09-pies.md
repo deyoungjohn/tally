@@ -8,6 +8,7 @@
 
 ## Owns
 
+- Approved 2026-10-09 (`docs/prompts/wo09-pies-mini.md`): in `packages/mod-pies/**` the Big Tech template and `basketBuyPlan` (pure) with tests; `apps/web/components/pies/use-pie-run*.ts` (hook, types, tests; no styling); in `apps/web/modules/pies/**` the `PiesPageVM`; `apps/web/e2e/pies-run.spec.ts`; the README roadmap line. ShareGuard, `use-trade-flow.ts`, `use-sell-flow.ts`, the buy routes and `lib/trade-plan/**` stay off limits.
 - `packages/mod-pies/**` (including `templates/*.json`)
 - `apps/web/modules/pies/**`, `apps/web/app/dev/pies/**`
 - `apps/worker/src/jobs/pies.ts`
