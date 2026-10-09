@@ -23,7 +23,7 @@ import {
 import { BinanceApi, pickBest, toRawQuote } from "./trading";
 import { PublicApi } from "./public";
 import { BinanceApiError } from "./errors";
-import type { RwaToken } from "./schemas";
+import type { QuoteItem, RwaToken } from "./schemas";
 
 const ISSUER_BY_TYPE: Record<number, Issuer> = { 1: "ondo", 2: "xstocks", 3: "bstock" };
 const FATAL = new Set(["region_block", "auth"]);
@@ -311,7 +311,7 @@ export class BinanceData {
       amount: amountIn,
       wallet,
     });
-    const best = pickBest(routes);
+    const best = pickMatchingRoute(routes) ?? pickBest(routes);
     if (!best)
       throw new BinanceApiError(
         "token_unavailable",
@@ -331,4 +331,49 @@ export class BinanceData {
     }
     return toRawQuote(best);
   }
+}
+
+function isRfqRoute(item: QuoteItem): boolean {
+  return item.dexRouterList.some((h) =>
+    Boolean(h.dexProtocol?.dexName && /rfq/i.test(h.dexProtocol.dexName)),
+  );
+}
+
+/**
+ * Route chooser for consolidated quotes, matching prepareTrade:
+ * prefers an AMM pool route when its output is within 0.5% of the best RFQ output.
+ */
+export function pickMatchingRoute(routes: QuoteItem[]): QuoteItem | undefined {
+  if (routes.length === 0) return undefined;
+
+  const rfqRoutes = routes.filter(isRfqRoute);
+  const poolRoutes = routes.filter((r) => !isRfqRoute(r));
+
+  const sortByOutput = (a: QuoteItem, b: QuoteItem) => {
+    const diff = BigInt(b.toTokenAmount) - BigInt(a.toTokenAmount);
+    return diff > 0n ? 1 : diff < 0n ? -1 : 0;
+  };
+
+  const bestRfq = [...rfqRoutes].sort(sortByOutput)[0];
+  const bestPool = [...poolRoutes].sort(sortByOutput)[0];
+
+  if (bestRfq && bestPool) {
+    const rfqOut = BigInt(bestRfq.toTokenAmount);
+    const poolOut = BigInt(bestPool.toTokenAmount);
+
+    if (poolOut >= rfqOut || (rfqOut - poolOut) * 1000n <= rfqOut * 5n) {
+      return bestPool;
+    }
+    return bestRfq;
+  }
+
+  if (bestPool) {
+    return bestPool;
+  }
+
+  if (bestRfq) {
+    return bestRfq;
+  }
+
+  return undefined;
 }
