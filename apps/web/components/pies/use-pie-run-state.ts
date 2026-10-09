@@ -108,6 +108,8 @@ export function parsePendingPie(raw: string, wallet: string, now: number): PieBu
     )
       return null;
     for (const leg of value.legs as unknown as Record<string, unknown>[]) {
+      // Runs persist executable buys only; a deferred leg in storage is corrupt.
+      if (leg.executable !== true) return null;
       if (!["not_started", "pending", "signing", "done", "failed"].includes(String(leg.status)))
         return null;
       if (leg.stage !== undefined && !["planning", "approval", "buy"].includes(String(leg.stage)))

@@ -44,9 +44,10 @@ it("empty templates, bad weights and source errors have explicit VM states", () 
   });
   expect(
     buildPiesPageVM({
+      budgetUsdt: 30n * E18,
       meta: { stale: true, ageMs: 300000, source: "failed snapshot", error: "Source unavailable" },
     }),
-  ).toMatchObject({ state: "error", error: "Source unavailable" });
+  ).toMatchObject({ state: "error", error: "Source unavailable", plan: null });
 });
 it("the selected basket minimum follows the requested nonzero-weight legs", () => {
   const vm = buildPiesPageVM({

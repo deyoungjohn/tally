@@ -291,6 +291,22 @@ it("malformed/over-budget inputs and unavailable persistence cannot reach the wa
   await expect(f.create().start(input)).rejects.toThrow("Storage blocked");
   expect(f.sendTx).not.toHaveBeenCalled();
 });
+it("rejects a corrupted saved run that contains a deferred leg instead of executing it", async () => {
+  const f = fixture();
+  const original = f.create();
+  await original.start(input);
+  const saved = original.run!;
+  saved.legs[1] = { ...saved.legs[1]!, executable: false, status: "not_started" };
+  f.values.set(PENDING_PIE_KEY, JSON.stringify(saved));
+  f.sendTx.mockClear();
+  const resumed = f.create();
+  await resumed.restore();
+  await resumed.continueRemaining();
+  expect(resumed.run).toBeNull();
+  expect(f.values.has(PENDING_PIE_KEY)).toBe(false);
+  expect(f.io.onWarn).toHaveBeenCalled();
+  expect(f.sendTx).not.toHaveBeenCalled();
+});
 it("a hash returned after unmount is saved without overwriting another coordinator", async () => {
   const f = fixture();
   let resolve!: (hash: typeof HASH) => void;
