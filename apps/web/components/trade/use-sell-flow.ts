@@ -13,7 +13,7 @@ import { MIN_SELL_USDT } from "@tally/config";
 import { createSellIntent, fetchSellPlan, postSellReceiptHint } from "../../lib/trade-plan/sell";
 import type { SellIntent } from "../../lib/trade-plan/sell";
 import { explainSellError, planGotWorse, type SellFailure } from "../../lib/sell/view";
-import { ONDO_CLOSED_TIP } from "./ondo-gate";
+import { ONDO_CLOSED_TIP } from "./ondo-closed";
 import { notifyPortfolioChanged } from "../../lib/hooks/portfolio-changed";
 
 /** The plain reason for a failed sale. Ondo tokens sell only while the US market is open: say that, not the router's wording. */
