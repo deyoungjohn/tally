@@ -107,7 +107,13 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
           className="max-w-[520px]"
         >
           <div className="mt-4 grid gap-4">
-            {step === "interstitial" && waitingReceipt ? (
+            {step === "interstitial" &&
+            (waitingReceipt ||
+              (pm.saleHash &&
+                !pm.usdtReceived &&
+                receiptState !== "failed" &&
+                receiptState !== "underMinimum" &&
+                source !== "wallet")) ? (
               <div className="flex flex-col gap-3 rounded-lg border border-black/10 bg-white p-4">
                 <div className="flex items-center gap-3">
                   <Loader2 className="h-5 w-5 motion-safe:animate-spin text-black" />
