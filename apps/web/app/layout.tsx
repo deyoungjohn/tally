@@ -23,7 +23,7 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  icons: { icon: "/icon.svg" },
+  icons: { icon: [{ url: "/favicon.svg", type: "image/svg+xml" }] },
   title: "Tally: buy tokenized shares, at the best prices",
   description:
     "Compare tokenized versions of the same US stock across Ondo, bStocks and xStocks on BNB Chain, in share units, and buy at the best price with an on-chain minimum-shares guarantee. Not the underlying shares.",

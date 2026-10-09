@@ -160,6 +160,8 @@ Until the named tunnel below is running (retire this afterwards): a Cloudflare q
    cloudflared tunnel create tally               # prints the tunnel ID (a UUID) and writes ~/.cloudflared/<UUID>.json
    cloudflared tunnel route dns tally app.tallyprotocol.xyz   # creates the proxied DNS record for you
    ```
+   **Check the `route dns` line it prints.** `cloudflared tunnel login` ties the certificate to ONE Cloudflare zone, the one you pick in the browser. If you own several domains and picked another, it creates `app.tallyprotocol.xyz.<other-domain>` in that zone (this happened on 9 Oct). Then delete that wrong record there and add the right one by hand in the `tallyprotocol.xyz` zone: DNS, Add record, type CNAME, name `app`, target `<UUID>.cfargotunnel.com`, proxy on (orange cloud).
+
    Create `/etc/cloudflared/config.yml` (replace `<UUID>`):
    ```yaml
    tunnel: <UUID>
