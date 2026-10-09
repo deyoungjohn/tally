@@ -146,11 +146,13 @@ test.describe("radar view model: real route on a seeded server", () => {
     await page.getByRole("radio", { name: "Not Tradable" }).click();
     await expect(page.getByTestId("radarvm-NVDAx")).toBeVisible();
     await expect(page.getByTestId("radarvm-TSLAB")).toHaveCount(0);
-    // "How we grade tokens" jumps to the explainer at the bottom.
+    // "How we grade tokens" opens the explanation in a modal that links to the full one in the docs.
     await page.getByRole("radio", { name: "All" }).click();
     await page.getByTestId("how-we-grade-link").click();
-    await expect(page.locator("#how-we-grade")).toBeInViewport({ timeout: 5000 });
-    await page.evaluate(() => window.scrollTo(0, 0));
+    await expect(page.getByTestId("how-we-grade-modal")).toContainText("Almost no trading");
+    await expect(page.getByTestId("how-we-grade-docs")).toHaveAttribute("href", "/docs#how-grades");
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("how-we-grade-modal")).toHaveCount(0);
     // Flow tab: the busiest token is shown by default; only a click changes it, and only one is shown.
     await page.getByRole("radio", { name: "Flow" }).click();
     await expect(page.getByTestId("radarvm-flow-NVDA")).toBeVisible();

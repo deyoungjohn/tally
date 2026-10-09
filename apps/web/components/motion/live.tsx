@@ -101,14 +101,17 @@ export function LiveText({ text, className }: { text: string; className?: string
 /** A price that turns green when it ticks up, red when it ticks down and white when it holds still. */
 export function TrendUsd({
   value,
+  tick,
   d = 2,
   className,
 }: {
   value: V;
+  /** Changes identity with every fresh reading (the fetched row), so an unchanged price turns white. */
+  tick?: unknown;
   d?: number;
   className?: string;
 }) {
-  const trend = usePriceTrend(value);
+  const trend = usePriceTrend(value, tick);
   return (
     <LiveUsd
       value={value}

@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build && node scripts/copy-standalone.mjs",
+    "dev": "node scripts/token-icons.mjs && next dev",
+    "build": "node scripts/token-icons.mjs && next build && node scripts/copy-standalone.mjs",
     "start": "node .next/standalone/apps/web/server.js",
     "typecheck": "tsc -p .",
     "test": "vitest run --passWithNoTests",

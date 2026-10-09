@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ExternalLink } from "lucide-react";
 import { SHAREGUARD_DEPLOYED } from "@tally/config";
 import { CONCEPTS } from "@/lib/concepts";
+import { GRADE_BANDS, GRADE_INTRO, GRADE_RULES } from "@/lib/grade-rules";
 
 export const metadata: Metadata = { title: "Docs: how Tally works · Tally" };
 
@@ -170,6 +171,25 @@ export default function Docs() {
               token contracts where they exist (bStocks, xStocks) and from the issuer data for Ondo,
               with a bounds check on every change. Integrity grades on Radar combine these sources
               and show every reason. If a source fails, Tally says so rather than guessing.
+            </p>
+          </section>
+
+          <section id="how-grades" className="scroll-mt-28">
+            <h2>How a Radar grade is made</h2>
+            <p className="mt-3">{GRADE_INTRO}</p>
+            <ul className="m-0 mt-3 grid list-none gap-2 p-0">
+              {GRADE_RULES.map(([h, b]) => (
+                <li key={h} className="panel p-3">
+                  <p className="font-semibold text-fg">{h}</p>
+                  <p className="mt-0.5 text-[15px]">{b}</p>
+                </li>
+              ))}
+            </ul>
+            <p className="t-meta mt-3">{GRADE_BANDS}</p>
+            <p className="mt-3">
+              Every check writes a record, whether or not it costs points, and a missing reading
+              says why it is missing. A grade is never lowered or raised silently, and a check that
+              cannot run is shown as unknown rather than passed.
             </p>
           </section>
 

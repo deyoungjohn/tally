@@ -49,18 +49,6 @@ export default function Home() {
               than promised, nothing happens.
             </p>
             <HeroActions />
-            <dl className="m-0 mt-10 grid max-w-[560px] grid-cols-3 gap-3">
-              {[
-                ["3", "issuers compared"],
-                ["$6", "minimum buy"],
-                ["≈ $0.02", "network fee"],
-              ].map(([k, v]) => (
-                <div key={v} className="panel p-4">
-                  <dt className="num text-[23px] font-bold tracking-tight">{k}</dt>
-                  <dd className="t-meta m-0 mt-1">{v}</dd>
-                </div>
-              ))}
-            </dl>
           </div>
           <div className="relative mx-auto w-full max-w-[520px] min-w-0 min-[981px]:max-w-none">
             <span
@@ -153,7 +141,6 @@ export default function Home() {
                     "1.2 shares from Ondo and 0.5 from bStock read as 1.7 shares.",
                   ],
                   ["Value in dollars", "At the current US price per share."],
-                  ["Dividends as shares", "Ondo grows your share count as dividends accrue. Soon."],
                 ].map(([h, b]) => (
                   <li key={h} className="panel p-4">
                     <p className="font-semibold">{h}</p>

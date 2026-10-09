@@ -347,7 +347,7 @@ export function TradeCard(p: TradeCardProps) {
         <div className="detail-row">
           <dt>Price per share</dt>
           <dd>
-            <TrendUsd value={p.row?.usdPerShare} />
+            <TrendUsd value={p.row?.usdPerShare} tick={p.row} />
           </dd>
         </div>
         <div className="detail-row">

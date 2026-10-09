@@ -121,7 +121,7 @@ function Row({
             </span>
             {pickable ? (
               <span className="mt-1 flex flex-wrap items-center gap-x-1.5 text-[14px] leading-none text-fg2">
-                <TrendUsd value={r.usdPerShare} className="num" />
+                <TrendUsd value={r.usdPerShare} tick={r} className="num" />
                 <span>per share ·</span>
                 <Premium p={r.premium} />
               </span>
