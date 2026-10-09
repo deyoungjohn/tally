@@ -43,6 +43,8 @@ export const recentPnlItemSchema = z
     buyTxCount: z.string().optional(),
     buyTxVolume: numString.optional(),
     buyAvgPrice: numString.optional(),
+    buyAmount: numString.optional(),
+    sellAmount: numString.optional(),
     sellTxCount: z.string().optional(),
     sellTxVolume: numString.optional(),
     sellAvgPrice: numString.optional(),
@@ -218,8 +220,28 @@ export function recentPnlToHoldings(
     const tokenBalanceUsdE18 = parseDecimal(item.tokenBalanceUsd, 18);
     const buyVolumeUsdE18 = item.buyTxVolume ? parseDecimal(item.buyTxVolume, 18) : 0n;
     const sellVolumeUsdE18 = item.sellTxVolume ? parseDecimal(item.sellTxVolume, 18) : 0n;
-    const costBasisUsdE18 =
-      buyVolumeUsdE18 > sellVolumeUsdE18 ? buyVolumeUsdE18 - sellVolumeUsdE18 : 0n;
+    // Average-cost method on tokens: what is still held carries its share of the buy volume. (The old "buy volume minus sell
+    // volume" mixed what was paid with what was received on sale, so a gain on a sold part wiped out the cost of the part still held.)
+    let costBasisUsdE18: bigint;
+    let costKnown = true;
+    let boughtTokens = item.buyAmount ? parseDecimal(item.buyAmount, 18) : 0n;
+    if (boughtTokens === 0n && item.buyAvgPrice && buyVolumeUsdE18 > 0n) {
+      const avg = parseDecimal(item.buyAvgPrice, 18);
+      boughtTokens = avg > 0n ? mulDiv(buyVolumeUsdE18, E18, avg) : 0n;
+    }
+    if (boughtTokens > 0n) {
+      const soldTokens = item.sellAmount ? parseDecimal(item.sellAmount, 18) : 0n;
+      const open = boughtTokens > soldTokens ? boughtTokens - soldTokens : 0n;
+      const matched = balanceTokens < open ? balanceTokens : open;
+      costBasisUsdE18 = mulDiv(buyVolumeUsdE18, matched, boughtTokens);
+      // More tokens held than purchases explain (received from another wallet): no honest cost for the whole position.
+      if (balanceTokens > 0n && mulDiv(balanceTokens, 100n, 1n) > mulDiv(open, 102n, 1n))
+        costKnown = false;
+    } else {
+      costBasisUsdE18 =
+        buyVolumeUsdE18 > sellVolumeUsdE18 ? buyVolumeUsdE18 - sellVolumeUsdE18 : 0n;
+      if (balanceTokens > 0n && buyVolumeUsdE18 === 0n) costKnown = false;
+    }
 
     const avgCostPerShareUsdE18 =
       balanceShares !== null && balanceShares > 0n
@@ -248,6 +270,7 @@ export function recentPnlToHoldings(
       avgCostPerShareUsdE18,
       pricePerShareUsdE18,
       unrealizedPnlUsdE18,
+      costKnown,
       source: "api/portfolio/recent-pnl",
       rowActionsSlot: {
         token: addr,

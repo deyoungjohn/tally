@@ -399,3 +399,55 @@ describe("WO-03 Slice A: Portfolio and Statement pure logic", () => {
     ).not.toThrow();
   });
 });
+
+describe("cost basis of what is still held", () => {
+  const base = {
+    tokenContractAddress: "0x02fca66c1d1afb4e2a7884261eb00f63598a7436",
+    tokenSymbol: "NVDAB",
+    lastActiveTimestamp: "1790948533000",
+    realizedPnlUsd: "0",
+    realizedPnlPercent: "0",
+  };
+  const cost = (h: ReturnType<typeof recentPnlToHoldings>[number]) =>
+    Number(formatUnits(h.costBasisUsdE18, 18));
+
+  it("a part sold at a gain does not wipe out the cost of the part still held", () => {
+    // Bought 0.05 tokens for $12; sold 0.0245 tokens for $12.5 (volume above the whole buy); 0.0255 tokens remain, worth $5.86.
+    const [h] = recentPnlToHoldings(
+      [
+        {
+          ...base,
+          buyTxVolume: "12",
+          buyAmount: "0.05",
+          sellTxVolume: "12.5",
+          sellAmount: "0.0245",
+          tokenBalanceAmount: "0.0255",
+          tokenBalanceUsd: "5.86",
+        },
+      ],
+      TEST_REGISTRY,
+    );
+    expect(h!.costKnown).toBe(true);
+    expect(cost(h!)).toBeCloseTo(6.12, 2);
+  });
+
+  it("tokens received from another wallet leave the cost unknown instead of a 5000% gain", () => {
+    const [h] = recentPnlToHoldings(
+      [
+        {
+          ...base,
+          buyTxVolume: "0.1",
+          buyAmount: "0.0004",
+          tokenBalanceAmount: "0.0255",
+          tokenBalanceUsd: "5.86",
+        },
+      ],
+      TEST_REGISTRY,
+    );
+    expect(h!.costKnown).toBe(false);
+    const stmt = statement({ walletAddress: "0xabc", holdings: [h!] });
+    expect(stmt.holdingsByTicker.NVDA!.avgCostPerShareUsdE18).toBeNull();
+    expect(stmt.totalUnrealizedPnlUsdE18).toBe(0n);
+    expect(stmt.totalValueUsdE18).toBeGreaterThan(0n);
+  });
+});

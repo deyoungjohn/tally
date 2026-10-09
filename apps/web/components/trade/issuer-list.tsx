@@ -9,7 +9,7 @@ import { isTokenBuyable } from "@/lib/tickers";
 import { SPRING_LAYOUT } from "@/lib/ease";
 import { cn } from "@/lib/utils";
 import { FlagBadge, GradeBadge, TokenLogo } from "./badges";
-import { LivePct, LiveShares, LiveUsd } from "@/components/motion/live";
+import { LivePct, LiveShares, TrendUsd } from "@/components/motion/live";
 import { Tip } from "@/components/ui/tooltip";
 import { LearnMore } from "@/components/learn-more";
 
@@ -120,7 +120,7 @@ function Row({
             </span>
             {pickable ? (
               <span className="mt-1 flex flex-wrap items-center gap-x-1.5 text-[14px] leading-none text-fg2">
-                <LiveUsd value={r.usdPerShare} className="num text-fg" />
+                <TrendUsd value={r.usdPerShare} className="num" />
                 <span>per share ·</span>
                 <Premium p={r.premium} />
               </span>

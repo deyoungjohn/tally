@@ -12,7 +12,7 @@ import { MIN_SELL_USDT } from "@tally/config";
 import { tokenPair } from "@/lib/tickers";
 import { ISSUER_LABEL, fmtShares, fmtUsd } from "@/lib/format";
 import { TokenLogo } from "./badges";
-import { LivePct, LiveUsd } from "@/components/motion/live";
+import { LivePct, TrendUsd } from "@/components/motion/live";
 import { LearnMore } from "@/components/learn-more";
 import { Tip } from "@/components/ui/tooltip";
 
@@ -347,7 +347,7 @@ export function TradeCard(p: TradeCardProps) {
         <div className="detail-row">
           <dt>Price per share</dt>
           <dd>
-            <LiveUsd value={p.row?.usdPerShare} />
+            <TrendUsd value={p.row?.usdPerShare} />
           </dd>
         </div>
         <div className="detail-row">
