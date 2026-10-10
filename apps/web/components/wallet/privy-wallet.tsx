@@ -12,6 +12,7 @@ import { createWalletClient, custom, toHex, type Hex } from "viem";
 import { bsc } from "viem/chains";
 import { resetJsonCache } from "@/lib/hooks/use-json";
 import { pickWallet } from "./pick-wallet";
+import { friendlyWalletError } from "./wallet-errors";
 import type { TallyWallet } from "./wallet-context";
 
 /**
@@ -177,7 +178,7 @@ function Bridge({ onChange }: { onChange: (w: TallyWallet) => void }) {
         } catch (e) {
           if (isUserRejection(e))
             throw Object.assign(new Error("Signature rejected"), { code: 4001 });
-          throw e;
+          throw friendlyWalletError(e);
         }
       },
     }),

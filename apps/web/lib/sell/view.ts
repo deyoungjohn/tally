@@ -181,6 +181,11 @@ export function explainSellError(e: unknown): SellFailure {
       };
     case "invalid_request":
       return { kind: "failed", message: "That amount can't be sold. Check it and try again." };
+    // The wallet's own refusals, already put into plain words by `friendlyWalletError` (not enough BNB for the fee, a busy wallet).
+    case "needs_gas":
+    case "nonce":
+    case "underpriced":
+      return { kind: "failed", message: msg };
     default:
       return { kind: "failed", message: "Something went wrong. Nothing was sold." };
   }
