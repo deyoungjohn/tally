@@ -1,11 +1,13 @@
 # WO-03: fill unknown statement and receipt facts from the chain
 
-Same worktree and branch as WO-03 (fast-forward to `main` first); no new branch; commit, push, keep an open PR with the latest push. Owner decision 2026-10-10: a transaction the feed does not know must not be shown or stored as "unknown" while the chain can tell us. Look it up and fill it in.
+Same worktree and branch as WO-03 (fast-forward to `main` first); no new branch; commit, push, keep an open PR with the latest push. Owner decision 2026-10-10: a transaction the feed does not know must not be shown or stored as "unknown" while the chain can tell us. Look it up and fill it in. **Ships after the demo and the Developer Experience Report (not before the 10 Oct freeze).** See `docs/MILESTONES.md` §6.
 
-## Source: our own RPC first, BscScan second
+**Standing rule (owner, 2026-10-10): before any field anywhere in Tally is recorded or shown as unknown or "-", the Etherscan V2 explorer API is asked as the last fallback.** Order: our usual source, then our RPC, then the explorer, and only then "-".
+
+## Sources: our own RPC first, the explorer API as the fallback
 - **Primary source is the chain through our existing RPC clients** (`@tally/chain`, archive RPC for old blocks). This is what BscScan itself reads, needs no new key, and is not a third party. BscScan is an indexer: it can lag, rate-limit and omits what only we compute (the shares multiplier at that block, the issuer, the price).
-- **BscScan / Etherscan V2 API is an optional second source**, used only to discover transaction hashes for a wallet (token transfers list) when the key `BSCSCAN_API_KEY` is set in `/etc/tally/tally.env`. Never read, print or ask for the key; no key means the step is skipped with a logged reason, never a failure. Document the variable in `docs/deployment.md` only.
-- **A transaction must never be recorded from an explorer's word alone.** Every amount, token and block comes from the receipt and its logs on our RPC, as the receipts module already does. The explorer may only add a hash to look at.
+- **The Etherscan V2 API (`chainid=56`, covers BSC; BscScan's own API is served through it) is the fallback source.** The owner has a key: 5 calls per second, 100,000 per day. It is read from `ETHERSCAN_API_KEY` in `/etc/tally/tally.env`; never read, print or ask for it, and no key means the step is skipped with a logged reason, never a failure. Document the variable in `docs/deployment.md` only. Use it for: discovering transaction hashes for a wallet (token transfers), and for any field our RPC could not give. Budget: a shared token bucket at 4 calls per second, a persisted daily counter that stops at 90,000, a cache so one hash is asked once, and a logged reason whenever it is skipped.
+- **Trust:** the explorer reads the same chain, so what it reports about a mined transaction is not a different truth, but it is an indexer that can lag. A value that came from the explorer is stored with provenance "explorer" and, where our RPC can verify it cheaply (an amount against the receipt's logs), it is checked and a mismatch is dropped and logged.
 
 ## What to fill
 For each hash in the statement or a receipt with a missing field: fetch the receipt and logs, decode the ERC-20 `Transfer` events to and from the wallet, and resolve the token through the registry. Then fill, each with its provenance ("from the chain"):

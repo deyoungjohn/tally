@@ -185,13 +185,15 @@ export function HeroPanels({ trade }: { trade: React.ReactNode }) {
           return (
             <div
               key={card.key}
-              className="hero-card absolute left-1/2 top-0"
+              className="hero-card absolute left-1/2 top-0 rounded-[28px]"
               style={{
                 width: "var(--hc-w)",
                 height: "var(--hc-h)",
                 marginLeft: "calc(var(--hc-w) / -2)",
                 transform: `translateX(calc(var(--hc-step) * ${off})) scale(${active ? 1 : 0.88})`,
-                opacity: active ? 1 : shown ? 0.5 : 0,
+                // Cards are solid, so nothing behind one shows through it. Neighbours are dimmed with brightness, not see-through.
+                opacity: shown || active ? 1 : 0,
+                filter: active ? "none" : "brightness(0.55)",
                 zIndex: active ? 3 : shown ? 2 : 1,
                 pointerEvents: shown ? "auto" : "none",
               }}

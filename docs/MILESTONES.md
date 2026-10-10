@@ -57,3 +57,15 @@ Larger pieces of work that are not part of the 11 Oct submission. They can be do
 **Scope.** A watchlist per signed-in wallet: add or remove any tokenized stock from a Radar row, a Trade page or a search. It shows each stock's price per share, the best issuer's liquidity grade and the change over 24 hours, in share units like everywhere else. Guardian can alert on a watchlist token the same way it does for holdings (a pause, a share-count change, a grade drop). A watchlist is private to the wallet and is stored on the server against the verified session, not in browser storage only. No new contract and nothing is sent on chain.
 
 **Done when.** A signed-in user can add, remove and reorder tokens; the list survives a reload and a second device; Guardian alerts include watchlist tokens when the user opts in; it works with keyboard only and at 375, 768 and 1280 px; a wallet with an empty watchlist sees a plain empty state, not a "coming soon" label.
+
+## 6. Explorer fallback before "unknown" or "-"
+
+**Status:** not started. Ships after the demo and the Developer Experience Report.
+
+**Why.** A receipt or statement row that reads "unknown" or "-" next to a working BscScan link looks like a poor implementation, and the chain (and so the explorer) usually has the answer. The owner has an Etherscan V2 API key (5 calls per second, 100,000 per day) that covers BNB Smart Chain.
+
+**Rule (owner, 2026-10-10).** Before any field anywhere in Tally is recorded or shown as unknown or "-", the explorer API is asked as the last fallback. The order is: the usual source, then our own RPC, then the explorer, then "-". It applies to the Statement, Activity, receipts (buy, sell, Migrate) and any other place a value can be missing.
+
+**Scope.** `ETHERSCAN_API_KEY` in `/etc/tally/tally.env` (documented in `docs/deployment.md`); a shared client with a 4-calls-per-second bucket, a persisted daily counter that stops at 90,000, a cache so a mined transaction is asked once, and a logged reason when it is skipped; filling token, amount, shares at that block, dollar value, gas, block and time. Values from the explorer carry the provenance "explorer" and are cross-checked against our RPC receipt when that is cheap. Work order: `docs/prompts/wo03-statement-chain-backfill.md`.
+
+**Done when.** A transaction the feed does not know shows real values on the Statement and on its receipt with no "unknown" or "-" that the chain could have filled; with the key removed everything still works and says why a value is missing; the daily budget is never exceeded in a load test.

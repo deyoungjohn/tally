@@ -1110,9 +1110,12 @@ body {
   height: var(--hc-h);
 }
 .hero-card {
+  /* Solid base: the glass inside it sits on black, so the cards behind and the floating shapes never show through. */
+  background: #0b0908;
   transition:
     transform 0.8s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+    filter 0.8s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform, opacity;
 }
 @media (max-width: 560px) {

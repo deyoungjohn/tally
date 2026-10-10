@@ -64,7 +64,7 @@ export default function Home() {
               </p>
               <p className="t-lead mt-5 max-w-[54ch]">
                 Trade, migrate, track and protect tokenized stocks in one place. Tally compares
-                every issuer in share units, buys from the best one, and cancels any trade that
+                every issuer in share units, buys from the best one, and reverts any trade that
                 would give you fewer shares than promised.
               </p>
               <HeroActions />
@@ -94,8 +94,9 @@ export default function Home() {
                 You can do many things with tokenized stocks on Tally
               </h2>
               <p className="t-lead mx-auto mt-3 max-w-[56ch]">
-                Buying is the start. Tally also moves your holdings between issuers, buys whole
-                baskets, watches your tokens and keeps your records.
+                Buying a tokenized stock is just the beginning. With Tally, you can migrate your
+                holdings between issuers, buy whole stock baskets, be alerted about the tokens you
+                hold and get your wallet statement in one click.
               </p>
             </div>
             <ul className="m-0 mt-10 grid list-none grid-cols-1 gap-4 p-0 min-[761px]:grid-cols-2">

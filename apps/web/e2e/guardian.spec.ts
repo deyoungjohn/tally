@@ -170,7 +170,7 @@ test.describe("guardian: real server, module running", () => {
     page,
   }) => {
     await mockWallet(page);
-    await stub(page, feed(), settings());
+    await stub(page, feed({ alerts: [], totalCount: 0, state: "empty" }), settings());
     await page.route("**/api/portfolio**", (route) =>
       route.fulfill({ json: { groups: [], failed: [], wallet: { usdt: 0, bnb: 0 }, asOf: "" } }),
     );
@@ -183,6 +183,25 @@ test.describe("guardian: real server, module running", () => {
     await expect(page.getByTestId("guardian-switch-autopilot")).toBeDisabled();
     await page.getByTestId("guardian-autopilot-soon").getByText("Autopilot").hover();
     await expect(page.getByRole("tooltip")).toContainText("act on an alert for you");
+  });
+
+  test("no tokens but unread alerts: the alerts stay and no recommendations show until the bell is clear", async ({
+    page,
+  }) => {
+    await mockWallet(page);
+    await stub(page, feed(), settings());
+    await page.route("**/api/portfolio**", (route) =>
+      route.fulfill({ json: { groups: [], failed: [], wallet: { usdt: 0, bnb: 0 }, asOf: "" } }),
+    );
+    await page.goto(`${server.url}/guardian`);
+    await expect(page.getByTestId("guardian-alert-a1")).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByTestId("notification-count")).toHaveText("2");
+    await expect(page.getByTestId("guardian-no-tokens")).toHaveCount(0);
+    // Opening the bell marks them seen; the page then shows the nudge, and the alerts are still listed.
+    await page.getByTestId("notification-bell").click();
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("guardian-no-tokens")).toBeVisible();
+    await expect(page.getByTestId("guardian-alert-a1")).toBeVisible();
   });
 
   test("signed in holding tokens: no nudge", async ({ page }) => {

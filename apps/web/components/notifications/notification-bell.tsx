@@ -18,19 +18,23 @@ import { tokenSymbol } from "@/lib/tickers";
 const SHOWN = 10;
 const seenKey = (address: string) => `tally.notifications.seen:${address.toLowerCase()}`;
 
-const readSeen = (address: string): number => {
+export const NOTIFICATIONS_SEEN_EVENT = "tally:notifications-seen";
+
+export const readSeen = (address: string): number => {
   try {
     return Number(window.localStorage.getItem(seenKey(address))) || 0;
   } catch {
     return 0;
   }
 };
-const writeSeen = (address: string, at: number) => {
+export const writeSeen = (address: string, at: number) => {
   try {
     window.localStorage.setItem(seenKey(address), String(at));
   } catch {
     /* storage blocked: the count just comes back next visit */
   }
+  // Other parts of the page that depend on the count (Guardian's recommendations) read it again.
+  window.dispatchEvent(new Event(NOTIFICATIONS_SEEN_EVENT));
 };
 
 const SEVERITY: Record<AlertFeedItemVM["severity"], string> = {

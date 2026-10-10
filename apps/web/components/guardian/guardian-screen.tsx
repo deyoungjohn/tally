@@ -32,6 +32,7 @@ import {
   type VmEnvelope,
 } from "@/components/portfolio/vm-shared";
 import { Tip } from "@/components/ui/tooltip";
+import { NOTIFICATIONS_SEEN_EVENT, readSeen } from "@/components/notifications/notification-bell";
 import { heldQuery } from "@/lib/held";
 import { useJson } from "@/lib/hooks/use-json";
 import { useSessionFetch } from "@/lib/hooks/use-session-fetch";
@@ -364,6 +365,19 @@ export function GuardianScreen() {
   );
   const holdingsKnown = !q || held.data !== null || held.error !== null;
   const feed = useSessionJson<AlertFeedVM>("/api/session/guardian/feed", { refreshMs: 60_000 });
+  // While the bell still shows a number, the page is about those alerts: no recommendations next to them.
+  const [seen, setSeen] = useState(0);
+  useEffect(() => {
+    if (!address) return;
+    const read = () => setSeen(readSeen(address));
+    read();
+    window.addEventListener(NOTIFICATIONS_SEEN_EVENT, read);
+    return () => window.removeEventListener(NOTIFICATIONS_SEEN_EVENT, read);
+  }, [address]);
+  const unreadAlerts =
+    "data" in feed.state && feed.state.data
+      ? feed.state.data.alerts.filter((a) => a.createdAt > seen).length
+      : 0;
   // While a link code is on screen, look for the link every few seconds so the page notices when the bot confirms it.
   const [watching, setWatching] = useState(false);
   const settings = useSessionJson<GuardianSettingsVM>("/api/session/guardian/settings", {
@@ -470,7 +484,7 @@ export function GuardianScreen() {
   return (
     <div className="grid grid-cols-1 gap-6 min-[981px]:grid-cols-[minmax(0,1fr)_340px]">
       <div className="min-w-0">
-        {holdsNothing ? (
+        {holdsNothing && unreadAlerts === 0 ? (
           <section
             className="glass mb-6 p-6"
             aria-label="Buy your first token"
