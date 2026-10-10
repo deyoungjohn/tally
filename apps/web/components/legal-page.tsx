@@ -56,7 +56,7 @@ export function LegalPage({
               ) : null}
             </section>
           ))}
-          <p className="t-meta" data-testid="legal-contact">
+          <p className="t-meta" data-testid="legal-contact-line">
             Contact: {LEGAL.owner} through{" "}
             <a className="link-text" href={LEGAL.contactHref} target="_blank" rel="noreferrer">
               {LEGAL.contactLabel}

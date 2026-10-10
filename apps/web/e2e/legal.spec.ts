@@ -41,7 +41,7 @@ test.describe("legal pages and the footer", () => {
     await expect(page.getByTestId("legal-tokens")).toContainText("not the underlying shares");
     await expect(page.getByTestId("legal-wallet")).toContainText("non-custodial");
     await expect(page.getByTestId("legal-guarantee")).toContainText("does not protect you");
-    await expect(page.getByTestId("legal-contact")).toContainText("Tally Protocol");
+    await expect(page.getByTestId("legal-contact-line")).toContainText("Tally Protocol");
   });
 
   test("the Privacy Policy says what is processed and that nothing is sold", async ({ page }) => {
