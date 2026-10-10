@@ -23,7 +23,6 @@ export default function Home() {
         <div className="grid grid-cols-1 items-center gap-12 min-[981px]:grid-cols-[1.05fr_.95fr]">
           <div className="min-w-0">
             <p className="eyebrow glass !rounded-full blur-in">
-              <span className="dot-live" aria-hidden />
               <span>
                 Live on BNB Chain · <b>Ondo · bStocks · xStocks</b>
               </span>

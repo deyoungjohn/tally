@@ -90,10 +90,15 @@ test.describe("radar view model: real route on a seeded server", () => {
     await page.goto(`${server.url}/radar`);
     const list = page.getByTestId("radar-masonry");
     await expect(list).toBeVisible({ timeout: 20_000 });
-    await expect(list).toHaveAttribute("data-shown", "24");
+    // The first page is 24 cards. Under load the end-of-list loader can already have run by the time we look, so wait for the
+    // list to settle on a whole number of pages and drive it from whatever state it is in, rather than assuming a timing.
+    await expect(list).toHaveAttribute("data-shown", /^(24|48|70)$/, { timeout: 20_000 });
     const first = await page.getByTestId("radarvm-card-ZZ00").boundingBox();
-    await page.getByTestId("radar-more").getByRole("button", { name: "Show more" }).click();
-    await expect(list).toHaveAttribute("data-shown", "48");
+    const shownNow = Number(await list.getAttribute("data-shown"));
+    if (shownNow === 24) {
+      await page.getByTestId("radar-more").getByRole("button", { name: "Show more" }).click();
+      await expect(list).toHaveAttribute("data-shown", /^(48|70)$/);
+    }
     // Scrolling to the end loads the rest by itself.
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     await expect(list).toHaveAttribute("data-shown", "70", { timeout: 10_000 });

@@ -18,7 +18,7 @@ import { useMigrateFlow } from "./use-migrate-flow";
 import { useSellFlow } from "./use-sell-flow";
 import { useLiveQuote, type QuoteAmount } from "@/lib/hooks/use-live-quote";
 import { fmtUsd, SESSION_LABEL } from "@/lib/format";
-import { isTokenBuyable, issuersOf, nameOf, tokenPair } from "@/lib/tickers";
+import { isTokenBuyable, issuersOf, nameOf, tokenPair, tokenSymbol } from "@/lib/tickers";
 import { ComingSoon } from "./coming-soon";
 import { StockPicker } from "./stock-picker";
 import { SessionBadge } from "./badges";
@@ -31,7 +31,12 @@ import { useTradeFlow, type FlowParams } from "./use-trade-flow";
 type TradeTab = "trade" | "migrate" | "fills";
 
 /** The Trade page. With the `switch` flag on it has two tabs: the trade card, and "Migrate stocks". Both stay mounted so typed amounts survive a tab change. */
-export function TradeClient(props: { ticker: string; initialUsd?: number }) {
+export function TradeClient(props: {
+  ticker: string;
+  initialUsd?: number;
+  /** Opens with this issuer's token chosen (a suggestion card says which one to buy). */
+  initialIssuer?: "ondo" | "bstock";
+}) {
   const flags = useModuleFlags();
   const migrateOn = flags.switch === true;
   const fillsOn = flags.quality === true;
@@ -100,10 +105,12 @@ const RETRY_KINDS = new Set([
 function TradeInner({
   ticker: initialTicker,
   initialUsd,
+  initialIssuer,
   tabbed = false,
 }: {
   ticker: string;
   initialUsd?: number;
+  initialIssuer?: "ondo" | "bstock";
   /** The tab bar sits above, so the page needs less top padding. */
   tabbed?: boolean;
 }) {
@@ -115,7 +122,9 @@ function TradeInner({
     String(initialUsd && initialUsd >= MIN_USD ? initialUsd : MIN_USD),
   );
   const [tolerance, setTolerance] = useState(1);
-  const [picked, setPicked] = useState<string | undefined>();
+  const [picked, setPicked] = useState<string | undefined>(
+    initialIssuer ? tokenSymbol(initialTicker, initialIssuer) : undefined,
+  );
   const flow = useTradeFlow();
   const { phase } = flow;
   // Buying and selling share this card; the flip button between its two boxes swaps them. Selling is behind the server's sell flag.
