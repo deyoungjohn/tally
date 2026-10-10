@@ -399,7 +399,7 @@ export function ReviewSheet({
             </div>
           </dl>
           <p className="t-meta">
-            You sign this in your own wallet; Your funds are never held by Tally.
+            You sign this in your own wallet; your funds are never held by Tally.
             {left > 0
               ? ` This price is good for ${left}s.`
               : " We refresh the price when you confirm."}

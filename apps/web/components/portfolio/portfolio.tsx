@@ -222,7 +222,7 @@ export function PortfolioPage() {
       </h1>
       <p className="t-lead mt-3 max-w-[62ch]">
         Tally counts tokenized stocks from different issuers tracking the same US share as one, by
-        multiplying each by it's current multiplier. <LearnMore concept="shares" />
+        multiplying each by its current multiplier. <LearnMore concept="shares" />
       </p>
 
       {!address ? (

@@ -10,7 +10,7 @@ const TABS = [
       {
         question: "Are these real shares?",
         answer:
-          "No. They are tokenized stocks tokens that track a US stock's price on BNB Chain. You don't own the underlying share or get shareholder rights, and the issuers' own terms apply.",
+          "No. They are tokens that track a US stock's price on BNB Chain. You don't own the underlying share or get shareholder rights, and the issuers' own terms apply.",
       },
       {
         question: "Is one token one share?",
@@ -20,7 +20,7 @@ const TABS = [
       {
         question: "Do I need to know crypto?",
         answer:
-          "No, you don't need to be a crypto OG. Sign in with your email or Google account, deposit USDT and a few cents of BNB on BNB chain, and make your first purchse. We explain each step.",
+          "No, you don't need to be a crypto OG. Sign in with your email or Google account, deposit USDT and a few cents of BNB on BNB chain, and make your first purchase. We explain each step.",
       },
     ],
   },

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { TradeClient } from "@/components/trade/trade-client";
 
-export const metadata: Metadata = { title: "Trade tokenized shares at the best price · Tally" };
+export const metadata: Metadata = { title: "Trade tokenized stocks at the best price · Tally" };
 
 export default async function TradeIndex({
   searchParams,
