@@ -154,7 +154,9 @@ test.describe("radar view model: real route on a seeded server", () => {
     // "How we grade tokens" opens the explanation in a modal that links to the full one in the docs.
     await page.getByRole("radio", { name: "All" }).click();
     await page.getByTestId("how-we-grade-link").click();
-    await expect(page.getByTestId("how-we-grade-modal")).toContainText("Almost no trading");
+    await expect(page.getByTestId("how-we-grade-modal")).toContainText(
+      "Little/no trading activity",
+    );
     await expect(page.getByTestId("how-we-grade-docs")).toHaveAttribute("href", "/docs#how-grades");
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("how-we-grade-modal")).toHaveCount(0);

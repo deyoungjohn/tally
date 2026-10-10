@@ -803,7 +803,7 @@ test("confirmed sale under 6 USDT gives its own message and offers no buy", asyn
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText("under the 6 USDT minimum required to buy");
-  await expect(dialog).toContainText("Your USDT is in your wallet. No buy was placed.");
+  await expect(dialog).toContainText("Your USDT is in your wallet. No purchase was made.");
 
   // Click Done dismisses and clears
   await dialog.getByRole("button", { name: "Done" }).click();
