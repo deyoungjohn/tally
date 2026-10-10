@@ -3,7 +3,7 @@
 // stopping at the first failure with an explicit "Continue with the remaining legs". Reads the hook's run state only.
 
 import { AlertTriangle, Check, Loader2 } from "lucide-react";
-import { formatUnits } from "@tally/core";
+import { moneyE18 } from "./money";
 import { Button } from "@/components/motion/button";
 import { TokenIcon } from "@/components/ui/token-icon";
 import type { PieBuyRun, PieBuyRunLeg } from "./use-pie-run";
@@ -88,7 +88,7 @@ export function PiesProgress({
             <span className="flex min-w-0 items-center gap-2.5">
               <TokenIcon ticker={leg.ticker} size={24} />
               <span className="font-semibold">{leg.symbol}</span>
-              <span className="num text-fg2">${formatUnits(BigInt(leg.amountUsdt), 18, 2)}</span>
+              <span className="num text-fg2">${moneyE18(leg.amountUsdt)}</span>
             </span>
             <span className="flex items-center gap-3 text-[15px]">
               <LegStatus leg={leg} />
@@ -123,8 +123,8 @@ export function PiesProgress({
       ) : null}
       {run.status === "done" ? (
         <p className="mt-3 text-[15px]" data-testid="pies-summary">
-          {done.length} {done.length === 1 ? "stock" : "stocks"} bought for $
-          {formatUnits(spent, 18, 2)} in total. Each receipt is linked above.
+          {done.length} {done.length === 1 ? "stock" : "stocks"} bought for ${moneyE18(spent)} in
+          total. Each receipt is linked above.
         </p>
       ) : null}
       {error ? (

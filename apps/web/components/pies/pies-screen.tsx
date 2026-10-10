@@ -15,6 +15,7 @@ import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { cn } from "@/lib/utils";
 import { buildPiesPageVM, type BasketVM, type PiesPageVM } from "@/modules/pies/basket-view-model";
 import { bpsToPercent, equalWeights, normaliseWeights, percentToBps } from "./pie-weights";
+import { moneyE18 } from "./money";
 import { PiesProgress } from "./pies-progress";
 import { usePerShareE18 } from "./use-basket-prices";
 import { usePieRun } from "./use-pie-run";
@@ -31,7 +32,7 @@ interface PlanLeg {
 }
 const MAX_LEG_USDT = 10_000n * 10n ** 18n;
 const BUDGET_SLIDER_MAX = 1_000;
-const money = (e18: string | bigint, d = 2) => formatUnits(BigInt(e18), 18, d);
+const money = moneyE18;
 
 const initialWeights = (basket: BasketVM | undefined): Record<string, string> =>
   Object.fromEntries((basket?.tokens ?? []).map((t) => [t.ticker, bpsToPercent(t.weightBps)]));
