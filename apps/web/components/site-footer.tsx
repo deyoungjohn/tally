@@ -61,7 +61,7 @@ export function SiteFooter() {
           are traded on the secondary market on BNB Smart Chain; you are responsible for complying
           with the laws that apply to you.
         </p>
-        <p className="t-meta mt-3" data-testid="copyright">
+        <p className="t-meta mt-3 text-center" data-testid="copyright">
           © 2026 Tally Protocol. All rights reserved.
         </p>
       </div>

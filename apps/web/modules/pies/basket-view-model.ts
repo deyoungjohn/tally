@@ -35,6 +35,8 @@ export interface BasketVM {
   name: string;
   description: string;
   minimumBudgetUsdt: string;
+  /** False for a basket that is shown but cannot be bought yet. */
+  available: boolean;
   tokens: {
     ticker: string;
     symbol: string;
@@ -54,7 +56,6 @@ export interface PiesPageVM extends SnapshotMeta {
   selectedBasketId: string | null;
   plan: BasketBuyPlanVM | null;
   run: PieBuyRun | null;
-  roadmap: string;
 }
 export interface PiesPageOptions {
   templates?: readonly BasketTemplate[];
@@ -98,6 +99,7 @@ export function buildPiesPageVM(options: PiesPageOptions = {}): PiesPageVM {
       id: template.id,
       name: template.name,
       description: template.description,
+      available: template.executable,
       minimumBudgetUsdt: (
         MIN_BASKET_LEG * BigInt(tokens.filter((token) => token.executable).length)
       ).toString(),
@@ -122,7 +124,6 @@ export function buildPiesPageVM(options: PiesPageOptions = {}): PiesPageVM {
       (!options.wallet || options.run.wallet.toLowerCase() === options.wallet.toLowerCase())
         ? serialise(options.run)
         : null,
-    roadmap: "Atomic baskets, auto-rebalancing and selling a basket: coming soon",
   };
   if (options.budgetUsdt === undefined || meta.error) return result;
   try {

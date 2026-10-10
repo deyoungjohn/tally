@@ -182,7 +182,7 @@ function Group({
           ) : null}
           {pnlKnown ? (
             <div className="detail-row">
-              <dt>Unrealized gain or loss</dt>
+              <dt>Unrealized PnL</dt>
               <dd className={pnlClass(g.unrealizedPnlUsd)}>
                 {usd(g.unrealizedPnlUsd)}
                 {g.avgCostPerShareUsd === "-" ? "" : ` (${g.unrealizedPnlPercent}%)`}

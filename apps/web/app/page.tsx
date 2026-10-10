@@ -216,11 +216,11 @@ export default function Home() {
             <div className="text-center">
               <p className="t-kicker">FAQ</p>
               <h2 id="faq-title" className="t-h2 mt-3">
-                Questions, answered plainly.
+                Answers to your burning questions.
               </h2>
               <p className="t-meta mx-auto mt-4 max-w-[60ch]">
-                Not investment advice. Tally compares and executes at your instruction; it
-                doesn&apos;t recommend what to buy. Not available in restricted regions.
+                Tally compares and executes at your instruction; it
+                doesn&apos;t recommend what to buy.
               </p>
             </div>
             <div className="min-w-0">

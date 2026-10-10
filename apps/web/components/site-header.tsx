@@ -14,17 +14,15 @@ import { SendModal } from "@/components/wallet/send-modal";
 import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { cn } from "@/lib/utils";
 
-export const NAV_LINKS = [
+/** In nav order. A link with a `flag` shows only while that module is on. */
+const ALL_LINKS: { href: string; label: string; flag?: ModuleName }[] = [
   { href: "/trade", label: "Trade" },
   { href: "/portfolio", label: "Portfolio" },
+  { href: "/pies", label: "Baskets", flag: "pies" }, // "Pies" was the module's first name; the code keeps it
   { href: "/radar", label: "Radar" },
-] as const;
-
-/** Feature-flagged modules from other work orders. Portfolio and Radar are core pages here, so they are not repeated. */
-const MODULE_LINKS: { href: string; label: string; flag: ModuleName }[] = [
   { href: "/guardian", label: "Guardian", flag: "guardian" },
-  { href: "/pies", label: "Baskets", flag: "pies" },
 ];
+const CORE_LINK_COUNT = ALL_LINKS.filter((l) => !l.flag).length;
 
 export function Logo() {
   return (
@@ -310,8 +308,8 @@ export function SiteHeader() {
   }, []);
   const isActive = (href: string) =>
     pathname === href || (!href.includes("#") && pathname.startsWith(href));
-  const links = [...NAV_LINKS, ...MODULE_LINKS.filter((link) => enabled[link.flag])];
-  const expanded = links.length > NAV_LINKS.length;
+  const links = ALL_LINKS.filter((link) => !link.flag || enabled[link.flag]);
+  const expanded = links.length > CORE_LINK_COUNT;
 
   // More opaque and blurrier once the page scrolls, so content passing behind stays faintly visible but never competes with the nav.
   useEffect(() => {

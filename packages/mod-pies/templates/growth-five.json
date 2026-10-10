@@ -1,7 +1,7 @@
 {
   "id": "growth-five",
   "name": "Growth five",
-  "description": "Example allocation, not advice",
+  "description": "Five growth names",
   "executable": true,
   "holdings": [
     { "ticker": "NVDA", "targetWeightBps": 3000 },

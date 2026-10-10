@@ -47,3 +47,13 @@ Larger pieces of work that are not part of the 11 Oct submission. They can be do
 **Scope.** A full, plain-language write-up: what a tokenized stock is and is not; the three issuers and how each represents shares (Ondo multiplier, bStock `uiMultiplier`, xStocks); the integrity grade and the Radar; how a guarded buy works, including the minimum shares floor and what a refusal means; selling and Migrate (two steps, why not atomic); the market-hours caveat for Ondo; Guardian, Pies and the agent layer; what Tally does not do. Every claim links to evidence in this repo or a transaction. It must never imply users own the underlying shares. The Developer Experience Report is separate and is written by the chief engineer, not by an AI.
 
 **Done when.** Each concept anchor has real content; every "Learn more" lands on it; a non-crypto reader can follow a buy from the page alone (test with one person); numbers and examples are checked against `IDEAS.md` and live receipts.
+
+## 5. Watchlists
+
+**Status:** not started
+
+**Why.** People follow far more stocks than they hold. Today Tally only knows about tokens in a wallet, so there is nothing to watch, compare or be alerted about until a buy.
+
+**Scope.** A watchlist per signed-in wallet: add or remove any tokenized stock from a Radar row, a Trade page or a search. It shows each stock's price per share, the best issuer's liquidity grade and the change over 24 hours, in share units like everywhere else. Guardian can alert on a watchlist token the same way it does for holdings (a pause, a share-count change, a grade drop). A watchlist is private to the wallet and is stored on the server against the verified session, not in browser storage only. No new contract and nothing is sent on chain.
+
+**Done when.** A signed-in user can add, remove and reorder tokens; the list survives a reload and a second device; Guardian alerts include watchlist tokens when the user opts in; it works with keyboard only and at 375, 768 and 1280 px; a wallet with an empty watchlist sees a plain empty state, not a "coming soon" label.

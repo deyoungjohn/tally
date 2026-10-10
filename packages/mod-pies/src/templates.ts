@@ -60,7 +60,7 @@ export const BIG_TECH: BasketTemplate = {
   ...validateTemplate({
     id: "big-tech",
     name: "Big Tech",
-    description: "Example allocation, not advice",
+    description: "Five of the largest US tech companies",
     executable: true,
     holdings: ["NVDA", "AAPL", "GOOGL", "MSFT", "META"].map((ticker) => ({
       ticker,
@@ -69,7 +69,44 @@ export const BIG_TECH: BasketTemplate = {
   }),
   issuer: "bstock",
 };
-export const BASKET_TEMPLATES: readonly BasketTemplate[] = [BIG_TECH];
+const even = (tickers: string[]) => {
+  // Weights in basis points that always add up to 10000: the first few take the remainder.
+  const base = Math.floor(10000 / tickers.length);
+  const extra = 10000 - base * tickers.length;
+  return tickers.map((ticker, i) => ({ ticker, targetWeightBps: base + (i < extra ? 1 : 0) }));
+};
+/** Visible on the Baskets page but not buyable yet (`executable: false`). */
+export const MAG_7: BasketTemplate = {
+  ...validateTemplate({
+    id: "mag-7",
+    name: "Mag 7",
+    description: "The seven largest US tech companies",
+    executable: false,
+    holdings: even(["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA"]),
+  }),
+  issuer: "bstock",
+};
+export const AI_CHIPS: BasketTemplate = {
+  ...validateTemplate({
+    id: "ai-chips",
+    name: "AI Chips",
+    description: "The companies that make the chips behind AI",
+    executable: false,
+    holdings: even(["NVDA", "AMD", "AVGO", "TSM", "MU"]),
+  }),
+  issuer: "bstock",
+};
+export const ETFS: BasketTemplate = {
+  ...validateTemplate({
+    id: "etfs",
+    name: "ETFs",
+    description: "Broad US market funds in one basket",
+    executable: false,
+    holdings: even(["SPY", "QQQ", "VTI", "IWM", "DIA"]),
+  }),
+  issuer: "bstock",
+};
+export const BASKET_TEMPLATES: readonly BasketTemplate[] = [BIG_TECH, MAG_7, AI_CHIPS, ETFS];
 
 export function templateAvailability(
   template: PieTemplate,

@@ -125,7 +125,19 @@ export function mergeChainHoldings(
     return { ...g, totalShares: String(Number(shares.toFixed(6))), totalValueUsd: money(value) };
   });
   const total = withTotals.reduce((a, g) => a + num(g.totalValueUsd), 0);
-  return { ...vm, state: "ready", holdings: withTotals, totalValueUsd: money(total), reason: null };
+  // The unrealized total follows what is still held. The feed's own total was worked out when it last ran, so after a sale it
+  // would keep showing the gain of tokens that are gone. A held stock with no known cost makes the total unknown ("-").
+  const heldGroups = withTotals.filter((g) => num(g.totalValueUsd) > 0);
+  const unrealizedKnown = heldGroups.every((g) => g.unrealizedPnlUsd !== "-");
+  const unrealized = heldGroups.reduce((a, g) => a + num(g.unrealizedPnlUsd), 0);
+  return {
+    ...vm,
+    state: "ready",
+    holdings: withTotals,
+    totalValueUsd: money(total),
+    totalUnrealizedPnlUsd: unrealizedKnown ? money(unrealized) : "-",
+    reason: null,
+  };
 }
 
 /** The chain's tokens the feed has no record of at all, for the Statement tab. */

@@ -5,7 +5,7 @@ remains off by default. Execution, persistence, the worker job, and the product 
 page belong to later slices.
 
 `PIE_TEMPLATES` contains exactly `tech-trio`, `index-core`, `growth-five`, and
-`mag7-preview`. Every template says “Example allocation, not advice”.
+`mag7-preview`.
 `validateTemplate(unknown)` checks uppercase unique tickers, integer weights, and a
 10000 bps total. Availability is computed from an injected buyable set; the web
 loader supplies `BUYABLE_TICKERS` from `apps/web/lib/tickers.ts`.

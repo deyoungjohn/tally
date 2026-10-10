@@ -107,22 +107,35 @@ test.describe("pies page", () => {
   });
   test.afterAll(() => server?.stop());
 
-  test("the basket card, chips, fixture label, roadmap and equal weights", async ({ page }) => {
+  test("the basket card, chips, fixture label and equal weights", async ({ page }) => {
     await wallet(page, false);
     await page.goto(`${server.url}/pies`);
+    await page.getByTestId("basket-big-tech").click({ timeout: 20_000 });
     await expect(page.getByTestId("pies-screen")).toBeVisible({ timeout: 20_000 });
     await expect(page.getByTestId("basket-big-tech")).toContainText("Big Tech");
     for (const s of ["NVDAB", "AAPLB", "GOOGLB", "MSFTB", "METAB"])
-      await expect(page.getByTestId(`chip-${s}`)).toBeVisible();
+      await expect(page.getByTestId("basket-big-tech").getByTestId(`chip-${s}`)).toBeVisible();
     await expect(page.getByTestId("basket-big-tech")).toContainText("Minimum budget $30");
     await expect(page.getByTestId("vm-fixture-label")).toContainText("not live");
-    await expect(page.getByTestId("pies-roadmap")).toContainText(
-      "Atomic baskets, auto-rebalancing and selling a basket: coming soon",
-    );
     await expect(page.getByTestId("pies-total")).toContainText("Total 100%");
     // Signed out: Sign in instead of Start.
     await expect(page.getByTestId("pies-signin")).toBeVisible();
     await expect(page.getByTestId("pies-start")).toHaveCount(0);
+  });
+
+  test("Mag 7, AI Chips and ETFs are listed but cannot be bought: an info icon says why", async ({
+    page,
+  }) => {
+    await wallet(page);
+    await page.goto(`${server.url}/pies`);
+    for (const id of ["mag-7", "ai-chips", "etfs"]) {
+      const card = page.getByTestId(`basket-${id}`);
+      await expect(card).toBeVisible({ timeout: 20_000 });
+      await expect(card).toHaveAttribute("aria-disabled", "true");
+      await card.click({ force: true });
+      await expect(page.getByTestId("pies-builder")).toHaveCount(0);
+      await expect(page.getByTestId(`basket-info-${id}`)).toBeVisible();
+    }
   });
 
   test("a $30 budget at equal weights is five $6 legs; legs under $6 are deferred with the reason", async ({
@@ -130,6 +143,7 @@ test.describe("pies page", () => {
   }) => {
     await wallet(page);
     await page.goto(`${server.url}/pies`);
+    await page.getByTestId("basket-big-tech").click({ timeout: 20_000 });
     await expect(page.getByTestId("pies-preview")).toBeVisible({ timeout: 20_000 });
     for (const t of ["NVDA", "AAPL", "GOOGL", "MSFT", "META"])
       await expect(page.getByTestId(`preview-${t}`)).toContainText("$6.00");
@@ -148,6 +162,7 @@ test.describe("pies page", () => {
   }) => {
     await wallet(page);
     await page.goto(`${server.url}/pies`);
+    await page.getByTestId("basket-big-tech").click({ timeout: 20_000 });
     await expect(page.getByTestId("pies-total")).toContainText("Total 100%", { timeout: 20_000 });
     await page.getByRole("textbox", { name: "Weight NVDAB %" }).fill("40");
     await expect(page.getByTestId("pies-total")).toContainText("Total 120%: must be 100%");
@@ -169,6 +184,7 @@ test.describe("pies page", () => {
     await wallet(page);
     await stubTrade(page);
     await page.goto(`${server.url}/pies`);
+    await page.getByTestId("basket-big-tech").click({ timeout: 20_000 });
     await expect(page.getByTestId("pies-builder")).toBeVisible({ timeout: 20_000 });
     await setWeights(page, THREE);
     await page.getByTestId("pies-budget").fill("18.01");
@@ -190,6 +206,7 @@ test.describe("pies page", () => {
     await expect(page.getByTestId("pies-summary")).toContainText("3 stocks bought for $18.00");
     expect(await sent(page)).toBe(3);
     await page.getByTestId("pies-dismiss").click();
+    await page.getByTestId("basket-big-tech").click();
     await expect(page.getByTestId("pies-builder")).toBeVisible();
   });
 
@@ -200,6 +217,7 @@ test.describe("pies page", () => {
     const controls: { failTicker?: string } = { failTicker: "AAPL" };
     await stubTrade(page, controls);
     await page.goto(`${server.url}/pies`);
+    await page.getByTestId("basket-big-tech").click({ timeout: 20_000 });
     await expect(page.getByTestId("pies-builder")).toBeVisible({ timeout: 20_000 });
     await setWeights(page, THREE);
     await page.getByTestId("pies-budget").fill("18.01");
@@ -225,6 +243,7 @@ test.describe("pies page", () => {
     await wallet(page);
     await stubTrade(page, { failTicker: "AAPL" });
     await page.goto(`${server.url}/pies`);
+    await page.getByTestId("basket-big-tech").click({ timeout: 20_000 });
     await expect(page.getByTestId("pies-builder")).toBeVisible({ timeout: 20_000 });
     await setWeights(page, THREE);
     await page.getByTestId("pies-budget").fill("18.01");
@@ -253,6 +272,7 @@ test.describe("pies page", () => {
           await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth),
         ).toBeLessThanOrEqual(0);
       await page.goto(`${server.url}/pies`);
+      await page.getByTestId("basket-big-tech").click({ timeout: 20_000 });
       await expect(page.getByTestId("pies-builder")).toBeVisible({ timeout: 20_000 });
       await noScroll();
       await page.screenshot({ path: `test-results/pies-builder-${w}.png`, fullPage: true });

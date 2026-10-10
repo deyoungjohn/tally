@@ -175,6 +175,5 @@ function buildEmptyMini(): PiesPageVM {
     selectedBasketId: null,
     plan: null,
     run: null,
-    roadmap: "Atomic baskets, auto-rebalancing and selling a basket: coming soon",
   };
 }

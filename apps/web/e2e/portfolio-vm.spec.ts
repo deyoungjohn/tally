@@ -574,7 +574,7 @@ test.describe("portfolio view model: states (stubbed routes)", () => {
     const links = await row.getByRole("link").allTextContents();
     expect([...links, ...labels].map((t) => t.trim())).toEqual(["Buy more", "Migrate", "Sell"]);
     await expect(page.getByTestId("group-NVDA")).not.toContainText("Average cost per share");
-    await expect(page.getByTestId("group-NVDA")).not.toContainText("Unrealized gain or loss");
+    await expect(page.getByTestId("group-NVDA")).not.toContainText("Unrealized PnL");
   });
 
   test("the chain's live balance beats the feed's older one, and a sold-out token disappears", async ({

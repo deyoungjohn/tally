@@ -1,7 +1,7 @@
 {
   "id": "mag7-preview",
   "name": "Mag 7 preview",
-  "description": "Example allocation, not advice",
+  "description": "The seven largest US tech companies",
   "executable": false,
   "holdings": [
     { "ticker": "AAPL", "targetWeightBps": 1429 },

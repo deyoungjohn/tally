@@ -82,9 +82,11 @@ function Leg({
             label="Delivered"
             value={
               delivered ? (
-                <span className="inline-flex items-center gap-1">
+                <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
                   {delivered}
-                  {leg.protectionPass && <CheckCircle2 className="w-3 h-3 shrink-0 text-white" />}
+                  {leg.protectionPass && (
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-white" aria-hidden />
+                  )}
                 </span>
               ) : null
             }

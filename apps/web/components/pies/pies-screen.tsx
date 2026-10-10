@@ -2,7 +2,7 @@
 // The Pies page: choose a basket, set a budget and a weight per stock, review, then buy the stocks one after another through
 // the guarantee. Built from the basket view model (`buildPiesPageVM`) and the run hook (`usePieRun`); no engine calls.
 
-import { Check, Plus, ShieldCheck } from "lucide-react";
+import { Check, Info, ShieldCheck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { formatUnits, parseDecimal } from "@tally/core";
 import { Button } from "@/components/motion/button";
@@ -52,6 +52,8 @@ export function PiesScreen({ initial }: { initial: PiesPageVM }) {
   const [budget, setBudget] = useState("30");
   const [weights, setWeights] = useState<Record<string, string>>(() => initialWeights(basket));
   const [reviewing, setReviewing] = useState(false);
+  // The builder (amount, weights) is a dialog over the page, opened from a basket card.
+  const [builderOpen, setBuilderOpen] = useState(false);
 
   // A different basket starts from its own weights.
   useEffect(() => setWeights(initialWeights(basket)), [basket]);
@@ -150,29 +152,23 @@ export function PiesScreen({ initial }: { initial: PiesPageVM }) {
         <>
           <section aria-label="Baskets">
             <h2 className="t-h3">Choose a basket</h2>
-            <div
-              role="radiogroup"
-              aria-label="Baskets"
-              className="mt-3 grid grid-cols-1 gap-3 min-[761px]:grid-cols-2"
-            >
+            <div className="mt-3 grid grid-cols-1 gap-3 min-[761px]:grid-cols-2">
               {initial.baskets.map((b) => {
-                const selected = b.id === basket.id;
-                return (
-                  <button
-                    key={b.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={selected}
-                    onClick={() => setBasketId(b.id)}
-                    data-testid={`basket-${b.id}`}
-                    className={cn(
-                      "glass min-w-0 p-5 text-left transition-colors",
-                      selected && "!border-[var(--hl-edge)] !bg-[var(--hl-soft)]",
-                    )}
-                  >
+                const selected = b.id === basket.id && builderOpen;
+                const body = (
+                  <>
                     <span className="flex items-center justify-between gap-3">
                       <span className="t-h3">{b.name}</span>
-                      {selected ? (
+                      {!b.available ? (
+                        <Tip text="This basket can't be bought yet. We're working on it and will open it as soon as it's ready.">
+                          <Info
+                            size={18}
+                            className="text-fg3"
+                            aria-label={`Why ${b.name} can't be bought yet`}
+                            data-testid={`basket-info-${b.id}`}
+                          />
+                        </Tip>
+                      ) : selected ? (
                         <Check size={18} style={{ color: "var(--orange-text)" }} aria-hidden />
                       ) : null}
                     </span>
@@ -186,7 +182,7 @@ export function PiesScreen({ initial }: { initial: PiesPageVM }) {
                         >
                           <TokenIcon ticker={t.ticker} size={16} />
                           <span className="font-semibold">{t.symbol}</span>
-                          {t.executable ? null : (
+                          {t.executable || !b.available ? null : (
                             <Tip text={t.reason ?? "Not enabled yet"} focusable={false}>
                               <span className="text-fg3">Not enabled yet</span>
                             </Tip>
@@ -194,228 +190,258 @@ export function PiesScreen({ initial }: { initial: PiesPageVM }) {
                         </span>
                       ))}
                     </span>
-                    <span className="t-meta mt-3 block">
-                      Minimum budget ${money(b.minimumBudgetUsdt, 0)}
-                    </span>
+                    {b.available ? (
+                      <span className="t-meta mt-3 block">
+                        Minimum budget ${money(b.minimumBudgetUsdt, 0)}
+                      </span>
+                    ) : null}
+                  </>
+                );
+                return b.available ? (
+                  <button
+                    key={b.id}
+                    type="button"
+                    aria-haspopup="dialog"
+                    onClick={() => {
+                      setBasketId(b.id);
+                      setBuilderOpen(true);
+                    }}
+                    data-testid={`basket-${b.id}`}
+                    className="glass min-w-0 p-5 text-left transition-colors"
+                  >
+                    {body}
                   </button>
+                ) : (
+                  <div
+                    key={b.id}
+                    data-testid={`basket-${b.id}`}
+                    aria-disabled="true"
+                    className="glass min-w-0 p-5 text-left opacity-70"
+                  >
+                    {body}
+                  </div>
                 );
               })}
             </div>
           </section>
 
-          <section
-            className="glass p-5 min-[561px]:p-6"
-            aria-label="Your basket"
-            data-testid="pies-builder"
+          <Modal
+            open={builderOpen && !reviewing}
+            onOpenChange={setBuilderOpen}
+            title={`${basket.name}: budget and weights`}
+            showClose
+            className="max-w-[640px]"
           >
-            <h2 className="t-h3">{basket.name}: budget and weights</h2>
+            <div aria-label="Your basket" data-testid="pies-builder">
+              <div className="mt-1 grid gap-1">
+                <label htmlFor="pies-budget" className="font-semibold">
+                  Budget (USDT)
+                </label>
+                <input
+                  id="pies-budget"
+                  data-testid="pies-budget"
+                  className="input num max-w-[220px]"
+                  inputMode="decimal"
+                  autoComplete="off"
+                  value={budget}
+                  onChange={(e) => setBudget(e.target.value)}
+                  aria-invalid={budgetUsdt === null}
+                />
+                <input
+                  type="range"
+                  aria-label="Budget slider"
+                  data-testid="pies-budget-slider"
+                  min={Math.ceil(minBudget)}
+                  max={Math.max(BUDGET_SLIDER_MAX, Math.ceil(minBudget))}
+                  step={1}
+                  value={Math.min(
+                    Math.max(Math.round(Number(budget) || 0), Math.ceil(minBudget)),
+                    Math.max(BUDGET_SLIDER_MAX, Math.ceil(minBudget)),
+                  )}
+                  onChange={(e) => setBudget(e.target.value)}
+                  className="pct-slider mt-2 max-w-[420px]"
+                  style={
+                    {
+                      "--p": `${
+                        ((Math.min(Math.max(Number(budget) || 0, minBudget), BUDGET_SLIDER_MAX) -
+                          minBudget) /
+                          Math.max(1, BUDGET_SLIDER_MAX - minBudget)) *
+                        100
+                      }%`,
+                    } as React.CSSProperties
+                  }
+                />
+                <p className="t-meta">
+                  Minimum ${money(basket.minimumBudgetUsdt, 0)} for this basket. Each stock needs at
+                  least $6.
+                </p>
+              </div>
 
-            <div className="mt-4 grid gap-1">
-              <label htmlFor="pies-budget" className="font-semibold">
-                Budget (USDT)
-              </label>
-              <input
-                id="pies-budget"
-                data-testid="pies-budget"
-                className="input num max-w-[220px]"
-                inputMode="decimal"
-                autoComplete="off"
-                value={budget}
-                onChange={(e) => setBudget(e.target.value)}
-                aria-invalid={budgetUsdt === null}
-              />
-              <input
-                type="range"
-                aria-label="Budget slider"
-                data-testid="pies-budget-slider"
-                min={Math.ceil(minBudget)}
-                max={Math.max(BUDGET_SLIDER_MAX, Math.ceil(minBudget))}
-                step={1}
-                value={Math.min(
-                  Math.max(Math.round(Number(budget) || 0), Math.ceil(minBudget)),
-                  Math.max(BUDGET_SLIDER_MAX, Math.ceil(minBudget)),
-                )}
-                onChange={(e) => setBudget(e.target.value)}
-                className="pct-slider mt-2 max-w-[420px]"
-                style={
-                  {
-                    "--p": `${
-                      ((Math.min(Math.max(Number(budget) || 0, minBudget), BUDGET_SLIDER_MAX) -
-                        minBudget) /
-                        Math.max(1, BUDGET_SLIDER_MAX - minBudget)) *
-                      100
-                    }%`,
-                  } as React.CSSProperties
-                }
-              />
-              <p className="t-meta">
-                Minimum ${money(basket.minimumBudgetUsdt, 0)} for this basket. Each stock needs at
-                least $6.
-              </p>
-            </div>
-
-            <div className="mt-6">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="font-semibold">Weight per stock</h3>
-                <span className="flex flex-wrap gap-2">
-                  <Button
-                    variant="glassy"
-                    onClick={() => {
-                      const eq = equalWeights(tickers);
-                      setWeights(
-                        Object.fromEntries(
-                          basket.tokens.map((t) => [t.ticker, bpsToPercent(eq[t.ticker] ?? 0)]),
-                        ),
-                      );
-                    }}
-                    data-testid="pies-equal"
-                  >
-                    Equal
-                  </Button>
-                  <Button
-                    variant="glassy"
-                    disabled={weightsOk || !parsed.valid}
-                    onClick={() => {
-                      const n = normaliseWeights(parsed.bps);
-                      if (n)
+              <div className="mt-6">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="font-semibold">Weight per stock</h3>
+                  <span className="flex flex-wrap gap-2">
+                    <Button
+                      variant="glassy"
+                      onClick={() => {
+                        const eq = equalWeights(tickers);
                         setWeights(
                           Object.fromEntries(
-                            basket.tokens.map((t) => [t.ticker, bpsToPercent(n[t.ticker] ?? 0)]),
+                            basket.tokens.map((t) => [t.ticker, bpsToPercent(eq[t.ticker] ?? 0)]),
                           ),
                         );
-                    }}
-                    data-testid="pies-normalise"
-                  >
-                    Make it 100%
-                  </Button>
-                </span>
-              </div>
-              <ul className="m-0 mt-3 grid list-none gap-3 p-0">
-                {basket.tokens.map((t) => {
-                  const bps = parsed.bps[t.ticker] ?? 0;
-                  return (
-                    <li
-                      key={t.symbol}
-                      className="panel grid gap-2 p-3"
-                      data-testid={`weight-${t.ticker}`}
+                      }}
+                      data-testid="pies-equal"
                     >
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="flex min-w-0 items-center gap-2.5">
-                          <TokenIcon ticker={t.ticker} size={24} />
-                          <span className="font-semibold">{t.symbol}</span>
-                          {t.executable ? null : <span className="t-meta">Not enabled yet</span>}
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                          <input
-                            aria-label={`Weight ${t.symbol} %`}
-                            className="input num !h-10 w-[84px] text-right"
-                            inputMode="decimal"
-                            autoComplete="off"
-                            value={weights[t.ticker] ?? ""}
-                            onChange={(e) => setWeights({ ...weights, [t.ticker]: e.target.value })}
-                            aria-invalid={percentToBps(weights[t.ticker] ?? "") === null}
-                          />
-                          <span aria-hidden>%</span>
-                        </span>
-                      </div>
-                      <PercentSlider
-                        value={bps / 100}
-                        onChange={(p) => setWeights({ ...weights, [t.ticker]: String(p) })}
-                        label={`${t.symbol} weight`}
-                        testId={`weight-slider-${t.ticker}`}
-                      />
-                    </li>
-                  );
-                })}
-              </ul>
-              <p
-                role="status"
-                className={cn("mt-3 font-semibold", weightsOk ? "text-up" : "text-red")}
-                data-testid="pies-total"
-              >
-                Total {parsed.valid ? bpsToPercent(parsed.total) : "–"}%
-                {weightsOk ? "" : ": must be 100%"}
-              </p>
-            </div>
-
-            {plan ? (
-              <div className="mt-6" data-testid="pies-preview">
-                <h3 className="font-semibold">What you would buy</h3>
-                <ul className="m-0 mt-3 grid list-none gap-2 p-0">
-                  {legs.map((leg) => (
-                    <li
-                      key={leg.id}
-                      className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5"
-                      data-testid={`preview-${leg.ticker}`}
+                      Equal
+                    </Button>
+                    <Button
+                      variant="glassy"
+                      disabled={weightsOk || !parsed.valid}
+                      onClick={() => {
+                        const n = normaliseWeights(parsed.bps);
+                        if (n)
+                          setWeights(
+                            Object.fromEntries(
+                              basket.tokens.map((t) => [t.ticker, bpsToPercent(n[t.ticker] ?? 0)]),
+                            ),
+                          );
+                      }}
+                      data-testid="pies-normalise"
                     >
-                      <span className="font-semibold">{leg.symbol}</span>
-                      {leg.executable ? (
-                        <span className="num text-right">
-                          ${money(leg.amountUsdt)}
-                          <span className="text-fg2">
-                            {" "}
-                            ·{" "}
-                            {leg.approximateSharesE18
-                              ? `about ${formatUnits(BigInt(leg.approximateSharesE18), 18, 4)} shares`
-                              : "shares unavailable"}
+                      Make it 100%
+                    </Button>
+                  </span>
+                </div>
+                <ul className="m-0 mt-3 grid list-none gap-3 p-0">
+                  {basket.tokens.map((t) => {
+                    const bps = parsed.bps[t.ticker] ?? 0;
+                    return (
+                      <li
+                        key={t.symbol}
+                        className="panel grid gap-2 p-3"
+                        data-testid={`weight-${t.ticker}`}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="flex min-w-0 items-center gap-2.5">
+                            <TokenIcon ticker={t.ticker} size={24} />
+                            <span className="font-semibold">{t.symbol}</span>
+                            {t.executable ? null : <span className="t-meta">Not enabled yet</span>}
                           </span>
-                        </span>
-                      ) : (
-                        <span className="text-fg2">
-                          Deferred: {leg.reason}
-                          {leg.amountUsdt !== "0"
-                            ? ` ($${money(leg.amountUsdt)} stays in your wallet)`
-                            : ""}
-                        </span>
-                      )}
-                    </li>
-                  ))}
+                          <span className="flex items-center gap-1.5">
+                            <input
+                              aria-label={`Weight ${t.symbol} %`}
+                              className="input num !h-10 w-[84px] text-right"
+                              inputMode="decimal"
+                              autoComplete="off"
+                              value={weights[t.ticker] ?? ""}
+                              onChange={(e) =>
+                                setWeights({ ...weights, [t.ticker]: e.target.value })
+                              }
+                              aria-invalid={percentToBps(weights[t.ticker] ?? "") === null}
+                            />
+                            <span aria-hidden>%</span>
+                          </span>
+                        </div>
+                        <PercentSlider
+                          value={bps / 100}
+                          onChange={(p) => setWeights({ ...weights, [t.ticker]: String(p) })}
+                          label={`${t.symbol} weight`}
+                          testId={`weight-slider-${t.ticker}`}
+                        />
+                      </li>
+                    );
+                  })}
                 </ul>
-                <dl className="mt-3">
-                  <div className="detail-row">
-                    <dt>Total of the buys</dt>
-                    <dd data-testid="pies-total-usdt">${money(plan.totalUsdt)}</dd>
-                  </div>
-                  <div className="detail-row">
-                    <dt>Unspent</dt>
-                    <dd data-testid="pies-unspent">${money(plan.unspentUsdt)}</dd>
-                  </div>
-                </dl>
-              </div>
-            ) : null}
-
-            {vm.error && weightsOk ? (
-              <p className="mt-3 text-red" role="alert">
-                {vm.error}
-              </p>
-            ) : null}
-            {flow.error ? (
-              <p className="mt-3 text-red" role="alert">
-                {flow.error}
-              </p>
-            ) : null}
-
-            <div className="mt-6">
-              {!wallet.authenticated ? (
-                <Button onClick={wallet.login} data-testid="pies-signin">
-                  Sign in to buy this basket
-                </Button>
-              ) : (
-                <Button
-                  disabled={!canStart}
-                  onClick={() => setReviewing(true)}
-                  data-testid="pies-start"
+                <p
+                  role="status"
+                  className={cn("mt-3 font-semibold", weightsOk ? "text-up" : "text-red")}
+                  data-testid="pies-total"
                 >
-                  Review and start
-                </Button>
-              )}
-              {blocker ? (
-                <p className="t-meta mt-2" data-testid="pies-blocker">
-                  {blocker}
+                  Total {parsed.valid ? bpsToPercent(parsed.total) : "–"}%
+                  {weightsOk ? "" : ": must be 100%"}
+                </p>
+              </div>
+
+              {plan ? (
+                <div className="mt-6" data-testid="pies-preview">
+                  <h3 className="font-semibold">What you would buy</h3>
+                  <ul className="m-0 mt-3 grid list-none gap-2 p-0">
+                    {legs.map((leg) => (
+                      <li
+                        key={leg.id}
+                        className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5"
+                        data-testid={`preview-${leg.ticker}`}
+                      >
+                        <span className="font-semibold">{leg.symbol}</span>
+                        {leg.executable ? (
+                          <span className="num text-right">
+                            ${money(leg.amountUsdt)}
+                            <span className="text-fg2">
+                              {" "}
+                              ·{" "}
+                              {leg.approximateSharesE18
+                                ? `about ${formatUnits(BigInt(leg.approximateSharesE18), 18, 4)} shares`
+                                : "shares unavailable"}
+                            </span>
+                          </span>
+                        ) : (
+                          <span className="text-fg2">
+                            Deferred: {leg.reason}
+                            {leg.amountUsdt !== "0"
+                              ? ` ($${money(leg.amountUsdt)} stays in your wallet)`
+                              : ""}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                  <dl className="mt-3">
+                    <div className="detail-row">
+                      <dt>Total of the buys</dt>
+                      <dd data-testid="pies-total-usdt">${money(plan.totalUsdt)}</dd>
+                    </div>
+                    <div className="detail-row">
+                      <dt>Unspent</dt>
+                      <dd data-testid="pies-unspent">${money(plan.unspentUsdt)}</dd>
+                    </div>
+                  </dl>
+                </div>
+              ) : null}
+
+              {vm.error && weightsOk ? (
+                <p className="mt-3 text-red" role="alert">
+                  {vm.error}
                 </p>
               ) : null}
+              {flow.error ? (
+                <p className="mt-3 text-red" role="alert">
+                  {flow.error}
+                </p>
+              ) : null}
+
+              <div className="mt-6">
+                {!wallet.authenticated ? (
+                  <Button onClick={wallet.login} data-testid="pies-signin">
+                    Sign in to buy this basket
+                  </Button>
+                ) : (
+                  <Button
+                    disabled={!canStart}
+                    onClick={() => setReviewing(true)}
+                    data-testid="pies-start"
+                  >
+                    Review and start
+                  </Button>
+                )}
+                {blocker ? (
+                  <p className="t-meta mt-2" data-testid="pies-blocker">
+                    {blocker}
+                  </p>
+                ) : null}
+              </div>
             </div>
-          </section>
+          </Modal>
         </>
       )}
 
@@ -430,10 +456,6 @@ export function PiesScreen({ initial }: { initial: PiesPageVM }) {
             "Build your own basket from the stocks you pick, name it, save it and share it, instead of choosing from Tally's list.",
         }}
       />
-
-      <p className="t-meta flex items-center gap-2" data-testid="pies-roadmap">
-        <Plus size={14} aria-hidden /> {vm.roadmap}
-      </p>
 
       <Modal
         open={reviewing && plan !== null}
@@ -474,6 +496,7 @@ export function PiesScreen({ initial }: { initial: PiesPageVM }) {
               <Button
                 onClick={() => {
                   setReviewing(false);
+                  setBuilderOpen(false);
                   void flow.start(plan);
                 }}
                 data-testid="pies-confirm"

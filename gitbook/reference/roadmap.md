@@ -9,6 +9,7 @@ What is not built, in no particular order. Each item is independent. The reposit
 * **Reliable 1-hour, 24-hour and 7-day windows** on every Radar panel. See [Radar and Flow](../modules/radar-and-flow.md).
 * **Pies beyond the first version.** Atomic baskets, batch buying, automatic rebalancing and selling a basket.
 * **Custom, user-defined baskets.** Create, name, save and share your own.
+* **Watchlists.** Follow tokenized stocks you don't hold yet, with their share price, liquidity grade and 24-hour change, and get Guardian alerts on them.
 * **Smart recommendations.** Suggestions based on what you hold, not one rotated list.
 * **Basket alerts in Guardian.** Tell users when something changes in a basket they bought.
 * **Paying with, or selling for, BNB.** USDT is the only trading currency today.

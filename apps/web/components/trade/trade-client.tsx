@@ -19,7 +19,6 @@ import { useSellFlow } from "./use-sell-flow";
 import { useLiveQuote, type QuoteAmount } from "@/lib/hooks/use-live-quote";
 import { fmtUsd, SESSION_LABEL } from "@/lib/format";
 import { isTokenBuyable, issuersOf, nameOf, tokenPair, tokenSymbol } from "@/lib/tickers";
-import { ComingSoon } from "./coming-soon";
 import { StockPicker } from "./stock-picker";
 import { SessionBadge } from "./badges";
 import { TradeFlowLayer, flowActionLabel } from "./flow-host";
@@ -397,7 +396,6 @@ function TradeInner({
                 {quote.error.message}
               </p>
             ) : null}
-            <ComingSoon items={["Limit price", "Recurring buys"]} title="Advanced · coming soon" />
           </div>
         </div>
       </div>

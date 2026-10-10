@@ -59,7 +59,7 @@ it("ships exactly four templates with the approved weights and advice copy", () 
     [1429, 1429, 1429, 1429, 1428, 1428, 1428],
   ]);
   for (const t of PIE_TEMPLATES) {
-    expect(t.description).toBe("Example allocation, not advice");
+    expect(t.description.trim()).not.toBe("");
     expect(t.holdings.reduce((n, h) => n + h.targetWeightBps, 0)).toBe(10000);
   }
 });

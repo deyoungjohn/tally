@@ -166,7 +166,6 @@ export function PiesMiniContent({ initial }: { initial: PiesPageVM }) {
           )}
         </section>
       )}
-      <p>{vm.roadmap}</p>
     </section>
   );
 }
