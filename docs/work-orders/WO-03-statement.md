@@ -9,6 +9,7 @@
 
 ## Owns
 
+- Approved 2026-10-10 (`docs/prompts/wo03-statement-pdf.md`): the PDF builder and button in `apps/web/components/portfolio/statement-vm.tsx` and a new `apps/web/components/portfolio/statement-pdf*` (+ tests), `apps/web/e2e/statement-pdf.spec.ts`, and the one new dependency `jspdf` in `apps/web/package.json` with its `pnpm-lock.yaml` change.
 - Approved 2026-10-09 (chief engineer request): token icons and documentation in `apps/web/public/tokens/**`, `docs/work-orders/WO-03-statement.md`.
 - Approved 2026-10-09 (`docs/prompts/wo03-portfolio-suggestions.md`): the `suggestions` field of the portfolio view model and its pure builder (`packages/mod-statement/src/suggestions*` and tests), `apps/web/modules/statement/**` and `apps/web/app/api/vm/portfolio/**` additively.
 - Approved 2026-10-09 (`docs/prompts/wo03-portfolio-speed.md`): `apps/web/app/api/portfolio/route.ts`; in `packages/engine/src/views.ts` only `portfolioFor` (and `radarFor` concurrency if the prompt's condition holds) and the engine-side cache of `inspectTicker`; their tests.
