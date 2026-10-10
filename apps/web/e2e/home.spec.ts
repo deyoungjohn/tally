@@ -89,14 +89,12 @@ test.describe("home behaviour", () => {
     await expect(page.getByTestId("trade-card")).toBeVisible();
   });
 
-  test("swapping out to BNB or USDT is shown but disabled", async ({ page }) => {
+  test("the hero trade card carries no Soon labels and nothing to sell", async ({ page }) => {
     await page.goto("/");
-    const swap = page.getByTestId("home-card").getByRole("region", { name: "Coming soon" });
-    await expect(swap).toContainText("Sell to BNB");
-    await expect(swap).toContainText("Soon");
-    await expect(swap).not.toContainText("Sell to USDT");
-    await expect(swap).not.toContainText("Migrate between issuers");
-    expect(await swap.getByRole("button").count()).toBe(0);
+    const card = page.getByTestId("home-card");
+    await expect(card).toBeVisible();
+    await expect(card.getByRole("region", { name: "Coming soon" })).toHaveCount(0);
+    await expect(card).not.toContainText("Sell to");
   });
 
   test("the nav bar stays nearly clear when you scroll", async ({ page }) => {
@@ -387,8 +385,8 @@ test.describe("hero rolling line and cards", () => {
       timeout: 8_000,
     });
     await expect(cur).toHaveText("Migrate across issuers seamlessly");
-    await expect(page.getByTestId("hero-panel-1")).toContainText("Migrate NVDAon to NVDAB");
-    await expect(page.getByTestId("hero-panel-1")).toContainText("Example");
+    await expect(page.getByTestId("hero-panel-1")).toContainText("Migrate across issuers");
+    await expect(page.getByTestId("hero-panel-1")).toContainText("Example numbers");
     const after = await page.getByTestId("hero-actions").boundingBox();
     expect(Math.abs((after?.y ?? 0) - (top?.y ?? 0))).toBeLessThan(2);
   });
@@ -401,13 +399,17 @@ test.describe("hero rolling line and cards", () => {
     await expect(page.getByTestId("rolling-current").last()).toHaveText(
       "Buy stock baskets without hassle",
     );
-    await expect(page.getByTestId("hero-panel-3")).toContainText("Big Tech basket");
+    await expect(page.getByTestId("hero-panel-3")).toContainText("Stock baskets");
     await page.waitForTimeout(4500);
     await expect(page.getByTestId("hero-panel-3")).toHaveAttribute("data-active", "true");
     // Inactive cards cannot be reached with the keyboard or a screen reader.
     await expect(page.getByTestId("hero-panel-0")).toHaveAttribute("aria-hidden", "true");
     await page.getByTestId("hero-dot-0").click();
-    await expect(page.getByTestId("home-get")).toBeVisible();
+    await expect(page.getByTestId("hero-trade-mock")).toBeVisible();
+    // Tapping the mock fades it into the real, live card.
+    await page.getByTestId("hero-trade-mock").click();
+    await expect(page.getByTestId("home-get")).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByTestId("hero-trade-live")).toHaveCSS("opacity", "1");
   });
 
   test("with reduced motion it stays on the first phrase and card", async ({ browser }) => {

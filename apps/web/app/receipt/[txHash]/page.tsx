@@ -7,7 +7,7 @@ import { moduleFlags } from "@/lib/flags";
 import { loadReceipt } from "@/modules/receipts/view-model";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Transaction receipt · Tally" };
+export const metadata: Metadata = { title: "Transaction Receipt | Tally" };
 
 /** The shareable receipt for one transaction. Public chain data: no wallet or sign-in needed. 404 with the receipts flag off. */
 export default async function Page({ params }: { params: Promise<{ txHash: string }> }) {

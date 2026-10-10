@@ -1,131 +1,157 @@
-// The four sample cards beside the hero's rolling line. They are illustrations with made-up round numbers, labelled "Example":
-// nothing here is live data. Matching copy lives in the sections below.
+// The cards in the hero carousel. They share one layout, like a listing card: a picture area on top (an illustration of the
+// feature with made-up round numbers, labelled "Example"), then a title, two lines of text and a small meta line. Nothing here
+// is live data; the live trade card replaces the first one when it is tapped (see `hero-stage.tsx`).
 
-import { ArrowRight, Bell, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeftRight,
+  Bell,
+  MousePointerClick,
+  Radar as RadarIcon,
+  ShoppingBasket,
+} from "lucide-react";
 import type { ReactNode } from "react";
 
-function Sample({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <div
-      className="glass flex h-full flex-col justify-center p-5 min-[561px]:p-6"
-      data-testid="hero-sample"
-    >
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-[18px] font-bold">{title}</p>
-        <span className="t-meta rounded-full border border-line px-2.5 py-0.5">Example</span>
-      </div>
-      <div className="mt-4">{children}</div>
-    </div>
-  );
+export interface HeroCardSpec {
+  key: string;
+  title: string;
+  text: string;
+  meta: ReactNode;
+  art: ReactNode;
 }
 
-const Row = ({ k, v }: { k: string; v: ReactNode }) => (
-  <div className="detail-row">
-    <dt>{k}</dt>
-    <dd>{v}</dd>
-  </div>
+const Chip = ({ children }: { children: ReactNode }) => (
+  <span className="rounded-full border border-white/20 bg-black/40 px-2.5 py-1 text-[13px] font-semibold">
+    {children}
+  </span>
 );
 
-function Migrate() {
-  return (
-    <Sample title="Migrate NVDAon to NVDAB">
-      <div className="flex items-center gap-3">
-        <span className="panel flex-1 p-3">
-          <span className="t-meta block">Step 1 · you sell</span>
-          <span className="num block text-[19px] font-bold">0.250 NVDAon</span>
+const ExampleTag = () => (
+  <span className="absolute bottom-3 left-4 text-[12.5px] font-medium text-white/70">
+    Example numbers
+  </span>
+);
+
+const Meta = ({ icon, children }: { icon: ReactNode; children: ReactNode }) => (
+  <span className="flex items-center gap-2 text-[14.5px] text-fg2">
+    {icon}
+    {children}
+  </span>
+);
+
+export const HERO_CARDS: HeroCardSpec[] = [
+  {
+    key: "trade",
+    title: "Trade at the best prices",
+    text: "Compare every issuer in share units and buy from the cheapest, with the shares you get guaranteed.",
+    meta: <Meta icon={<MousePointerClick size={16} aria-hidden />}>Tap to try it live</Meta>,
+    art: (
+      <div className="grid h-full content-center gap-3 px-6">
+        <span className="t-meta">You pay</span>
+        <span className="num text-[44px] font-bold leading-none">$6</span>
+        <span className="t-meta">You receive at the best price</span>
+        <span className="num text-[26px] font-bold leading-none">
+          0.026 <span className="text-[17px] text-fg2">NVDAon shares</span>
         </span>
-        <ArrowRight size={18} aria-hidden className="shrink-0 text-fg2" />
-        <span className="panel flex-1 p-3">
-          <span className="t-meta block">Step 2 · you buy</span>
-          <span className="num block text-[19px] font-bold">0.249 NVDAB</span>
-        </span>
+        <ExampleTag />
       </div>
-      <dl className="m-0 mt-4">
-        <Row k="Shares you gave up" v="2.500" />
-        <Row k="Shares you received" v="2.490" />
-        <Row k="Dollar difference" v="$0.00" />
-      </dl>
-      <p className="t-meta mt-3">Two confirmed steps, then a receipt that compares the shares.</p>
-    </Sample>
-  );
-}
-
-function Alerts() {
-  const items: [string, string][] = [
-    ["NVDAon", "Trading is paused by the issuer."],
-    ["AAPLB", "Shares per token changed from 1.000 to 1.002."],
-    ["TSLAx", "Liquidity grade dropped from B to D."],
-  ];
-  return (
-    <Sample title="Guardian alerts">
-      <ul className="m-0 grid list-none gap-3 p-0">
-        {items.map(([t, m]) => (
-          <li key={t} className="panel flex items-start gap-3 p-3">
-            <Bell size={16} aria-hidden className="mt-1 shrink-0 text-[var(--orange-text)]" />
-            <span className="min-w-0">
-              <span className="block font-semibold">{t}</span>
-              <span className="block text-[15px] text-fg2">{m}</span>
+    ),
+  },
+  {
+    key: "migrate",
+    title: "Migrate across issuers",
+    text: "Move a holding from one issuer to another in two confirmed steps. A receipt compares the shares.",
+    meta: <Meta icon={<ArrowLeftRight size={16} aria-hidden />}>Ondo to bStock</Meta>,
+    art: (
+      <div className="grid h-full content-center gap-4 px-6">
+        <div className="flex items-center justify-between gap-3">
+          <span className="panel flex-1 p-3">
+            <span className="t-meta block">You sell</span>
+            <span className="num block text-[19px] font-bold">0.250 NVDAon</span>
+          </span>
+          <ArrowLeftRight size={18} aria-hidden className="shrink-0 text-[var(--orange-text)]" />
+          <span className="panel flex-1 p-3">
+            <span className="t-meta block">You buy</span>
+            <span className="num block text-[19px] font-bold">0.249 NVDAB</span>
+          </span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Chip>2.500 shares out</Chip>
+          <Chip>2.490 shares in</Chip>
+        </div>
+        <ExampleTag />
+      </div>
+    ),
+  },
+  {
+    key: "alerts",
+    title: "Alerts about your holdings",
+    text: "A pause, a change in shares per token or a drop in liquidity, sent to you on Telegram as it happens.",
+    meta: <Meta icon={<Bell size={16} aria-hidden />}>Guardian</Meta>,
+    art: (
+      <div className="grid h-full content-center gap-2.5 px-6">
+        {(
+          [
+            ["NVDAon", "Trading paused by the issuer"],
+            ["AAPLB", "Shares per token 1.000 to 1.002"],
+            ["TSLAx", "Liquidity grade fell from B to D"],
+          ] as const
+        ).map(([t, m]) => (
+          <span key={t} className="panel flex items-center gap-3 p-2.5">
+            <Bell size={15} aria-hidden className="shrink-0 text-[var(--orange-text)]" />
+            <span className="min-w-0 text-[14.5px] leading-tight">
+              <b className="block">{t}</b>
+              <span className="text-fg2">{m}</span>
             </span>
-          </li>
+          </span>
         ))}
-      </ul>
-      <p className="t-meta mt-3">Sent to you on Telegram as it happens.</p>
-    </Sample>
-  );
-}
-
-function Baskets() {
-  const stocks = ["NVDAB", "AAPLB", "GOOGLB", "MSFTB", "METAB"];
-  return (
-    <Sample title="Big Tech basket">
-      <p className="num text-[28px] font-bold leading-none">$30</p>
-      <p className="t-meta mt-1">budget, 20% to each stock</p>
-      <ul className="m-0 mt-4 grid list-none gap-2.5 p-0">
-        {stocks.map((s) => (
-          <li key={s} className="flex items-center gap-3">
-            <span className="w-[68px] shrink-0 font-semibold">{s}</span>
-            <span className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
-              <span className="block h-full w-1/5 min-w-[20%] rounded-full bg-[var(--orange)]" />
+        <ExampleTag />
+      </div>
+    ),
+  },
+  {
+    key: "baskets",
+    title: "Stock baskets, no hassle",
+    text: "Pick a basket, set a budget and the weights, and Tally buys each stock with its own guaranteed minimum.",
+    meta: <Meta icon={<ShoppingBasket size={16} aria-hidden />}>Big Tech · $30</Meta>,
+    art: (
+      <div className="grid h-full content-center gap-2.5 px-6">
+        {["NVDAB", "AAPLB", "GOOGLB", "MSFTB", "METAB"].map((s) => (
+          <span key={s} className="flex items-center gap-3 text-[14.5px]">
+            <span className="w-[62px] shrink-0 font-semibold">{s}</span>
+            <span className="h-2 flex-1 overflow-hidden rounded-full bg-white/15">
+              <span className="block h-full w-[40%] rounded-full bg-[var(--orange)]" />
             </span>
-            <span className="num w-[44px] text-right text-fg2">$6.00</span>
-          </li>
+            <span className="num w-[40px] text-right text-fg2">$6</span>
+          </span>
         ))}
-      </ul>
-      <p className="t-meta mt-3">Each stock is bought with its own guaranteed minimum.</p>
-    </Sample>
-  );
-}
-
-function Radar() {
-  const rows: [string, string, string, boolean][] = [
-    ["NVDAon", "10 shares per token", "Liquid", true],
-    ["AAPLB", "1 share per token", "Liquid", true],
-    ["TSLAx", "$10 traded in 24 hours", "Not Tradable", false],
-  ];
-  return (
-    <Sample title="Radar">
-      <ul className="m-0 grid list-none gap-3 p-0">
-        {rows.map(([t, note, badge, ok]) => (
-          <li key={t} className="panel flex items-center justify-between gap-3 p-3">
-            <span className="min-w-0">
-              <span className="block font-semibold">{t}</span>
-              <span className="block text-[15px] text-fg2">{note}</span>
+        <ExampleTag />
+      </div>
+    ),
+  },
+  {
+    key: "radar",
+    title: "Spot liquid tokens",
+    text: "Every token is graded A to F, and unit traps, like ten shares in one token, are flagged before you buy.",
+    meta: <Meta icon={<RadarIcon size={16} aria-hidden />}>Radar</Meta>,
+    art: (
+      <div className="grid h-full content-center gap-2.5 px-6">
+        {(
+          [
+            ["NVDAon", "10 shares per token", "Liquid", true],
+            ["AAPLB", "1 share per token", "Liquid", true],
+            ["TSLAx", "$10 traded in 24 h", "Not Tradable", false],
+          ] as const
+        ).map(([t, n, b, ok]) => (
+          <span key={t} className="panel flex items-center justify-between gap-3 p-2.5">
+            <span className="min-w-0 text-[14.5px] leading-tight">
+              <b className="block">{t}</b>
+              <span className="text-fg2">{n}</span>
             </span>
-            <span className={ok ? "badge badge-up" : "badge badge-amber"}>{badge}</span>
-          </li>
+            <span className={ok ? "badge badge-up" : "badge badge-amber"}>{b}</span>
+          </span>
         ))}
-      </ul>
-      <p className="t-meta mt-3 flex items-center gap-2">
-        <ShieldCheck size={14} aria-hidden /> One token can be ten shares. Radar says so before you
-        buy.
-      </p>
-    </Sample>
-  );
-}
-
-export const HeroSamples: ReactNode[] = [
-  <Migrate key="m" />,
-  <Alerts key="a" />,
-  <Baskets key="b" />,
-  <Radar key="r" />,
+        <ExampleTag />
+      </div>
+    ),
+  },
 ];

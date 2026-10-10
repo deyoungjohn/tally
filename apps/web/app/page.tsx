@@ -77,11 +77,73 @@ export default function Home() {
                 className="shape ring float absolute -bottom-16 -right-5 z-0 h-20 w-20 opacity-60"
               />
               <div className="relative z-10">
-                <HeroPanels trade={<HomeTradeCard />} />
+                <HeroPanels trade={<HomeTradeCard compact />} />
               </div>
             </div>
           </div>
         </HeroStage>
+      </section>
+
+      <section id="more" className={SCREEN} aria-labelledby="more-title">
+        <Reveal>
+          <div className="mx-auto w-full max-w-[980px]">
+            <div className="text-center">
+              <h2 id="more-title" className="t-h2">
+                You can do many things with tokenized stocks on Tally
+              </h2>
+              <p className="t-lead mx-auto mt-3 max-w-[56ch]">
+                Buying is the start. Tally also moves your holdings between issuers, buys whole
+                baskets, watches your tokens and keeps your records.
+              </p>
+            </div>
+            <ul className="m-0 mt-10 grid list-none grid-cols-1 gap-4 p-0 min-[761px]:grid-cols-2">
+              {(
+                [
+                  [
+                    ArrowLeftRight,
+                    "Migrate",
+                    "Move a holding from one issuer to another in two confirmed steps. A receipt compares the shares you gave up with the shares you received.",
+                    "/portfolio",
+                    "Open Portfolio",
+                  ],
+                  [
+                    ShoppingBasket,
+                    "Baskets",
+                    "Pick a basket, set a budget and how much goes to each stock, and Tally buys them one after another, each with its own guaranteed minimum.",
+                    "/pies",
+                    "Open Baskets",
+                  ],
+                  [
+                    Bell,
+                    "Guardian",
+                    "Alerts about the tokens you hold: a trading pause, a change in shares per token or a drop in liquidity grade, sent to you on Telegram.",
+                    "/guardian",
+                    "Open Guardian",
+                  ],
+                  [
+                    FileText,
+                    "Statements",
+                    "Everything you bought and sold, counted in shares, with a statement you can download as a PDF or a CSV.",
+                    "/portfolio",
+                    "Open Portfolio",
+                  ],
+                ] as const
+              ).map(([Icon, h, b, href, cta]) => (
+                <li key={h} className="panel flex min-w-0 flex-col gap-3 p-5">
+                  <p className="flex items-center gap-2 text-[18px] font-bold">
+                    <Icon size={18} aria-hidden /> {h}
+                  </p>
+                  <p className="flex-1 text-[15px] text-fg2">{b}</p>
+                  <div>
+                    <ButtonLink href={href} variant="glassy">
+                      {cta} <ArrowRight size={16} aria-hidden />
+                    </ButtonLink>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </Reveal>
       </section>
 
       <section id="trade" className={SCREEN} aria-labelledby="trade-title">
@@ -96,8 +158,8 @@ export default function Home() {
               </h2>
               <p className="t-lead mt-3 max-w-[50ch]">
                 The same ticker is not the same amount of stock. Issuers define a token differently,
-                so raw prices mislead. Tally converts everything into shares first, then ranks the
-                issuers by what you actually pay, network fee included.{" "}
+                so raw prices mislead. Tally converts everything into unit shares first, then ranks
+                the issuers by what you actually pay, network fee included.{" "}
                 <LearnMore concept="shares" />
               </p>
               <ul className="m-0 mt-6 grid list-none gap-3 p-0">
@@ -225,69 +287,6 @@ export default function Home() {
             <div className="min-w-0">
               <HomeRadarPreview />
             </div>
-          </div>
-        </Reveal>
-      </section>
-
-      <section id="more" className={SCREEN} aria-labelledby="more-title">
-        <Reveal>
-          <div className="mx-auto w-full max-w-[980px]">
-            <div className="text-center">
-              <p className="t-kicker">Everything else</p>
-              <h2 id="more-title" className="t-h2 mt-3">
-                Everything you do with tokenized stocks, in one app.
-              </h2>
-              <p className="t-lead mx-auto mt-3 max-w-[56ch]">
-                Buying is the start. Tally also moves your holdings between issuers, buys whole
-                baskets, watches your tokens and keeps your records.
-              </p>
-            </div>
-            <ul className="m-0 mt-10 grid list-none grid-cols-1 gap-4 p-0 min-[761px]:grid-cols-2">
-              {(
-                [
-                  [
-                    ArrowLeftRight,
-                    "Migrate",
-                    "Move a holding from one issuer to another in two confirmed steps. A receipt compares the shares you gave up with the shares you received.",
-                    "/portfolio",
-                    "Open Portfolio",
-                  ],
-                  [
-                    ShoppingBasket,
-                    "Baskets",
-                    "Pick a basket, set a budget and how much goes to each stock, and Tally buys them one after another, each with its own guaranteed minimum.",
-                    "/pies",
-                    "Open Baskets",
-                  ],
-                  [
-                    Bell,
-                    "Guardian",
-                    "Alerts about the tokens you hold: a trading pause, a change in shares per token or a drop in liquidity grade, sent to you on Telegram.",
-                    "/guardian",
-                    "Open Guardian",
-                  ],
-                  [
-                    FileText,
-                    "Statements",
-                    "Everything you bought and sold, counted in shares, with a statement you can download as a PDF or a CSV.",
-                    "/portfolio",
-                    "Open Portfolio",
-                  ],
-                ] as const
-              ).map(([Icon, h, b, href, cta]) => (
-                <li key={h} className="panel flex min-w-0 flex-col gap-3 p-5">
-                  <p className="flex items-center gap-2 text-[18px] font-bold">
-                    <Icon size={18} aria-hidden /> {h}
-                  </p>
-                  <p className="flex-1 text-[15px] text-fg2">{b}</p>
-                  <div>
-                    <ButtonLink href={href} variant="glassy">
-                      {cta} <ArrowRight size={16} aria-hidden />
-                    </ButtonLink>
-                  </div>
-                </li>
-              ))}
-            </ul>
           </div>
         </Reveal>
       </section>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LegalPage } from "@/components/legal-page";
 import { TERMS, TERMS_INTRO } from "@/lib/legal-content";
 
-export const metadata: Metadata = { title: "Terms of Use · Tally" };
+export const metadata: Metadata = { title: "Terms of Use | Tally" };
 
 export default function Terms() {
   return (

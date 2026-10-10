@@ -25,7 +25,7 @@ import { TrendUsd } from "@/components/motion/live";
 /* ----------------------------------------------------------------- hero card */
 
 /** The minimalist trade card on Home: pick a stock, type dollars, see the best live price. The real flow lives on /trade. */
-export function HomeTradeCard() {
+export function HomeTradeCard({ compact = false }: { compact?: boolean }) {
   const wallet = useTallyWallet();
   const flow = useTradeFlow();
   const { phase } = flow;
@@ -53,7 +53,11 @@ export function HomeTradeCard() {
   };
 
   return (
-    <section className="gcard w-full" aria-label="Quick quote" data-testid="home-card">
+    <section
+      className={`gcard w-full ${compact ? "gcard-compact" : ""}`}
+      aria-label="Quick quote"
+      data-testid="home-card"
+    >
       <TradeFlowLayer flow={flow} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <StockPicker value={ticker} onChange={setTicker} />
@@ -148,9 +152,11 @@ export function HomeTradeCard() {
           {phase.message}
         </p>
       ) : null}
-      <div className="mt-3">
-        <ComingSoon title="Coming soon" items={["Sell to BNB"]} />
-      </div>
+      {compact ? null : (
+        <div className="mt-3">
+          <ComingSoon title="Coming soon" items={["Sell to BNB"]} />
+        </div>
+      )}
       <p className="t-meta mt-3">
         Tokenized stocks track a US stock&apos;s price. They are not the underlying shares.
       </p>
@@ -264,7 +270,7 @@ function HomeRadarLegacy() {
     ? [...data.rows]
         .filter((r) => r.grade !== "A" && r.grade !== "B")
         .sort((a, b) => "FDCBA".indexOf(a.grade) - "FDCBA".indexOf(b.grade))
-        .slice(0, 4)
+        .slice(0, 2)
     : [];
   return (
     <div data-testid="home-radar">

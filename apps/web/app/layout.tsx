@@ -25,9 +25,9 @@ const jetbrains = localFont({
 
 export const metadata: Metadata = {
   icons: { icon: [{ url: "/favicon.svg", type: "image/svg+xml" }] },
-  title: "Tally: the everything app for tokenized stocks on BSC",
+  title: "Tally | The everything app for tokenized stocks on BSC",
   description:
-    "Compare tokenized versions of the same US stock across Ondo, bStocks and xStocks on BNB Chain, in share units, and buy at the best price with an on-chain minimum-shares guarantee. Not the underlying shares.",
+    "Tally is the everything app for tokenized stocks on BNB Smart Chain: compare Ondo, bStocks and xStocks in share units, buy at the best price with a minimum-shares guarantee, migrate between issuers, buy baskets and get alerts. Not the underlying shares.",
 };
 
 export const viewport: Viewport = {

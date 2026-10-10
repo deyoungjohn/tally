@@ -120,6 +120,7 @@ test.describe("radar view model: real route on a seeded server", () => {
     });
     await page.goto(`${server.url}/radar`);
     await page.getByRole("radio", { name: "Flow" }).click({ timeout: 20_000 });
+    await expect(page.getByTestId("tab-subtitle")).toHaveAttribute("data-active", "flow");
     const table = page.getByTestId("radarvm-whales-ondo");
     await expect(table.getByRole("table")).toBeVisible();
     await expect(table.getByRole("row")).toHaveCount(3);

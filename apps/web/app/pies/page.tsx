@@ -1,13 +1,18 @@
 // "Pies" was the module's first name and still names the code (module, flag, route, files). The product calls them Baskets.
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Info } from "lucide-react";
 import { PiesScreen } from "@/components/pies/pies-screen";
 import { VmDegraded } from "@/components/portfolio/vm-shared";
 import { moduleFlags } from "@/lib/flags";
 import { loadPiesPage } from "@/modules/pies/view-model";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Baskets: buy a basket of tokenized stocks · Tally" };
+export const metadata: Metadata = {
+  title: "Baskets | Tally",
+  description:
+    "Buy a basket of tokenized stocks in one go: pick a basket, set a budget and the weights.",
+};
 
 /**
  * Buy a basket of tokenized stocks, one after another through the guarantee. 404 with the `pies` flag off.
@@ -31,6 +36,10 @@ export default async function Page() {
         Pick a basket, set a budget and how much goes to each stock, and Tally buys them one after
         another. Each purchase has its own guaranteed minimum, and you confirm each one in your
         wallet.
+      </p>
+      <p className="t-meta mt-3 flex items-center gap-2" data-testid="baskets-signin-note">
+        <Info size={14} aria-hidden /> For the best experience with baskets, sign in with Google or
+        email.
       </p>
       <div className="mt-8">{content}</div>
     </main>

@@ -7,7 +7,7 @@ import { loadMigrateReceipt } from "@/lib/server/migrate-receipt";
 import { MigrateReceiptView } from "@/components/trade/migrate-receipt-view";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Migrate receipt · Tally" };
+export const metadata: Metadata = { title: "Migrate Receipt | Tally" };
 
 export default async function Page({
   params,

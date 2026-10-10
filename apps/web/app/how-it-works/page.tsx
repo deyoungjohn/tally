@@ -3,7 +3,11 @@ import { ArrowRight } from "lucide-react";
 import { ButtonLink } from "@/components/motion/button";
 import { GRADE_BANDS, GRADE_INTRO, GRADE_RULES } from "@/lib/grade-rules";
 
-export const metadata: Metadata = { title: "How it works · Tally" };
+export const metadata: Metadata = {
+  title: "How It Works | Tally",
+  description:
+    "How Tally compares tokenized stocks in share units, buys from the best issuer and guarantees the shares you receive.",
+};
 
 const DOCS_URL = "https://docs.tallyprotocol.xyz";
 
@@ -96,7 +100,7 @@ export default function HowItWorks() {
             <h3 id="how-unit-trap">The unit trap</h3>
             <p className="mt-2">
               A <b>unit trap</b> is when a token is more than one share, so its price and balance
-              look off by that factor. Tally flags it with a badge wherever it can mislead you.
+              look off by that factor. Tally flags it with a badge.
             </p>
             <h3>The multiplier changes</h3>
             <p className="mt-2">

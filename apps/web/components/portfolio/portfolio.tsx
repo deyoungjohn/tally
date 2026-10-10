@@ -12,6 +12,8 @@ import { MigrateSheet } from "@/components/trade/migrate-sheet";
 import { useMigrateFlow } from "@/components/trade/use-migrate-flow";
 import { useModuleFlagsState } from "@/lib/hooks/use-flags";
 import { PortfolioVmPanel } from "./portfolio-vm";
+import { TabSubtitle } from "@/components/tab-subtitle";
+import type { PortfolioTab } from "@/modules/statement/view-model";
 import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { useJson } from "@/lib/hooks/use-json";
 import { ISSUER_LABEL } from "@/lib/format";
@@ -207,6 +209,7 @@ export function PortfolioPage() {
       })),
   );
   const [confirmedSales, setConfirmedSales] = useState(0);
+  const [tab, setTab] = useState<PortfolioTab>("holdings");
   useEffect(() => {
     if (sell.phase.name === "confirmed") {
       reload();
@@ -220,10 +223,21 @@ export function PortfolioPage() {
       <h1 className="t-h2 mt-3 max-w-[22ch]">
         Your tokenized stock holdings from different issuers, counted as one.
       </h1>
-      <p className="t-lead mt-3 max-w-[62ch]">
-        Tally counts tokenized stocks from different issuers tracking the same US share as one, by
-        multiplying each by its current multiplier. <LearnMore concept="shares" />
-      </p>
+      <TabSubtitle
+        className="mt-3"
+        active={address ? tab : "holdings"}
+        items={{
+          holdings: (
+            <>
+              Tally counts tokenized stocks from different issuers tracking the same US stock as
+              one, by multiplying each by its current multiplier. <LearnMore concept="shares" />
+            </>
+          ),
+          activity: "All your tokenized stock transactions on BNB Chain, recorded in one place.",
+          statement:
+            "Export a statement of your wallet activity the TradFi way. Only tokenized stock transactions are included in the statements.",
+        }}
+      />
 
       {!address ? (
         <div className="mt-8 grid grid-cols-1 gap-6 min-[981px]:grid-cols-2">
@@ -278,6 +292,7 @@ export function PortfolioPage() {
       ) : useVm ? (
         <PortfolioVmPanel
           address={address}
+          onTabChange={setTab}
           refreshKey={confirmedSales}
           onSell={canSell ? (t) => void sell.open(t) : undefined}
           onMigrate={canMigrate ? (t, to) => void migrate.open(t, to) : undefined}

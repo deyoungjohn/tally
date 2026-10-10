@@ -11,8 +11,8 @@ export const CONCEPTS: Record<string, Concept> = {
     id: "shares",
     title: "Why Tally counts in shares",
     paragraphs: [
-      "A tokenized stock is not always one share per token. Ondo's NFLXon token is ten shares (bStock's NFLXB is one), and issuers change the number of shares per token over time (for dividends and stock splits).",
-      "Comparing token prices would therefore mislead you. Tally multiplies every token by its current share multiplier, so every quote, balance and guarantee is in the same unit: shares of the stock.",
+      "A tokenized stock is not always one share per token. E.g. As of 02-10-26, Ondo's NFLXon token is ten shares while bStock's NFLXB is one, and issuers change the number of shares per token over time (for dividends and stock splits).",
+      "Therefore, comparing token prices might be misleading. Tally multiplies every token by its current share multiplier, so every quote, balance and guarantee is in the same unit: shares of the stock.",
     ],
   },
   guarantee: {
@@ -20,7 +20,7 @@ export const CONCEPTS: Record<string, Concept> = {
     title: "How the minimum is guaranteed",
     paragraphs: [
       "Your trade goes through a smart contract that holds nothing between transactions. After the swap it counts the shares your tokens are worth and reverts the whole transaction if they are below the minimum you saw.",
-      "Because the check runs on-chain, it does not depend on Tally, on the route, or on a promise: if the minimum is not met, nothing is spent except the network fee of the failed attempt.",
+      "Because the check runs onchain, it does not depend on Tally, on the route, or on a promise: if the minimum is not met, nothing is spent except the network fee of the failed attempt.",
     ],
   },
   slippage: {

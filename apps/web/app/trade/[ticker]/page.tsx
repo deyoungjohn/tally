@@ -11,7 +11,10 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { ticker } = await params;
   const t = ticker.toUpperCase();
-  return { title: `${nameOf(t)} (${t}): tokenized shares at the best price · Tally` };
+  return {
+    title: `${nameOf(t)} (${t}) | Tally`,
+    description: `Compare every issuer of ${nameOf(t)} in share units and buy tokenized ${t} at the best price.`,
+  };
 }
 
 export default async function TradePage({ params, searchParams }: Props) {

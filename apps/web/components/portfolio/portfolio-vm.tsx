@@ -72,14 +72,18 @@ export function PortfolioVmPanel({
   onSell,
   onMigrate,
   refreshKey,
+  onTabChange,
 }: {
   address: string;
+  /** Told whenever the visible tab changes, so the page can change its subtitle with it. */
+  onTabChange?: (t: PortfolioTab) => void;
   onSell?: (t: SellTarget) => void;
   onMigrate?: (t: SellTarget, toIssuer: "ondo" | "bstock") => void;
   /** Changes when something happened that may have moved the holdings (a sale confirmed): refetch. */
   refreshKey?: number;
 }) {
   const [tab, setTab] = useState<PortfolioTab>("holdings");
+  useEffect(() => onTabChange?.(tab), [tab, onTabChange]);
   const q = encodeURIComponent(address);
   // A wallet the statement worker has not read yet answers "empty, suggestions unavailable". That is not the real answer, so the
   // page shows its loading state (never the empty card) and asks again every 2 s, for at most 8 s.

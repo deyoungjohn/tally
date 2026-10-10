@@ -1087,3 +1087,41 @@ body {
   outline-offset: 3px;
   border-radius: 4px;
 }
+
+/* The trade card inside the hero carousel is tighter so it fits the shared card size. */
+.gcard-compact {
+  padding: 16px;
+}
+.gcard-compact .amount-input {
+  font-size: 40px;
+}
+.gcard-compact .field {
+  padding: 12px 14px;
+}
+.gcard-compact .t-big {
+  font-size: 32px !important;
+}
+
+/* Hero carousel: one card size everywhere. --hc-w is the card, --hc-step the distance between card centres. */
+.hero-track {
+  --hc-w: min(400px, 80vw);
+  --hc-h: 560px;
+  --hc-step: calc(var(--hc-w) * 0.78);
+  height: var(--hc-h);
+}
+.hero-card {
+  transition:
+    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, opacity;
+}
+@media (max-width: 560px) {
+  .hero-track {
+    --hc-h: 600px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-card {
+    transition: none;
+  }
+}

@@ -7,7 +7,9 @@ const COLS = [
     links: [
       ["Trade", "/trade"],
       ["Portfolio", "/portfolio"],
+      ["Baskets", "/pies"],
       ["Radar", "/radar"],
+      ["Guardian", "/guardian"],
     ],
   },
   {
@@ -16,10 +18,9 @@ const COLS = [
       ["How it works", "/how-it-works"],
       ["FAQ", "/#faq"],
       ["Docs", "https://docs.tallyprotocol.xyz"],
-      ["Contracts and proof", "/docs#contracts"],
     ],
   },
-  { h: "Community", links: [["GitHub", "https://github.com/deyoungjohn/tally"]] },
+  { h: "Links", links: [["GitHub", "https://github.com/deyoungjohn/tally"]] },
   {
     h: "Legal",
     links: [

@@ -44,15 +44,20 @@ export function MigrateTab({ flow }: { flow: ReturnType<typeof useMigrateFlow> }
 
   return (
     <section className="wrap pb-24 pt-6" aria-label="Migrate stocks" data-testid="migrate-tab">
-      <h1 className="t-h2 !text-[clamp(28px,4.5vw,40px)]">Migrate stocks</h1>
-      <p className="t-lead mt-3 max-w-[62ch]">
+      <h1 className="t-h2 !text-[clamp(28px,4.5vw,40px)] min-[761px]:text-center">
+        Migrate stocks
+      </h1>
+      <p className="t-lead mt-3 max-w-[62ch] min-[761px]:mx-auto min-[761px]:text-center">
         Move a holding to the other issuer, keeping the same stock. Tally sells it for USDT, then
         buys the same stock from the other issuer. Each step is confirmed by you, and nothing is
         sent until you do.
       </p>
 
       {!wallet.authenticated ? (
-        <div className="glass mt-6 max-w-[560px] p-6" data-testid="migrate-signed-out">
+        <div
+          className="glass mx-auto mt-6 max-w-[560px] p-6 min-[761px]:text-center"
+          data-testid="migrate-signed-out"
+        >
           <p className="font-semibold">Sign in to see what you can migrate</p>
           <p className="mt-1 text-fg2">Your holdings are read from your wallet.</p>
           <Button className="mt-4" onClick={() => wallet.login()} disabled={!wallet.ready}>
@@ -60,17 +65,17 @@ export function MigrateTab({ flow }: { flow: ReturnType<typeof useMigrateFlow> }
           </Button>
         </div>
       ) : portfolio.loading && !portfolio.data ? (
-        <div className="skeleton mt-6 h-[120px] max-w-[560px]" aria-busy="true" />
+        <div className="skeleton mx-auto mt-6 h-[120px] max-w-[560px]" aria-busy="true" />
       ) : portfolio.error && !portfolio.data ? (
-        <p role="alert" className="mt-6 text-amber">
+        <p role="alert" className="mt-6 text-amber min-[761px]:text-center">
           {portfolio.error}
         </p>
       ) : parts.length === 0 ? (
-        <p className="mt-6 text-fg2" data-testid="migrate-empty">
+        <p className="mt-6 text-fg2 min-[761px]:text-center" data-testid="migrate-empty">
           You don&apos;t hold any Ondo or bStock tokens to migrate.
         </p>
       ) : (
-        <ul className="m-0 mt-6 grid max-w-[720px] list-none gap-3 p-0">
+        <ul className="m-0 mx-auto mt-6 grid max-w-[720px] list-none gap-3 p-0">
           {parts.map((p) => (
             <OndoGate key={p.address} ticker={p.ticker} issuer="ondo">
               {(ondoClosed) => {

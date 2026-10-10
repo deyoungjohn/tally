@@ -479,11 +479,24 @@ function RadarMasonry({
   );
 }
 
-export function RadarVmBody() {
+export type RadarView = "tokens" | "flow";
+
+export function RadarVmBody({
+  view: viewProp,
+  onViewChange,
+}: {
+  view?: RadarView;
+  onViewChange?: (v: RadarView) => void;
+} = {}) {
   const { data: env, error } = useJson<VmEnvelope<RadarDisplay>>("/api/vm/radar", {
     refreshMs: 60_000,
   });
-  const [view, setView] = useState<"tokens" | "flow">("tokens");
+  const [viewLocal, setViewLocal] = useState<RadarView>("tokens");
+  const view = viewProp ?? viewLocal;
+  const setView = (v: RadarView) => {
+    setViewLocal(v);
+    onViewChange?.(v);
+  };
   const [filter, setFilter] = useState<Filter>("all");
   const [q, setQ] = useState("");
   const vm = env?.vm ?? null;
@@ -634,7 +647,7 @@ export function HomeRadarVm() {
       all
         .filter(flagged)
         .sort((a, b) => rank(b) - rank(a) || "ABCDF".indexOf(b.grade) - "ABCDF".indexOf(a.grade))
-        .slice(0, 4),
+        .slice(0, 2),
     [all],
   );
   return (

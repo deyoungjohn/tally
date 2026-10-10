@@ -15,7 +15,8 @@ import { isTokenBuyable, issuersOf } from "@/lib/tickers";
 import { Tip } from "@/components/ui/tooltip";
 import { LearnMore } from "@/components/learn-more";
 import { useModuleFlagsState } from "@/lib/hooks/use-flags";
-import { RadarVmBody } from "./radar-vm";
+import { RadarVmBody, type RadarView } from "./radar-vm";
+import { TabSubtitle } from "@/components/tab-subtitle";
 import { HowWeGradeLink } from "./how-we-grade-link";
 
 export const useRadar = () => useJson<RadarReport>("/api/radar");
@@ -234,20 +235,29 @@ function RadarLegacyBody() {
 /** The full Radar page. With the `flow` flag on the grades and flow panels come from the flow module's view models. */
 export function RadarPage() {
   const { flags, ready } = useModuleFlagsState();
+  const [view, setView] = useState<RadarView>("tokens");
   return (
     <main id="main" className="wrap pb-24 pt-10 min-[561px]:pt-14">
       <p className="t-kicker">Radar</p>
-      <h1 className="t-h2 mt-3 max-w-[22ch]">Spot the tokens that would mislead you.</h1>
-      <p className="t-lead mt-3 max-w-[62ch]">
-        The same ticker can be a different amount of stock, a market nobody trades, or data that
-        disagrees with itself. Radar grades every token A to F and says why, in plain words.{" "}
-        <LearnMore concept="liquidity" />
-      </p>
+      <h1 className="t-h2 mt-3 max-w-[22ch]">Spot liquid and non-tradable tokens in a glance.</h1>
+      <TabSubtitle
+        className="mt-3"
+        active={flags.flow ? view : "tokens"}
+        items={{
+          tokens: (
+            <>
+              Radar grades every token A to F and tells you why, in plain words.{" "}
+              <LearnMore concept="liquidity" />
+            </>
+          ),
+          flow: "Flow shows you how liquidity is flowing in and out of a token in real time.",
+        }}
+      />
 
       {!ready ? (
         <div className="mt-8 skeleton h-[96px]" aria-busy="true" />
       ) : flags.flow ? (
-        <RadarVmBody />
+        <RadarVmBody view={view} onViewChange={setView} />
       ) : (
         <RadarLegacyBody />
       )}

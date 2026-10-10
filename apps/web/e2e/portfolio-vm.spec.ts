@@ -115,6 +115,10 @@ test.describe("portfolio view model: real routes on a seeded server", () => {
     await mockWallet(page);
     await page.goto(`${server.url}/portfolio`);
     await page.getByRole("radio", { name: "Statement" }).click({ timeout: 20_000 });
+    await expect(page.getByTestId("tab-subtitle")).toHaveAttribute("data-active", "statement");
+    await expect(page.getByTestId("tab-subtitle-statement")).toContainText(
+      "Export a statement of your wallet activity the TradFi way",
+    );
     await expect(page.getByTestId("st-table")).toBeVisible({ timeout: 20_000 });
     await expect(page.getByTestId("st-table")).toContainText("Sale");
     await expect(page.getByTestId("st-converted")).toContainText("converted at today's ratio");
@@ -134,6 +138,10 @@ test.describe("portfolio view model: real routes on a seeded server", () => {
     await mockWallet(page);
     await page.goto(`${server.url}/portfolio`);
     await page.getByRole("radio", { name: "Activity" }).click({ timeout: 20_000 });
+    await expect(page.getByTestId("tab-subtitle")).toHaveAttribute("data-active", "activity");
+    await expect(page.getByTestId("tab-subtitle-activity")).toContainText(
+      "All your tokenized stock transactions on BNB Chain",
+    );
     await expect(page.getByTestId("vm-activity")).toBeVisible({ timeout: 20_000 });
     await expect(
       page.getByTestId("vm-activity").getByTestId("activity-status").first(),
