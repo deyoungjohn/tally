@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { TokenIcon } from "@/components/ui/token-icon";
 import { Download } from "lucide-react";
 import { Button } from "@/components/motion/button";
@@ -66,9 +67,27 @@ export function StatementVmView({
   // The table lists tokenized stocks only. A line with no issuer is not one (for example BNB or USDT moving as part of a swap).
   const lines = [...recent, ...vm.lines].filter((l) => l.issuer !== null);
   const anyRealized = vm.lines.some((l) => l.realizedPnlUsd !== undefined);
+
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+
+  const handleDownloadPdf = async () => {
+    setPdfLoading(true);
+    setPdfError(null);
+    try {
+      const { downloadStatementPdf } = await import("./statement-pdf");
+      await downloadStatementPdf(vm);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "PDF generation failed";
+      setPdfError(`Could not generate PDF: ${message}. Please try downloading CSV.`);
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
   return (
-    <div className="grid gap-4" data-testid="vm-statement">
-      <section className="glass p-5" aria-label="Statement totals">
+    <div className="grid grid-cols-1 min-w-0 gap-4" data-testid="vm-statement">
+      <section className="glass min-w-0 p-5" aria-label="Statement totals">
         <dl>
           <div className="detail-row">
             <dt>Value today</dt>
@@ -106,27 +125,54 @@ export function StatementVmView({
             No sale in this statement could be matched to a cost, so no realized figure is shown.
           </p>
         )}
-        <div className="mt-4">
+        <div className="mt-4 flex flex-wrap items-center gap-3">
           <Button variant="glassy" onClick={() => downloadCsv(vm)} data-testid="st-csv">
             <Download size={16} aria-hidden /> Download statement CSV
           </Button>
+          <Button
+            variant="glassy"
+            onClick={handleDownloadPdf}
+            disabled={pdfLoading}
+            data-testid="st-pdf"
+          >
+            <Download size={16} aria-hidden />{" "}
+            {pdfLoading ? "Generating PDF..." : "Download statement PDF"}
+          </Button>
         </div>
+        {pdfError ? (
+          <p role="alert" className="t-meta mt-2 text-amber" data-testid="st-pdf-error">
+            {pdfError}
+          </p>
+        ) : null}
       </section>
 
       {vm.differsFromApiNote ? (
-        <p role="note" className="t-meta text-amber" data-testid="st-differs">
+        <p
+          role="note"
+          className="t-meta break-words text-amber [overflow-wrap:anywhere]"
+          data-testid="st-differs"
+        >
           {vm.differsFromApiNote}
         </p>
       ) : null}
       {vm.convertedAtTodaysRatioNote ? (
-        <p role="note" className="t-meta" data-testid="st-converted">
+        <p
+          role="note"
+          className="t-meta break-words [overflow-wrap:anywhere]"
+          data-testid="st-converted"
+        >
           {vm.convertedAtTodaysRatioNote}
         </p>
       ) : null}
       {vm.notes.length > 0 ? (
-        <ul className="t-meta m-0 list-disc pl-5" data-testid="st-notes">
+        <ul
+          className="t-meta m-0 list-disc break-words pl-5 [overflow-wrap:anywhere]"
+          data-testid="st-notes"
+        >
           {vm.notes.map((n) => (
-            <li key={n}>{n}</li>
+            <li key={n} className="break-words [overflow-wrap:anywhere]">
+              {n}
+            </li>
           ))}
         </ul>
       ) : null}
