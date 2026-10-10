@@ -369,38 +369,77 @@ test.describe("back to top", () => {
   });
 });
 
-test.describe("hero rolling line", () => {
-  test("the line rolls to the next phrase by itself and the page never jumps", async ({ page }) => {
+test.describe("hero rolling line and cards", () => {
+  // Automation never auto-rotates (so other tests can type in the card); these tests look like a real browser.
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() =>
+      Object.defineProperty(navigator, "webdriver", { get: () => false }),
+    );
+  });
+
+  test("the line and the card roll together, and the page never jumps", async ({ page }) => {
     await page.goto("/");
     const cur = page.getByTestId("rolling-current").last();
     await expect(cur).toHaveText("Trade at the best prices");
+    await expect(page.getByTestId("hero-panel-0")).toHaveAttribute("data-active", "true");
     const top = await page.getByTestId("hero-actions").boundingBox();
-    await expect(cur).not.toHaveText("Trade at the best prices", { timeout: 6_000 });
+    await expect(page.getByTestId("hero-panel-1")).toHaveAttribute("data-active", "true", {
+      timeout: 8_000,
+    });
+    await expect(cur).toHaveText("Migrate across issuers seamlessly");
+    await expect(page.getByTestId("hero-panel-1")).toContainText("Migrate NVDAon to NVDAB");
+    await expect(page.getByTestId("hero-panel-1")).toContainText("Example");
     const after = await page.getByTestId("hero-actions").boundingBox();
     expect(Math.abs((after?.y ?? 0) - (top?.y ?? 0))).toBeLessThan(2);
-    await expect(page.getByTestId("rolling-text")).toContainText("avoid unit traps");
   });
 
-  test("with reduced motion it stays on the first phrase", async ({ browser }) => {
+  test("a dot picks a card and stops the rotation; touching the trade card also stops it", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await page.getByTestId("hero-dot-3").click();
+    await expect(page.getByTestId("rolling-current").last()).toHaveText(
+      "Buy stock baskets without hassle",
+    );
+    await expect(page.getByTestId("hero-panel-3")).toContainText("Big Tech basket");
+    await page.waitForTimeout(4500);
+    await expect(page.getByTestId("hero-panel-3")).toHaveAttribute("data-active", "true");
+    // Inactive cards cannot be reached with the keyboard or a screen reader.
+    await expect(page.getByTestId("hero-panel-0")).toHaveAttribute("aria-hidden", "true");
+    await page.getByTestId("hero-dot-0").click();
+    await expect(page.getByTestId("home-get")).toBeVisible();
+  });
+
+  test("with reduced motion it stays on the first phrase and card", async ({ browser }) => {
     const ctx = await browser.newContext({ reducedMotion: "reduce" });
     const page = await ctx.newPage();
+    await page.addInitScript(() =>
+      Object.defineProperty(navigator, "webdriver", { get: () => false }),
+    );
     await page.goto("/");
+    await page.waitForTimeout(4500);
     await expect(page.getByTestId("rolling-current")).toHaveText("Trade at the best prices");
-    await page.waitForTimeout(3500);
-    await expect(page.getByTestId("rolling-current")).toHaveText("Trade at the best prices");
+    await expect(page.getByTestId("hero-panel-0")).toHaveAttribute("data-active", "true");
     await ctx.close();
   });
 
-  test("the hero says what Tally is and the page has no horizontal scroll at 375px", async ({
-    browser,
-  }) => {
-    const ctx = await browser.newContext({ viewport: { width: 375, height: 812 } });
-    const page = await ctx.newPage();
-    await page.goto("/");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("everything app");
-    expect(
-      await page.evaluate(() => document.documentElement.scrollWidth - innerWidth),
-    ).toBeLessThanOrEqual(0);
-    await ctx.close();
-  });
+  for (const w of [375, 768, 1280]) {
+    test(`at ${w}px every card fits, the page does not scroll sideways`, async ({ browser }) => {
+      const ctx = await browser.newContext({ viewport: { width: w, height: 812 } });
+      const page = await ctx.newPage();
+      await page.goto("/");
+      await expect(page.getByRole("heading", { level: 1 })).toContainText("everything app");
+      for (let i = 0; i < 5; i++) {
+        await page.getByTestId(`hero-dot-${i}`).click();
+        await expect(page.getByTestId(`hero-panel-${i}`)).toHaveAttribute("data-active", "true");
+        expect(
+          await page.evaluate(() => document.documentElement.scrollWidth - innerWidth),
+        ).toBeLessThanOrEqual(0);
+      }
+      await page.getByTestId("hero-dot-1").click();
+      await page.waitForTimeout(700);
+      await page.screenshot({ path: `test-results/hero-migrate-${w}.png` });
+      await ctx.close();
+    });
+  }
 });

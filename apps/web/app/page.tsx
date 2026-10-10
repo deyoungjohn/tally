@@ -20,74 +20,68 @@ import { HeroActions } from "@/components/home/hero-actions";
 import { ButtonLink } from "@/components/motion/button";
 import { Reveal } from "@/components/reveal";
 import { HomeFaq } from "@/components/home/faq";
-import { RollingText } from "@/components/home/rolling-text";
+import { HeroLine, HeroPanels, HeroStage } from "@/components/home/hero-stage";
 import { LearnMore } from "@/components/learn-more";
 
 /** One screen per feature on a 16" desktop: Trade, Portfolio, Radar, the rest of the app, then the FAQ. */
 const SCREEN =
   "wrap flex scroll-mt-24 flex-col justify-center py-14 min-[981px]:min-h-[calc(100svh-96px)] min-[981px]:py-10";
 
-const HERO_PHRASES = [
-  "Trade at the best prices",
-  "Migrate across issuers seamlessly",
-  "Receive alerts about your holdings",
-  "Buy stock baskets without hassle",
-  "Spot liquid tokens at a glance and avoid unit traps",
-] as const;
-
 export default function Home() {
   return (
     <main id="main">
       <section className={SCREEN} aria-labelledby="hero-title">
-        <div className="grid grid-cols-1 items-center gap-12 min-[981px]:grid-cols-[1.05fr_.95fr]">
-          <div className="min-w-0">
-            <p className="eyebrow glass !rounded-full blur-in">
-              <span>
-                Live on BNB Chain · <b>Ondo · bStocks · xStocks</b>
-              </span>
-            </p>
-            <h1 id="hero-title" className="t-display mt-6">
-              <span
-                className="blur-in blur-in-word"
-                style={{ "--d": "60ms" } as React.CSSProperties}
+        <HeroStage>
+          <div className="grid grid-cols-1 items-center gap-12 min-[981px]:grid-cols-[1.05fr_.95fr]">
+            <div className="min-w-0">
+              <p className="eyebrow glass !rounded-full blur-in">
+                <span>
+                  Live on BNB Chain · <b>Ondo · bStocks · xStocks</b>
+                </span>
+              </p>
+              <h1 id="hero-title" className="t-display mt-6">
+                <span
+                  className="blur-in blur-in-word"
+                  style={{ "--d": "60ms" } as React.CSSProperties}
+                >
+                  Tally, the <span className="fade-text">everything app</span>
+                </span>{" "}
+                <br />
+                <span
+                  className="blur-in blur-in-word dim-text"
+                  style={{ "--d": "160ms" } as React.CSSProperties}
+                >
+                  for tokenized stocks on BSC.
+                </span>
+              </h1>
+              <p
+                className="blur-in mt-5 text-[clamp(20px,2.6vw,28px)] font-semibold leading-[1.25] tracking-[-0.02em] text-[var(--orange-text)]"
+                style={{ "--d": "260ms" } as React.CSSProperties}
               >
-                Tally, the <span className="fade-text">everything app</span>
-              </span>{" "}
-              <br />
+                <HeroLine />
+              </p>
+              <p className="t-lead mt-5 max-w-[54ch]">
+                Trade, migrate, track and protect tokenized stocks in one place. Tally compares
+                every issuer in share units, buys from the best one, and cancels any trade that
+                would give you fewer shares than promised.
+              </p>
+              <HeroActions />
+            </div>
+            <div className="relative mx-auto w-full max-w-[520px] min-w-0 min-[981px]:max-w-none">
               <span
-                className="blur-in blur-in-word dim-text"
-                style={{ "--d": "160ms" } as React.CSSProperties}
-              >
-                for tokenized stocks on BSC.
-              </span>
-            </h1>
-            <p
-              className="blur-in mt-5 text-[clamp(20px,2.6vw,28px)] font-semibold leading-[1.25] tracking-[-0.02em] text-[var(--orange-text)]"
-              style={{ "--d": "260ms" } as React.CSSProperties}
-            >
-              <RollingText phrases={HERO_PHRASES} />
-            </p>
-            <p className="t-lead mt-5 max-w-[54ch]">
-              Trade, migrate, track and protect tokenized stocks in one place. Tally compares every
-              issuer in share units, buys from the best one, and cancels any trade that would give
-              you fewer shares than promised.
-            </p>
-            <HeroActions />
-          </div>
-          <div className="relative mx-auto w-full max-w-[520px] min-w-0 min-[981px]:max-w-none">
-            <span
-              aria-hidden
-              className="shape sphere drift absolute -right-6 -top-10 z-0 h-20 w-20 opacity-90"
-            />
-            <span
-              aria-hidden
-              className="shape ring float absolute -bottom-16 -right-5 z-0 h-20 w-20 opacity-60"
-            />
-            <div className="relative z-10">
-              <HomeTradeCard />
+                aria-hidden
+                className="shape sphere drift absolute -right-6 -top-10 z-0 h-20 w-20 opacity-90"
+              />
+              <span
+                aria-hidden
+                className="shape ring float absolute -bottom-16 -right-5 z-0 h-20 w-20 opacity-60"
+              />
+              <div className="relative z-10">
+                <HeroPanels trade={<HomeTradeCard />} />
+              </div>
             </div>
           </div>
-        </div>
+        </HeroStage>
       </section>
 
       <section id="trade" className={SCREEN} aria-labelledby="trade-title">
