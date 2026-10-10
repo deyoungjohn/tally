@@ -219,8 +219,8 @@ export default function Home() {
                 Answers to your burning questions.
               </h2>
               <p className="t-meta mx-auto mt-4 max-w-[60ch]">
-                Tally compares and executes at your instruction; it
-                doesn&apos;t recommend what to buy.
+                Tally compares and executes at your instruction; it doesn&apos;t recommend what to
+                buy.
               </p>
             </div>
             <div className="min-w-0">
