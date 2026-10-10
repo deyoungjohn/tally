@@ -212,18 +212,20 @@ export default function Home() {
 
       <section id="faq" className={SCREEN} aria-labelledby="faq-title">
         <Reveal>
-          <div className="grid grid-cols-1 gap-10 min-[981px]:grid-cols-[.8fr_1.2fr]">
-            <div>
+          <div className="mx-auto grid w-full max-w-[760px] grid-cols-1 gap-8">
+            <div className="text-center">
               <p className="t-kicker">FAQ</p>
               <h2 id="faq-title" className="t-h2 mt-3">
                 Questions, answered plainly.
               </h2>
-              <p className="t-meta mt-6">
+              <p className="t-meta mx-auto mt-4 max-w-[60ch]">
                 Not investment advice. Tally compares and executes at your instruction; it
                 doesn&apos;t recommend what to buy. Not available in restricted regions.
               </p>
             </div>
-            <HomeFaq />
+            <div className="min-w-0">
+              <HomeFaq />
+            </div>
           </div>
         </Reveal>
       </section>
