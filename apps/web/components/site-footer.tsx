@@ -13,9 +13,9 @@ const COLS = [
   {
     h: "Learn",
     links: [
-      ["How it works", "/docs#how"],
+      ["How it works", "/how-it-works"],
       ["FAQ", "/#faq"],
-      ["Docs", "/docs"],
+      ["Docs", "https://docs.tallyprotocol.xyz"],
       ["Contracts and proof", "/docs#contracts"],
     ],
   },

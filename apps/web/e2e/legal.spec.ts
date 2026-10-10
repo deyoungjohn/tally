@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 const WIDTHS = [375, 768, 1280] as const;
 
 test.describe("legal pages and the footer", () => {
-  for (const path of ["/", "/trade", "/docs", "/terms", "/privacy"]) {
+  for (const path of ["/", "/trade", "/docs", "/how-it-works", "/terms", "/privacy"]) {
     test(`the copyright line and the Legal links are in the footer of ${path}`, async ({
       page,
     }) => {

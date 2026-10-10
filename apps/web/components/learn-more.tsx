@@ -37,7 +37,7 @@ export function LearnMore({
           ))}
         </div>
         <Link
-          href={`/docs#how-${c.id}`}
+          href={`/how-it-works#how-${c.id}`}
           onClick={() => setOpen(false)}
           className="btn btn-glassy mt-5 w-full no-underline"
         >

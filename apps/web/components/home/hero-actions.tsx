@@ -15,7 +15,7 @@ export function HeroActions() {
         <ButtonLink href="/trade">
           Get Started <ArrowRight size={16} aria-hidden />
         </ButtonLink>
-        <ButtonLink href="/docs#how" variant="glassy">
+        <ButtonLink href="/how-it-works" variant="glassy">
           How it works
         </ButtonLink>
       </div>

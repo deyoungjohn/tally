@@ -157,7 +157,10 @@ test.describe("radar view model: real route on a seeded server", () => {
     await expect(page.getByTestId("how-we-grade-modal")).toContainText(
       "Little/no trading activity",
     );
-    await expect(page.getByTestId("how-we-grade-docs")).toHaveAttribute("href", "/docs#how-grades");
+    await expect(page.getByTestId("how-we-grade-docs")).toHaveAttribute(
+      "href",
+      "/how-it-works#how-grades",
+    );
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("how-we-grade-modal")).toHaveCount(0);
     // Flow tab: the busiest token is shown by default; only a click changes it, and only one is shown.

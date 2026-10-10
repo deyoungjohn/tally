@@ -54,9 +54,9 @@ test.describe("round 3", () => {
       .evaluate((el) => getComputedStyle(el).backdropFilter);
     expect(blur).toContain("blur");
     const link = dialog.getByRole("link", { name: "Tell me more" });
-    await expect(link).toHaveAttribute("href", "/docs#how-guarantee");
+    await expect(link).toHaveAttribute("href", "/how-it-works#how-guarantee");
     await link.click();
-    await expect(page).toHaveURL(/\/docs#how-guarantee$/);
+    await expect(page).toHaveURL(/\/how-it-works#how-guarantee$/);
     await expect(page.locator("#how-guarantee")).toBeAttached();
   });
 

@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { ExternalLink } from "lucide-react";
 import { SHAREGUARD_DEPLOYED } from "@tally/config";
-import { CONCEPTS } from "@/lib/concepts";
-import { GRADE_BANDS, GRADE_INTRO, GRADE_RULES } from "@/lib/grade-rules";
 
-export const metadata: Metadata = { title: "Docs: how Tally works · Tally" };
+export const metadata: Metadata = { title: "Docs: contracts and proof · Tally" };
+
+const DOCS_URL = "https://docs.tallyprotocol.xyz";
 
 const BSCSCAN = "https://bscscan.com";
 const GUARD = SHAREGUARD_DEPLOYED;
@@ -36,11 +36,7 @@ function Ext({ href, children }: { href: string; children: React.ReactNode }) {
 }
 
 const NAV = [
-  ["tokenized", "What you are buying"],
-  ["how", "How a buy works"],
-  ["guarantee", "The guarantee"],
-  ["fees", "Fees and limits"],
-  ["data", "Where the data comes from"],
+  ["developers", "Developer docs"],
   ["contracts", "Contracts and proof"],
   ["disclaimer", "Availability and disclaimer"],
 ] as const;
@@ -49,7 +45,7 @@ export default function Docs() {
   return (
     <main id="main" className="wrap pb-24 pt-10 min-[561px]:pt-14">
       <p className="t-kicker">Docs</p>
-      <h1 className="t-h2 mt-3">How Tally works.</h1>
+      <h1 className="t-h2 mt-3">Contracts, proof and the developer docs.</h1>
       <div className="mt-8 grid grid-cols-1 gap-8 min-[981px]:grid-cols-[240px_minmax(0,1fr)]">
         <nav
           aria-label="On this page"
@@ -66,130 +62,19 @@ export default function Docs() {
           </ul>
         </nav>
         <div className="grid min-w-0 gap-6 [&_h2]:t-h3 [&_p]:text-fg2 [&_p]:leading-7 [&_section]:glass [&_section]:scroll-mt-28 [&_section]:p-6 min-[561px]:[&_section]:p-8">
-          <section id="tokenized">
-            <h2>What you are buying</h2>
+          <section id="developers">
+            <h2>Developer documentation</h2>
             <p className="mt-3">
-              Tokenized shares: tokens issued by Ondo and bStocks that follow a US stock&apos;s
-              price on BNB Smart Chain. You do not own the underlying share and get no shareholder
-              rights. Each issuer&apos;s own terms apply. Tally is a secondary-market comparison and
-              trading tool: it never mints or redeems tokens, and nothing here is investment advice.
+              How Tally was built, the architecture, the smart contract, the product modules, the
+              challenges we hit and the roadmap are written up for developers in the docs. Looking
+              for the plain-language guide instead? Read{" "}
+              <a className="link-text" href="/how-it-works">
+                How it works
+              </a>
+              .
             </p>
             <p className="mt-3">
-              A token is not always one share. Ondo&apos;s NFLXon token is ten shares, bStock&apos;s
-              NFLXB is one. Tally multiplies every token by its share multiplier so all quotes are
-              in the same unit: shares.
-            </p>
-          </section>
-
-          <section id="how">
-            <h2>How a buy works</h2>
-            <ol className="mt-3 grid list-decimal gap-2 pl-6 text-fg2 leading-7">
-              <li>
-                Tally quotes every issuer at the same moment, converts to shares and ranks them by
-                price per share with the network fee included.
-              </li>
-              <li>
-                You pick an amount (from $6) and sign in. Your wallet is created with your email;
-                you sign everything yourself.
-              </li>
-              <li>
-                If you have not allowed Tally to spend that exact USDT amount yet, you approve
-                exactly that amount, never unlimited.
-              </li>
-              <li>
-                Tally builds a fresh quote, estimates the network fee, and simulates the trade at
-                the exact gas limit it will send. If the simulation fails you are not asked to sign.
-              </li>
-              <li>
-                You see the minimum shares you will receive, confirm, and sign. The receipt shows
-                the shares delivered, read from the on-chain event.
-              </li>
-            </ol>
-          </section>
-
-          <section id="concepts">
-            <h2>The reasoning behind each number</h2>
-            <p className="mt-3">
-              The short explanations on the site (the “Learn more” links) end here. The full
-              write-ups, with references, are being written.
-            </p>
-            <div className="mt-4 grid gap-4">
-              {Object.values(CONCEPTS).map((c) => (
-                <div key={c.id} id={`how-${c.id}`} className="scroll-mt-28">
-                  <h3 className="font-semibold text-fg">{c.title}</h3>
-                  {c.paragraphs.map((t) => (
-                    <p key={t} className="mt-2">
-                      {t}
-                    </p>
-                  ))}
-                  <p className="t-meta mt-2">Full write-up with references: coming soon.</p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section id="guarantee">
-            <h2>The guarantee</h2>
-            <p className="mt-3">
-              The trade runs through a smart contract called ShareGuard that holds nothing between
-              transactions. It buys through an allow-listed route, counts the shares your tokens are
-              worth, and reverts the whole transaction if they are below your minimum. The route,
-              the issuers&apos; pause checks and the Ondo share multiplier (a signed, bounded feed)
-              are all enforced on-chain.
-            </p>
-            <p className="mt-3">
-              ShareGuard v1 has not been independently audited. Test-size amounts only until it has
-              been.
-            </p>
-          </section>
-
-          <section id="fees">
-            <h2>Fees and limits</h2>
-            <ul className="mt-3 grid list-disc gap-2 pl-6 text-fg2 leading-7">
-              <li>
-                Tally adds no fee. You pay the BNB Smart Chain network fee, about 2 to 5 cents, and
-                the issuer&apos;s spread inside the price.
-              </li>
-              <li>
-                The minimum buy is $6 (Ondo requires $5 in dollars; USDT is worth slightly under
-                $1).
-              </li>
-              <li>
-                You need USDT and a few cents of BNB, both on BNB Smart Chain (BEP-20). Anything
-                sent on another network is lost.
-              </li>
-              <li>
-                Price tolerance defaults to 1%. It decides the minimum shares you are guaranteed.
-              </li>
-            </ul>
-          </section>
-
-          <section id="data">
-            <h2>Where the data comes from</h2>
-            <p className="mt-3">
-              Quotes and routes come from the Binance Web3 API. Share multipliers come from the
-              token contracts where they exist (bStocks, xStocks) and from the issuer data for Ondo,
-              with a bounds check on every change. Integrity grades on Radar combine these sources
-              and show every reason. If a source fails, Tally says so rather than guessing.
-            </p>
-          </section>
-
-          <section id="how-grades" className="scroll-mt-28">
-            <h2>How a Radar grade is made</h2>
-            <p className="mt-3">{GRADE_INTRO}</p>
-            <ul className="m-0 mt-3 grid list-none gap-2 p-0">
-              {GRADE_RULES.map(([h, b]) => (
-                <li key={h} className="panel p-3">
-                  <p className="font-semibold text-fg">{h}</p>
-                  <p className="mt-0.5 text-[15px]">{b}</p>
-                </li>
-              ))}
-            </ul>
-            <p className="t-meta mt-3">{GRADE_BANDS}</p>
-            <p className="mt-3">
-              Every check writes a record, whether or not it costs points, and a missing reading
-              says why it is missing. A grade is never lowered or raised silently, and a check that
-              cannot run is shown as unknown rather than passed.
+              <Ext href={DOCS_URL}>docs.tallyprotocol.xyz</Ext>
             </p>
           </section>
 

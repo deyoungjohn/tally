@@ -164,8 +164,8 @@ test.describe("home behaviour", () => {
     await q.click();
     await expect(q).toHaveAttribute("aria-expanded", "true");
     await expect(faq).toContainText("USDT is worth slightly under $1");
-    await faq.getByRole("button", { name: "Read the docs" }).click();
-    await expect(page).toHaveURL(/\/docs$/);
+    await faq.getByRole("button", { name: "Read how it works" }).click();
+    await expect(page).toHaveURL(/\/how-it-works$/);
   });
 
   test("the old tagline is gone and no page links a contract outside the docs", async ({

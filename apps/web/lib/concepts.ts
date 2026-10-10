@@ -1,4 +1,4 @@
-/** Short explanations behind the "Learn more" links. Each ends in a link to `/docs#how-<id>`, where the full write-up with references will live. */
+/** Short explanations behind the "Learn more" links. Each ends in a link to `/how-it-works#how-<id>`, where the full write-up lives. */
 export interface Concept {
   id: string;
   title: string;

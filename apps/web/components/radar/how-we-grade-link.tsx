@@ -40,7 +40,7 @@ export function HowWeGradeLink() {
           <p className="t-meta">{GRADE_BANDS}</p>
         </div>
         <Link
-          href="/docs#how-grades"
+          href="/how-it-works#how-grades"
           onClick={() => setOpen(false)}
           data-testid="how-we-grade-docs"
           className="btn btn-glassy mt-5 w-full no-underline"

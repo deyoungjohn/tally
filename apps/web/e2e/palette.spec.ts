@@ -35,7 +35,7 @@ async function greys(page: Page) {
 }
 
 test.describe("palette: no greys", () => {
-  for (const path of ["/", "/trade/NVDA", "/radar", "/docs"]) {
+  for (const path of ["/", "/trade/NVDA", "/radar", "/docs", "/how-it-works"]) {
     test(`no solid grey fill, text or border on ${path}`, async ({ page }) => {
       await page.goto(path);
       await page.waitForTimeout(1500);

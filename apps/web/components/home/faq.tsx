@@ -71,8 +71,8 @@ export function HomeFaq() {
   return (
     <FAQTabsCard
       tabs={TABS}
-      footerLabel="Read the docs"
-      onFooterClick={() => router.push("/docs")}
+      footerLabel="Read how it works"
+      onFooterClick={() => router.push("/how-it-works")}
     />
   );
 }
