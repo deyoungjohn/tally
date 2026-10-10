@@ -20,14 +20,8 @@ export interface HeroCardSpec {
 }
 
 const Chip = ({ children }: { children: ReactNode }) => (
-  <span className="rounded-full border border-white/20 bg-black/40 px-2.5 py-1 text-[13px] font-semibold">
+  <span className="whitespace-nowrap rounded-full border border-white/20 bg-black/40 px-3 py-1.5 text-center text-[13.5px] font-semibold">
     {children}
-  </span>
-);
-
-const ExampleTag = () => (
-  <span className="absolute bottom-3 left-4 text-[12.5px] font-medium text-white/70">
-    Example numbers
   </span>
 );
 
@@ -52,7 +46,6 @@ export const HERO_CARDS: HeroCardSpec[] = [
         <span className="num text-[26px] font-bold leading-none">
           0.026 <span className="text-[17px] text-fg2">NVDAon shares</span>
         </span>
-        <ExampleTag />
       </div>
     ),
   },
@@ -63,22 +56,25 @@ export const HERO_CARDS: HeroCardSpec[] = [
     meta: <Meta icon={<ArrowLeftRight size={16} aria-hidden />}>Ondo to bStock</Meta>,
     art: (
       <div className="grid h-full content-center gap-4 px-6">
-        <div className="flex items-center justify-between gap-3">
-          <span className="panel flex-1 p-3">
-            <span className="t-meta block">You sell</span>
-            <span className="num block text-[19px] font-bold">0.250 NVDAon</span>
+        <div className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-3">
+          <span className="panel flex min-w-0 flex-col gap-1 p-3">
+            <span className="t-meta">You sell</span>
+            <span className="num text-[22px] font-bold leading-none">0.250</span>
+            <span className="text-[14px] font-semibold text-fg2">NVDAon</span>
           </span>
-          <ArrowLeftRight size={18} aria-hidden className="shrink-0 text-[var(--orange-text)]" />
-          <span className="panel flex-1 p-3">
-            <span className="t-meta block">You buy</span>
-            <span className="num block text-[19px] font-bold">0.249 NVDAB</span>
+          <span className="grid place-items-center">
+            <ArrowLeftRight size={18} aria-hidden className="text-[var(--orange-text)]" />
+          </span>
+          <span className="panel flex min-w-0 flex-col gap-1 p-3">
+            <span className="t-meta">You buy</span>
+            <span className="num text-[22px] font-bold leading-none">0.249</span>
+            <span className="text-[14px] font-semibold text-fg2">NVDAB</span>
           </span>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-2 gap-3">
           <Chip>2.500 shares out</Chip>
           <Chip>2.490 shares in</Chip>
         </div>
-        <ExampleTag />
       </div>
     ),
   },
@@ -104,7 +100,6 @@ export const HERO_CARDS: HeroCardSpec[] = [
             </span>
           </span>
         ))}
-        <ExampleTag />
       </div>
     ),
   },
@@ -124,7 +119,6 @@ export const HERO_CARDS: HeroCardSpec[] = [
             <span className="num w-[40px] text-right text-fg2">$6</span>
           </span>
         ))}
-        <ExampleTag />
       </div>
     ),
   },
@@ -150,7 +144,6 @@ export const HERO_CARDS: HeroCardSpec[] = [
             <span className={ok ? "badge badge-up" : "badge badge-amber"}>{b}</span>
           </span>
         ))}
-        <ExampleTag />
       </div>
     ),
   },

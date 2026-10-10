@@ -87,9 +87,6 @@ function ListingCard({ card }: { card: HeroCardSpec }) {
         }}
       >
         {card.art}
-        <span className="absolute right-3 top-3 rounded-full bg-black/60 px-3 py-1 text-[13px] font-semibold text-[var(--orange-text)] backdrop-blur-sm">
-          Available now
-        </span>
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-2 p-5">
         <p className="text-[21px] font-bold leading-tight tracking-[-0.02em]">{card.title}</p>
@@ -191,9 +188,11 @@ export function HeroPanels({ trade }: { trade: React.ReactNode }) {
                 height: "var(--hc-h)",
                 marginLeft: "calc(var(--hc-w) / -2)",
                 transform: `translateX(calc(var(--hc-step) * ${off})) scale(${active ? 1 : 0.88})`,
-                // Cards are solid, so nothing behind one shows through it. Neighbours are dimmed with brightness, not see-through.
-                opacity: shown || active ? 1 : 0,
-                filter: active ? "none" : "brightness(0.55)",
+                // The card in front is solid black, so the cards behind it and the shapes never show through it. The neighbours
+                // fade into the page: faint, soft and see-through.
+                background: active ? "#000" : "transparent",
+                opacity: active ? 1 : shown ? 0.38 : 0,
+                filter: active ? "none" : "blur(1.5px)",
                 zIndex: active ? 3 : shown ? 2 : 1,
                 pointerEvents: shown ? "auto" : "none",
               }}

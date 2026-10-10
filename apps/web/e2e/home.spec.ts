@@ -386,7 +386,7 @@ test.describe("hero rolling line and cards", () => {
     });
     await expect(cur).toHaveText("Migrate across issuers seamlessly");
     await expect(page.getByTestId("hero-panel-1")).toContainText("Migrate across issuers");
-    await expect(page.getByTestId("hero-panel-1")).toContainText("Example numbers");
+    await expect(page.getByTestId("hero-panel-1")).not.toContainText("Available now");
     const after = await page.getByTestId("hero-actions").boundingBox();
     expect(Math.abs((after?.y ?? 0) - (top?.y ?? 0))).toBeLessThan(2);
   });
