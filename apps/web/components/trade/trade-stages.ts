@@ -4,7 +4,7 @@
  * Exposes the 5 trade lifecycle stages:
  *  1. intent     - user requests a trade with specified parameters and signed-in address
  *  2. quote      - quote and trade plan received from engine
- *  3. simulation - on-chain simulation evidence when available (or explicit missing reason)
+ *  3. simulation - onchain simulation evidence when available (or explicit missing reason)
  *  4. signed     - transaction submitted to wallet and broadcast (txHash only, never signature material)
  *  5. realized   - confirmed receipt from network with fill execution details or revert reason
  *

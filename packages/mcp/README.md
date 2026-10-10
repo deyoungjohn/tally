@@ -157,7 +157,7 @@ Show the parsed approval, risks and authority changes. Check spender = deployed 
 baw contract-call execute --requestId <approval-preview-requestId> --json
 ```
 
-Wait for on-chain confirmation (complete any pending Binance App confirmation). Then call `build_guarded_swap` again with the same 6 USDT intent. It must now be `ready`.
+Wait for onchain confirmation (complete any pending Binance App confirmation). Then call `build_guarded_swap` again with the same 6 USDT intent. It must now be `ready`.
 
 4. Check `baw contract-call preview --help` for `--gasLimit` first, and record the result in this PR. Show the ready plan. Whenever help lists the flag, pass the plan's exact gas limit so the preview and sent transaction use the limit Tally simulated:
 
@@ -166,7 +166,7 @@ baw contract-call preview --help
 baw contract-call preview --binanceChainId 56 --from <wallet> --to 0x28F6F19bffbF25E36452c78d12090F0bC922970a --value 0 --inputData <plan.tx.data> --gasLimit <plan.tx.gasLimit> --json
 ```
 
-If help does not list `--gasLimit`, omit it and state in the facts shown that the sent limit is baw's own and may differ from Tally's simulation. Record the actual approval/swap preview and execute command lines used in this PR. Inspect parsed transaction, simulation, risks and authority changes alongside decoded plan fields and share floor. Rebuild if the plan is older than about **90 seconds**; the on-chain deadline is **300 seconds** and the share floor protects the price. The engine's 15-second quote freshness check applies when creating the plan, not to this review window. Check the actual calldata deadline. After explicit buy confirmation, with a plan no older than about 90 seconds and its deadline still ahead:
+If help does not list `--gasLimit`, omit it and state in the facts shown that the sent limit is baw's own and may differ from Tally's simulation. Record the actual approval/swap preview and execute command lines used in this PR. Inspect parsed transaction, simulation, risks and authority changes alongside decoded plan fields and share floor. Rebuild if the plan is older than about **90 seconds**; the onchain deadline is **300 seconds** and the share floor protects the price. The engine's 15-second quote freshness check applies when creating the plan, not to this review window. Check the actual calldata deadline. After explicit buy confirmation, with a plan no older than about 90 seconds and its deadline still ahead:
 
 ```bash
 baw contract-call execute --requestId <swap-preview-requestId> --json

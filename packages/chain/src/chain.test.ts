@@ -79,7 +79,7 @@ describe("failover transport (V14: publicnode started answering 403 to the EC2 b
 });
 
 describe("multiplier readers (blueprint §7.3)", () => {
-  it("calls uiMultiplier() 0xa60bf13d for bStock and multiplier() 0x1b3ed722 for xStocks; Ondo has no on-chain value", async () => {
+  it("calls uiMultiplier() 0xa60bf13d for bStock and multiplier() 0x1b3ed722 for xStocks; Ondo has no onchain value", async () => {
     const t = rpc((m) => (m === "eth_call" ? word(1_001_701_196_801_074_000n) : "0x38"));
     const read = onchainMultiplierReader(createBscClient({ transports: [t.transport] }));
     expect(await read({ issuer: "bstock", address: NVDAB })).toBe(1_001_701_196_801_074_000n);

@@ -65,7 +65,7 @@ export interface TokenMarketFacts {
   status: TokenStatus | null;
   /** Price per TOKEN as listed by data APIs (not a fill price). Used to flag stale or ghost listings. */
   listedTokenPrice?: number;
-  /** On-chain 24h buy + sell volume in USD. */
+  /** Onchain 24h buy + sell volume in USD. */
   onchainVolume24hUsd?: number;
   /** Latest dated attestation report. Age is computed in core from `now`, so it is testable. */
   attestation?: AttestationFact;

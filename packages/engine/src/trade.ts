@@ -307,7 +307,7 @@ export async function prepareTrade(deps: TradeDeps, req: TradeRequest): Promise<
   const stored = g.sharesPerToken;
   let m: bigint;
   let feed: { update: FeedUpdate; signature: Hex } | undefined;
-  // The guard stores no on-chain multiplier for Ondo (source Feed): its feed goes stale after maxAge and has to be refreshed by a signed update.
+  // The guard stores no onchain multiplier for Ondo (source Feed): its feed goes stale after maxAge and has to be refreshed by a signed update.
   if (g.source === GUARD_SOURCE.Feed) {
     if (stored !== undefined && ppm(stored, engineM) <= SAME_PPM) {
       m = stored;
@@ -340,7 +340,7 @@ export async function prepareTrade(deps: TradeDeps, req: TradeRequest): Promise<
     m = stored;
     if (ppm(stored, engineM) > DISAGREE_PPM)
       warnings.push(
-        "The on-chain share count and the data feed differ by more than 0.1%; ShareGuard uses the on-chain value.",
+        "The onchain share count and the data feed differ by more than 0.1%; ShareGuard uses the onchain value.",
       );
   }
 
@@ -442,7 +442,7 @@ export async function prepareTrade(deps: TradeDeps, req: TradeRequest): Promise<
     binance = "skipped";
     binanceNote = e instanceof Error ? e.message : String(e);
     warnings.push(
-      `Binance simulation unavailable (${binanceNote}); the on-chain simulation passed.`,
+      `Binance simulation unavailable (${binanceNote}); the onchain simulation passed.`,
     );
     deps.onWarn?.(`trade: Binance simulate failed: ${binanceNote}`);
   }

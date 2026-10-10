@@ -23,8 +23,8 @@ Dividends and splits change it. For Ondo, multiplier growth tracks the dividend 
 | Issuer | Source Tally reads | Notes |
 |---|---|---|
 | bStock | `uiMultiplier()` on the token | Matched the API on 38 of 38 tokens. |
-| xStocks | `multiplier()` on the token | Display only. On-chain and API disagreed on 12 of 38. |
-| Ondo | The API's share multiplier | **No on-chain read exists.** Bounded by sanity checks, and signed into ShareGuard. See [Multiplier sources](../smart-contracts/multiplier-sources.md). |
+| xStocks | `multiplier()` on the token | Display only. Onchain and API disagreed on 12 of 38. |
+| Ondo | The API's share multiplier | **No onchain read exists.** Bounded by sanity checks, and signed into ShareGuard. See [Multiplier sources](../smart-contracts/multiplier-sources.md). |
 
 The same token can show three different multipliers depending on the source (NVDAx: list API 1.000000, dynamic API 1.000918, contract 1.001701). Tally records every reading, compares them, and says so when they disagree.
 

@@ -218,7 +218,7 @@ describe("the integrity log records EVERY check, passes and skips included", () 
       /max difference 0 ppm ≤ 1000, using api → pass/,
     );
   });
-  it("bounds: not applicable for on-chain issuers, otherwise the bounds detail is logged", () => {
+  it("bounds: not applicable for onchain issuers, otherwise the bounds detail is logged", () => {
     expect(id(gradeIntegrity({ ...clean, bounds: undefined }), "ondo-bounds").summary).toMatch(
       /not applicable.*skipped/,
     );

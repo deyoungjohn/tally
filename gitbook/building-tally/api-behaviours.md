@@ -26,7 +26,7 @@ Engineering notes from building on the Binance Web3 API, Agentic Wallet and the 
 | Observed | What Tally does |
 |---|---|
 | One token is not one share; multipliers differ per issuer and change. | See [The unit trap](../concepts/the-unit-trap.md). |
-| bStock's on-chain multiplier matched the API; xStocks' did not (1.001701 against 1.000918 for NVDAx). | Read on-chain where it exists and compare. |
+| bStock's onchain multiplier matched the API; xStocks' did not (1.001701 against 1.000918 for NVDAx). | Read onchain where it exists and compare. |
 | bStock has no pause getter; a shared manager contract decides. Ondo's pause is read from the token. | ShareGuard reads both and fails closed. |
 | A rebasing balance drifts from what a wallet service shows (0.08% for NVDAB). | Size an action from the chain balance. |
 | Ghost markets exist for Ondo too (NFLXon traded $16 in 24 hours). | Not executable. |

@@ -37,4 +37,4 @@ Most tokens fail one of the gates in [Adding assets](adding-assets.md): no repla
 
 ## Why the product list is per token
 
-Enablement is per token on-chain, so the app checks the token, not the ticker. On 8 October, 12 of the 21 tickers had only one issuer enabled, and a Migrate whose destination issuer is not enabled is refused before anything is sold.
+Enablement is per token onchain, so the app checks the token, not the ticker. On 8 October, 12 of the 21 tickers had only one issuer enabled, and a Migrate whose destination issuer is not enabled is refused before anything is sold.

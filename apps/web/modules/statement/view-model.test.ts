@@ -199,7 +199,7 @@ describe("WO-03 Slice B: View-model tests", () => {
     expect(statementVM.state).toBe("degraded");
     expect(statementVM.source).toBe("receipts");
     expect(statementVM.notes).toContain(
-      "Generated from on-chain receipts only (Binance API unavailable).",
+      "Generated from onchain receipts only (Binance API unavailable).",
     );
     expect(statementVM.csv.content).toContain("# Tally Portfolio Statement");
 
@@ -462,7 +462,7 @@ describe("additive view-model fields (WO-12 decisions 2026-10-06)", () => {
             issuer: "bstock",
             score: 95,
             grade: "A",
-            reasons: ["Strong on-chain depth"],
+            reasons: ["Strong onchain depth"],
             ghost: false,
             rawVolume24hUsd: 500_000n * E18,
           },

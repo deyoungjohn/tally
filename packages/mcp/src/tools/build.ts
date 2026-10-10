@@ -83,7 +83,7 @@ export async function buildGuardedSwap(runtime: Runtime, input: unknown) {
       sharesPerToken: formatUnits(BigInt(plan.multiplier), 18),
       multiplierSource:
         plan.issuer === "bstock"
-          ? "on-chain uiMultiplier()"
+          ? "onchain uiMultiplier()"
           : "fresh stored ShareGuard feed, checked against the engine's accepted Ondo reading",
       route: plan.routeText,
       premium: plan.premium,
@@ -91,7 +91,7 @@ export async function buildGuardedSwap(runtime: Runtime, input: unknown) {
       risks: [
         "Tokenized shares are not the underlying shares.",
         "Issuer, smart-contract and price-movement risks apply.",
-        "Only the on-chain share floor is guaranteed; quoted output can change.",
+        "Only the onchain share floor is guaranteed; quoted output can change.",
       ],
     },
   };

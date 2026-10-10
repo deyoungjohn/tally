@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { moduleFlags } from "@/lib/flags";
 import { Logo } from "./site-header";
 
 const COLS = [
@@ -7,9 +8,9 @@ const COLS = [
     links: [
       ["Trade", "/trade"],
       ["Portfolio", "/portfolio"],
-      ["Baskets", "/pies"],
+      ["Baskets", "/pies", "pies"],
       ["Radar", "/radar"],
-      ["Guardian", "/guardian"],
+      ["Guardian", "/guardian", "guardian"],
     ],
   },
   {
@@ -32,6 +33,7 @@ const COLS = [
 ] as const;
 
 export function SiteFooter() {
+  const flags = moduleFlags();
   return (
     <footer className="relative z-10 px-4 pb-10 pt-6">
       <div className="glass mx-auto max-w-[var(--w)] !rounded-[26px] p-6 min-[561px]:p-8">
@@ -46,13 +48,15 @@ export function SiteFooter() {
             <div key={c.h}>
               <h2 className="text-xs font-semibold uppercase tracking-[0.09em] text-fg3">{c.h}</h2>
               <ul className="mt-3 grid gap-2">
-                {c.links.map(([label, href]) => (
-                  <li key={label}>
-                    <Link href={href} className="link-text text-sm">
-                      {label}
-                    </Link>
-                  </li>
-                ))}
+                {c.links
+                  .filter((l) => !l[2] || flags[l[2]])
+                  .map(([label, href]) => (
+                    <li key={label}>
+                      <Link href={href} className="link-text text-sm">
+                        {label}
+                      </Link>
+                    </li>
+                  ))}
               </ul>
             </div>
           ))}

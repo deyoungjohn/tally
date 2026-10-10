@@ -20,7 +20,7 @@ Binance returns no baskets. Its sector filters (`tabId`) are ignored by the API,
 3. **Refusals:** missing funds, an expired quote, or anything that is not a valid zero-value transaction on BNB Chain.
 4. **Stop at the first failure.** There is no automatic retry. The page shows exactly what happened: legs done with their receipts, the failed leg with a plain reason, and legs not started. A "continue with the remaining legs" action re-plans from the failed leg.
 5. **Never send twice.** If a signature is interrupted before its hash is saved, nothing is resent; the page asks you to check wallet activity.
-6. **Resumable.** The run is saved against your wallet for 24 hours. After a reload it checks the saved transaction hashes on-chain and carries on.
+6. **Resumable.** The run is saved against your wallet for 24 hours. After a reload it checks the saved transaction hashes onchain and carries on.
 7. **Wallet change stops it.** Changing the connected wallet cancels the run.
 
 ## Not built

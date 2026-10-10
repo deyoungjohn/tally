@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 const query = z.object({ hash: z.string().regex(/^0x[0-9a-fA-F]{64}$/) });
 
 /**
- * On-chain status of one transaction, for flows that are not buys (a sell has no ShareGuard event to decode).
+ * Onchain status of one transaction, for flows that are not buys (a sell has no ShareGuard event to decode).
  * Reads `engine.transactions.getReceipt` and returns only the status, the block, the gas used (with its dollar value) and the BscScan link:
  * no logs, no sender, no provider details.
  */

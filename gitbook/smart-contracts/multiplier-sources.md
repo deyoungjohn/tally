@@ -4,9 +4,9 @@ ShareGuard needs the share multiplier to turn tokens into shares. Where it reads
 
 | Source | Issuer | Read from | Notes |
 |---|---|---|---|
-| `UiMultiplier` | bStock | `token.uiMultiplier()` | On-chain every swap. |
+| `UiMultiplier` | bStock | `token.uiMultiplier()` | Onchain every swap. |
 | `Multiplier` | xStocks | `token.multiplier()` | Supported by the contract; Tally never routes there. |
-| `Feed` | Ondo | A stored value kept current by signed updates | Ondo exposes no on-chain multiplier. |
+| `Feed` | Ondo | A stored value kept current by signed updates | Ondo exposes no onchain multiplier. |
 
 ## The Ondo feed
 
@@ -30,7 +30,7 @@ Because the update rides inside the user's own swap, there is no separate keeper
 
 ## What a compromised signer could do
 
-It could push an Ondo multiplier up by at most 3% per update, forward in time only, within the validity window. It cannot decrease a value, cannot exceed the cap, and cannot touch bStock assets. Combined with the on-chain `minShares` the buyer chose, that is a small, bounded exposure. It is still a trust assumption, and it is listed in the [security model](../architecture/security-model.md).
+It could push an Ondo multiplier up by at most 3% per update, forward in time only, within the validity window. It cannot decrease a value, cannot exceed the cap, and cannot touch bStock assets. Combined with the onchain `minShares` the buyer chose, that is a small, bounded exposure. It is still a trust assumption, and it is listed in the [security model](../architecture/security-model.md).
 
 ## Off-chain checks on the same data
 

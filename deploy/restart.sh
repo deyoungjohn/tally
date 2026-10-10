@@ -270,7 +270,7 @@ need NEXT_PUBLIC_PRIVY_APP_ID "(sign-in will not work; rebuild with --build afte
 need BINANCE_W3_API_KEY "(quotes will fail)"
 need BINANCE_W3_API_SECRET "(quotes will fail)"
 need BSC_RPC_PRIMARY "(falls back to public RPCs, which can answer 403; the name is BSC_RPC_PRIMARY, not BSC_RPC_URL)"
-need FEED_SIGNER_PK "(Ondo buys fail once the on-chain multiplier is more than 3 days old)"
+need FEED_SIGNER_PK "(Ondo buys fail once the onchain multiplier is more than 3 days old)"
 need TALLY_DATA_DIR "(fills, declarations and the Ondo baseline will not be saved)"
 if [[ -n "${TALLY_DATA_DIR:-}" && ! -w "$TALLY_DATA_DIR" ]]; then
   echo "   NOT WRITABLE  $TALLY_DATA_DIR  -> run: sudo chown $(id -un):$(id -gn) $TALLY_DATA_DIR"

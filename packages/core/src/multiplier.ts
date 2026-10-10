@@ -17,7 +17,7 @@ export interface ResolvedMultiplier {
 
 export const DISAGREE_PPM = 1_000; // 0.1%
 
-/** Source of truth (blueprint §7.3): on-chain for bStock and xStocks, the API for Ondo (it has no on-chain multiplier). */
+/** Source of truth (blueprint §7.3): onchain for bStock and xStocks, the API for Ondo (it has no onchain multiplier). */
 const PREFERRED: Record<Issuer, ResolvedSource[]> = {
   bstock: ["onchain", "api", "list"],
   xstocks: ["onchain", "api", "list"],

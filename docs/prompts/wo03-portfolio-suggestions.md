@@ -7,7 +7,7 @@ Count the **distinct tickers** the wallet holds (any issuer; a dust balance unde
 
 ## Candidates and order
 1. Candidate tokens: enabled on the deployed ShareGuard (`issuersOf` and `isTokenBuyable` in `apps/web/lib/tickers.ts`; one token per ticker, the issuer with the better current liquidity), not already held.
-2. "Good liquidity at the moment": read the Radar's small snapshot rows (`radar` grade rows and `flow-aggregate`; **no network calls on the request path and never the full `flow` tape**) and keep tokens graded A or B ("Liquid") that are not ghosts and whose data is not stale; order by cleaned on-chain 24 h volume, highest first.
+2. "Good liquidity at the moment": read the Radar's small snapshot rows (`radar` grade rows and `flow-aggregate`; **no network calls on the request path and never the full `flow` tape**) and keep tokens graded A or B ("Liquid") that are not ghosts and whose data is not stale; order by cleaned onchain 24 h volume, highest first.
 3. Per-wallet variety: take the top 8 and rotate the starting point by a stable hash of the wallet address (a small pure function, same address gives the same order; no address is stored). So wallet A may see NVDAB first and wallet B AAPLB first.
 4. If the Radar data is missing or stale, return no suggestions with the reason ("Liquidity data is catching up") rather than guessing; fixtures say "Fixture data".
 

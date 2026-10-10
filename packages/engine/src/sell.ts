@@ -51,7 +51,7 @@ export interface SellPlan {
   tokensIn: string;
   sharesIn: string;
   quotedUsdtOut: string;
-  /** Minimum USDT received. Enforced on-chain by the router's minReceiveAmount. */
+  /** Minimum USDT received. Enforced onchain by the router's minReceiveAmount. */
   minUsdtOut: string;
   floorSource: "router";
   multiplier: string;
@@ -350,7 +350,7 @@ export async function prepareSell(deps: SellDeps, req: SellRequest): Promise<Sel
 
   if (allowance === null || allowance < amountIn) {
     if (allowance === null) {
-      warnings.push("Could not verify on-chain token allowance; approval transaction prepared.");
+      warnings.push("Could not verify onchain token allowance; approval transaction prepared.");
       deps.onWarn?.("sell: token allowance could not be determined, defaulting to needs_approval");
     }
     return {
@@ -390,7 +390,7 @@ export async function prepareSell(deps: SellDeps, req: SellRequest): Promise<Sel
     binance = "skipped";
     binanceNote = e instanceof Error ? e.message : String(e);
     warnings.push(
-      `Binance simulation unavailable (${binanceNote}); the on-chain simulation passed.`,
+      `Binance simulation unavailable (${binanceNote}); the onchain simulation passed.`,
     );
     deps.onWarn?.(`sell: Binance simulate failed: ${binanceNote}`);
   }

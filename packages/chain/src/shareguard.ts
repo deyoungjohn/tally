@@ -178,7 +178,7 @@ export const GUARD_SOURCE = { None: 0, UiMultiplier: 1, Multiplier: 2, Feed: 3 }
 export interface GuardReading {
   paused: boolean;
   enabled: boolean;
-  /** Per-token pause check; `undefined` when the check itself reverted (fails closed on-chain). */
+  /** Per-token pause check; `undefined` when the check itself reverted (fails closed onchain). */
   tokenPaused?: boolean;
   /** Shares per token the guard would use now. Undefined when it reverts (a stale Ondo feed), with the reason. */
   sharesPerToken?: bigint;

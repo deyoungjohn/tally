@@ -119,14 +119,14 @@ export function formatFacts(ticker: string, tokens: TokenInspection[], now: numb
     );
     const r = t.readings;
     out.push(
-      `  multiplier readings: on-chain ${num(r.onchain)}, api ${num(r.api)}, list ${num(r.list)}${t.multiplier ? `  → using ${t.multiplier.source} ${num(t.multiplier.value)}${t.multiplier.degraded ? " (degraded)" : ""}` : "  → none"}`,
+      `  multiplier readings: onchain ${num(r.onchain)}, api ${num(r.api)}, list ${num(r.list)}${t.multiplier ? `  → using ${t.multiplier.source} ${num(t.multiplier.value)}${t.multiplier.degraded ? " (degraded)" : ""}` : "  → none"}`,
     );
     const s = t.facts.status;
     out.push(
       `  status: ${s ? `${s.kind} (${s.reasonCode ?? "no code"}), session ${s.session}${s.reasonMsg ? `, "${s.reasonMsg}"` : ""}` : "unknown"}`,
     );
     out.push(
-      `  listed token price: ${t.facts.listedTokenPrice === undefined ? "–" : `$${t.facts.listedTokenPrice.toFixed(2)}`}   on-chain volume 24h: ${t.facts.onchainVolume24hUsd === undefined ? "–" : `$${Math.round(t.facts.onchainVolume24hUsd).toLocaleString("en-US")}`}`,
+      `  listed token price: ${t.facts.listedTokenPrice === undefined ? "–" : `$${t.facts.listedTokenPrice.toFixed(2)}`}   onchain volume 24h: ${t.facts.onchainVolume24hUsd === undefined ? "–" : `$${Math.round(t.facts.onchainVolume24hUsd).toLocaleString("en-US")}`}`,
     );
     const a = t.facts.attestation;
     out.push(`  attestation: ${a ? `report ${a.reportDate} (${a.url})` : "none"}`);

@@ -156,7 +156,7 @@ interface Prepared {
   readings: MultiplierReadings;
   facts: TokenMarketFacts;
   multiplier: ResolvedMultiplier | null;
-  /** Ondo multiplier bounds result; undefined for issuers read on-chain. */
+  /** Ondo multiplier bounds result; undefined for issuers read onchain. */
   bounds?: OndoBoundsResult;
   blockedReason?: string;
 }

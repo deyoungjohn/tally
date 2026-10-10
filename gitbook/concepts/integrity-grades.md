@@ -10,7 +10,7 @@ Start at 100 points and subtract:
 |---|---|---|
 | Multiplier sources disagree by more than 0.1% | 25 | List, API and chain readings are compared. |
 | Price more than 2% away from the US price in regular hours | 30 | Premium is measured per share, never per token. |
-| Under $1,000 of on-chain volume in 24 hours | 40 | Flagged as a **ghost market**. Not executable. |
+| Under $1,000 of onchain volume in 24 hours | 40 | Flagged as a **ghost market**. Not executable. |
 | Trading status unknown | 10 | A missing status is never assumed open. |
 | Token paused by the issuer | 50 | Not executable right now. |
 | Token limited (for example around earnings) | 10 | |
@@ -29,7 +29,7 @@ In the app, A and B read **Liquid**, C to F read **Low Liquidity**, and a ghost 
 
 ## Two grades, on purpose
 
-* The **quote grade** on the Trade page uses raw 24-hour on-chain volume, so it can be computed instantly for every quote.
+* The **quote grade** on the Trade page uses raw 24-hour onchain volume, so it can be computed instantly for every quote.
 * The **Radar grade** uses *cleaned flow*: trades left after bot wallets and router hops are removed. The two can differ, and the Radar page says which basis it uses. We chose not to wire the cleaned figure into the quote path, so the two never silently disagree inside one screen. See [Radar and Flow](../modules/radar-and-flow.md).
 
 ## The integrity log
@@ -38,7 +38,7 @@ Every check writes a record (inputs, outcome of pass, deduct, flag or skipped, a
 
 ## Checks against the issuer's own claims
 
-The Ondo multiplier has no on-chain source, so every reading is bounded:
+The Ondo multiplier has no onchain source, so every reading is bounded:
 
 * An increase of up to 3% is accepted unless the independent price check fails. The 3% is a judgement threshold, about five times the largest step observed (+0.58%).
 * A decrease, or an increase above 3%, is accepted only when a split or dividend status was seen within 48 hours, the ratio is within 0.5% of a simple ratio (2, 3, 4, 5, 8, 10, 15, 20, 25, 30, 50, 3/2, 2/3 or their inverses), and the token price divided by the new multiplier is within 2% of the US share price.

@@ -18,13 +18,13 @@ export async function getSharesOf(runtime: Runtime, input: unknown) {
       sourceDetail:
         row.source === "onchain"
           ? row.issuer === "bstock"
-            ? "on-chain uiMultiplier()"
-            : "on-chain multiplier(); display only"
+            ? "onchain uiMultiplier()"
+            : "onchain multiplier(); display only"
           : row.source === null
             ? null
             : row.issuer === "ondo"
               ? `${row.source}; Ondo readings checked against the accepted baseline`
-              : `${row.source} fallback; preferred on-chain multiplier unavailable`,
+              : `${row.source} fallback; preferred onchain multiplier unavailable`,
     })),
   };
 }

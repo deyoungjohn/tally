@@ -38,7 +38,7 @@ export function recordedReceipt(name: VectorName): Receipt {
         source: guarded
           ? "ShareGuard Guarded event"
           : name === "F6_NVDAB"
-            ? "on-chain uiMultiplier"
+            ? "onchain uiMultiplier"
             : "public RWA API sharesMultiplier",
         observationId: guarded
           ? `${vector.txHash}:${guardedLog!.logIndex}`

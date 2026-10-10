@@ -18,9 +18,9 @@ Read [the setup and live runbook](../../packages/mcp/README.md) for tool paramet
 
 ## Source of truth
 
-- **bStock:** on-chain `uiMultiplier()`. API/list fallbacks are labelled degraded, with their missing-source reason; they do not replace ShareGuard's on-chain check.
-- **Ondo:** the engine's accepted API/list reading, checked against its previous accepted baseline and corporate-action/price sanity rules. Ondo has no on-chain multiplier getter. ShareGuard uses a bounded, fresh stored feed. MCP has no feed signer: if an update is needed, stop with “share data is being refreshed / use the web app.”
-- **xStocks:** on-chain `multiplier()` for display; API/list disagreements remain visible. Never select xStocks for a buy through Tally.
+- **bStock:** onchain `uiMultiplier()`. API/list fallbacks are labelled degraded, with their missing-source reason; they do not replace ShareGuard's onchain check.
+- **Ondo:** the engine's accepted API/list reading, checked against its previous accepted baseline and corporate-action/price sanity rules. Ondo has no onchain multiplier getter. ShareGuard uses a bounded, fresh stored feed. MCP has no feed signer: if an update is needed, stop with “share data is being refreshed / use the web app.”
+- **xStocks:** onchain `multiplier()` for display; API/list disagreements remain visible. Never select xStocks for a buy through Tally.
 - **Unknown:** keep `shares: null` and its reason. Never assume one token equals one share. `get_shares_of` includes source per row and retains zero balances; its default ticker scope is stated in the result. Use `tickers` to inspect additional registry tickers.
 
 ## Build without signing
@@ -48,7 +48,7 @@ Use the preview command's `--gasLimit` only when help lists it; otherwise follow
 
 Show `parsedTx`, `simulationResult`, `risks`, `authorityChanges` and Tally's share floor. Check preview success and a usable `requestId`. A preview error/interception stops the flow. If parsing does not expose the guard call, present the locally decoded fields alongside the preview and explain the parsing limitation; do not invent parsed facts.
 
-Ask for **explicit confirmation of this buy** after the preview. Rebuild if the plan is older than about **90 seconds**; the on-chain deadline is **300 seconds** and the share floor protects the price. The engine's 15-second quote freshness check applies when creating the plan, not to this review window. Check the actual calldata deadline as well. If the plan is older than about 90 seconds or its deadline has passed, rebuild and re-preview; show the new facts and obtain confirmation for that new request. Do not execute a stale preview, silently change issuer/floor/spend/recipient, or reuse approval confirmation for the swap.
+Ask for **explicit confirmation of this buy** after the preview. Rebuild if the plan is older than about **90 seconds**; the onchain deadline is **300 seconds** and the share floor protects the price. The engine's 15-second quote freshness check applies when creating the plan, not to this review window. Check the actual calldata deadline as well. If the plan is older than about 90 seconds or its deadline has passed, rebuild and re-preview; show the new facts and obtain confirmation for that new request. Do not execute a stale preview, silently change issuer/floor/spend/recipient, or reuse approval confirmation for the swap.
 
 ```bash
 baw contract-call execute --requestId <successful-preview-requestId> --json

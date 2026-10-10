@@ -98,7 +98,7 @@ export function SellSheet({ flow, isMigrate }: { flow: Flow; isMigrate?: boolean
                 >
                   <Check size={16} />
                 </span>
-                Confirmed on-chain
+                Confirmed onchain
               </p>
               <ReceiptLine hash={phase.hash} floorUsdt={phase.floorUsdt} />
               <dl className="mt-3">
@@ -498,10 +498,10 @@ function ReceiptLine({ hash, floorUsdt }: { hash: string; floorUsdt: string | nu
   return (
     <p className="mt-2 text-[15px] text-fg2" data-testid="sell-receipt-status">
       {r.state === "pending"
-        ? "Confirmed on-chain. Verifying the amount you received…"
+        ? "Confirmed onchain. Verifying the amount you received…"
         : r.state === "unreconciled"
-          ? "Confirmed on-chain. The received amount couldn't be verified yet; check your USDT balance."
-          : "Confirmed on-chain. Check your USDT balance."}
+          ? "Confirmed onchain. The received amount couldn't be verified yet; check your USDT balance."
+          : "Confirmed onchain. Check your USDT balance."}
     </p>
   );
 }

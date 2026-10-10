@@ -2,17 +2,17 @@
 
 **Aggregator.** Binance's Web3 trading API, which finds a route and builds swap calldata. For stocks it returns one route from one vendor (LiquidMesh).
 
-**bStock.** Binance's tokenized stock issuer on BNB Chain. Symbols end in `B` (NVDAB). Multiplier on-chain (`uiMultiplier()`).
+**bStock.** Binance's tokenized stock issuer on BNB Chain. Symbols end in `B` (NVDAB). Multiplier onchain (`uiMultiplier()`).
 
 **Corporate action.** A split or other change to an Ondo multiplier beyond the per-update bound. The owner registers it on ShareGuard so a signed update can apply it once.
 
-**Feed (Ondo feed).** The signed, bounded multiplier updates ShareGuard accepts for Ondo assets, which have no on-chain multiplier.
+**Feed (Ondo feed).** The signed, bounded multiplier updates ShareGuard accepts for Ondo assets, which have no onchain multiplier.
 
 **Fixture.** A recorded API response or a fake chain used so the app can run offline. Fixture data is always labelled as a recording.
 
-**Floor / minimum shares.** The least number of shares the buyer will accept, enforced on-chain by ShareGuard. Below it the whole transaction reverts.
+**Floor / minimum shares.** The least number of shares the buyer will accept, enforced onchain by ShareGuard. Below it the whole transaction reverts.
 
-**Ghost market.** A token with under $1,000 of on-chain volume in 24 hours. Its price can be stale. Tally does not execute against it.
+**Ghost market.** A token with under $1,000 of onchain volume in 24 hours. Its price can be stale. Tally does not execute against it.
 
 **Guarded buy.** A buy that goes through ShareGuard.
 
@@ -22,7 +22,7 @@
 
 **Multiplier.** Shares of the stock that one token represents, as a number with 18 decimals. Also written "shares per token".
 
-**Ondo.** A tokenized stock issuer. Symbols end in `on` (NVDAon). No on-chain multiplier.
+**Ondo.** A tokenized stock issuer. Symbols end in `on` (NVDAon). No onchain multiplier.
 
 **Pie.** A basket of stocks bought together from one budget.
 

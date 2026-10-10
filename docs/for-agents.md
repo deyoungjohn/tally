@@ -1,6 +1,6 @@
 # Tally for agents
 
-Tally gives an AI agent two things it needs to deal in tokenized US stocks on BNB Chain: **information it can trust** and **execution that is checked on-chain**. It is a narrow service, not a data catalogue: it covers the Ondo, bStock and xStocks tokens that exist on BNB Chain, and it says plainly when it cannot answer.
+Tally gives an AI agent two things it needs to deal in tokenized US stocks on BNB Chain: **information it can trust** and **execution that is checked onchain**. It is a narrow service, not a data catalogue: it covers the Ondo, bStock and xStocks tokens that exist on BNB Chain, and it says plainly when it cannot answer.
 
 ## Information
 
@@ -36,4 +36,4 @@ Run the MCP server beside the agent: see `packages/mcp/README.md` for the Claude
 
 ## Notes for later
 
-Paying per call (x402), an on-chain identity and task listing (ERC-8004 and ERC-8183 through BNB Agent Studio) and a signing session limited to the router and a daily amount (for example an Altana session key) are possible next steps. None of them is built or claimed.
+Paying per call (x402), an onchain identity and task listing (ERC-8004 and ERC-8183 through BNB Agent Studio) and a signing session limited to the router and a daily amount (for example an Altana session key) are possible next steps. None of them is built or claimed.

@@ -33,7 +33,7 @@ export type OnchainMultiplierReader = (token: RegistryToken) => Promise<bigint |
 export interface BinanceDataOptions {
   api: BinanceApi;
   pub: PublicApi;
-  /** bStock `uiMultiplier()` and xStocks `multiplier()` reads, from @tally/chain. Omit to run without on-chain readings. */
+  /** bStock `uiMultiplier()` and xStocks `multiplier()` reads, from @tally/chain. Omit to run without onchain readings. */
   onchain?: OnchainMultiplierReader;
   now?: () => number;
   /** Called whenever a data source fails and a weaker fallback is used. Silent degradation hid a schema bug once (2026-10-02). */
@@ -170,7 +170,7 @@ export class BinanceData {
         const v = await this.o.onchain(token);
         if (v !== undefined) readings.onchain = v;
       } catch (e) {
-        this.warn(`on-chain multiplier read failed for ${token.symbol}, using the API reading`, e);
+        this.warn(`onchain multiplier read failed for ${token.symbol}, using the API reading`, e);
       }
     }
     return readings;
@@ -187,7 +187,7 @@ export class BinanceData {
       if (!facts.listedTokenPrice && d.price) facts.listedTokenPrice = Number(d.price);
     } catch (e) {
       notes.volume = `public token-dynamic call failed: ${msg(e)}`;
-      this.warn(`on-chain volume unavailable for ${token.symbol}: ghost check skipped`, e);
+      this.warn(`onchain volume unavailable for ${token.symbol}: ghost check skipped`, e);
     }
     if (token.executable) await this.addAttestation(token, facts);
     else notes.attestation = "not fetched: this issuer is not executable through Tally";
@@ -207,7 +207,7 @@ export class BinanceData {
     }
     if (facts.listedTokenPrice === undefined)
       notes.listedPrice = "no listed token price from any source";
-    // Ondo has no on-chain multiplier, so its readings are checked against the last accepted one (§7.3).
+    // Ondo has no onchain multiplier, so its readings are checked against the last accepted one (§7.3).
     if (token.issuer === "ondo") {
       facts.multiplierBaseline = this.o.baseline?.get(token.address);
       facts.corporateAction = this.o.baseline?.getAction(token.address);

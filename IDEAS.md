@@ -6,10 +6,10 @@
 >
 > | | **Idea 1: TALLY** | **Idea 2: STIPEND** |
 > |---|---|---|
-> | One line | *Buy tokenized shares, at the best prices.* A best-execution layer that converts Ondo, bStock and xStocks into share units, sends each order to the issuer with the best true price, and blocks trades that fall into data traps. | *The AI wealth manager paid only from your dividends.* An Agent Studio agent whose entire income is a capped cut of dividends, measured on-chain from share multipliers and enforced by a vault contract. |
+> | One line | *Buy tokenized shares, at the best prices.* A best-execution layer that converts Ondo, bStock and xStocks into share units, sends each order to the issuer with the best true price, and blocks trades that fall into data traps. | *The AI wealth manager paid only from your dividends.* An Agent Studio agent whose entire income is a capped cut of dividends, measured onchain from share multipliers and enforced by a vault contract. |
 > | Blind spot it attacks | Unit of account and data integrity. The same ticker means 10× different amounts of stock depending on the issuer, and the APIs disagree with the chain. | Nobody uses the multiplier as a dividend ledger. It tracks dividend yield at **r = 0.917**. |
 > | Special prize it targets | Best Use of Agentic Wallet / Wallet Skills | Best Use of BNB Agent Studio (identity, runtime, **self-funding via x402**) |
-> | Pattern from past winners it uses | Precise financial primitive + upstream fix to the sponsor's own tooling (Meld, PRECEDENCE, Tilt) | AI bounded by on-chain policy + paid x402 calls + verifiable profit and loss (Faktura, Flattora, Watchdog, Infinite Money Glitch) |
+> | Pattern from past winners it uses | Precise financial primitive + upstream fix to the sponsor's own tooling (Meld, PRECEDENCE, Tilt) | AI bounded by onchain policy + paid x402 calls + verifiable profit and loss (Faktura, Flattora, Watchdog, Infinite Money Glitch) |
 >
 > Both ideas avoid the weekend-gap idea completely. Both are spot-only and run on BSC mainnet.
 
@@ -22,8 +22,8 @@ Source: `projects.jsonl` / `hackathons.jsonl` (15 hackathons, Jan–Sep 2026). R
 | Signal | Data | What it means for us |
 |---|---|---|
 | The sponsor's stack carries real weight | 77/77 winners with a known rating used sponsor tech as **load-bearing** | Every Binance module we touch has to do real work. No logo integrations. |
-| Evidence you can verify | **57%** of winners (50/87) are built around receipts, proofs, attestations or audit trails. It shows up in 7 first-place projects. | On-chain guards and receipts beat dashboards. |
-| AI bounded by on-chain policy | **29%** of winners, including **4 first places** (Faktura, Watchdog, Flattora, GATE402) | The LLM proposes and the contract decides. |
+| Evidence you can verify | **57%** of winners (50/87) are built around receipts, proofs, attestations or audit trails. It shows up in 7 first-place projects. | Onchain guards and receipts beat dashboards. |
+| AI bounded by onchain policy | **29%** of winners, including **4 first places** (Faktura, Watchdog, Flattora, GATE402) | The LLM proposes and the contract decides. |
 | RWA precision wins | RWA was only 7% of winners, but 2 of those 6 took **1st** (Faktura, Tilt Protocol). PRECEDENCE took 3rd as "an unusually precise financial primitive". | Precise primitives beat generic "AI trader" projects. |
 | Generic agent marketplaces and escrow | 9% of winners, **zero** first places | Avoid. |
 | Generic trading or portfolio agents | ATLAS, ORCA and Sui Jarvis all placed 3rd–4th | "AI that trades" on its own doesn't take 1st. |
@@ -37,21 +37,21 @@ Pulled from the same public endpoints the Binance skills use, plus BSC RPC. Raw 
 1. **A token is not a share, and each issuer uses different units.** BSC has 517 tokenized tickers: 458 Ondo, 87 bStock, 130 xStocks. 38 tickers are listed by all three issuers and 120 by at least two. 242 of the 458 Ondo tokens have a multiplier other than 1.
    - `NFLX`: Ondo **10.0** shares per token, bStock 1.0, xStocks 1.0 in the list API. The xStocks dynamic API says 10.0.
    - `CRWD`: Ondo **4.0**. `SOXS`: Ondo **0.1017** (reverse split).
-2. **The API disagrees with itself and with the chain.** For NVDAx, the list API says the multiplier is `1.000000`, the dynamic API says `1.000918`, and the token contract's on-chain `multiplier()` says `1.001701`. That's three answers for one token. 17 of 103 issuer–ticker pairs disagree between list and dynamic. On-chain vs dynamic, 12 of 38 xStocks tokens disagree, while bStock matches in 38 of 38.
+2. **The API disagrees with itself and with the chain.** For NVDAx, the list API says the multiplier is `1.000000`, the dynamic API says `1.000918`, and the token contract's onchain `multiplier()` says `1.001701`. That's three answers for one token. 17 of 103 issuer–ticker pairs disagree between list and dynamic. Onchain vs dynamic, 12 of 38 xStocks tokens disagree, while bStock matches in 38 of 38.
 3. **The obvious cross-issuer "arbitrage" is an illusion.** Compare raw token prices and you see gaps of 899% (NFLX), 869% (GME), 713% (MRVL) and 563% (IBM). Normalize to share units against the US reference price and the gaps disappear:
    - Ondo: median **+0.004%**, mean |premium| 0.046%
    - bStock: median **+0.062%**, mean |premium| 0.072%
    - xStocks on BSC: median −1.17%, with outliers of −90% / +865%. These are **stale marks on a ghost market.**
-4. **Trading is concentrated in one issuer.** 24h on-chain volume across the 38 triple-listed tickers: **bStock $48.3M, Ondo $4.3M, xStocks $96.** A naive arbitrage bot would buy into those $96 pools.
+4. **Trading is concentrated in one issuer.** 24h onchain volume across the 38 triple-listed tickers: **bStock $48.3M, Ondo $4.3M, xStocks $96.** A naive arbitrage bot would buy into those $96 pools.
 5. **The metadata has gaps.**
    - Only Ondo returns `marketStatus`. bStock and xStocks return `null` for all 38.
    - `liquidity` reads $0 for almost every token, yet NVDAB made ~2,968 transfers in 22 minutes through router contracts (LI.FI, CoW settlement).
-   - bStock exposes `uiMultiplier()` on-chain. xStocks exposes `multiplier()`. Ondo exposes **no** on-chain multiplier, but does expose `compliance()` and `tokenPauseManager()`.
-6. **The multiplier is a dividend ledger.** Across 26 Ondo tokens on BSC, multiplier growth tracks the stock's dividend yield with **Pearson r = 0.917**. Examples: PFE +6.09% multiplier vs 5.98% yield, KO +2.39% vs 2.95%, TSLA and AMZN 0.00% vs 0%. Dividends are silently reinvested, users never see them, and they can be measured on-chain.
+   - bStock exposes `uiMultiplier()` onchain. xStocks exposes `multiplier()`. Ondo exposes **no** onchain multiplier, but does expose `compliance()` and `tokenPauseManager()`.
+6. **The multiplier is a dividend ledger.** Across 26 Ondo tokens on BSC, multiplier growth tracks the stock's dividend yield with **Pearson r = 0.917**. Examples: PFE +6.09% multiplier vs 5.98% yield, KO +2.39% vs 2.95%, TSLA and AMZN 0.00% vs 0%. Dividends are silently reinvested, users never see them, and they can be measured onchain.
 
 **What this means:** this month's baskets, DCA bots, rebalancers, spread monitors and "AI traders" will mostly read raw `price` and assume one token equals one share. The biggest hidden risk in this asset class right now is not the weekend gap. It's **wrong units and bad data.** Both ideas are built on that finding.
 
-> ⚠️ Verify on day one with your API key: the authenticated RWA Data API docs describe `referencePrice` as *"per-share converted price derived from on-chain token price"*. If that's literally true, then every "on-chain vs reference spread" monitor (one of the suggested ideas) is comparing the token price with itself. The real underlying price we used is `stockInfo.price` from the public dynamic endpoint.
+> ⚠️ Verify on day one with your API key: the authenticated RWA Data API docs describe `referencePrice` as *"per-share converted price derived from onchain token price"*. If that's literally true, then every "onchain vs reference spread" monitor (one of the suggested ideas) is comparing the token price with itself. The real underlying price we used is `stockInfo.price` from the public dynamic endpoint.
 
 ## 3. Where the crowd will be
 
@@ -61,7 +61,7 @@ The track page lists 10 example ideas, and most entries will cluster around them
 |---|---|
 | Weekend gap / market-hours arb / reference-spread monitor | Excluded on purpose. The data above also shows the spread signal is mostly a units problem. |
 | Cross-protocol arb (bStock vs Ondo) | In share units it's ≤0.1% during market hours. The big "gaps" are traps. **Tally turns this idea into a safety product.** |
-| NL strategy agent / earnings agent / TradFi-crypto rebalancer | These will look alike and be judged on build quality. **Stipend gives an agent a business model and on-chain limits.** |
+| NL strategy agent / earnings agent / TradFi-crypto rebalancer | These will look alike and be judged on build quality. **Stipend gives an agent a business model and onchain limits.** |
 | DCA / thematic baskets / "first stock" onboarding | Consumer UX will be crowded. Tally's "buy in shares" flow stands out because the units are actually correct. |
 | MCP / SDK wrapper | Wrappers are commodities. Tally's MCP server is useful because it's a **correctness layer**, not a wrapper. |
 
@@ -70,7 +70,7 @@ The track page lists 10 example ideas, and most entries will cluster around them
 ## Idea 1: TALLY: "Buy tokenized shares, at the best prices."
 
 ### The pitch
-Robinhood users think in shares and dollars, and they expect best execution. On-chain they get three issuers, each with its own units, disagreeing metadata and ghost pools. Tally is the **consolidated tape and share-true order router for tokenized equities on BSC**. You say "buy half a share of NVDA" or "$50 of Apple". Tally quotes every issuer in real share units, picks the best true price, and settles through an on-chain guard that reverts if you'd get fewer **shares** than promised.
+Robinhood users think in shares and dollars, and they expect best execution. Onchain they get three issuers, each with its own units, disagreeing metadata and ghost pools. Tally is the **consolidated tape and share-true order router for tokenized equities on BSC**. You say "buy half a share of NVDA" or "$50 of Apple". Tally quotes every issuer in real share units, picks the best true price, and settles through an onchain guard that reverts if you'd get fewer **shares** than promised.
 
 ### Product surfaces
 1. **Consumer app** (mobile-first; Binance Wallet / Agentic Wallet)
@@ -83,9 +83,9 @@ Robinhood users think in shares and dollars, and they expect best execution. On-
    - Reverts when the issuer's pause manager reports a pause, or when the signed reference price shows a premium above `maxPremiumBps`.
    - Execution: a pull-through router, or an EIP-7702 batch so a normal wallet can swap and assert in one transaction.
 3. **Trap Shield / Integrity Score** per issuer and ticker:
-   - multiplier agreement across list API, dynamic API and on-chain
+   - multiplier agreement across list API, dynamic API and onchain
    - premium vs `stockInfo.price` during regular hours
-   - on-chain transfers and volume in the last 24h
+   - onchain transfers and volume in the last 24h
    - whether the token has status coverage
    - age of the latest attestation report
 
@@ -127,10 +127,10 @@ Robinhood users think in shares and dollars, and they expect best execution. On-
 ## Idea 2: STIPEND: "An AI wealth manager paid only from your dividends."
 
 ### The pitch
-Robo-advisors charge 0.25–1% a year **out of your principal**, whether or not they add value. On BSC, dividends are silently reinvested into each token's multiplier, which makes them **measurable on-chain income**. Stipend is a vault plus an Agent Studio agent:
+Robo-advisors charge 0.25–1% a year **out of your principal**, whether or not they add value. On BSC, dividends are silently reinvested into each token's multiplier, which makes them **measurable onchain income**. Stipend is a vault plus an Agent Studio agent:
 - The agent manages your tokenized stock portfolio under rules the contract enforces.
 - **Its only income is a capped share of the dividends your holdings actually earned.** It can never touch principal.
-- It pays for its own data and inference (x402/b402) out of that income, and publishes an on-chain salary slip. If it's not worth its keep, it runs out of money where everyone can see it.
+- It pays for its own data and inference (x402/b402) out of that income, and publishes an onchain salary slip. If it's not worth its keep, it runs out of money where everyone can see it.
 
 ### Mechanics
 - **StipendVault** (per user; holds allowlisted Ondo, bStock and xStocks tokens)
@@ -144,13 +144,13 @@ Robo-advisors charge 0.25–1% a year **out of your principal**, whether or not 
     - no trading while `ASSET_PAUSED`, and none while `ASSET_LIMITED (earnings)` unless the mandate allows it
     - concentration caps
   - The user keeps withdraw-all and a kill switch. The agent holds only a session key.
-- **Multiplier oracle**: bStock and xStocks are read on-chain. Ondo updates are signed by a keeper, **bounded by `dividendYield × Δt`**, timelocked 24h, and the user can veto. The agent can't raise its own pay.
+- **Multiplier oracle**: bStock and xStocks are read onchain. Ondo updates are signed by a keeper, **bounded by `dividendYield × Δt`**, timelocked 24h, and the user can veto. The agent can't raise its own pay.
 - **Agent (BNB Agent Studio)**
   - **ERC-8004 identity**, and a reputation feed covering tracking error vs mandate, fees taken and turnover.
   - **ERC-8183 task interface**, so users hire it with tasks like "set my mandate", "rebalance" or "explain this quarter".
   - Autonomous runtime.
-  - **Pays for itself via x402/b402**: buys market data and inference, and posts a monthly on-chain "salary slip" with income, costs and runway.
-- **Mandates in plain English, turned into on-chain policy**. For example, "60% dividend payers, 30% QQQ, 10% BNB, never >10% in one name" is compiled into vault constraints. The LLM writes the rules and the contract enforces them. This is the Faktura / Flattora pattern.
+  - **Pays for itself via x402/b402**: buys market data and inference, and posts a monthly onchain "salary slip" with income, costs and runway.
+- **Mandates in plain English, turned into onchain policy**. For example, "60% dividend payers, 30% QQQ, 10% BNB, never >10% in one name" is compiled into vault constraints. The LLM writes the rules and the contract enforces them. This is the Faktura / Flattora pattern.
 - **Issuer choice**: rebalances go to the issuer with the best share-true price. Because multiplier math is built in, a split can't confuse drift calculations.
 
 ### Honest economics (shown in the app as "break-even AUM")
@@ -213,7 +213,7 @@ These are subjective estimates against the published rubric:
 
 | Phase | Tally | Stipend |
 |---|---|---|
-| P0: Truth layer | Ingest the 3 issuers; multiplier adapters (on-chain + API); integrity scoring; snapshot store | Same core; add the dividend-accrual ledger and split detection |
+| P0: Truth layer | Ingest the 3 issuers; multiplier adapters (onchain + API); integrity scoring; snapshot store | Same core; add the dividend-accrual ledger and split detection |
 | P1: Quotes and simulation | Trading API quote ladder per issuer; Transaction API simulation of each route; consolidated quote | Simulate agent actions against vault invariants |
 | P2: Contracts | `ShareGuard` + `MultiplierRegistry`; Foundry **BSC mainnet-fork** tests using real NVDAB/NVDAon/NVDAx; deploy; $2–5 live trades on ≥2 issuers | `StipendVault` + bounded oracle + split firewall; fork tests including a synthetic 10× split; deploy; small live deposit |
 | P3: Product | "Buy in shares" flow, portfolio in shares, Trap Shield | Mandate → policy compiler, salary slip, runway meter, kill switch |
@@ -223,7 +223,7 @@ These are subjective estimates against the published rubric:
 ### Feasibility checks already done
 - **The token layer does not block contracts.** On 2026-09-30, `research/transfer_check.py` simulated real holders sending NVDAon, NVDAB and NVDAx to a brand-new wallet and to a brand-new contract. All six transfers passed, and an overdraw control reverted as expected. All three issuers use a **blocklist/sanctions model** (Ondo: `isBlocked`/`isSanctioned` via `compliance()`; bStock: `addToBlocklist`/`sanctionedAddresses`; xStocks: `sanctionsList()` + `isPaused()`), not an allowlist of approved holders. Any address can hold unless it is listed. Re-run the script before deploying, because the lists can change.
 - **The real gate is off-chain eligibility, not the contract.** Issuers push geographic and eligibility enforcement onto the app offering the product. The bStocks FAQ expects a country-eligibility API that isn't publicly documented. xStocks puts KYC and geography on the venue. Ondo attaches eligibility representations to secondary buyers, and redemption requires issuer KYC. See "Eligibility" below.
-- On-chain multipliers can be read for bStock and xStocks. Ondo needs a feed. Its `tokenPauseManager()` exists, so pause checks can be done on-chain.
+- Onchain multipliers can be read for bStock and xStocks. Ondo needs a feed. Its `tokenPauseManager()` exists, so pause checks can be done onchain.
 - The skill docs show `limit-order` returning `Ondo-related tokens cannot be traded`. Plan for market orders plus guards on Ondo.
 
 ### Eligibility: how each idea handles it
@@ -237,11 +237,11 @@ Transfers work, but an app that helps people buy these tokens takes on the issue
 This section is the project's lab notebook. Every claim has a date, how we got it, and where the raw evidence lives. Numbers are copied from tool output, not estimated. When a later finding corrected an earlier one, both are kept and the correction is marked.
 
 **Evidence locations**
-- `research/snapshot-2026-09-30/`: public-API and on-chain snapshot (§F1, §F2)
+- `research/snapshot-2026-09-30/`: public-API and onchain snapshot (§F1, §F2)
 - `research/transfer_check.py`: compliance and transfer simulation (§F2)
 - `research/region_check.py`: Trading API region runs. The team's raw reports stay off-repo because they contain wallet addresses (§F3).
 - `spike/results/`: fork-test logs, route captures, live-buy JSON (§F4–§F7)
-- On-chain transactions: BscScan links in §F6
+- Onchain transactions: BscScan links in §F6
 
 ### F1. Market data and units (2026-09-30, public endpoints + BSC RPC)
 - **Universe on BSC:** 517 tokenized tickers: Ondo 458 tokens, bStock 87, xStocks 130. 38 tickers are listed by all three issuers and 120 by at least two.
@@ -249,15 +249,15 @@ This section is the project's lab notebook. Every claim has a date, how we got i
   - 242 of 458 Ondo BSC tokens have a share multiplier other than 1.
   - Split-adjusted examples: Ondo NFLX = 10.0 shares per token, CRWD = 4.0, SOXS = 0.1017. bStock and xStocks NFLX = 1.0.
   - Anyone comparing raw token prices sees fake cross-issuer "arbitrage": NFLX 899%, GME 869%, MRVL 713%, IBM 563%.
-- **The same token's multiplier differs by source.** NVDAx: list API 1.000000, dynamic API 1.000918, token contract `multiplier()` 1.001701. List and dynamic disagree on 17 of 103 issuer–ticker pairs. On-chain vs dynamic: 12 of 38 xStocks tokens disagree, while bStock matches on 38 of 38.
-- **Where the on-chain truth lives.** bStock exposes `uiMultiplier()`, xStocks exposes `multiplier()`, and Ondo exposes **no** on-chain multiplier (only the API's `sharesMultiplier`).
+- **The same token's multiplier differs by source.** NVDAx: list API 1.000000, dynamic API 1.000918, token contract `multiplier()` 1.001701. List and dynamic disagree on 17 of 103 issuer–ticker pairs. Onchain vs dynamic: 12 of 38 xStocks tokens disagree, while bStock matches on 38 of 38.
+- **Where the onchain truth lives.** bStock exposes `uiMultiplier()`, xStocks exposes `multiplier()`, and Ondo exposes **no** onchain multiplier (only the API's `sharesMultiplier`).
 - **Share-true premiums in US regular hours are tiny for the two live issuers.** Ondo: median +0.004%, mean |premium| 0.046%. bStock: median +0.062%, mean |premium| 0.072%. xStocks on BSC: median −1.17%, with stale outliers from −90% to +865%.
-- **Where volume is.** 24h on-chain volume across the 38 shared tickers: bStock $48.3M, Ondo $4.3M, xStocks $96. **xStocks on BSC is a ghost market** and should only appear in Tally as a "trap" example, never as an execution venue.
+- **Where volume is.** 24h onchain volume across the 38 shared tickers: bStock $48.3M, Ondo $4.3M, xStocks $96. **xStocks on BSC is a ghost market** and should only appear in Tally as a "trap" example, never as an execution venue.
 - **The multiplier records dividends.** Across 26 Ondo tokens, multiplier growth tracks dividend yield with Pearson r = 0.917 (e.g. PFE +6.09% vs 5.98% yield). This is the basis of Idea 2 (Stipend).
 - **Metadata gaps:**
   - `marketStatus` is returned only for Ondo; `null` for bStock and xStocks.
   - `liquidity` reads $0 on tokens that make thousands of router transfers per hour.
-  - `tokenInfo.volume24h` is the US stock's volume, not on-chain volume.
+  - `tokenInfo.volume24h` is the US stock's volume, not onchain volume.
   - bStock's `stockInfo.price` is `null`, so a bStock reference price has to be borrowed from another issuer's token for the same ticker.
 
 ### F2. Token contracts and compliance (2026-09-30, `research/transfer_check.py`)
@@ -305,7 +305,7 @@ Method: `capture_route.py` takes a real quote and swap transaction for (a) a tes
 | Test | What it proves | NVDAB (4 runs) | NVDAon (3 valid runs) |
 |---|---|---|---|
 | A: replay as plain wallet | API calldata works on the fork; received within 0.005% of quote | ✅ 4/4 | ✅ 3/3 |
-| B: **ShareGuard as the trader** | A contract can trade the API's routes; shares checked on-chain | ✅ 4/4 | ✅ 3/3 |
+| B: **ShareGuard as the trader** | A contract can trade the API's routes; shares checked onchain | ✅ 4/4 | ✅ 3/3 |
 | C: ShareGuard rejects a shortfall | A share-denominated minimum reverts a bad fill | ✅ 4/4 | ✅ 3/3 |
 | D: EIP-7702 batch | Wallet runs approve → unchanged API swap → share check in one transaction | ✅ 4/4 | ✅ 3/3 |
 | E: batch reverts atomically | A failed share check undoes the swap (fails at call index 2) | ✅ 4/4 | ✅ 3/3 |
@@ -377,7 +377,7 @@ Swap #5 used **775,639 gas: with the API's 450,000 it would have reverted again.
 ### F9. Still open
 - **Larger sizes.** ~~Price impact at $100 and $1,000 is unknown.~~ Answered for quotes in §F10 (impact < 0.003%); real fills at those sizes are untested.
 - **Ondo RFQ mode.** It's documented but never observed. Keep a code path and a test for it.
-- **Ondo multiplier on-chain.** There isn't one. ShareGuard v1 uses a signed feed bounded per asset (§F11); the TS signer service is M3.
+- **Ondo multiplier onchain.** There isn't one. ShareGuard v1 uses a signed feed bounded per asset (§F11); the TS signer service is M3.
 - **Whether Binance Wallet / Agentic Wallet can send EIP-7702 batches.**
 - **Region behaviour for UK, Canada, Japan and the Netherlands.** Partly answered in §F10: NL blocked, JP allowed, CA inconclusive (clock skew), UK untested. Romania is blocked too.
 - **The Binance Transaction API (simulation/broadcast).** Paths now known (§F10) but not exercised; `spike/record_m1_probes.py` records them. We still use `eth_call` / `eth_estimateGas`.
@@ -437,15 +437,15 @@ Evidence: `packages/binance/fixtures/raw/` (recorded on the Seoul EC2 and from V
 | NVDA | 1,000 | **bStock** | +0.06% / +0.03% | 0.0026% | 0.03% |
 | AAPL | 6 | **bStock** | −0.08% / +0.05% | 0.0044% | 0.33% (Ondo took 4 legs) |
 | AAPL | 25–1,000 | Ondo | +0.02% / +0.04% to +0.06% | ≤ 0.0009% | 0.02–0.04% |
-| NFLX | 6–1,000 | bStock | Ondo blocked as a ghost ($16 of on-chain volume) / +0.06% to +0.11% | ≤ 0.0026% | – |
+| NFLX | 6–1,000 | bStock | Ondo blocked as a ghost ($16 of onchain volume) / +0.06% to +0.11% | ≤ 0.0026% | – |
 
 - **Price impact is negligible up to $1,000** in every recorded quote, which answers the open "larger sizes" question for *quotes*. Fills can still land below a quote (F6: −0.51% once).
 - The cheapest issuer changes with size (NVDA flips to bStock at $1,000), and fees decide close calls: a 4-leg route cost ≈$0.03 more gas than a 1-leg one in the model, which is why AAPL at $6 prefers bStock.
 - The gas model is deliberately conservative for 4 legs (1.03M assumed vs 775,639 used in F6); refine it with every real fill.
 
-**Ghost markets are real and common for Ondo too:** NFLXon had **$16** of 24h on-chain volume (09-30 snapshot), NVDAon $78k, NVDAB $16.7M, NVDAx $52. The ≤$1,000 rule blocks NFLXon, so for some tickers only one issuer is executable.
+**Ghost markets are real and common for Ondo too:** NFLXon had **$16** of 24h onchain volume (09-30 snapshot), NVDAon $78k, NVDAB $16.7M, NVDAx $52. The ≤$1,000 rule blocks NFLXon, so for some tickers only one issuer is executable.
 
-**On-chain reads work from the cloud:** `uiMultiplier()` for NVDAB returned 1.000778223752807865 (identical to the API), and `multiplier()` for NVDAx 1.001701196801074 (matches the 09-30 snapshot, not the API's 1.000918).
+**Onchain reads work from the cloud:** `uiMultiplier()` for NVDAB returned 1.000778223752807865 (identical to the API), and `multiplier()` for NVDAx 1.001701196801074 (matches the 09-30 snapshot, not the API's 1.000918).
 
 **MEV protection:** `enableMevProtection` (optional boolean) exists only on `POST /api/v1/dex/pre-transaction/broadcast-transaction`. Tally has users sign and broadcast in their own wallet, so we cannot set it. Not claimed as a feature (blueprint §15).
 
@@ -470,7 +470,7 @@ Evidence: `packages/binance/fixtures/raw/` (recorded on the Seoul EC2 and from V
 - Attestation age is wired: Ondo NVDA's report (`daily-2026-09-29`) was 3.2 days old at 05:26 UTC on Friday 2026-10-02, so it carries the −10 deduction from §7.5. **That is not explained by a weekend** (it was a Friday), and one token at one moment is too little data to say how stale Ondo reports usually are. The rule stays as written (calendar days, > 3) until a few days of `tally facts` output from the EC2 show the real lag.
 - **A live run 18 minutes later (05:44 UTC) showed no attestation deduction for the same token**, where the fixture engine showed −10. The cause is not proven: either a report was published in between, or the `underlying-profile` call failed. A failure would have been invisible, because the adapter's warning went to stderr (not captured by `> live.json`) and the quote's own `warnings` only held core's messages. Fixed: every integrity check now records its inputs and outcome, a missing fact carries the reason it is missing, and those reasons appear in the quote's `warnings`. `tally facts` and `tally quote --checks` print the log. A failed call is also retried with a longer backoff after a 42900 (1 s, 2 s).
 
-**Live confirmation (exit check 1, live): `pnpm tally quote NVDA 25 --json` on the Seoul EC2, 2026-10-02 05:44 UTC** (`packages/engine/fixtures/live_quote_NVDA_25_20261002T054441Z.json`). Real Binance API and BSC RPC, no warnings, no row errors. Ondo won: 0.107897 shares at $231.59 (−0.05% vs the $231.71 US price), 2 legs via NVDAB, fee ≈$0.023; bStock 0.107807 shares at $231.79 (+0.03%), 1 leg, fee ≈$0.017. Ondo saved 0.059% ($0.015) vs bStock, fee included. xStocks: F, multiplier disagreement and $0 of on-chain volume. The fixture engine matches it on winner, executability, multiplier sources and grades, and on prices within 0.2% (`live-parity.test.ts`).
+**Live confirmation (exit check 1, live): `pnpm tally quote NVDA 25 --json` on the Seoul EC2, 2026-10-02 05:44 UTC** (`packages/engine/fixtures/live_quote_NVDA_25_20261002T054441Z.json`). Real Binance API and BSC RPC, no warnings, no row errors. Ondo won: 0.107897 shares at $231.59 (−0.05% vs the $231.71 US price), 2 legs via NVDAB, fee ≈$0.023; bStock 0.107807 shares at $231.79 (+0.03%), 1 leg, fee ≈$0.017. Ondo saved 0.059% ($0.015) vs bStock, fee included. xStocks: F, multiplier disagreement and $0 of onchain volume. The fixture engine matches it on winner, executability, multiplier sources and grades, and on prices within 0.2% (`live-parity.test.ts`).
 
 **Other build findings**
 - Schemas written from the docs failed on real data twice (`assetType` is `null` on some rows; `executionMode` sits at the top level of the swap response, not inside `routerResult`). The first version swallowed the failure and silently fell back to stale public data, so every fallback now reports a warning.
@@ -512,7 +512,7 @@ Offline: **72 unit and fuzz tests pass** (swap, admin, feed bounds, monotonic re
 6. **Pause checks fail closed:** a manager that reverts, returns the wrong size, or a token that reports no manager makes the swap revert (`PauseCheckFailed`) instead of passing.
 
 **Live deployment and guarded buys (2026-10-02, owner-run; results in `contracts/results/`, deploy record in `contracts/broadcast/Deploy.s.sol/56/run-latest.json`).**
-- **ShareGuard v1: [`0x28F6F19bffbF25E36452c78d12090F0bC922970a`](https://bscscan.com/address/0x28f6f19bffbf25e36452c78d12090F0bC922970a)**, block 125266385, deploy tx `0xbebce369…0d59`. 12 transactions (deploy, router, 10 assets) cost 0.00021 BNB in total (4.2M gas at 0.05 gwei), below the dry run's estimate. Read back from the chain: owner = the deployer wallet `0x327D…f710`, no pending owner, feed signer `0xDd3C…f407`, not paused, `maxAge` 3 days, router `0xB444…dDA5` allow-listed with itself as approve target, NVDAB and NVDAon price (1.000778 / 1.001715) and answer their pause checks. The on-chain runtime has the same length as a local build (14,597 bytes).
+- **ShareGuard v1: [`0x28F6F19bffbF25E36452c78d12090F0bC922970a`](https://bscscan.com/address/0x28f6f19bffbf25e36452c78d12090F0bC922970a)**, block 125266385, deploy tx `0xbebce369…0d59`. 12 transactions (deploy, router, 10 assets) cost 0.00021 BNB in total (4.2M gas at 0.05 gwei), below the dry run's estimate. Read back from the chain: owner = the deployer wallet `0x327D…f710`, no pending owner, feed signer `0xDd3C…f407`, not paused, `maxAge` 3 days, router `0xB444…dDA5` allow-listed with itself as approve target, NVDAB and NVDAon price (1.000778 / 1.001715) and answer their pause checks. The onchain runtime has the same length as a local build (14,597 bytes).
 - **BscScan verification took two attempts.** The submission from `forge script --verify` was accepted (`OK`), then the Etherscan queue answered "Pending in queue" and finally "Other Exception - Please contact us". Resubmitting with `forge verify-contract … --watch` succeeded (reported by the owner). Sourcify received the contract too.
 
 | | NVDAB (bStock) | NVDAon (Ondo, signed feed) |
@@ -566,10 +566,10 @@ Evidence: `packages/engine/src/trade.ts` and `trade.test.ts` (recorded Seoul quo
 
 ## The DX report (25%): write it yourself, as you go
 The rules reject AI-generated reports, so **keep a timestamped human log from the first minute**. That covers time to first successful call, each error message copied verbatim, and page URL plus section for every doc problem. The items below are leads we found from outside with public endpoints. **Confirm each one yourself with your key before it goes in the report:**
-- Three different multiplier values for the same token across list API, dynamic API and on-chain (xStocks).
+- Three different multiplier values for the same token across list API, dynamic API and onchain (xStocks).
 - `liquidity` = 0 on tokens with thousands of router transfers per hour.
 - `marketStatus` returned only for Ondo tokens.
-- `tokenInfo.volume24h` is the **US stock** volume, not on-chain volume. The skill docs admit this, but the field name misleads.
+- `tokenInfo.volume24h` is the **US stock** volume, not onchain volume. The skill docs admit this, but the field name misleads.
 - RWA Data API docs list `platformId: "ondo" | "bstock"` only, while xStocks are `type=2` in the public list.
 - The tokenized-securities skill says Ondo is "the only supported provider", which contradicts the agentic-wallet skill.
 - The `referencePrice` definition (see §2 warning).
@@ -589,7 +589,7 @@ The rules reject AI-generated reports, so **keep a timestamped human log from th
 ## Reproduce
 ```bash
 python3 research/analyze_winners.py                        # hackathon-winner patterns
-python3 research/fetch_snapshot.py                         # fresh public-API + on-chain snapshot
+python3 research/fetch_snapshot.py                         # fresh public-API + onchain snapshot
 python3 research/analyze_snapshot.py research/snapshot-<date>
 python3 research/region_check.py --label <where>           # needs your API key; read-only
 cd spike && ./setup.sh && ./run_fork_spike.sh              # ShareGuard on a BSC fork; see spike/README.md

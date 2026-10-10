@@ -21,7 +21,7 @@ The gas estimate and the simulation both need the allowance to exist. Without it
 
 ## The Ondo feed signer
 
-Ondo has no on-chain multiplier, so the contract keeps a stored value that the owner seeded and a bounded, signed feed keeps current. There is no separate sign endpoint: `prepare` signs a bounded `FeedUpdate` itself, and only when the stored value is stale or differs from the engine's accepted multiplier by more than 1 ppm. `FEED_SIGNER_PK` is read only on the server. See [Multiplier sources](../smart-contracts/multiplier-sources.md).
+Ondo has no onchain multiplier, so the contract keeps a stored value that the owner seeded and a bounded, signed feed keeps current. There is no separate sign endpoint: `prepare` signs a bounded `FeedUpdate` itself, and only when the stored value is stale or differs from the engine's accepted multiplier by more than 1 ppm. `FEED_SIGNER_PK` is read only on the server. See [Multiplier sources](../smart-contracts/multiplier-sources.md).
 
 ## Route choice
 

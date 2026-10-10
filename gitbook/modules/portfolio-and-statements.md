@@ -20,7 +20,7 @@ Activity lists the wallet's guarded buys, sells and Migrates with their status a
 
 ## Suggestions for small portfolios
 
-A wallet that holds fewer than three stocks sees suggestions: three minus the number held. It is not a recommendation engine. Candidates are tokens enabled on ShareGuard that Radar grades A or B (Liquid), not ghost and with fresh data, ordered by cleaned 24-hour on-chain volume, then rotated per wallet by a stable hash of the address so different wallets see a different token first. While the wallet's holdings or the Radar data are still loading, it says so and suggests nothing. Smart recommendations are on the [roadmap](../reference/roadmap.md).
+A wallet that holds fewer than three stocks sees suggestions: three minus the number held. It is not a recommendation engine. Candidates are tokens enabled on ShareGuard that Radar grades A or B (Liquid), not ghost and with fresh data, ordered by cleaned 24-hour onchain volume, then rotated per wallet by a stable hash of the address so different wallets see a different token first. While the wallet's holdings or the Radar data are still loading, it says so and suggests nothing. Smart recommendations are on the [roadmap](../reference/roadmap.md).
 
 ## Speed
 

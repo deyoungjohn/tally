@@ -35,7 +35,7 @@ export interface CandidateTokenInput {
   score?: number;
   ghost?: boolean;
   stale?: boolean;
-  /** Cleaned on-chain 24h volume in USD (bigint, number, or string). */
+  /** Cleaned onchain 24h volume in USD (bigint, number, or string). */
   cleanedVolumeUsd?: bigint | number | string | null;
   reason?: string;
 }
@@ -242,7 +242,7 @@ export function buildPortfolioSuggestions(opts: BuildSuggestionsOptions): Portfo
     }
   }
 
-  // Order candidate tickers by cleaned on-chain 24h volume, highest first
+  // Order candidate tickers by cleaned onchain 24h volume, highest first
   const sorted = [...byTicker.values()].sort((a, b) => {
     const volA = toSortableVolume(a.cleanedVolumeUsd);
     const volB = toSortableVolume(b.cleanedVolumeUsd);
@@ -278,7 +278,7 @@ export function buildPortfolioSuggestions(opts: BuildSuggestionsOptions): Portfo
     grade: c.grade as "A" | "B",
     label: "Liquid",
     volume24hUsd: formatVolumeUsdString(c.cleanedVolumeUsd),
-    reason: opts.isFixture ? SUGGESTIONS_FIXTURE_TEXT : (c.reason ?? "Liquid on-chain"),
+    reason: opts.isFixture ? SUGGESTIONS_FIXTURE_TEXT : (c.reason ?? "Liquid onchain"),
   }));
 
   return {

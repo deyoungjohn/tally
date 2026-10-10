@@ -16,7 +16,7 @@ export interface PauseStateResult {
  * - { paused: true, reason: null, observedAt } when token is paused
  * - { paused: false, reason: null, observedAt } when token is active
  * - { paused: null, reason: "token not configured in ShareGuard", observedAt } when asset is not enabled in ShareGuard
- * - { paused: null, reason: "pause check reverted", observedAt } when isTokenPaused check reverted on-chain
+ * - { paused: null, reason: "pause check reverted", observedAt } when isTokenPaused check reverted onchain
  * - { paused: null, reason: "guard read failed; details withheld", observedAt } when readGuard itself fails/reverts
  */
 export async function pauseState(

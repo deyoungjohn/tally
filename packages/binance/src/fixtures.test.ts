@@ -152,7 +152,7 @@ describe("authenticated RWA data and public lists", () => {
     expect(on56(b).find((r) => r.symbol === "NFLXB")!.multiplier).toBe("1");
     expect(on56(ondo).filter((r) => r.multiplier !== "1")).toHaveLength(242); // F1: 242 of 458
   });
-  it("token dynamic gives the on-chain volume that exposes the xStocks ghost market ($96 across 38 tickers, F1)", async () => {
+  it("token dynamic gives the onchain volume that exposes the xStocks ghost market ($96 across 38 tickers, F1)", async () => {
     const pub = new PublicApi(createFixtureFetch());
     const d = await pub.tokenDynamic("0xc845b2894dbddd03858fd2d643b4ef725fe0849d");
     expect(Number(d.volume24hBuy ?? 0) + Number(d.volume24hSell ?? 0)).toBeLessThan(1000);

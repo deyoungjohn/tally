@@ -71,7 +71,7 @@ describe("MCP fixture tools", () => {
     });
     expect(result.rows.find((r) => r.issuer === "bstock")).toMatchObject({
       shares: E18,
-      sourceDetail: "on-chain uiMultiplier()",
+      sourceDetail: "onchain uiMultiplier()",
     });
     engine.ports.facts.multipliers = async () => ({});
     const unknown = await getSharesOf(runtime(engine), { address: USER, tickers: ["NFLX"] });

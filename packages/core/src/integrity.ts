@@ -46,7 +46,7 @@ export interface IntegrityInput {
   /** Resolved multiplier and the raw readings behind it. */
   multiplier?: ResolvedMultiplier | null;
   readings?: MultiplierReadings;
-  /** Ondo bounds result; undefined for issuers that read on-chain (check is not applicable). */
+  /** Ondo bounds result; undefined for issuers that read onchain (check is not applicable). */
   bounds?: { outcome: BoundsOutcome; detail: string };
   /** The independent price check of a multiplier change (token price ÷ multiplier vs the US price). */
   validation?: PriceValidation;
@@ -150,7 +150,7 @@ export function gradeIntegrity(i: IntegrityInput): Integrity {
       outcome: "skipped",
       points: 0,
       inputs: {},
-      summary: "not applicable: this issuer's multiplier is read on-chain → skipped",
+      summary: "not applicable: this issuer's multiplier is read onchain → skipped",
     });
   } else if (i.bounds.outcome === "fail") {
     checks.push({
@@ -181,7 +181,7 @@ export function gradeIntegrity(i: IntegrityInput): Integrity {
         outcome: "skipped",
         points: 0,
         inputs: {},
-        summary: "not applicable: this issuer's multiplier is read on-chain → skipped",
+        summary: "not applicable: this issuer's multiplier is read onchain → skipped",
       });
     } else if (!v) {
       checks.push({
@@ -261,7 +261,7 @@ export function gradeIntegrity(i: IntegrityInput): Integrity {
     }
   }
 
-  // 4. On-chain volume (−40 if under $1,000 in 24h: a ghost market)
+  // 4. Onchain volume (−40 if under $1,000 in 24h: a ghost market)
   {
     const inputs = { onchainVolume24hUsd: i.onchainVolume24hUsd };
     if (i.onchainVolume24hUsd === undefined) {

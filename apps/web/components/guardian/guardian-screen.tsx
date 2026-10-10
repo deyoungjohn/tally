@@ -32,6 +32,7 @@ import {
   type VmEnvelope,
 } from "@/components/portfolio/vm-shared";
 import { Tip } from "@/components/ui/tooltip";
+import { heldQuery } from "@/lib/held";
 import { useJson } from "@/lib/hooks/use-json";
 import { useSessionFetch } from "@/lib/hooks/use-session-fetch";
 import { useSessionJson, type SessionJson } from "@/lib/hooks/use-session-json";
@@ -358,7 +359,9 @@ export function GuardianScreen() {
   const holdsNothing =
     held.data !== null && held.data.groups.length === 0 && held.data.failed.length === 0;
   // Asked at the same time as the holdings (not after them), so the suggestions are ready when the nudge appears.
-  const portfolioVm = useJson<VmEnvelope<PortfolioVM>>(q ? `/api/vm/portfolio?address=${q}` : null);
+  const portfolioVm = useJson<VmEnvelope<PortfolioVM>>(
+    q && held.data ? `/api/vm/portfolio?address=${q}${heldQuery(held.data)}` : null,
+  );
   const holdingsKnown = !q || held.data !== null || held.error !== null;
   const feed = useSessionJson<AlertFeedVM>("/api/session/guardian/feed", { refreshMs: 60_000 });
   // While a link code is on screen, look for the link every few seconds so the page notices when the bot confirms it.

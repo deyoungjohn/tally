@@ -26,7 +26,7 @@ Solidity 0.8.28, EVM `prague`, OpenZeppelin 5.4 and forge-std 1.10 as **git subm
 **shares** (`tokens × multiplier / 1e18`), reverts below `minShares`, forwards the stock, refunds
 unspent input, and resets the approval to 0. It holds no balance between transactions.
 
-- **Multiplier sources:** bStock `uiMultiplier()` (on-chain); xStocks `multiplier()` (data only);
+- **Multiplier sources:** bStock `uiMultiplier()` (onchain); xStocks `multiplier()` (data only);
   **Ondo: a signed feed** (`swapForSharesWithFeed`, EIP-712 `FeedUpdate{stock, multiplier,
   validAfter, validUntil}` signed by `feedSigner`). Per asset `maxStepBps` (start 300): a decrease or
   a bigger increase is accepted only with an **owner-registered `CorporateAction`** that matches. A
@@ -212,7 +212,7 @@ without an engine reference; held products remain excluded.
 `captures/depth/batch-2-bstock-manifest.json` is the separate six-token scope,
 pinned by exact bytes in `AddAssets.s.sol`. The script also verifies its capture,
 selection, fork-report and first-manifest hashes before planning. Separate
-Batch 2 preview/run/verification/rollback methods use only bStock's on-chain
+Batch 2 preview/run/verification/rollback methods use only bStock's onchain
 multiplier and shared pause manager; they never read seeds. The first owner
 manifest and generated product data are unchanged.
 

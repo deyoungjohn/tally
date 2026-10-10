@@ -18,7 +18,7 @@ const SAMPLE_CANDIDATES: CandidateTokenInput[] = [
     grade: "A",
     score: 95,
     cleanedVolumeUsd: 500_000n * E18,
-    reason: "High volume on-chain",
+    reason: "High volume onchain",
   },
   {
     ticker: "AAPL",
@@ -123,7 +123,7 @@ describe("WO-03 Portfolio Suggestions Pure Tests", () => {
       grade: "A",
       label: "Liquid",
       volume24hUsd: "500000",
-      reason: "High volume on-chain",
+      reason: "High volume onchain",
     });
   });
 
@@ -300,7 +300,7 @@ describe("WO-03 Portfolio Suggestions Pure Tests", () => {
         grade: "A",
         score: 90,
         cleanedVolumeUsd: BigInt(i * 10_000) * E18,
-        reason: "Liquid on-chain",
+        reason: "Liquid onchain",
       });
     }
     // 1 stale candidate with highest volume

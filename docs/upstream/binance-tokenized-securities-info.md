@@ -24,7 +24,7 @@ Evidence and limits:
 - [IDEAS F4](https://github.com/deyoungjohn/tally/blob/main/IDEAS.md#f4-trading-api-quotes-routes-and-fees-2026-10-01-all-runs): `40375`, USD-versus-USDT minimum, repeated gas placeholder and fee limitations.
 - [IDEAS F6](https://github.com/deyoungjohn/tally/blob/main/IDEAS.md#f6-live-mainnet-buys-2026-10-01-burner-wallet-0x2bf7edf53bc6be6ff98f149387f3818ce28d2930-from-aws-seoul): live out-of-gas revert and successful buys with estimation and simulation.
 - [IDEAS F10](https://github.com/deyoungjohn/tally/blob/main/IDEAS.md#f10-m1-engine-what-the-seoul-recordings-and-the-build-showed-2026-10-02): truncated authenticated registry, per-token reference correction, accepted-baseline rules and HTTP-200 region errors.
-- [IDEAS F11](https://github.com/deyoungjohn/tally/blob/main/IDEAS.md#f11-m2-shareguard-v1-what-the-build-and-the-fork-tests-showed-2026-10-02): bounded Ondo feed, on-chain pause mechanisms and final-call gas evidence.
+- [IDEAS F11](https://github.com/deyoungjohn/tally/blob/main/IDEAS.md#f11-m2-shareguard-v1-what-the-build-and-the-fork-tests-showed-2026-10-02): bounded Ondo feed, onchain pause mechanisms and final-call gas evidence.
 
 Validation: patch application checked against the pinned upstream source; statements cross-checked with the committed recordings and contract/engine documentation. No endpoint, dependency or execution behavior changes. No live trading was performed for this documentation patch.
 

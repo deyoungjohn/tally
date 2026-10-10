@@ -59,7 +59,7 @@ describe("engine.pauseState (packages/engine/src/pause.ts)", () => {
     });
   });
 
-  it("returns paused: null with reason when pause check reverted on-chain (tokenPaused is undefined)", async () => {
+  it("returns paused: null with reason when pause check reverted onchain (tokenPaused is undefined)", async () => {
     const res = await pauseState(
       fakeChain({ tokenPaused: undefined, enabled: true }),
       token,

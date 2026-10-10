@@ -206,7 +206,7 @@ export const publicListRow = z
   .passthrough();
 export type PublicListRow = z.infer<typeof publicListRow>;
 
-/** v4 token dynamic: on-chain volume lives in volume24hBuy + volume24hSell (research/analyze_snapshot.py). */
+/** v4 token dynamic: onchain volume lives in volume24hBuy + volume24hSell (research/analyze_snapshot.py). */
 export const tokenDynamic = z
   .object({ price: num.nullish(), volume24hBuy: num.nullish(), volume24hSell: num.nullish() })
   .passthrough();

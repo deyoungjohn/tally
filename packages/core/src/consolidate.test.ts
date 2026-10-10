@@ -279,7 +279,7 @@ describe("consolidatedQuote", () => {
       expect(r.best).toBe("NVDAB");
       expect(r.saving).toBeUndefined(); // nothing to compare against
     });
-    it("a ghost market (on-chain volume < $1,000) is blocked even for an executable issuer", async () => {
+    it("a ghost market (onchain volume < $1,000) is blocked even for an executable issuer", async () => {
       const p = ports({ facts: { NVDAB: { onchainVolume24hUsd: 500 } } });
       const r = await consolidatedQuote(p, { ticker: "NVDA", amount: { usd: 25 } });
       expect(r.rows.find((x) => x.symbol === "NVDAB")).toMatchObject({ executable: false });

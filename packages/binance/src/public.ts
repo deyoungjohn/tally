@@ -21,7 +21,7 @@ const HEADERS = {
 
 export type PublicIssuerType = keyof typeof PUBLIC_LIST_TYPE;
 
-/** Undocumented, key-less endpoints (V15): used for the registry's full lists, cross-checks and on-chain volume. Work from any region. */
+/** Undocumented, key-less endpoints (V15): used for the registry's full lists, cross-checks and onchain volume. Work from any region. */
 export class PublicApi {
   constructor(private readonly f: typeof fetch = fetch) {}
 

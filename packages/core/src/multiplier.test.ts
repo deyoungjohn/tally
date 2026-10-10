@@ -30,7 +30,7 @@ describe("share maths: reproduces the live fills (IDEAS F6/F7)", () => {
 });
 
 describe("resolveMultiplier (blueprint §7.3)", () => {
-  it("NVDAx three-source mismatch (IDEAS F1): list 1.000000, dynamic 1.000918, on-chain 1.001701 → on-chain wins, flagged", () => {
+  it("NVDAx three-source mismatch (IDEAS F1): list 1.000000, dynamic 1.000918, onchain 1.001701 → onchain wins, flagged", () => {
     const r = resolveMultiplier("xstocks", {
       list: m("1"),
       api: m("1.0009180758490996"),
@@ -41,7 +41,7 @@ describe("resolveMultiplier (blueprint §7.3)", () => {
     expect(r.maxDeviationPpm).toBe(1701); // 0.17%
     expect(r.degraded).toBe(false);
   });
-  it("bStock on-chain matches the API (38/38 in F1): no disagreement", () => {
+  it("bStock onchain matches the API (38/38 in F1): no disagreement", () => {
     const r = resolveMultiplier("bstock", {
       onchain: m("1.0007782237528078"),
       api: m("1.000778223752807865"),
@@ -50,7 +50,7 @@ describe("resolveMultiplier (blueprint §7.3)", () => {
     expect(r.disagree).toBe(false);
     expect(r.source).toBe("onchain");
   });
-  it("Ondo has no on-chain value: the API is the source", () => {
+  it("Ondo has no onchain value: the API is the source", () => {
     const r = resolveMultiplier("ondo", { api: m("10") })!;
     expect(r).toMatchObject({ source: "api", degraded: false, disagree: false });
   });

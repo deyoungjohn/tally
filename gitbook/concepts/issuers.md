@@ -3,7 +3,7 @@
 | | Ondo | bStock | xStocks |
 |---|---|---|---|
 | Symbol suffix in Tally | `on` (NVDAon) | `B` (NVDAB) | `x` (NVDAx) |
-| Multiplier on-chain | No (API only) | Yes, `uiMultiplier()` | Yes, `multiplier()` |
+| Multiplier onchain | No (API only) | Yes, `uiMultiplier()` | Yes, `multiplier()` |
 | Pause check | `tokenPauseManager().isTokenPaused(token)` | Shared manager `isTokenPaused(token)`; the token itself has no pause getter | `isPaused()` on the token |
 | Executable in Tally | Yes | Yes | No (ghost market) |
 | Typical volume on BNB Chain | Moderate | Highest | Almost none |
@@ -17,7 +17,7 @@
 
 ## What "ghost market" means
 
-A token with under $1,000 of 24-hour on-chain volume is a ghost: its quoted price can be days old. This applies to Ondo too (NFLXon traded $16 in the 30 September snapshot). Tally flags it as a ghost, labels it Not Tradable and will not execute against it, which is why some tickers have only one tradable issuer.
+A token with under $1,000 of 24-hour onchain volume is a ghost: its quoted price can be days old. This applies to Ondo too (NFLXon traded $16 in the 30 September snapshot). Tally flags it as a ghost, labels it Not Tradable and will not execute against it, which is why some tickers have only one tradable issuer.
 
 ## Enabled on ShareGuard
 

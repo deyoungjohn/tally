@@ -1,6 +1,6 @@
 """Generate the planned buyable list from the approved deployment manifest, offline.
 
-The generated list is a deployment target, not proof of on-chain enablement. It is
+The generated list is a deployment target, not proof of onchain enablement. It is
 not imported by the product until the owner has enabled the additions and the
 read-only list_enabled.py comparison passes. The explicit --seeds-only command
 instead reads public multiplier sources and writes only deploy/seeds.json for

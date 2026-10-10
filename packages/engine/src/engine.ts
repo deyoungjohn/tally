@@ -343,7 +343,7 @@ export function createFixtureEngine(
   const recordedGasPrice = BigInt(
     Object.values<any>(swaps).find((s) => s.swap?.ok)?.swap.data.tx.gasPrice ?? "50000000",
   );
-  // Snapshot on-chain readings (2026-09-30) keyed by ticker and issuer. The registry gives us the ticker.
+  // Snapshot onchain readings (2026-09-30) keyed by ticker and issuer. The registry gives us the ticker.
   const tickerByAddress = new Map<string, string>();
   const base = o.fetch ?? createFixtureFetch({ blockRegion: o.blockRegion });
   const onchain = async (token: RegistryToken) => {

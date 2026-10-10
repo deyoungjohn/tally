@@ -75,7 +75,7 @@ export const CONCEPTS: Record<string, Concept> = {
     id: "radar",
     title: "How Radar grades tokens",
     paragraphs: [
-      "Radar reads each tokenized stock's own data, the on-chain multiplier, and market volume, and cross-checks them against each other. Every check writes a line you can read, whether or not it costs points.",
+      "Radar reads each tokenized stock's own data, the onchain multiplier, and market volume, and cross-checks them against each other. Every check writes a line you can read, whether or not it costs points.",
       "A missing fact is reported as missing, never guessed. The grade is a summary; the reasons under it are the evidence.",
     ],
   },

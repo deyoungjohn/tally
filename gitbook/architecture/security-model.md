@@ -11,7 +11,7 @@
 | Your wallet | Signing | Anything else |
 | Tally's server | Building transactions, reading data | Holding funds or keys: it has none |
 | Binance Web3 API | Quotes and swap calldata | Gas numbers, prices as truth, or being reachable from everywhere |
-| ShareGuard | Enforcing the share floor on-chain | Being safe against a compromised owner (see below) |
+| ShareGuard | Enforcing the share floor onchain | Being safe against a compromised owner (see below) |
 | The router | Executing swaps | Anything: ShareGuard checks what arrived |
 | Issuers' multipliers | Being the reference | Staying consistent across sources |
 

@@ -5,7 +5,7 @@ export class PausedRule implements Rule {
   readonly id = "paused";
   readonly name = "Token Paused or Halted";
   readonly description =
-    "Alerts when a held token is paused or halted by the issuer or on-chain pause manager.";
+    "Alerts when a held token is paused or halted by the issuer or onchain pause manager.";
 
   evaluate(
     prev: TokenState | null,
@@ -19,7 +19,7 @@ export class PausedRule implements Rule {
 
     // 1. bStock handling:
     // Probe evidence (IDEAS.md §F11 & probe files) proves bStock marketStatus is always null
-    // and statusInfo emits TRADING. It emits NOTHING from status, only from on-chain pause evaluation.
+    // and statusInfo emits TRADING. It emits NOTHING from status, only from onchain pause evaluation.
     if (next.issuer === "bstock") {
       if (next.isPausedOnchain === null) {
         ports?.onWarn?.(

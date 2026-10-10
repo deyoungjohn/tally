@@ -84,7 +84,7 @@ The order is the cut line: if time runs out, everything above the cut ships and 
 | Holders, top traders | `GET /market/token/holder`, `/token/top-trader` | — (show "unavailable", reason) | Includes `fundingSourceLabel` (e.g. CEX wallet) |
 | Candles | `GET /market/candles` (`bar` lower-case: `1h`, `1d`) | — | NVDAB 114 days, NVDAon 284 days of 1d history |
 | Prices | `GET /market/rwa/price?tokenContractAddresses=a,b` (batch) | public RWA dynamic | `POST /market/price` and `/price-info` return 50000 for stock tokens |
-| Status / session | `rwa/tokens` + `rwa/underlying-market` `statusInfo` | — | Ondo only. **bStock `marketStatus` is always `null`** → pause from on-chain pause manager (as ShareGuard does) |
+| Status / session | `rwa/tokens` + `rwa/underlying-market` `statusInfo` | — | Ondo only. **bStock `marketStatus` is always `null`** → pause from onchain pause manager (as ShareGuard does) |
 | Wallet P&L | `portfolio/overview` (`timeFrame` 1–4), `recent-pnl`, `token/latest-pnl`, `dex-history` | Receipts + logs | Token units; Tally converts to shares |
 | DeFi | `POST /defi/data/investment/list` (`investType` required), `position/list` (`addresses[]`) | — | 58 Earn products on BSC; NVDAB has a Venus market and PancakeSwap V3 pools |
 | Leaderboard / tracker | `leaderboard/list` (`timeFrame`, `sortBy`), `address-tracker/trades` (`trackerType` 1/2/3) | — | Mostly memecoin wallets; filter by our registry |
@@ -138,7 +138,7 @@ Watches what the user holds and tells them, in plain words, on Telegram and in a
 
 | Rule | Input | Alert |
 |---|---|---|
-| Paused / halted | Ondo `statusInfo`; bStock on-chain pause manager | "NVDA via Ondo is paused: session transition. Your shares are unchanged." |
+| Paused / halted | Ondo `statusInfo`; bStock onchain pause manager | "NVDA via Ondo is paused: session transition. Your shares are unchanged." |
 | Share count changed | multiplier observations (Ondo bounds, bStock `uiMultiplier`) | "Your token count is the same; your shares rose 0.6% (dividend reinvested)." |
 | Integrity grade dropped | Radar snapshots | "TSLA via bStock dropped B → D: no real trade for 3 days." |
 | Ghost / no exit | Flow | "There's no market to sell this token on BNB Chain right now." |

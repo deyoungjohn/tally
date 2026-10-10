@@ -359,7 +359,7 @@ export function ReviewSheet({
               {fmtShares(min)} <span className="text-[23px] text-fg2">{plan.symbol} shares</span>
             </p>
             <p className="mt-2 text-[15px] text-fg2">
-              …or nothing happens. Tally checks this in shares, on-chain, before it keeps the trade.
+              …or nothing happens. Tally checks this in shares, onchain, before it keeps the trade.
             </p>
           </div>
           <dl>

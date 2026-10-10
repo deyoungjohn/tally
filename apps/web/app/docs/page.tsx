@@ -4,7 +4,7 @@ import { SHAREGUARD_DEPLOYED } from "@tally/config";
 
 export const metadata: Metadata = {
   title: "Docs | Tally",
-  description: "Contract addresses, on-chain proof and developer documentation for Tally.",
+  description: "Contract addresses, onchain proof and developer documentation for Tally.",
 };
 
 const DOCS_URL = "https://docs.tallyprotocol.xyz";

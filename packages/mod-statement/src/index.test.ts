@@ -309,9 +309,7 @@ describe("WO-03 Slice A: Portfolio and Statement pure logic", () => {
     });
 
     expect(stmt.source).toBe("receipts");
-    expect(stmt.notes).toContain(
-      "Generated from on-chain receipts only (Binance API unavailable).",
-    );
+    expect(stmt.notes).toContain("Generated from onchain receipts only (Binance API unavailable).");
     expect(stmt.holdings.length).toBe(2);
     expect(stmt.holdingsByTicker["NVDA"]).toBeDefined();
     expect(formatUnits(stmt.holdingsByTicker["NVDA"]!.totalShares, 18)).toBe("1");

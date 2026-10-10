@@ -15,7 +15,7 @@ export type PollSaleResult =
 
 /**
  * Polls the sale transaction status.
- * Queries the on-chain /api/trade/sale-proceeds route first.
+ * Queries the onchain /api/trade/sale-proceeds route first.
  * The receipts worker (/api/receipts) is an optional fallback.
  */
 export async function fetchSaleStatus(
@@ -27,7 +27,7 @@ export async function fetchSaleStatus(
 ): Promise<PollSaleResult> {
   const isTimedOut = nowMs - startMs > 120_000;
 
-  // 1. Query on-chain sale proceeds directly
+  // 1. Query onchain sale proceeds directly
   try {
     const spRes = await fetchFn(`/api/trade/sale-proceeds?hash=${saleHash}`);
     if (spRes.ok) {

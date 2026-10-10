@@ -428,12 +428,14 @@ export function loadSuggestionsFromStore(
   held: Parameters<typeof buildPortfolioSuggestions>[0]["held"],
   walletAddress?: string | null,
   now = Date.now(),
+  /** True when `held` was read from the chain just now: the statement snapshot's age then says nothing about it. */
+  heldIsLive = false,
 ): PortfolioSuggestionsVM {
   const isFixture = process.env.TALLY_FIXTURES === "1";
 
   // If a wallet address is provided (signed-in user), verify that the statement snapshot
   // exists in the store and is fresh. If missing or stale, holdings are unknown.
-  if (walletAddress && walletAddress.trim()) {
+  if (!heldIsLive && walletAddress && walletAddress.trim()) {
     const stmtSnap = store.latest<Statement>("statement", walletAddress.toLowerCase(), {
       maxAgeMs: 300_000,
       now,
@@ -486,7 +488,7 @@ export function loadSuggestionsFromStore(
       ghost: radarSnap.data.ghost,
       stale: radarSnap.stale,
       cleanedVolumeUsd,
-      reason: radarSnap.data.reasons?.[0] ?? "Liquid on-chain",
+      reason: radarSnap.data.reasons?.[0] ?? "Liquid onchain",
     });
   }
 
@@ -505,6 +507,11 @@ export async function loadPortfolio(opts?: {
   store?: SnapshotStore;
   flags?: Partial<Record<ModuleName, boolean>>;
   now?: number;
+  /**
+   * The stocks the wallet holds right now, read from the chain by the page. The statement snapshot can be minutes old, so after a
+   * sale it still lists what was sold; suggestions follow this list instead whenever it is given.
+   */
+  heldTickers?: string[];
 }): Promise<PortfolioVM> {
   const wallet = opts?.walletAddress;
   const store = opts?.store;
@@ -525,7 +532,9 @@ export async function loadPortfolio(opts?: {
   }
 
   let suggestions: PortfolioSuggestionsVM | undefined;
-  if (store) {
+  if (store && opts?.heldTickers) {
+    suggestions = loadSuggestionsFromStore(store, new Set(opts.heldTickers), wallet, now, true);
+  } else if (store) {
     if (wallet && (!stmt || snapInfo.stale)) {
       const isFixture =
         process.env.TALLY_FIXTURES === "1" || (snapInfo.source?.includes("fixture") ?? false);

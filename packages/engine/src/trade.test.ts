@@ -91,7 +91,7 @@ describe("trade plan (blueprint §7.6), on recorded quotes and swap builds", () 
     expect(p.feedUpdate).toBe(false);
   });
 
-  it("Ondo with a stale on-chain feed carries a bounded signed update the guard can verify", async () => {
+  it("Ondo with a stale onchain feed carries a bounded signed update the guard can verify", async () => {
     const chain = approved();
     const stale = {
       ...chain,

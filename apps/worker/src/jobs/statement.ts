@@ -223,7 +223,7 @@ export const job: WorkerJob = {
           trades = dexHistoryToTrades(parsedDex.transactionList, registryMap, multiplierMap);
         }
 
-        // Read any on-chain receipts recorded for this wallet
+        // Read any onchain receipts recorded for this wallet
         const receiptSnaps = ctx.store.history<StatementReceipt>("receipt", fw.wallet, 0, 500);
         const receipts = receiptSnaps.map((s) => s.data);
 

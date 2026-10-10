@@ -7,6 +7,7 @@ import { ButtonLink } from "@/components/motion/button";
 import { Segmented } from "@/components/motion/segmented";
 import type { SellTarget } from "@/components/trade/use-sell-flow";
 import { ComingSoon } from "@/components/trade/coming-soon";
+import { heldQuery } from "@/lib/held";
 import { useJson } from "@/lib/hooks/use-json";
 import type { PortfolioTab, PortfolioVM, StatementVM } from "@/modules/statement/view-model";
 import type { ActivityVM } from "@/modules/receipts/view-model";
@@ -85,6 +86,12 @@ export function PortfolioVmPanel({
   const [tab, setTab] = useState<PortfolioTab>("holdings");
   useEffect(() => onTabChange?.(tab), [tab, onTabChange]);
   const q = encodeURIComponent(address);
+  // "Other assets": only `wallet.usdt` and `wallet.bnb` from the engine route (plain wallet balances). Its holdings groups,
+  // shares and values are the float-based numbers the view model replaces, so they are never read or shown here.
+  const balances = useJson<Pick<PortfolioReport, "wallet" | "asOf" | "groups" | "failed">>(
+    `/api/portfolio?address=${q}`,
+    { refreshMs: 30_000 },
+  );
   // A wallet the statement worker has not read yet answers "empty, suggestions unavailable". That is not the real answer, so the
   // page shows its loading state (never the empty card) and asks again every 2 s, for at most 8 s.
   const [gaveUp, setGaveUp] = useState(false);
@@ -93,9 +100,12 @@ export function PortfolioVmPanel({
     return () => window.clearTimeout(id);
   }, []);
   const [settling, setSettling] = useState(true);
-  const portfolio = useJson<VmEnvelope<PortfolioVM>>(`/api/vm/portfolio?address=${q}`, {
-    refreshMs: settling && !gaveUp ? 2_000 : 30_000,
-  });
+  const portfolio = useJson<VmEnvelope<PortfolioVM>>(
+    `/api/vm/portfolio?address=${q}${heldQuery(balances.data)}`,
+    {
+      refreshMs: settling && !gaveUp ? 2_000 : 30_000,
+    },
+  );
   useEffect(() => {
     const v = portfolio.data?.vm;
     if (v && !(v.state === "empty" && v.suggestions?.state === "unavailable")) setSettling(false);
@@ -104,12 +114,6 @@ export function PortfolioVmPanel({
   useEffect(() => {
     if (refreshKey) reload();
   }, [refreshKey, reload]);
-  // "Other assets": only `wallet.usdt` and `wallet.bnb` from the engine route (plain wallet balances). Its holdings groups,
-  // shares and values are the float-based numbers the view model replaces, so they are never read or shown here.
-  const balances = useJson<Pick<PortfolioReport, "wallet" | "asOf" | "groups" | "failed">>(
-    `/api/portfolio?address=${q}`,
-    { refreshMs: 30_000 },
-  );
   // The feed can miss tokens the wallet holds; the chain read fills them in, so every tokenized stock is counted and the total is
   // the sum of all of them. A fixture server's chain read is made up, so it is never merged.
   const feedEnv = portfolio.data;

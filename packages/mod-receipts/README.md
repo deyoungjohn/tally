@@ -69,7 +69,7 @@ is inferred from them.
 or contradictory evidence, threshold boundaries, a later multiplier, pending
 state, refunds, custom reverts and sample-size/reference-valuation edges from real
 vectors. `PENDING` and `UNRECONCILED` are proven only by these synthetic edges;
-the other three statuses have on-chain proof. No realized on-chain amounts are
+the other three statuses have onchain proof. No realized onchain amounts are
 invented in the recorded vectors.
 
 ## Quality statistics

@@ -51,7 +51,7 @@ event Guarded(
 );
 ```
 
-The receipt page decodes this event: what was spent, how many tokens arrived, how many shares they were worth at which multiplier. That is the proof, and it is on-chain.
+The receipt page decodes this event: what was spent, how many tokens arrived, how many shares they were worth at which multiplier. That is the proof, and it is onchain.
 
 ## Failure modes seen in practice
 

@@ -223,7 +223,7 @@ Help establishes a quota query, but does not specify the failure result. The [lo
 
 as a reason for transaction rejection under security policy, and lists corresponding prediction, DeFi, Developer Mode, and x402 quota rejections. The [official developer overview](https://developers.binance.com/en/docs/products/agentic-wallet/welcome) explains that out-of-policy actions are rejected or require further confirmation, depending on the rule.
 
-Do not confuse a refusal with order submission or pending App approval. The local market-order reference says an accepted order ID alone is not proof of execution; the external-sign reference distinguishes broadcast from pending confirmation. A successful JSON envelope can represent a pending order rather than an on-chain trade. This inspection did not establish whether any cap specifically offers an App override, nor the error/exit code the installed CLI returns at the boundary.
+Do not confuse a refusal with order submission or pending App approval. The local market-order reference says an accepted order ID alone is not proof of execution; the external-sign reference distinguishes broadcast from pending confirmation. A successful JSON envelope can represent a pending order rather than an onchain trade. This inspection did not establish whether any cap specifically offers an App override, nor the error/exit code the installed CLI returns at the boundary.
 
 ## Other controls and distinctions
 

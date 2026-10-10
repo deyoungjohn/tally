@@ -15,7 +15,7 @@ export interface RadarGradeDisplay {
   ghost: boolean;
   ghostReasons: string[];
   unitTrap: boolean;
-  /** Raw 24h on-chain volume in whole dollars, or null when unknown. This is the figure the Trade page quote grade uses. */
+  /** Raw 24h onchain volume in whole dollars, or null when unknown. This is the figure the Trade page quote grade uses. */
   rawVolume24hUsd: string | null;
   /** False when a recorded fact blocks buying; null when Radar cannot say (never true by guess). */
   executable: boolean | null;

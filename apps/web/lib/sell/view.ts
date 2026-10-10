@@ -31,7 +31,7 @@ export interface SellSheetView {
   /** What the person sends. */
   sharesIn: string;
   tokensIn: string;
-  /** What the router quotes, and the least it will pay (the router enforces it on-chain). */
+  /** What the router quotes, and the least it will pay (the router enforces it onchain). */
   expectedUsdt: string;
   minUsdt: string;
   routeText: string;
@@ -58,7 +58,7 @@ export function plainWarning(w: string): string | null {
     .trim();
   if (/https?:\/\//i.test(stripped)) return null;
   if (/^Binance simulation unavailable/i.test(stripped))
-    return "The second simulation check was unavailable. The on-chain simulation passed.";
+    return "The second simulation check was unavailable. The onchain simulation passed.";
   if (/token allowance/i.test(stripped))
     return "The existing token approval couldn't be read, so an approval step is shown.";
   return stripped.length > 0 && stripped.length < 160 ? stripped : null;

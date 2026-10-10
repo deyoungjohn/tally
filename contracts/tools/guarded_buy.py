@@ -196,7 +196,7 @@ def main():
         print(f"  feed: API multiplier {api_mult / 1e18:.9f} ({mult_from}); guard holds {stored / 1e18:.9f} "
               f"({step_bps:+d} bps, bound {info['maxStepBps']})")
         if api_mult < stored or step_bps > info["maxStepBps"]:
-            return finish(result, "the update is outside the on-chain bound: that needs an owner-registered "
+            return finish(result, "the update is outside the onchain bound: that needs an owner-registered "
                                   "CorporateAction, so nothing was signed or sent")
         update, sig, signer = sign_feed_update(guard, token_addr, api_mult,
                                                load_key("FEED_SIGNER_PK", "Feed signer private key (hidden): "))

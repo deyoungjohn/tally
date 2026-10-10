@@ -300,7 +300,7 @@ function TradeInner({
 
           <div className="panel order-5 min-w-0 p-5">
             <p className="flex items-center gap-2 font-semibold">
-              <ShieldCheck size={18} aria-hidden /> Guaranteed in shares, on-chain
+              <ShieldCheck size={18} aria-hidden /> Guaranteed in shares, onchain
             </p>
             <p className="mt-1 text-[15px] text-fg2">
               Tally checks how many <b className="text-fg">shares</b> your tokens represent and

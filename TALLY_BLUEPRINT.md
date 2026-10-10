@@ -44,13 +44,13 @@ This document is the hand-off from the ideation and validation phase to the buil
    - the **real** network fee;
    - the route in plain words;
    - an integrity grade.
-2. **Guaranteed-in-shares buy:** execute the best route through **ShareGuard**, which checks the result **in shares** on-chain.
+2. **Guaranteed-in-shares buy:** execute the best route through **ShareGuard**, which checks the result **in shares** onchain.
 3. **Portfolio in shares:** holdings across issuers in share units, with dividends shown as shares received (multiplier growth).
 4. **Trap Shield:** live list of tokens that would mislead naive tools (unit mismatches, ghost markets, data disagreements, paused assets).
 5. **Agent surfaces:** a Binance Wallet Skill and an MCP server, so AI agents get the same correctness layer.
 6. **Telegram bot (read-only first):** quotes, Trap Shield and alerts in Telegram. Trading comes later, only through a Telegram Mini App.
 
-**Who it's for:** people who already buy stocks on Robinhood or a local app and want them on-chain without learning crypto. The language is "shares", "price per share", "you pay"; never "slippage tolerance" on the main path.
+**Who it's for:** people who already buy stocks on Robinhood or a local app and want them onchain without learning crypto. The language is "shares", "price per share", "you pay"; never "slippage tolerance" on the main path.
 
 **Why it can win** (from the 87-winner analysis, `IDEAS.md` §1):
 - Precise financial primitives took 1st places (Faktura, Tilt, PRECEDENCE).
@@ -71,7 +71,7 @@ This document is the hand-off from the ideation and validation phase to the buil
   - Technical implementation: 30%
   - Creativity: 25%
   - DX report: 25%
-  - Product quality and UX: 20% ("would it bring non-crypto-native users on-chain?")
+  - Product quality and UX: 20% ("would it bring non-crypto-native users onchain?")
 - **Special prizes** ($2k each):
   - Best Use of Agentic Wallet / Wallet Skills: our target (§12).
   - Best Use of BNB Agent Studio: not targeted; Stipend is deferred.
@@ -85,7 +85,7 @@ Each fact links to its evidence in `IDEAS.md`. If a fact changes, update this ta
 | # | Fact | Design consequence | Evidence |
 |---|---|---|---|
 | V1 | Token ≠ share. Multipliers differ by issuer (NFLX Ondo 10.0 vs bStock 1.0; CRWD 4.0; SOXS 0.1017). 242/458 Ondo tokens ≠ 1. | All math is done in **shares**: `shares = tokens × multiplier`. | F1 |
-| V2 | Multiplier sources disagree. bStock `uiMultiplier()` matches the API 38/38. xStocks on-chain `multiplier()` disagrees with the API on 12/38. Ondo has **no** on-chain multiplier. | Source of truth: on-chain for bStock and xStocks; API for Ondo, with bounds. | F1 |
+| V2 | Multiplier sources disagree. bStock `uiMultiplier()` matches the API 38/38. xStocks onchain `multiplier()` disagrees with the API on 12/38. Ondo has **no** onchain multiplier. | Source of truth: onchain for bStock and xStocks; API for Ondo, with bounds. | F1 |
 | V3 | xStocks on BSC: ~$0 volume, stale prices from −90% to +865%. | Data and Trap Shield only. **Never route execution to xStocks.** | F1 |
 | V4 | The multiplier grows with dividends (r = 0.917 vs yield across 26 Ondo tokens). | "Dividends received as shares" in the portfolio. | F1 |
 | V5 | Issuer contracts use blocklists (sanctions), not allowlists. Contracts can hold, receive and send all three. | ShareGuard can act as the trader. | F2, F5 |
@@ -249,7 +249,7 @@ Fork tests need an RPC secret and run on demand.
 | Market | `/api/v1/dex/market/price` (not a GET) and `/candlestick` (404) as documented: **don't work** (F10) | Ticker charts need another source (decide in M3). BNB price for the fee comes from a small BNB quote (verified) |
 | Transaction | **Verified:** `GET /api/v1/dex/pre-transaction/{gas-price,block-height}`, `POST …/simulate` (body `{binanceChainId, evmTx:{from,to,data,value}}`). `…/gas-limit` returned a system error; `broadcast-transaction` untested | **Simulate the ShareGuard call before showing "Buy"**, alongside `eth_call`. Using it counts toward "modules used". |
 | Wallet | **Verified:** `POST /api/v1/dex/balance/token-balances-by-address`. `GET …/all-token-balances-by-address` returned an empty list for a funded wallet | Portfolio (query the registry's tokens explicitly) |
-| Public, no key (cross-check only) | `bapi/defi/v1/public/wallet-direct/buw/wallet/market/token/rwa/stock/detail/list/ai?type=1|2|3`, `.../v2/.../rwa/dynamic/ai`, `.../rwa/asset/market/status/ai`, `web3.binance.com/bapi/defi/v4/.../token/dynamic/info/ai` | Multiplier cross-check, `stockInfo.price` reference, on-chain volume (ghost detection) |
+| Public, no key (cross-check only) | `bapi/defi/v1/public/wallet-direct/buw/wallet/market/token/rwa/stock/detail/list/ai?type=1|2|3`, `.../v2/.../rwa/dynamic/ai`, `.../rwa/asset/market/status/ai`, `web3.binance.com/bapi/defi/v4/.../token/dynamic/info/ai` | Multiplier cross-check, `stockInfo.price` reference, onchain volume (ghost detection) |
 
 **Rate limits are unknown.** Ask for the hackathon's "elevated rate limits" (§19), and cache aggressively (§7.7).
 
@@ -263,11 +263,11 @@ Fork tests need an RPC secret and run on demand.
 
 | Issuer | Source | Selector |
 |---|---|---|
-| bStock | on-chain `uiMultiplier()` | `0xa60bf13d` |
-| xStocks | on-chain `multiplier()` (display only) | `0x1b3ed722` |
+| bStock | onchain `uiMultiplier()` | `0xa60bf13d` |
+| xStocks | onchain `multiplier()` (display only) | `0x1b3ed722` |
 | Ondo | RWA API `sharesMultiplier` | — |
 
-**Ondo sanity bounds** (off-chain, checked on every reading). Ondo has no on-chain multiplier, so every change in it is checked twice: by its size, and against the market.
+**Ondo sanity bounds** (off-chain, checked on every reading). Ondo has no onchain multiplier, so every change in it is checked twice: by its size, and against the market.
 
 *Steps.* Ondo multipliers move in single steps on distribution dates, not gradually. Measured between the 2026-09-30 and 2026-10-02 snapshots (`research/ondo-multiplier-steps.md`): **31 of 458 tokens changed, each in one step, none decreased, the largest step was +0.58% (USHY)**; bond ETFs on their monthly distribution moved +0.28% to +0.40% (HYG +0.40%, TLT +0.39%, AGG +0.34%, BIL +0.28%). Reverse splits do happen: SOXS (Ondo) has a multiplier of 0.1017. There is deliberately **no per-day growth cap**: a `dividendYield / 365 + ε` rule would have rejected all 31 observed updates (HYG's ~5.8% yield allows about 0.016% per day, and it stepped 0.40%).
 
@@ -316,7 +316,7 @@ Start at 100 and subtract:
 |---|---|---|
 | Multiplier sources disagree by > 0.1% | 25 | |
 | \|premium\| > 2% during regular hours | 30 | |
-| On-chain 24h volume < $1,000 | 40 | ghost |
+| Onchain 24h volume < $1,000 | 40 | ghost |
 | Status unknown | 10 | |
 | Status `pause` / `ASSET_PAUSED` | 50 | not executable now |
 | Status `ASSET_LIMITED (earnings)` | 10 | |
@@ -352,7 +352,7 @@ Grades: A ≥ 90, B ≥ 75, C ≥ 60, D ≥ 40, F < 40. Every deduction is shown
 | Data | TTL |
 |---|---|
 | Registry | 1 h |
-| Multipliers | 5 min (bStock/xStocks on-chain reads are cheap, Ondo bounded) |
+| Multipliers | 5 min (bStock/xStocks onchain reads are cheap, Ondo bounded) |
 | Status | 60 s |
 | Reference price | 15 s |
 | Quotes | 10 s per (ticker, amount bucket: 6, 10, 25, 50, 100, 250, 500, 1000 USDT, else exact) |
@@ -594,7 +594,7 @@ All visual rules live in `DESIGN.md`. This section covers structure.
 |---|---|
 | Arbitrary call through ShareGuard (spike bug) | Router and approve-target allow lists; fork test G |
 | Over-broad approvals | Exact-amount approvals to ShareGuard only; the UI never asks for unlimited |
-| Stale or manipulated quote | Re-quote before signing; `minShares` + `deadline` on-chain |
+| Stale or manipulated quote | Re-quote before signing; `minShares` + `deadline` onchain |
 | Ondo feed signer compromise | Bounded step, monotonic, corporate actions only via the owner, signer rotation; worst case limited to that asset's `maxStepBps` |
 | Phishing or cloned tokens | Addresses only from the registry |
 | API key leak | Server-only; secrets file; never sent to clients; the key's permissions are limited to what the API grants |
@@ -659,7 +659,7 @@ Today is Thu 1 Oct; submissions lock **Sun 11 Oct, 12:00 UTC**. Dates are target
 | 0:00 | "Is one NFLX token one Netflix share?" Ondo 10 vs bStock 1. A naive tool shows +869%. |
 | 0:40 | Trade page: three issuers quoted in shares. "Best" re-sorts live; xStocks flagged as a ghost market. |
 | 1:30 | Sign in with email (embedded wallet on BSC), top up via deposit, buy $6 of NVDA. Dynamic-island progress. Receipt in shares with the BscScan link. |
-| 2:30 | ShareGuard: show a simulated revert when the shares fall short. "Guaranteed in shares, on-chain." |
+| 2:30 | ShareGuard: show a simulated revert when the shares fall short. "Guaranteed in shares, onchain." |
 | 3:00 | Agent: Claude Code + the Wallet Skill buys through ShareGuard. Telegram `/quote`. |
 | 3:40 | Portfolio in shares, dividends as shares. Close with the upstream PR and the DX findings. |
 

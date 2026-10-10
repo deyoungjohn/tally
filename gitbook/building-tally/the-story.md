@@ -8,7 +8,7 @@ Before writing code we measured the market and analysed what the 87 projects tha
 
 * There were 517 tickers across 675 tokens on BNB Chain from three issuers, and **the same stock could look 900% apart** because of share multipliers.
 * The multiplier even differed by source for the same token.
-* So Tally's bet: be correct about *what you get*, back it with an on-chain guarantee, then be cheapest.
+* So Tally's bet: be correct about *what you get*, back it with an onchain guarantee, then be cheapest.
 
 We shortlisted two ideas and chose Tally because every risk we could test on it had a verified answer: region, contracts holding the tokens, real routes, both issuers, and live money.
 
@@ -32,7 +32,7 @@ On 6 October an unattended sale ran through Binance's Agentic Wallet with no tap
 
 ## 7 to 10 October: widening and hardening
 
-* **ShareGuard grew** from 10 tokens to 30 through gated, evidence-checked owner batches, each confirmed on-chain.
+* **ShareGuard grew** from 10 tokens to 30 through gated, evidence-checked owner batches, each confirmed onchain.
 * **Migrate** shipped as a guided two-step flow after we proved the API cannot do a stock-to-stock swap.
 * **Real use found real bugs:** a market-maker order that expired before it mined, a database that grew to 8 GB, a Radar page that froze the server, an RPC provider whose quota ran out, a wallet that stayed "connected" after sign-out. Each is written up in [Challenges](challenges.md), with the fix.
 * **The domain, a Cloudflare tunnel and this documentation** went up.

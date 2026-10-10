@@ -16,7 +16,7 @@ import { E18, parseDecimal } from "@tally/core";
 import type { ReferencePrice } from "./quality";
 import type { Hex, Receipt } from "./types";
 
-describe("on-chain F6/F11 vectors (no network)", () => {
+describe("onchain F6/F11 vectors (no network)", () => {
   it("F6 NVDAB: -0.51% vs quote, above signed minimum => RECONCILED_WITH_DIFFERENCE", () => {
     const result = reconcile(recordedReceipt("F6_NVDAB"));
     expect(result.status).toBe("RECONCILED_WITH_DIFFERENCE");

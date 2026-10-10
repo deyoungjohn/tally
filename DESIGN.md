@@ -361,13 +361,13 @@ Each page lists its sections in order, and the BeUI components to use.
 2. **Hero** (two columns ≥980px, stacked below):
    - Eyebrow pill: "● Live on BNB Chain · **Ondo · bStocks · xStocks**".
    - h1 with blur-in: "Buy **tokenized shares**," / a second faded line: "at the best prices." (the tagline never says "buy shares" without "tokenized": these are not the underlying shares).
-   - Lead paragraph (`--fg2`): one sentence on comparing issuers and the on-chain share guarantee.
+   - Lead paragraph (`--fg2`): one sentence on comparing issuers and the onchain share guarantee.
    - Primary orange CTA "Get a quote" plus glassy "See the trap" (goes to Radar).
    - Right side: 2–3 **floating hero glass cards** (`gcard` + `tilt-card`) showing a real quote ("NVDAon · 0.0261 shares · −0.12% vs US price"), a receipt ("Shares delivered ✓"), and an integrity card ("NFLXon token = **10** shares"). (Chrome spheres and a ring are optional; see 2.4.)
 3. **Ticker marquee:** live share prices across issuers.
 4. **"One stock, three tokens":** the unit trap explained with an interactive card that flips between "token price" and "price per share" (NFLXon / NFLXB example, real numbers from the engine).
 5. **Live comparison preview:** the actual trade card (read-only until signed in), plus a notification stack (BeUI `notification-stack`) of recent real fills ("0.0261 NVDA shares · −0.12% · 2m ago").
-6. **ShareGuard section:** "Guaranteed in shares, on-chain". A 3-step diagram (quote → guard → shares) with the BscScan link of a real guarded trade.
+6. **ShareGuard section:** "Guaranteed in shares, onchain". A 3-step diagram (quote → guard → shares) with the BscScan link of a real guarded trade.
 7. **Radar teaser:** "We've caught these so you don't buy them": ghost-market xStocks cards with red "Not Tradable" badges.
 8. **FAQ** (BeUI `bouncy-accordion`, Revenue layout: title left, accordion right).
 9. **Footer:** a rounded glass card (radius 26px) with columns Product / Learn / Community / Legal, and the disclaimer line ("Not investment advice. Not available in restricted regions.").
@@ -395,7 +395,7 @@ Each page lists its sections in order, and the BeUI components to use.
 - **Cards per trap type:**
   - unit mismatch (NFLX 10×);
   - ghost market (xStocks volume ≈ $0);
-  - API vs on-chain multiplier disagreement;
+  - API vs onchain multiplier disagreement;
   - paused / corporate action.
 - **A searchable list** (beUI Morphing Search, suggestions, surface capped at 380px, no page blur) of every token's integrity grade and reasons, ordered Liquid, then Low Liquidity, then Not Tradable.
 

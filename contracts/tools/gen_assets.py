@@ -8,7 +8,7 @@ writes
                       owner-vouched first value of each Feed asset (do not commit; the deploy
                       script refuses seeds older than 2 hours)
 
-Ondo has no on-chain multiplier, so the seed comes from the RWA API. Two public endpoints carry
+Ondo has no onchain multiplier, so the seed comes from the RWA API. Two public endpoints carry
 it (the list's `multiplier` and the dynamic endpoint's `sharesMultiplier`); the tool refuses to
 write a seed when they differ by more than 0.1% (blueprint §7.3: sources must agree).
 Standard library only. Runs anywhere the public bapi endpoints work (not region-gated).

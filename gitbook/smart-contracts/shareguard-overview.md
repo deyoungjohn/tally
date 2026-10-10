@@ -8,7 +8,7 @@ Contract: `0x28F6F19bffbF25E36452c78d12090F0bC922970a` on BNB Smart Chain. Sourc
 
 ## The problem it solves
 
-A normal swap protects you with a minimum amount of *tokens*. But one token is `multiplier` shares, and the multiplier differs per issuer and moves over time. A minimum of "0.025 tokens" means a different number of shares for Ondo and for bStock. ShareGuard states the floor in shares and enforces it on-chain.
+A normal swap protects you with a minimum amount of *tokens*. But one token is `multiplier` shares, and the multiplier differs per issuer and moves over time. A minimum of "0.025 tokens" means a different number of shares for Ondo and for bStock. ShareGuard states the floor in shares and enforces it onchain.
 
 ## The shape of it
 
@@ -32,7 +32,7 @@ It holds no balances between transactions, and an approval to it is for exactly 
 
 | Function | Who | Purpose |
 |---|---|---|
-| `swapForShares(tokenIn, amountIn, stock, minShares, router, routerData, recipient, deadline)` | anyone | Guarded buy for assets whose multiplier is on-chain (bStock). |
+| `swapForShares(tokenIn, amountIn, stock, minShares, router, routerData, recipient, deadline)` | anyone | Guarded buy for assets whose multiplier is onchain (bStock). |
 | `swapForSharesWithFeed(…, FeedUpdate u, bytes sig)` | anyone | The same, with a signed multiplier update for Ondo assets. |
 | `sharesPerToken(stock)`, `toShares(stock, tokens)` | view | The multiplier the guard would use right now. |
 | `isTokenPaused(stock)` | view | The issuer's pause state; reverts if it cannot be answered. |

@@ -468,7 +468,7 @@ def inspect_public(row, kind, token_data, rwa_data=None):
         result["reasons"].append("xStocks always excluded")
         return result
     try:
-        # The headline volume24h includes off-chain stock volume. Only raw on-chain
+        # The headline volume24h includes off-chain stock volume. Only raw onchain
         # buy + sell volume is eligible, exactly as the engine's facts adapter uses.
         with localcontext() as context:
             context.prec = 80
@@ -504,7 +504,7 @@ def qualify(public, reading, manager):
     if public["kind"] == "bstock":
         multiplier = reading.get("uiMultiplierE18")
         if not isinstance(multiplier, str) or not multiplier.isdigit() or int(multiplier) <= 0:
-            result["pending"].append("no verified on-chain uiMultiplier() reading")
+            result["pending"].append("no verified onchain uiMultiplier() reading")
         else:
             result["multiplierE18"] = multiplier
     pause_manager = reading.get("pauseManager")
@@ -653,7 +653,7 @@ def inspect_batch_fact(row, rpc, block, manager, list_readings):
             if not 0 < value < 2**256:
                 raise ValueError("uiMultiplier() is zero or invalid")
             result["multiplierE18"] = str(value)
-            result["multiplierSource"] = "on-chain uiMultiplier()"
+            result["multiplierSource"] = "onchain uiMultiplier()"
         else:
             dynamic = fetch(f"{BAPI}/v2/public/wallet-direct/buw/wallet/market/token/rwa/dynamic/ai?chainId=56&contractAddress={address}")
             value = positive_e18((dynamic.get("tokenInfo") or {}).get("sharesMultiplier"))

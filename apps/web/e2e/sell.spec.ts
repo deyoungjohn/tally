@@ -234,7 +234,7 @@ test.describe("sell", () => {
     expect(txs[0]).toMatchObject({ to: ROUTER, data: "0xfeed02", gas: "390000", value: "0" });
     expect(bodies.length).toBeGreaterThanOrEqual(3);
     expect(hashes[0]).toBe(HASH);
-    await expect(sheet).toContainText("Confirmed on-chain");
+    await expect(sheet).toContainText("Confirmed onchain");
     await expect(sheet).not.toContainText("receipts are coming");
     await expect(sheet).not.toContainText(/you received/i);
     // Gas is shown in dollars (0.031 estimated at the 390000 limit, 281000 used), with the unit count kept for agents.

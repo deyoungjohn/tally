@@ -226,7 +226,7 @@ export function statement(options: StatementOptions): Statement {
     holdings = synthesized.holdings;
     trades = synthesized.trades;
     source = "receipts";
-    notes.push("Generated from on-chain receipts only (Binance API unavailable).");
+    notes.push("Generated from onchain receipts only (Binance API unavailable).");
   } else if (receipts.length > 0 && hasApiData) {
     source = "mixed";
   }

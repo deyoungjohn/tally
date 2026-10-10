@@ -1,6 +1,6 @@
 # Tally for agents
 
-An AI agent that deals in tokenized stocks needs two things: **information it can trust** and **execution that is checked on-chain**. Tally provides both as tools, and never holds a key.
+An AI agent that deals in tokenized stocks needs two things: **information it can trust** and **execution that is checked onchain**. Tally provides both as tools, and never holds a key.
 
 ## What an agent gets
 
@@ -40,4 +40,4 @@ The MCP server runs as a local stdio process beside the agent. An opt-in Streama
 
 ## Possible next steps
 
-Paying per call (x402), an on-chain agent identity and task listing (ERC-8004 and ERC-8183 through BNB Agent Studio) and a signing session limited to the router and a daily amount. We read how BNB Agent Studio works (agents on AWS Bedrock AgentCore with session keys); Tally does not use it.
+Paying per call (x402), an onchain agent identity and task listing (ERC-8004 and ERC-8183 through BNB Agent Studio) and a signing session limited to the router and a daily amount. We read how BNB Agent Studio works (agents on AWS Bedrock AgentCore with session keys); Tally does not use it.

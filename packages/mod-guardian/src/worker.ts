@@ -362,7 +362,7 @@ export async function runGuardianEvaluation(ctx: GuardianJobContext): Promise<Gu
       continue;
     }
 
-    // bStock on-chain pause evaluation via injected pauseState accessor
+    // bStock onchain pause evaluation via injected pauseState accessor
     let isPausedOnchain: boolean | null = null;
     if (tokenIssuer === "bstock") {
       if (ctx.pauseState) {

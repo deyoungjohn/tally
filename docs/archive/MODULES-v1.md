@@ -55,7 +55,7 @@ type TradeIntent =
   - `SameToken`, router allow-list and pause checks already apply.
 - **Sell** needs a **minimum-USDT** check, which v1 doesn't have (it only checks shares of an enabled stock).
   - **Preferred:** no contract change. The user's wallet sends the API's swap transaction directly; the router's own `minReceiveAmount` enforces the floor; and Receipts reconciles the result.
-  - **If an on-chain guard is wanted later:** add `ShareGuard v1.1` with `swapForMinOut(tokenIn, amountIn, tokenOut, minOut, …)` as a **separate deployment**. v1 stays untouched for buys.
+  - **If an onchain guard is wanted later:** add `ShareGuard v1.1` with `swapForMinOut(tokenIn, amountIn, tokenOut, minOut, …)` as a **separate deployment**. v1 stays untouched for buys.
 - **Rewards → Stocks:** the claim is the DeFi API's own transaction, signed by the user; the buy goes through the deployed ShareGuard. No new contract in the manual version.
 
 ### 3.3 Evidence store
@@ -74,8 +74,8 @@ SQLite (blueprint §14), tables `intents`, `quotes`, `simulations`, `transaction
 | Intent | asset address + issuer, spend token and amount, min shares/out, tolerance, approvedAt | the confirm sheet |
 | Quote | quoteId, expected out, route text, observedAt, expiresAt | Trading API |
 | Simulation | predicted balance changes, gas limit sent | **Transaction API `POST /pre-transaction/simulate`** (works, F10) + `eth_call` at the exact limit |
-| Conversion | multiplier value, source (on-chain `uiMultiplier` / feed / API), observationId, observedAt | engine |
-| Realized | txHash, block, status, **ShareGuard `Guarded` event** (tokensOut, shares, multiplier used on-chain), ERC-20 `Transfer` logs **from this tx only** | BSC receipt |
+| Conversion | multiplier value, source (onchain `uiMultiplier` / feed / API), observationId, observedAt | engine |
+| Realized | txHash, block, status, **ShareGuard `Guarded` event** (tokensOut, shares, multiplier used onchain), ERC-20 `Transfer` logs **from this tx only** | BSC receipt |
 
 **Reconciliation** is deterministic, never AI-generated:
 
@@ -88,9 +88,9 @@ SQLite (blueprint §14), tables `intents`, `quotes`, `simulations`, `transaction
 | `UNRECONCILED` | wrong asset received, or no transfer evidence explains the amount |
 
 **Rules:**
-- **Raw token units are authoritative.** Shares are derived and shown with *"ratio 1.000778, observed 14:23:11 UTC, on-chain"*.
+- **Raw token units are authoritative.** Shares are derived and shown with *"ratio 1.000778, observed 14:23:11 UTC, onchain"*.
 - **A receipt never changes when the multiplier changes later**, because it stores its observationId.
-- The on-chain `Guarded` event is the primary realized evidence; Transfer logs cross-check it.
+- The onchain `Guarded` event is the primary realized evidence; Transfer logs cross-check it.
 
 **UI** (DESIGN.md glass card): a stage ladder **Quoted → Simulated → Received**, a "Why different?" disclosure, the conversion provenance line, and an evidence drawer (tx, block, observation IDs). Badge: **✓ Reconciled** (or amber "Reconciled, 0.51% below quote").
 
@@ -103,7 +103,7 @@ SQLite (blueprint §14), tables `intents`, `quotes`, `simulations`, `transaction
 
 **Required edge tests** (from Trace): wrong decimals, a later multiplier change (receipt must not move), and missing transfer evidence (→ `UNRECONCILED`).
 
-**Not in scope:** tax/accounting, dividend tracking, legal analysis, an on-chain receipt registry.
+**Not in scope:** tax/accounting, dividend tracking, legal analysis, an onchain receipt registry.
 
 ---
 

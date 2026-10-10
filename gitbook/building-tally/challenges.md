@@ -25,7 +25,7 @@ Each entry says what happened, why, what we changed, and where the evidence is. 
 **What:** the early guard called any caller-supplied address. A fork test showed an attacker could pull a dust amount of the stock as "input", point the call at USDT and drain a victim's approved balance.
 **Fix:** ShareGuard v1 allow-lists routers and approve targets, rejects `tokenIn == stock`, and never lets a router be a stock token. The prototype is never deployed.
 
-## Ondo has no on-chain multiplier
+## Ondo has no onchain multiplier
 
 **What:** a contract that must check shares cannot read Ondo's multiplier from the token.
 **Fix:** a stored, owner-seeded value kept current by bounded, monotonic, EIP-712-signed updates inside the user's own swap, with corporate actions for splits. See [Multiplier sources](../smart-contracts/multiplier-sources.md). While wiring it, using the wrong source number for Ondo made every Ondo buy fail with "share count can't be read right now" until the source was corrected.
@@ -42,7 +42,7 @@ Each entry says what happened, why, what we changed, and where the evidence is. 
 
 ## A quote that expires before it mines
 
-**What:** three sales of TSMB reverted on-chain with `RFQ_OrderExpired`. The server's own simulation had passed seconds earlier.
+**What:** three sales of TSMB reverted onchain with `RFQ_OrderExpired`. The server's own simulation had passed seconds earlier.
 **Why:** the best route was a market-maker order that lives only a few seconds. Plan, signature and mining together outlasted it. One replay one block before showed the revert; the others replayed fine, so the order expired in the very block that mined them. Some wallets also refuse to preview such orders.
 **Fix:** prefer a pool route when its output is within 0.5% of the market-maker route, flag a market-maker route and ask the user to confirm promptly, explain a reverted sale in plain words, and offer Try again. The same chooser now drives buys.
 

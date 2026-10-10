@@ -34,7 +34,7 @@ describe("exit check 1: `tally quote NVDA 25` prints the per-issuer comparison",
     expect(x.integrity.flags).toEqual(expect.arrayContaining(["ghost", "multiplier-disagreement"]));
   });
 
-  it("the shares come from the recorded quote's tokens × the on-chain bStock multiplier", async () => {
+  it("the shares come from the recorded quote's tokens × the onchain bStock multiplier", async () => {
     const q = await engine().quote({ ticker: "NVDA", amount: { usd: 25 } });
     const b = q.rows.find((r) => r.symbol === "NVDAB")!;
     expect(b.multiplier).toMatchObject({ source: "onchain", disagree: false });
@@ -102,7 +102,7 @@ describe("exit check 2: unit tests reproduce the F1/F7 vectors end to end", () =
     expect(Math.abs(b.premium!)).toBeLessThan(0.01);
   });
 
-  it("NFLXon is blocked as a ghost market in this snapshot ($16 of 24h on-chain volume): shown with its reason, not quoted", async () => {
+  it("NFLXon is blocked as a ghost market in this snapshot ($16 of 24h onchain volume): shown with its reason, not quoted", async () => {
     const q = await engine().quote({ ticker: "NFLX", amount: { usd: 100 } });
     const on = q.rows.find((r) => r.symbol === "NFLXon")!;
     expect(on).toMatchObject({
@@ -113,7 +113,7 @@ describe("exit check 2: unit tests reproduce the F1/F7 vectors end to end", () =
     expect(q.best).toBe("NFLXB");
   });
 
-  it("NVDAx three-source mismatch: list 1.000000, API 1.000918, on-chain 1.001701", async () => {
+  it("NVDAx three-source mismatch: list 1.000000, API 1.000918, onchain 1.001701", async () => {
     const q = await engine().quote({ ticker: "NVDA", amount: { usd: 25 } });
     const x = q.rows.find((r) => r.symbol === "NVDAx")!;
     expect(x.multiplier).toMatchObject({

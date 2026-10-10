@@ -367,7 +367,7 @@ export function TradeCard(p: TradeCardProps) {
         {selling ? null : (
           <div className="detail-row">
             <dt>
-              <Tip text="The fewest shares you can receive. If the trade would give you less, it is cancelled on-chain.">
+              <Tip text="The fewest shares you can receive. If the trade would give you less, it is cancelled onchain.">
                 Min amount to receive
               </Tip>
             </dt>

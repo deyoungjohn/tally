@@ -21,6 +21,7 @@ import { ButtonLink } from "@/components/motion/button";
 import { Reveal } from "@/components/reveal";
 import { HomeFaq } from "@/components/home/faq";
 import { HeroLine, HeroPanels, HeroStage } from "@/components/home/hero-stage";
+import { moduleFlags } from "@/lib/flags";
 import { LearnMore } from "@/components/learn-more";
 
 /** One screen per feature on a 16" desktop: Trade, Portfolio, Radar, the rest of the app, then the FAQ. */
@@ -28,6 +29,7 @@ const SCREEN =
   "wrap flex scroll-mt-24 flex-col justify-center py-14 min-[981px]:min-h-[calc(100svh-96px)] min-[981px]:py-10";
 
 export default function Home() {
+  const flags = moduleFlags();
   return (
     <main id="main">
       <section className={SCREEN} aria-labelledby="hero-title">
@@ -128,19 +130,23 @@ export default function Home() {
                     "Open Portfolio",
                   ],
                 ] as const
-              ).map(([Icon, h, b, href, cta]) => (
-                <li key={h} className="panel flex min-w-0 flex-col gap-3 p-5">
-                  <p className="flex items-center gap-2 text-[18px] font-bold">
-                    <Icon size={18} aria-hidden /> {h}
-                  </p>
-                  <p className="flex-1 text-[15px] text-fg2">{b}</p>
-                  <div>
-                    <ButtonLink href={href} variant="glassy">
-                      {cta} <ArrowRight size={16} aria-hidden />
-                    </ButtonLink>
-                  </div>
-                </li>
-              ))}
+              )
+                .filter(([, , , href]) =>
+                  href === "/pies" ? flags.pies : href === "/guardian" ? flags.guardian : true,
+                )
+                .map(([Icon, h, b, href, cta]) => (
+                  <li key={h} className="panel flex min-w-0 flex-col gap-3 p-5">
+                    <p className="flex items-center gap-2 text-[18px] font-bold">
+                      <Icon size={18} aria-hidden /> {h}
+                    </p>
+                    <p className="flex-1 text-[15px] text-fg2">{b}</p>
+                    <div>
+                      <ButtonLink href={href} variant="glassy">
+                        {cta} <ArrowRight size={16} aria-hidden />
+                      </ButtonLink>
+                    </div>
+                  </li>
+                ))}
             </ul>
           </div>
         </Reveal>

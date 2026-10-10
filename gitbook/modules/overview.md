@@ -14,7 +14,7 @@ Tally's features beyond the quote and the buy are **modules**. Each follows the 
 
 | Module | What it does | Page |
 |---|---|---|
-| [Receipts](receipts.md) | Verifies a transaction on-chain and shows shares received against the floor. | `/receipt/[hash]` |
+| [Receipts](receipts.md) | Verifies a transaction onchain and shows shares received against the floor. | `/receipt/[hash]` |
 | [Portfolio and statements](portfolio-and-statements.md) | Holdings in shares across issuers, activity, a statement export. | `/portfolio` |
 | [Radar and Flow](radar-and-flow.md) | Integrity grades for every token and per-issuer trade-flow panels. | `/radar` |
 | [Guardian and the Telegram bot](guardian.md) | Alerts about tokens you hold. | `/guardian`, the bot |
