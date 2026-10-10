@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import { Tip } from "@/components/ui/tooltip";
 
 const GRADE_TIP: Record<string, string> = {
-  A: "Grade A: plenty of trading and no data problems found.",
+  A: "Grade A: good liquidity and no data problems found.",
   B: "Grade B: healthy, with a minor note in Radar.",
   C: "Grade C: something looks thin or inconsistent. The reasons are in Radar.",
   D: "Grade D: several checks failed. Buy with care.",
@@ -41,7 +41,7 @@ const isLiquid = (grade: Grade) => grade === "A" || grade === "B";
 /** Liquid (grade A or B) or Low Liquidity (C to F). */
 export function LiquidityBadge({ grade }: { grade: Grade }) {
   return isLiquid(grade) ? (
-    <Tip text="Liquid: plenty of trading and no data problems found (grade A or B).">
+    <Tip text="Liquid: good liquidity and no data problems found (grade A or B).">
       <span className="badge badge-up">Liquid</span>
     </Tip>
   ) : (

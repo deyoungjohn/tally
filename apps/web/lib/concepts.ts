@@ -44,7 +44,7 @@ export const CONCEPTS: Record<string, Concept> = {
     title: "Liquid and Low Liquidity",
     paragraphs: [
       "Tally checks every token's data before you can buy it: trading volume, whether the share multiplier is sane, whether the price agrees with the US price, and whether the issuer has paused it. Each check can cost points on a grade from A to F.",
-      "Liquid means grade A or B: plenty of trading and no data problems found. Low Liquidity means C to F: something looked thin or inconsistent, and the reasons are listed so you can judge for yourself.",
+      "Liquid means grade A or B: good liquidity and no data problems found. Low Liquidity means C to F: something looked thin or inconsistent, and the reasons are listed so you can judge for yourself.",
     ],
   },
   "not-tradable": {

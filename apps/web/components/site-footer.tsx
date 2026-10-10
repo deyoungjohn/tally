@@ -20,7 +20,14 @@ const COLS = [
     ],
   },
   { h: "Community", links: [["GitHub", "https://github.com/deyoungjohn/tally"]] },
-  { h: "Legal", links: [["Not investment advice", "/docs#disclaimer"]] },
+  {
+    h: "Legal",
+    links: [
+      ["Terms of Use", "/terms"],
+      ["Privacy Policy", "/privacy"],
+      ["Not investment advice", "/docs#disclaimer"],
+    ],
+  },
 ] as const;
 
 export function SiteFooter() {
@@ -53,6 +60,9 @@ export function SiteFooter() {
           Not investment advice. Not available in restricted regions. Tokenized stocks are traded on
           the secondary market on BNB Smart Chain; you are responsible for complying with the laws
           that apply to you.
+        </p>
+        <p className="t-meta mt-3" data-testid="copyright">
+          © 2026 Tally Protocol. All rights reserved.
         </p>
       </div>
     </footer>
