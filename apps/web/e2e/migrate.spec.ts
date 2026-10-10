@@ -505,11 +505,62 @@ test("pending-forever falls to typed amount after the cap, cancel and resume wor
     page.getByRole("dialog").filter({ hasText: "We could not confirm the amount automatically" }),
   ).toBeVisible();
 
-  // Test that "Cancel" works
+  // "Cancel" asks first; "Keep going" leaves the Migrate exactly as it was.
   const cancelBtn = page.getByRole("button", { name: "Cancel" });
   await expect(cancelBtn).toBeVisible();
   await cancelBtn.click();
+  const confirm = page.getByTestId("migrate-drop-confirm");
+  await expect(confirm).toContainText("dropped permanently");
+  await page.getByTestId("migrate-keep-going").click();
+  await expect(confirm).toHaveCount(0);
+  await expect(
+    page.getByRole("dialog").filter({ hasText: "We could not confirm the amount automatically" }),
+  ).toBeVisible();
+  expect(
+    await page.evaluate(() => window.localStorage.getItem("tally.pendingMigrate")),
+  ).not.toBeNull();
+
+  // Cancel then "Drop Migrate" removes it for good, and a reload does not bring it back.
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await page.getByTestId("migrate-drop").click();
   await expect(page.getByRole("dialog")).not.toBeVisible();
+  expect(await page.evaluate(() => window.localStorage.getItem("tally.pendingMigrate"))).toBeNull();
+  expect(await page.evaluate(() => window.localStorage.getItem("tally.pendingSell"))).toBeNull();
+});
+
+test("clicking outside a Migrate that is under way asks before dropping it", async ({ page }) => {
+  await flags(page, true);
+  await mockWallet(page);
+  await page.addInitScript(() => {
+    window.localStorage.setItem(
+      "tally.pendingMigrate",
+      JSON.stringify({
+        id: "test",
+        wallet: "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
+        ticker: "NVDA",
+        from: "ondo",
+        to: "bstock",
+        step: 1,
+        saleHash: "0xabc",
+        createdAt: Date.now(),
+        pollStartedAt: Date.now() - 121000,
+      }),
+    );
+  });
+  await stubSaleProceeds(page, "pending");
+  await page.route("**/api/receipts*", async (route) => {
+    await route.fulfill({ json: { state: "pending" } });
+  });
+  await page.goto("/portfolio");
+  await expect(
+    page.getByRole("dialog").filter({ hasText: "We could not confirm the amount automatically" }),
+  ).toBeVisible();
+  // Escape closes the dialog the same way a click outside it does.
+  await page.keyboard.press("Escape");
+  await expect(page.getByTestId("migrate-drop-confirm")).toContainText("dropped permanently");
+  expect(
+    await page.evaluate(() => window.localStorage.getItem("tally.pendingMigrate")),
+  ).not.toBeNull();
 });
 
 test("failed sale says it did not go through and clears", async ({ page }) => {

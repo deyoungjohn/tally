@@ -76,7 +76,8 @@ export interface SellInputs {
 }
 
 export const SELL_TOLERANCES = [0.5, 1, 2] as const;
-const PENDING_KEY = "tally.pendingSell";
+export const PENDING_SELL_KEY = "tally.pendingSell";
+const PENDING_KEY = PENDING_SELL_KEY;
 const APPROVE_GAS = 80_000n;
 const POLL_MS = 3_000;
 const TIMEOUT_MS = 180_000;

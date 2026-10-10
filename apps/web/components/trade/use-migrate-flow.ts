@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useSellFlow, type SellTarget } from "./use-sell-flow";
+import { useSellFlow, PENDING_SELL_KEY, type SellTarget } from "./use-sell-flow";
 import type { PlanDto } from "@/lib/dto";
 import {
   type PendingMigrate,
@@ -118,6 +118,14 @@ export function useMigrateFlow() {
     setReviewing({ target, to });
   }, []);
   const cancelReview = useCallback(() => setReviewing(null), []);
+  // Leaving a Migrate that is under way asks first (the sheet shows the question); "Keep going" restarts whatever was open.
+  const [dropAsk, setDropAsk] = useState(false);
+  const [restartKey, setRestartKey] = useState(0);
+  const askDrop = useCallback(() => setDropAsk(true), []);
+  const keepGoing = useCallback(() => {
+    setDropAsk(false);
+    setRestartKey((k) => k + 1);
+  }, []);
   const confirmReview = useCallback(async () => {
     if (!reviewing) return;
     const r = reviewing;
@@ -138,7 +146,17 @@ export function useMigrateFlow() {
     setReceiptState(null);
     setWaitElapsedMs(0);
     sell.close();
+    // The sale's own saved watch must go too, or the sell sheet brings the dropped Migrate back after a reload.
+    try {
+      localStorage.removeItem(PENDING_SELL_KEY);
+    } catch {
+      /* storage blocked: nothing to remove */
+    }
   }, [sell]);
+  const drop = useCallback(() => {
+    setDropAsk(false);
+    cancel();
+  }, [cancel]);
 
   // The automatic sale: sell all, approve if the plan asks for it, then sign. Each plan is acted on once; if anything
   // comes back needing a person (a refusal, a worse price, a failure) the automation stops and the sell sheet takes over.
@@ -414,6 +432,11 @@ export function useMigrateFlow() {
     confirmReview,
     autoSelling: auto && step === 1,
     cancel,
+    dropAsk,
+    askDrop,
+    keepGoing,
+    drop,
+    restartKey,
     resumeStep2,
     waitingReceipt,
     source,

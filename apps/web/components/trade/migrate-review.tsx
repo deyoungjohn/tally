@@ -117,7 +117,7 @@ export function MigrateReviewModal({
         if (!o) onClose();
       }}
       title={`Migrate ${from} to ${to}`}
-      description="Migrate invloves a sale and a purchase and you'll confirm each one."
+      description="Migrate involves a sale and a purchase and you'll confirm each one."
       className="max-w-[540px]"
       showClose
     >
@@ -255,6 +255,48 @@ export function MigrateSellProgress({
           </Button>
         </div>
       ) : null}
+    </Modal>
+  );
+}
+
+/** Asked whenever someone leaves a Migrate that is under way: the saved Migrate is removed for good if they confirm. */
+export function MigrateDropConfirm({
+  open,
+  onKeep,
+  onDrop,
+}: {
+  open: boolean;
+  onKeep: () => void;
+  onDrop: () => void;
+}) {
+  return (
+    <Modal
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onKeep();
+      }}
+      title="Drop this Migrate?"
+      description="Your Migrate will be dropped permanently."
+      className="max-w-[460px]"
+    >
+      <div className="mt-4 grid gap-2 text-fg2" data-testid="migrate-drop-confirm">
+        <p>
+          If you leave now, this Migrate is dropped permanently: Tally forgets it and you can&apos;t
+          pick it up again.
+        </p>
+        <p>
+          Anything already confirmed on the chain stays as it is. If your sale went through, your
+          USDT is in your wallet and nothing will be bought.
+        </p>
+      </div>
+      <div className="mt-5 flex flex-wrap justify-end gap-3">
+        <Button variant="glassy" onClick={onDrop} data-testid="migrate-drop">
+          Drop Migrate
+        </Button>
+        <Button onClick={onKeep} data-testid="migrate-keep-going" autoFocus>
+          Keep going
+        </Button>
+      </div>
     </Modal>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Modal } from "@/components/motion/modal";
 import { Button, ButtonLink } from "@/components/motion/button";
 import { useMigrateFlow } from "./use-migrate-flow";
@@ -11,7 +11,7 @@ import { formatUnits, parseUnits } from "viem";
 import { Loader2 } from "lucide-react";
 import { roundDownToCent } from "@/lib/migrate/state";
 import { MigrateReceiptModal } from "./migrate-receipt";
-import { MigrateReviewModal, MigrateSellProgress } from "./migrate-review";
+import { MigrateDropConfirm, MigrateReviewModal, MigrateSellProgress } from "./migrate-review";
 import type { PlanDto } from "@/lib/dto";
 
 /** Everything Migrate shows: the review, the automatic sale's progress, then the later steps. */
@@ -29,10 +29,11 @@ export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow>
           phaseName={sp.name}
           approving={sp.name === "approve" ? sp.step : null}
           symbol={flow.pm?.from === "ondo" ? `${flow.pm.ticker}on` : `${flow.pm?.ticker ?? ""}B`}
-          onCancel={flow.cancel}
+          onCancel={flow.askDrop}
         />
       ) : null}
       <MigrateSteps flow={flow} />
+      <MigrateDropConfirm open={flow.dropAsk} onKeep={flow.keepGoing} onDrop={flow.drop} />
     </>
   );
 }
@@ -42,6 +43,9 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
     pm,
     step,
     cancel,
+    askDrop,
+    restartKey,
+    dropAsk,
     resumeStep2,
     waitingReceipt,
     source,
@@ -86,7 +90,14 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
 
   if (step === 2) {
     return (
-      <MigrateBuyStep pm={pm} cancel={cancel} onDone={onBuyDone} onBuySigning={onBuySigning} />
+      <MigrateBuyStep
+        pm={pm}
+        askDrop={askDrop}
+        dropAsk={dropAsk}
+        restartKey={restartKey}
+        onDone={onBuyDone}
+        onBuySigning={onBuySigning}
+      />
     );
   }
 
@@ -100,10 +111,14 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
         <Modal
           open={open}
           onOpenChange={(o) => {
-            if (!o) cancel();
+            // A finished or failed Migrate just closes. One that is still under way asks first.
+            if (!o)
+              (step === "done" || receiptState === "failed" || receiptState === "underMinimum"
+                ? cancel
+                : askDrop)();
           }}
           title={`Migrate to ${pm.to === "ondo" ? "Ondo" : "bStock"}`}
-          description="Migrate invloves two separate transactions, and prices can change between them."
+          description="Migrate involves two separate transactions, and prices can change between them."
           className="max-w-[520px]"
         >
           <div className="mt-4 grid gap-4">
@@ -135,7 +150,7 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
                   )}
                 </div>
                 <div className="flex justify-end mt-2">
-                  <Button onClick={cancel} className="bg-white text-black border border-black/10">
+                  <Button onClick={askDrop} className="bg-white text-black border border-black/10">
                     Cancel
                   </Button>
                 </div>
@@ -206,7 +221,7 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
                   ) : null}
                 </div>
                 <div className="flex justify-end gap-3">
-                  <Button onClick={cancel} className="bg-white text-black border border-black/10">
+                  <Button onClick={askDrop} className="bg-white text-black border border-black/10">
                     Cancel
                   </Button>
                   {source === "wallet" && (
@@ -295,19 +310,35 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
 
 function MigrateBuyStep({
   pm,
-  cancel,
+  askDrop,
+  dropAsk,
+  restartKey,
   onDone,
   onBuySigning,
 }: {
   pm: NonNullable<ReturnType<typeof useMigrateFlow>["pm"]>;
-  cancel: () => void;
+  askDrop: () => void;
+  dropAsk: boolean;
+  restartKey: number;
   onDone: (hash: string) => void;
   onBuySigning: (plan: PlanDto) => void;
 }) {
   const buy = useTradeFlow();
+  // Closing the buy review used to restart it at once (the buy is "idle" again), so Cancel never seemed to work. Now closing it
+  // asks whether to drop the Migrate; "Keep going" bumps `restartKey` and the buy opens again.
+  const started = useRef(false);
+  useEffect(() => {
+    if (buy.phase.name !== "idle") started.current = true;
+  }, [buy.phase.name]);
+  useEffect(() => {
+    started.current = false;
+  }, [restartKey]);
+  useEffect(() => {
+    if (buy.phase.name === "idle" && started.current && !dropAsk) askDrop();
+  }, [buy.phase.name, dropAsk, askDrop]);
 
   useEffect(() => {
-    if (pm.usdtReceived && buy.phase.name === "idle") {
+    if (pm.usdtReceived && buy.phase.name === "idle" && !started.current && !dropAsk) {
       const usd = Number(formatUnits(BigInt(roundDownToCent(pm.usdtReceived)), 18));
       buy.start({
         ticker: pm.ticker,
@@ -333,13 +364,5 @@ function MigrateBuyStep({
     }
   }, [buy.phase, onDone]);
 
-  return (
-    <div
-      onKeyDown={(e) => {
-        if (e.key === "Escape" && buy.phase.name === "idle") cancel();
-      }}
-    >
-      <TradeFlowLayer flow={buy} />
-    </div>
-  );
+  return <TradeFlowLayer flow={buy} />;
 }
