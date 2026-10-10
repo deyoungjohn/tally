@@ -1,4 +1,14 @@
-import { ArrowRight, Eye, PieChart, Radar as RadarIcon, ShieldCheck } from "lucide-react";
+import {
+  ArrowLeftRight,
+  ArrowRight,
+  Bell,
+  Eye,
+  FileText,
+  PieChart,
+  Radar as RadarIcon,
+  ShieldCheck,
+  ShoppingBasket,
+} from "lucide-react";
 import {
   HomeComparison,
   HomePortfolioPreview,
@@ -10,11 +20,20 @@ import { HeroActions } from "@/components/home/hero-actions";
 import { ButtonLink } from "@/components/motion/button";
 import { Reveal } from "@/components/reveal";
 import { HomeFaq } from "@/components/home/faq";
+import { RollingText } from "@/components/home/rolling-text";
 import { LearnMore } from "@/components/learn-more";
 
-/** One screen per feature on a 16" desktop: Trade, Portfolio, Radar, then the FAQ. */
+/** One screen per feature on a 16" desktop: Trade, Portfolio, Radar, the rest of the app, then the FAQ. */
 const SCREEN =
   "wrap flex scroll-mt-24 flex-col justify-center py-14 min-[981px]:min-h-[calc(100svh-96px)] min-[981px]:py-10";
+
+const HERO_PHRASES = [
+  "Trade at the best prices",
+  "Migrate across issuers seamlessly",
+  "Receive alerts about your holdings",
+  "Buy stock baskets without hassle",
+  "Spot liquid tokens at a glance and avoid unit traps",
+] as const;
 
 export default function Home() {
   return (
@@ -32,20 +51,26 @@ export default function Home() {
                 className="blur-in blur-in-word"
                 style={{ "--d": "60ms" } as React.CSSProperties}
               >
-                Buy <span className="fade-text">tokenized shares,</span>
-              </span>
+                Tally, the <span className="fade-text">everything app</span>
+              </span>{" "}
               <br />
               <span
                 className="blur-in blur-in-word dim-text"
                 style={{ "--d": "160ms" } as React.CSSProperties}
               >
-                at the best prices.
+                for tokenized stocks on BSC.
               </span>
             </h1>
-            <p className="t-lead mt-6 max-w-[54ch]">
-              Tally compares the same US stock across every issuer on BNB Chain, shows what you get
-              in share units, and buys from the cheapest one. If you&apos;d receive fewer shares
-              than promised, nothing happens.
+            <p
+              className="blur-in mt-5 text-[clamp(20px,2.6vw,28px)] font-semibold leading-[1.25] tracking-[-0.02em] text-[var(--orange-text)]"
+              style={{ "--d": "260ms" } as React.CSSProperties}
+            >
+              <RollingText phrases={HERO_PHRASES} />
+            </p>
+            <p className="t-lead mt-5 max-w-[54ch]">
+              Trade, migrate, track and protect tokenized stocks in one place. Tally compares every
+              issuer in share units, buys from the best one, and cancels any trade that would give
+              you fewer shares than promised.
             </p>
             <HeroActions />
           </div>
@@ -206,6 +231,69 @@ export default function Home() {
             <div className="min-w-0">
               <HomeRadarPreview />
             </div>
+          </div>
+        </Reveal>
+      </section>
+
+      <section id="more" className={SCREEN} aria-labelledby="more-title">
+        <Reveal>
+          <div className="mx-auto w-full max-w-[980px]">
+            <div className="text-center">
+              <p className="t-kicker">Everything else</p>
+              <h2 id="more-title" className="t-h2 mt-3">
+                Everything you do with tokenized stocks, in one app.
+              </h2>
+              <p className="t-lead mx-auto mt-3 max-w-[56ch]">
+                Buying is the start. Tally also moves your holdings between issuers, buys whole
+                baskets, watches your tokens and keeps your records.
+              </p>
+            </div>
+            <ul className="m-0 mt-10 grid list-none grid-cols-1 gap-4 p-0 min-[761px]:grid-cols-2">
+              {(
+                [
+                  [
+                    ArrowLeftRight,
+                    "Migrate",
+                    "Move a holding from one issuer to another in two confirmed steps. A receipt compares the shares you gave up with the shares you received.",
+                    "/portfolio",
+                    "Open Portfolio",
+                  ],
+                  [
+                    ShoppingBasket,
+                    "Baskets",
+                    "Pick a basket, set a budget and how much goes to each stock, and Tally buys them one after another, each with its own guaranteed minimum.",
+                    "/pies",
+                    "Open Baskets",
+                  ],
+                  [
+                    Bell,
+                    "Guardian",
+                    "Alerts about the tokens you hold: a trading pause, a change in shares per token or a drop in liquidity grade, sent to you on Telegram.",
+                    "/guardian",
+                    "Open Guardian",
+                  ],
+                  [
+                    FileText,
+                    "Statements",
+                    "Everything you bought and sold, counted in shares, with a statement you can download as a PDF or a CSV.",
+                    "/portfolio",
+                    "Open Portfolio",
+                  ],
+                ] as const
+              ).map(([Icon, h, b, href, cta]) => (
+                <li key={h} className="panel flex min-w-0 flex-col gap-3 p-5">
+                  <p className="flex items-center gap-2 text-[18px] font-bold">
+                    <Icon size={18} aria-hidden /> {h}
+                  </p>
+                  <p className="flex-1 text-[15px] text-fg2">{b}</p>
+                  <div>
+                    <ButtonLink href={href} variant="glassy">
+                      {cta} <ArrowRight size={16} aria-hidden />
+                    </ButtonLink>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
         </Reveal>
       </section>

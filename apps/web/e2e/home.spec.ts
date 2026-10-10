@@ -22,7 +22,7 @@ for (const width of WIDTHS) {
 
     test("minimalist trade card is live, sections exist, nothing overflows", async ({ page }) => {
       await page.goto("/");
-      await expect(page.getByRole("heading", { level: 1 })).toContainText("tokenized shares");
+      await expect(page.getByRole("heading", { level: 1 })).toContainText("tokenized stocks");
       await expect(page.getByTestId("home-get")).toContainText(/NVDA(on|B) shares/, {
         timeout: 15_000,
       });
@@ -366,5 +366,41 @@ test.describe("back to top", () => {
     expect(alpha).toBeLessThanOrEqual(0.02);
     await btn.click();
     await expect.poll(() => page.evaluate(() => window.scrollY)).toBeLessThan(5);
+  });
+});
+
+test.describe("hero rolling line", () => {
+  test("the line rolls to the next phrase by itself and the page never jumps", async ({ page }) => {
+    await page.goto("/");
+    const cur = page.getByTestId("rolling-current").last();
+    await expect(cur).toHaveText("Trade at the best prices");
+    const top = await page.getByTestId("hero-actions").boundingBox();
+    await expect(cur).not.toHaveText("Trade at the best prices", { timeout: 6_000 });
+    const after = await page.getByTestId("hero-actions").boundingBox();
+    expect(Math.abs((after?.y ?? 0) - (top?.y ?? 0))).toBeLessThan(2);
+    await expect(page.getByTestId("rolling-text")).toContainText("avoid unit traps");
+  });
+
+  test("with reduced motion it stays on the first phrase", async ({ browser }) => {
+    const ctx = await browser.newContext({ reducedMotion: "reduce" });
+    const page = await ctx.newPage();
+    await page.goto("/");
+    await expect(page.getByTestId("rolling-current")).toHaveText("Trade at the best prices");
+    await page.waitForTimeout(3500);
+    await expect(page.getByTestId("rolling-current")).toHaveText("Trade at the best prices");
+    await ctx.close();
+  });
+
+  test("the hero says what Tally is and the page has no horizontal scroll at 375px", async ({
+    browser,
+  }) => {
+    const ctx = await browser.newContext({ viewport: { width: 375, height: 812 } });
+    const page = await ctx.newPage();
+    await page.goto("/");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("everything app");
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth - innerWidth),
+    ).toBeLessThanOrEqual(0);
+    await ctx.close();
   });
 });

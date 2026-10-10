@@ -38,7 +38,7 @@ export function SiteFooter() {
           <div>
             <Logo />
             <p className="mt-3 max-w-[28ch] text-sm text-fg2">
-              Tokenized stocks, compared across every issuer on BNB Chain, at the best price.
+              The everything app for tokenized stocks on BSC.
             </p>
           </div>
           {COLS.map((c) => (
