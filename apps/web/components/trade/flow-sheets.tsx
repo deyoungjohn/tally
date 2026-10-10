@@ -146,8 +146,7 @@ export function SignInSheet({ open, onClose }: { open: boolean; onClose: () => v
   return (
     <Modal open={open} onOpenChange={(o) => !o && onClose()} title="Create your account">
       <p className="mt-1 text-fg2">
-        Sign in with your email or Google. We make you a wallet in a few seconds. No crypto
-        experience needed.
+        Sign in with your email or Google and we'll create a wallet for you in a few seconds.
       </p>
       <label className="panel mt-5 flex cursor-pointer items-start gap-3 p-4 text-[15px] leading-snug">
         <input
@@ -400,7 +399,7 @@ export function ReviewSheet({
             </div>
           </dl>
           <p className="t-meta">
-            Not investment advice. You sign this in your own wallet; Tally never holds your money.
+            You sign this in your own wallet; Your funds are never held by Tally.
             {left > 0
               ? ` This price is good for ${left}s.`
               : " We refresh the price when you confirm."}

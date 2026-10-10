@@ -217,10 +217,12 @@ export function PortfolioPage() {
   return (
     <main id="main" className="wrap pb-24 pt-10 min-[561px]:pt-14">
       <p className="t-kicker">Portfolio</p>
-      <h1 className="t-h2 mt-3 max-w-[22ch]">Your tokenized shares, counted in shares.</h1>
+      <h1 className="t-h2 mt-3 max-w-[22ch]">
+        Your tokenized stock holdings from different issuers, counted as one.
+      </h1>
       <p className="t-lead mt-3 max-w-[62ch]">
-        Holdings from different issuers add up in share units, so 1.2 shares from Ondo and 0.5 from
-        bStock read as 1.7 shares, not two confusing token balances. <LearnMore concept="shares" />
+        Tally counts tokenized stocks from different issuers tracking the same US share as one, by
+        multiplying each by it's current multiplier. <LearnMore concept="shares" />
       </p>
 
       {!address ? (
@@ -229,15 +231,15 @@ export function PortfolioPage() {
             <Wallet size={28} aria-hidden />
             <h2 className="t-h3 mt-4">Sign in to see your holdings</h2>
             <p className="mt-2 text-fg2">
-              Your portfolio is read from the chain, so nothing needs to be stored. Or paste any
-              wallet address to look at it.
+              Your portfolio is read from the chain. Paste any wallet address to view its tokenized
+              stock holdings on BSC.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <Button onClick={() => wallet.login()} disabled={!wallet.ready}>
                 <Lock size={16} aria-hidden /> Sign in
               </Button>
               <ButtonLink href="/trade" variant="glassy">
-                Buy your first shares
+                Buy your first tokenized stocks
               </ButtonLink>
             </div>
             <form
@@ -295,7 +297,7 @@ export function PortfolioPage() {
               </div>
             ) : bigGroups.length === 0 && smallParts.length === 0 ? (
               <div className="glass p-6 min-[561px]:p-8" data-testid="empty-portfolio">
-                <h2 className="t-h3">No tokenized shares yet</h2>
+                <h2 className="t-h3">No tokenized stocks yet</h2>
                 <p className="mt-2 text-fg2">
                   This wallet doesn&apos;t hold any of the stocks Tally covers. Buy from $6.
                 </p>

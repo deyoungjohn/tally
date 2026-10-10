@@ -16,7 +16,7 @@ export function LiveFills({ active }: { active: boolean }) {
       <h1 className="t-h2 max-w-[22ch]">Live fills</h1>
       <p className="t-lead mt-3 max-w-[62ch]">
         Every completed purchase is checked against what was quoted and simulated. These are the
-        results, by issuer and by route length, from chain-verified fills only.
+        results, by issuer and by route length.
       </p>
       <div className="mt-8">
         {data?.vm ? (

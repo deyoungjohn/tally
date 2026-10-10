@@ -83,7 +83,7 @@ export function HomeTradeCard() {
         </p>
       </div>
       <div className="field mt-2" data-testid="home-get">
-        <p className="t-meta">You get, at the best price right now</p>
+        <p className="t-meta">You receive, at the best price right now</p>
         <p className="t-big mt-2 !text-[clamp(31px,3.6vw,47px)]">
           {row?.shares === undefined ? (
             <span className="text-fg-disabled">–</span>
@@ -152,7 +152,7 @@ export function HomeTradeCard() {
         <ComingSoon title="Coming soon" items={["Sell to BNB"]} />
       </div>
       <p className="t-meta mt-3">
-        Tokenized shares track a US stock&apos;s price. They are not the underlying shares.
+        Tokenized stocks track a US stock&apos;s price. They are not the underlying shares.
       </p>
     </section>
   );
@@ -189,7 +189,7 @@ export function UnitTrapCard() {
           ? "Per share they differ by about 0.1%. That's the real comparison."
           : "Compared per token, Ondo looks 899% dearer. It isn't: one token is ten shares."}
       </p>
-      <p className="t-meta mt-1">Recorded 2026-10-02.</p>
+      <p className="t-meta mt-1">Recorded on 2026-10-02.</p>
     </div>
   );
 }
@@ -241,7 +241,7 @@ export function HomePortfolioPreview() {
     );
   return (
     <div>
-      <p className="t-meta mb-2">Example: the two recorded test buys (not a real account)</p>
+      <p className="t-meta mb-2">Example:</p>
       <ul className="m-0 grid list-none gap-3 p-0">
         <HoldingGroup g={EXAMPLE_GROUP} example />
       </ul>

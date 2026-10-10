@@ -94,7 +94,7 @@ export function FlagBadge({ flag, inButton }: { flag: string; inButton?: boolean
     );
   if (flag === "unit-trap")
     return (
-      <Tip text="Unit trap: one token is more than one share, so its price and balance look off by that factor. Tally always shows shares.">
+      <Tip text="Unit trap occurs when one token is more than one share, so its price and balance look off by that factor. Tally always shows shares.">
         <span className="badge badge-amber">
           <AlertTriangle size={12} aria-hidden /> Unit trap
         </span>

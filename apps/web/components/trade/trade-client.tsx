@@ -305,13 +305,14 @@ function TradeInner({
             </p>
             <p className="mt-1 text-[15px] text-fg2">
               Tally checks how many <b className="text-fg">shares</b> your tokens represent and
-              cancels the whole trade if you&apos;d get fewer than your minimum. Your USDT stays
-              put. These are tokenized shares issued by Ondo and bStocks, not the underlying stock.
+              cancels the whole trade if you&apos;d get fewer than your minimum. You'd never lose
+              your USDT if the transaction reverts. These are tokenized stocks issued by Ondo and
+              bStocks, not the underlying stock.
             </p>
           </div>
           {!buyable ? (
             <p role="status" className="order-5 text-[15px] text-amber">
-              {tokenPair(ticker)} can be compared here, but buying isn&apos;t switched on yet.
+              {tokenPair(ticker)} can be compared here, but buying isn&apos;t enabled.
             </p>
           ) : null}
           <p className="sr-only" aria-live="polite" data-testid="live-summary">

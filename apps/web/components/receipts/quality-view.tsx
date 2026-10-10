@@ -146,7 +146,7 @@ export function QualityView({ vm: initial, fixtures }: { vm: QualityVM; fixtures
       </p>
       <p className="t-meta mt-4">
         The US price comparison needs a historical US reference and the spend token&apos;s USD value
-        to both be recorded; no stablecoin peg is assumed.
+        to both be recorded.
       </p>
       {vm.truncated ? (
         <p className="t-meta mt-1">Showing up to 1000 latest observations per kind.</p>

@@ -25,7 +25,7 @@ const COLS = [
     links: [
       ["Terms of Use", "/terms"],
       ["Privacy Policy", "/privacy"],
-      ["Not investment advice", "/docs#disclaimer"],
+      ["Disclaimer", "/docs#disclaimer"],
     ],
   },
 ] as const;
@@ -57,9 +57,9 @@ export function SiteFooter() {
           ))}
         </div>
         <p id="disclaimer" className="t-meta mt-8 border-t border-white/[0.06] pt-5">
-          Not investment advice. Not available in restricted regions. Tokenized stocks are traded on
-          the secondary market on BNB Smart Chain; you are responsible for complying with the laws
-          that apply to you.
+          The services offered by Tally are not available in restricted regions. Tokenized stocks
+          are traded on the secondary market on BNB Smart Chain; you are responsible for complying
+          with the laws that apply to you.
         </p>
         <p className="t-meta mt-3" data-testid="copyright">
           © 2026 Tally Protocol. All rights reserved.

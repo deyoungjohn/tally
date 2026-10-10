@@ -80,14 +80,14 @@ export function StatementVmView({
           </div>
           {untracked.length === 0 ? (
             <div className="detail-row">
-              <dt>Unrealized gain or loss</dt>
+              <dt>Unrealized PnL</dt>
               <dd className={signed(vm.totalUnrealizedPnlUsd)} data-testid="st-unrealized">
                 {dash(usd(vm.totalUnrealizedPnlUsd))}
               </dd>
             </div>
           ) : null}
           <div className="detail-row">
-            <dt>Realized gain or loss</dt>
+            <dt>Realized PnL</dt>
             <dd className={signed(vm.totalRealizedPnlUsd)} data-testid="st-realized">
               {anyRealized ? dash(usd(vm.totalRealizedPnlUsd)) : "-"}
             </dd>

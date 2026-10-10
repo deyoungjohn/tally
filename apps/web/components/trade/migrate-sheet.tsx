@@ -103,7 +103,7 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
             if (!o) cancel();
           }}
           title={`Migrate to ${pm.to === "ondo" ? "Ondo" : "bStock"}`}
-          description="Two separate transactions; the price can move between them."
+          description="Migrate invloves two separate transactions, and prices can change between them."
           className="max-w-[520px]"
         >
           <div className="mt-4 grid gap-4">
@@ -163,7 +163,7 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
                     USDT{pm.isFixture ? " (fixture data)" : ""}, which is under the 6 USDT minimum
                     required to buy.
                   </p>
-                  <p>Your USDT is in your wallet. No buy was placed.</p>
+                  <p>Your USDT is in your wallet. No purchase was made.</p>
                 </div>
                 <div className="flex justify-end">
                   <Button onClick={cancel} className="bg-white text-black border border-black/10">

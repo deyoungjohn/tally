@@ -77,7 +77,7 @@ function IssuerRow({
       <span className="num text-fg2">
         {h.balanceTokens} tokens ×{" "}
         {h.multiplier === "unavailable" ? (
-          <Tip text="The share multiplier for this token couldn't be read, so its shares aren't counted. Tally never guesses 1:1.">
+          <Tip text="The share multiplier for this token couldn't be read, so its shares aren't counted. Tally never assumes 1:1.">
             <span className="text-amber">unknown</span>
           </Tip>
         ) : (

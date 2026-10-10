@@ -35,7 +35,7 @@ export function SellSheet({ flow, isMigrate }: { flow: Flow; isMigrate?: boolean
         if (!o && !locked) flow.close();
       }}
       title={target ? `Sell ${target.symbol}` : "Sell"}
-      description="To USDT, on BNB Smart Chain."
+      description="To USDT, on BSC."
       showClose={!locked}
       className="max-w-[520px]"
     >
@@ -65,7 +65,7 @@ export function SellSheet({ flow, isMigrate }: { flow: Flow; isMigrate?: boolean
           <Progress testId="sell-approving">
             {phase.step === "sign"
               ? `Approve ${phase.plan.symbol} in your wallet. This approves exactly ${tokensText(phase.plan.approve?.amount ?? phase.plan.tokensIn, phase.plan.symbol)}.`
-              : "Approving… waiting for BNB Smart Chain to confirm."}
+              : "Approving… waiting for confirmation on BSC."}
           </Progress>
         ) : null}
 
@@ -76,7 +76,7 @@ export function SellSheet({ flow, isMigrate }: { flow: Flow; isMigrate?: boolean
         {phase.name === "mining" ? (
           <>
             <Progress testId="sell-mining">
-              Sent. Waiting for BNB Smart Chain to confirm.
+              Sent. Waiting for confirmation on BSC.
               {phase.slow ? " This is taking longer than usual; your transaction is saved." : ""}
             </Progress>
             <HashLink hash={phase.hash} />
@@ -314,7 +314,7 @@ function FormView({ flow, isMigrate }: { flow: Flow; isMigrate?: boolean }) {
             </div>
             {view.feeUsd !== null ? (
               <div className="detail-row">
-                <dt>Network fee (estimated)</dt>
+                <dt>Est. network fee</dt>
                 <dd>≈ {fmtUsd(view.feeUsd, 3)}</dd>
               </div>
             ) : null}
@@ -373,7 +373,7 @@ function FormView({ flow, isMigrate }: { flow: Flow; isMigrate?: boolean }) {
       ) : null}
 
       <p className="t-meta" data-testid="sell-risk">
-        Tokenized shares can sell for less than the US price. The router enforces the least USDT
+        Tokenized stocks can sell for less than the US price. The router enforces the least USDT
         shown: if the price moves past it, the sale doesn&apos;t happen and only the network fee is
         spent.
       </p>

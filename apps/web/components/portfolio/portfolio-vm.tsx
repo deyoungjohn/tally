@@ -205,8 +205,8 @@ export function PortfolioVmPanel({
             <div className="mt-4 grid gap-2" data-testid="vm-empty-help">
               {env.vm.source === null ? (
                 <p className="t-meta">
-                  No portfolio snapshot has been collected for this wallet yet. That is different
-                  from an empty wallet.
+                  No portfolio snapshot has been collected for this wallet yet. We can't say it's
+                  empty, for now.
                 </p>
               ) : null}
               <div>
@@ -225,11 +225,11 @@ export function PortfolioVmPanel({
             {vm?.state === "ready" ? (
               <dl className="mt-3">
                 <div className="detail-row">
-                  <dt>Unrealized gain or loss</dt>
+                  <dt>Unrealized PnL</dt>
                   <dd>{usd(vm.totalUnrealizedPnlUsd)}</dd>
                 </div>
                 <div className="detail-row">
-                  <dt>Realized gain or loss</dt>
+                  <dt>Realized PnL</dt>
                   <dd>{usd(vm.totalRealizedPnlUsd)}</dd>
                 </div>
               </dl>

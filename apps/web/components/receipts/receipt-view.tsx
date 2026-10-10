@@ -23,7 +23,7 @@ const STATUS: Record<Status, { label: string; tone: string; tip: string }> = {
   RECONCILED_WITH_DIFFERENCE: {
     label: "Verified",
     tone: "badge-up",
-    tip: "The chain confirms this transaction and the amount you received. The amount differs from the quote, which can happen when prices move.",
+    tip: "The chain confirms this transaction and the amount you received. The amount differs from the quote, which can happen when prices drift.",
   },
   PENDING: {
     label: "Pending",

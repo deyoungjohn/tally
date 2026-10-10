@@ -87,10 +87,7 @@ export default function Home() {
                     "Shares you get",
                     "Every quote is in share units, with the price per share and the premium over the US price.",
                   ],
-                  [
-                    "The real network fee",
-                    "Estimated from the route's real cost, not the API's placeholder.",
-                  ],
+                  ["The real network fee", "Estimated from the route's real cost."],
                   [
                     "Cheapest right now",
                     "Quotes refresh every 10 seconds and the best issuer is marked.",
@@ -130,8 +127,7 @@ export default function Home() {
               </h2>
               <p className="t-lead mt-3 max-w-[50ch]">
                 Tokens from different issuers add up in share units, so you never have to do the
-                maths yourself. Read straight from the chain: nothing to import, nothing stored.{" "}
-                <LearnMore concept="portfolio" />
+                maths yourself. <LearnMore concept="portfolio" />
               </p>
               <ul className="m-0 mt-6 grid list-none gap-3 p-0">
                 {[

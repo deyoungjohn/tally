@@ -57,9 +57,13 @@ const SEVERITY: Record<AlertFeedItemVM["severity"], { label: string; cls: string
 const RULES: [keyof GuardianSettingsVM["settings"]["rules"], string, string][] = [
   ["paused", "Token paused", "An issuer pauses a token you hold."],
   ["shareCount", "Share count changes", "The number of shares one token represents changes."],
-  ["gradeDrop", "Grade drops", "A token you hold falls to a lower Radar grade."],
-  ["ghost", "Not Tradable", "A token you hold stops trading (under $1,000 in 24 hours)."],
-  ["priceThreshold", "Price thresholds", "A price crosses a limit you set."],
+  ["gradeDrop", "Grade drops", "A token you hold falls to a lower grade on Radar."],
+  [
+    "ghost",
+    "Thin Liquidity",
+    "Trading activity on a token you hold drops to under $1,000 in 24 hours.",
+  ],
+  ["priceThreshold", "Price thresholds", "Market price crosses a limit you set."],
   ["earnings", "Earnings", "An issuer limits a token around earnings."],
 ];
 
@@ -76,7 +80,7 @@ function Unverified({ login }: { login: () => void }) {
         sign-in
       </p>
       <p className="mt-2 text-fg2">
-        Guardian only shows alerts to the wallet that signed in, and the server could not confirm
+        Guardian only shows alerts to the wallet that signed in, and our server could not confirm
         that. Sign in again to continue.
       </p>
       <Button className="mt-4" onClick={login}>
@@ -390,8 +394,9 @@ export function GuardianScreen() {
       <section className="glass p-6" aria-label="Sign in" data-testid="guardian-signed-out">
         <h2 className="t-h3">Sign in to see your alerts</h2>
         <p className="mt-2 max-w-[60ch] text-fg2">
-          Guardian watches the tokens in your wallet and tells you about problems: a pause, a share
-          count change, a grade drop. Alerts are private to you, so they need a sign-in.
+          Guardian watches the tokens in your wallet and alerts you about certain issues like a
+          pause, a share count change, a grade drop, etc. Alerts are private to you, so you need to
+          sign in to start receiving alerts.
         </p>
         <Button className="mt-4" onClick={login}>
           <LogIn size={16} aria-hidden /> Sign in

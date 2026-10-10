@@ -117,7 +117,7 @@ export function MigrateReviewModal({
         if (!o) onClose();
       }}
       title={`Migrate ${from} to ${to}`}
-      description="Two transactions: sell, then buy. You confirm each one."
+      description="Migrate invloves a sale and a purchase and you'll confirm each one."
       className="max-w-[540px]"
       showClose
     >
