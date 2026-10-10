@@ -1,7 +1,8 @@
 import { ModuleBoundary } from "@/components/module-boundary";
 import { formatUnits } from "@tally/core";
 import { openStore } from "@tally/modkit";
-import { loadPies, type PiesViewModel } from "./view-model";
+import { loadPies, loadPiesPage, type PiesPageVM, type PiesViewModel } from "./view-model";
+import { PiesMiniContent } from "./mini-plain";
 
 const usd = (amount: string) => formatUnits(BigInt(amount), 18, 2);
 export function PiesContent({ vm }: { vm: PiesViewModel }) {
@@ -99,20 +100,81 @@ export function PiesContent({ vm }: { vm: PiesViewModel }) {
 }
 
 export function PiesPlain({ wallet, vm }: { wallet?: string; vm?: PiesViewModel }) {
+  const mini = <PiesMiniPlainContent />;
   return (
     <ModuleBoundary
       module="pies"
       load={async () => {
-        if (vm) return <PiesContent vm={vm} />;
-        if (!wallet) return <PiesContent vm={await loadPies()} />;
+        if (vm)
+          return (
+            <>
+              {mini}
+              <PiesContent vm={vm} />
+            </>
+          );
+        if (!wallet)
+          return (
+            <>
+              {mini}
+              <PiesContent vm={await loadPies()} />
+            </>
+          );
         const store = openStore();
         try {
-          return <PiesContent vm={await loadPies({ wallet, store })} />;
+          return (
+            <>
+              {mini}
+              <PiesContent vm={await loadPies({ wallet, store })} />
+            </>
+          );
         } finally {
           store.close();
         }
       }}
-      fallback={vm ? <PiesContent vm={vm} /> : <p>Pies has no successful update yet.</p>}
+      fallback={
+        vm ? (
+          <>
+            {mini}
+            <PiesContent vm={vm} />
+          </>
+        ) : (
+          <p>Pies has no successful update yet.</p>
+        )
+      }
     />
   );
+}
+
+async function PiesMiniPlainContent() {
+  return <PiesMiniContent initial={await loadPiesPage()} />;
+}
+
+export function PiesMiniPlain({ vm }: { vm?: PiesPageVM }) {
+  return (
+    <ModuleBoundary
+      module="pies"
+      load={async () => <PiesMiniContent initial={vm ?? (await loadPiesPage())} />}
+      fallback={
+        <PiesMiniContent initial={vm ?? { ...buildEmptyMini(), fixtures: false, label: null }} />
+      }
+    />
+  );
+}
+function buildEmptyMini(): PiesPageVM {
+  return {
+    state: "empty",
+    empty: true,
+    reason: "Pies has no observations yet",
+    error: null,
+    source: null,
+    stale: false,
+    ageMs: null,
+    fixtures: false,
+    label: null,
+    baskets: [],
+    selectedBasketId: null,
+    plan: null,
+    run: null,
+    roadmap: "Atomic baskets, auto-rebalancing and selling a basket: coming soon",
+  };
 }

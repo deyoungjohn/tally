@@ -161,7 +161,11 @@ export function FlowPanel({ panel }: { panel: FlowPanelDisplay }) {
                 <dt className="t-meta">{WINDOW_LABEL[w.window] ?? w.window}</dt>
                 <dd className="m-0">
                   {w.reason ? (
-                    <span className="text-fg2">Unavailable: {w.reason}</span>
+                    <span className="text-fg2" title={w.reason}>
+                      {/does not cover this window/i.test(w.reason)
+                        ? "History still building"
+                        : `Unavailable: ${w.reason}`}
+                    </span>
                   ) : (
                     <>
                       <span className="num font-semibold">{w.netShares}</span> net shares
@@ -186,11 +190,18 @@ export function FlowPanel({ panel }: { panel: FlowPanelDisplay }) {
               ? (i.concentrationReason ?? "unknown")
               : `${i.concentration}%`}
           </p>
-          {i.notes.map((n) => (
-            <p key={n} className="t-meta mt-1">
-              {n}
+          {i.notes
+            .filter((n) => !/^Trade history incomplete:/i.test(n))
+            .map((n) => (
+              <p key={n} className="t-meta mt-1">
+                {n}
+              </p>
+            ))}
+          {i.notes.some((n) => /^Trade history incomplete:/i.test(n)) ? (
+            <p className="t-meta mt-1" data-testid={`radarvm-history-note-${i.issuer}`}>
+              Some trade history is still being collected.
             </p>
-          ))}
+          ) : null}
           {i.whalePrints.length ? (
             <div className="mt-3 overflow-x-auto" data-testid={`radarvm-whales-${i.issuer}`}>
               <table className="w-full min-w-[320px] border-collapse text-left text-[14px]">
@@ -559,8 +570,7 @@ export function RadarVmBody() {
         />
         {env.degraded ? (
           <p className="t-meta mt-1 text-amber" role="status" data-testid="radarvm-degraded-note">
-            Radar is catching up: {env.reason ?? "the last update failed"}. Showing the last good
-            grades.
+            Radar is catching up. Showing the last good grades.
           </p>
         ) : null}
       </div>

@@ -52,6 +52,25 @@ export const PIE_TEMPLATES: readonly PieTemplate[] = [tech, index, growth, mag7]
   validateTemplate,
 );
 
+/** Basket buying is separate from the four existing rebalance templates. */
+export interface BasketTemplate extends PieTemplate {
+  issuer: "bstock";
+}
+export const BIG_TECH: BasketTemplate = {
+  ...validateTemplate({
+    id: "big-tech",
+    name: "Big Tech",
+    description: "Example allocation, not advice",
+    executable: true,
+    holdings: ["NVDA", "AAPL", "GOOGL", "MSFT", "META"].map((ticker) => ({
+      ticker,
+      targetWeightBps: 2000,
+    })),
+  }),
+  issuer: "bstock",
+};
+export const BASKET_TEMPLATES: readonly BasketTemplate[] = [BIG_TECH];
+
 export function templateAvailability(
   template: PieTemplate,
   buyable: ReadonlySet<string>,
