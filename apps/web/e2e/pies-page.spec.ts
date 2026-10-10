@@ -137,7 +137,7 @@ test.describe("pies page", () => {
     await expect(page.getByTestId("pies-unspent")).toHaveText("$0.00");
     await page.getByTestId("pies-budget").fill("20");
     await expect(page.getByTestId("preview-NVDA")).toContainText("Deferred");
-    await expect(page.getByTestId("preview-NVDA")).toContainText("below the 6.00 USDT minimum");
+    await expect(page.getByTestId("preview-NVDA")).toContainText("below the 6 USDT minimum");
     await expect(page.getByTestId("pies-total-usdt")).toHaveText("$0.00");
     await expect(page.getByTestId("pies-start")).toBeDisabled();
     await expect(page.getByTestId("pies-blocker")).toBeVisible();
