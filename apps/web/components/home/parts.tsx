@@ -133,7 +133,7 @@ export function HomeTradeCard() {
           <span>{ISSUER_LABEL[row.issuer]}</span>
           <span aria-hidden>·</span>
           <span className="inline-flex items-center gap-1">
-            <TrendUsd value={row.usdPerShare} /> per share
+            <TrendUsd value={row.usdPerShare} tick={row} /> per share
           </span>
           {row.feeUsd === undefined ? null : (
             <>

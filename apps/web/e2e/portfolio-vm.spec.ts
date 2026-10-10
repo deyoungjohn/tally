@@ -330,6 +330,111 @@ async function stubPortfolio(page: Page, body: unknown, delayMs = 0) {
 test.describe("portfolio view model: states (stubbed routes)", () => {
   test.use({ viewport: { width: 1280, height: 900 } });
 
+  const suggestionsOf = (state: string, items: unknown[] = [], reasonText = "") => ({
+    count: items.length,
+    items,
+    state,
+    reasonText,
+  });
+  const item = (ticker: string, name: string, issuer = "bstock") => ({
+    ticker,
+    symbol: `${ticker}${issuer === "ondo" ? "on" : "B"}`,
+    issuer,
+    name,
+    grade: "A",
+    label: "Liquid",
+    volume24hUsd: "250000",
+    reason: "Enabled in Tally's guarantee and liquid right now. Not advice.",
+  });
+
+  test("suggestions: cards from the view model, each with a Buy link to the Trade page for that issuer", async ({
+    page,
+  }) => {
+    await mockWallet(page);
+    await stubPortfolio(
+      page,
+      env(
+        holdingVm({
+          suggestions: suggestionsOf("ok", [item("AAPL", "Apple"), item("MSFT", "Microsoft")]),
+        }),
+      ),
+    );
+    await page.goto("/portfolio");
+    const block = page.getByTestId("suggestions");
+    await expect(block).toBeVisible({ timeout: 20_000 });
+    await expect(block).toContainText("Suggested for you");
+    await expect(page.getByTestId("suggestion-AAPLB")).toContainText("Apple");
+    await expect(page.getByTestId("suggestion-AAPLB")).toContainText("Liquid");
+    await expect(page.getByTestId("suggestion-AAPLB")).toContainText("Not advice");
+    await expect(page.getByTestId("suggestion-buy-AAPLB")).toHaveAttribute(
+      "href",
+      "/trade/AAPL?issuer=bstock",
+    );
+    await page.getByTestId("suggestion-buy-MSFTB").click();
+    await expect(page).toHaveURL(/\/trade\/MSFT\?issuer=bstock/);
+  });
+
+  test("suggestions: nothing when none are needed, a quiet line when unavailable", async ({
+    page,
+  }) => {
+    await mockWallet(page);
+    await stubPortfolio(page, env(holdingVm({ suggestions: suggestionsOf("none_needed") })));
+    await page.goto("/portfolio");
+    await expect(page.getByTestId("symbols-NVDA")).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByTestId("suggestions")).toHaveCount(0);
+    await expect(page.getByTestId("suggestions-unavailable")).toHaveCount(0);
+    await page.unroute("**/api/vm/portfolio*");
+    await page.route("**/api/vm/portfolio*", (route) =>
+      route.fulfill({
+        json: env(
+          holdingVm({
+            suggestions: suggestionsOf("unavailable", [], "Liquidity data is catching up"),
+          }),
+        ),
+      }),
+    );
+    await page.reload();
+    await expect(page.getByTestId("suggestions-unavailable")).toContainText(
+      "Liquidity data is catching up",
+      { timeout: 20_000 },
+    );
+    await expect(page.getByTestId("suggestions")).toHaveCount(0);
+  });
+
+  test("suggestions: shown for an empty wallet in place of a blank page", async ({ page }) => {
+    await mockWallet(page);
+    await stubPortfolio(
+      page,
+      env(
+        holdingVm({
+          state: "empty",
+          holdings: [],
+          reason: "No holdings in this wallet.",
+          source: null,
+          suggestions: suggestionsOf("ok", [
+            item("NVDA", "NVIDIA"),
+            item("AAPL", "Apple"),
+            item("MSFT", "Microsoft"),
+          ]),
+        }),
+      ),
+    );
+    await page.goto("/portfolio");
+    await expect(page.getByTestId("vm-empty")).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByTestId("suggestions").locator("li")).toHaveCount(3);
+  });
+
+  test("the Trade page opens with the suggested issuer chosen", async ({ page }) => {
+    for (const [issuer, symbol] of [
+      ["bstock", "NVDAB"],
+      ["ondo", "NVDAon"],
+    ] as const) {
+      await page.goto(`/trade/NVDA?issuer=${issuer}`);
+      const row = page.getByTestId(`row-${symbol}`).getByRole("button").first();
+      await expect(row).toHaveAttribute("aria-pressed", "true", { timeout: 20_000 });
+    }
+  });
+
   test("a zero balance (the source of a migration) is not shown, and the largest holding comes first", async ({
     page,
   }) => {

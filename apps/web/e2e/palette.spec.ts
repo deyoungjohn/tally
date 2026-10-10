@@ -49,7 +49,9 @@ test.describe("palette: no greys", () => {
 });
 
 test.describe("palette: pop-ups and highlights", () => {
-  test("a modal is transparent-black liquid glass, not grey", async ({ page }) => {
+  test("a modal is pure liquid glass like the nav bar (almost no fill, a blur behind it), not grey", async ({
+    page,
+  }) => {
     await page.goto("/trade/NVDA");
     await page
       .getByRole("button", { name: /learn more/i })
@@ -61,8 +63,10 @@ test.describe("palette: pop-ups and highlights", () => {
       const cs = getComputedStyle(el);
       return { bg: cs.backgroundColor, filter: cs.backdropFilter };
     });
-    expect(parse(style.bg)).toEqual([0, 0, 0, 0.58]);
-    expect(style.filter).toContain("blur");
+    // Pure liquid glass like the nav bar: almost no fill, and a blur of whatever is behind the surface.
+    const [, , , alpha] = parse(style.bg)!;
+    expect(alpha).toBeLessThan(0.05);
+    expect(style.filter).toContain("blur(4px)");
   });
 
   test("the Select dropdown is the same glass and its hover highlight is orange", async ({
@@ -72,9 +76,13 @@ test.describe("palette: pop-ups and highlights", () => {
     await page.locator("button[aria-haspopup='listbox']").first().click();
     const panel = page.locator(".select-panel");
     await expect(panel).toBeVisible();
-    expect(parse(await panel.evaluate((el) => getComputedStyle(el).backgroundColor))).toEqual([
-      0, 0, 0, 0.58,
-    ]);
+    const [, , , panelAlpha] = parse(
+      await panel.evaluate((el) => getComputedStyle(el).backgroundColor),
+    )!;
+    expect(panelAlpha).toBeLessThan(0.05);
+    expect(await panel.evaluate((el) => getComputedStyle(el).backdropFilter)).toContain(
+      "blur(4px)",
+    );
     await page.getByRole("option").nth(2).hover();
     const pill = panel.locator("[data-glide-pill]");
     await expect(pill).toHaveCSS("opacity", "1");

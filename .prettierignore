@@ -8,3 +8,4 @@ contracts
 packages/binance/fixtures
 packages/engine/fixtures
 data
+apps/web/lib/token-icons.generated.ts

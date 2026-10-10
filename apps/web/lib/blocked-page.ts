@@ -30,6 +30,7 @@ small{display:block;margin-top:20px;color:var(--fg3);font-size:12.5px}
 <h1>Not available in your region</h1>
 <p>Tally can’t be used from your location. This applies to the whole site, including quotes and prices.</p>
 <small>If you think this is a mistake, make sure you are not on a VPN or Tor, then reload.</small>
+<small>© 2026 Tally Protocol. All rights reserved.</small>
 </main>
 </body>
 </html>`;

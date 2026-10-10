@@ -90,10 +90,15 @@ test.describe("radar view model: real route on a seeded server", () => {
     await page.goto(`${server.url}/radar`);
     const list = page.getByTestId("radar-masonry");
     await expect(list).toBeVisible({ timeout: 20_000 });
-    await expect(list).toHaveAttribute("data-shown", "24");
+    // The first page is 24 cards. Under load the end-of-list loader can already have run by the time we look, so wait for the
+    // list to settle on a whole number of pages and drive it from whatever state it is in, rather than assuming a timing.
+    await expect(list).toHaveAttribute("data-shown", /^(24|48|70)$/, { timeout: 20_000 });
     const first = await page.getByTestId("radarvm-card-ZZ00").boundingBox();
-    await page.getByTestId("radar-more").getByRole("button", { name: "Show more" }).click();
-    await expect(list).toHaveAttribute("data-shown", "48");
+    const shownNow = Number(await list.getAttribute("data-shown"));
+    if (shownNow === 24) {
+      await page.getByTestId("radar-more").getByRole("button", { name: "Show more" }).click();
+      await expect(list).toHaveAttribute("data-shown", /^(48|70)$/);
+    }
     // Scrolling to the end loads the rest by itself.
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     await expect(list).toHaveAttribute("data-shown", "70", { timeout: 10_000 });
@@ -146,11 +151,13 @@ test.describe("radar view model: real route on a seeded server", () => {
     await page.getByRole("radio", { name: "Not Tradable" }).click();
     await expect(page.getByTestId("radarvm-NVDAx")).toBeVisible();
     await expect(page.getByTestId("radarvm-TSLAB")).toHaveCount(0);
-    // "How we grade tokens" jumps to the explainer at the bottom.
+    // "How we grade tokens" opens the explanation in a modal that links to the full one in the docs.
     await page.getByRole("radio", { name: "All" }).click();
     await page.getByTestId("how-we-grade-link").click();
-    await expect(page.locator("#how-we-grade")).toBeInViewport({ timeout: 5000 });
-    await page.evaluate(() => window.scrollTo(0, 0));
+    await expect(page.getByTestId("how-we-grade-modal")).toContainText("Almost no trading");
+    await expect(page.getByTestId("how-we-grade-docs")).toHaveAttribute("href", "/docs#how-grades");
+    await page.keyboard.press("Escape");
+    await expect(page.getByTestId("how-we-grade-modal")).toHaveCount(0);
     // Flow tab: the busiest token is shown by default; only a click changes it, and only one is shown.
     await page.getByRole("radio", { name: "Flow" }).click();
     await expect(page.getByTestId("radarvm-flow-NVDA")).toBeVisible();

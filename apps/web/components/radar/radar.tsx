@@ -5,7 +5,6 @@ import { AlertTriangle, ArrowRight, Building2, Search } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { RadarReport, RadarRow } from "@tally/engine";
-import { ButtonLink } from "@/components/motion/button";
 import { MorphingSearch, type MorphingSearchItem } from "@/components/motion/morphing-search";
 import { Segmented } from "@/components/motion/segmented";
 import { nameOf, tokenPair } from "@/lib/tickers";
@@ -252,63 +251,6 @@ export function RadarPage() {
       ) : (
         <RadarLegacyBody />
       )}
-
-      <section
-        id="how-we-grade"
-        tabIndex={-1}
-        className="glass mt-12 scroll-mt-24 p-6 outline-none min-[561px]:p-8"
-        aria-labelledby="how-grades"
-      >
-        <h2 id="how-grades" className="t-h3">
-          How a grade is made
-        </h2>
-        <p className="mt-2 max-w-[70ch] text-fg2">
-          Every token starts at 100 points. Each problem below takes points off, and every deduction
-          is shown with its reason.
-        </p>
-        <ul className="m-0 mt-4 grid grid-cols-1 gap-3 p-0 min-[761px]:grid-cols-2">
-          {[
-            [
-              "Share counts disagree (−25)",
-              "Sources disagree by more than 0.1% on how many shares one token is.",
-            ],
-            [
-              "Price far from the US price (−30)",
-              "More than 2% away from the US price while the market is open.",
-            ],
-            [
-              "Almost no trading (−40)",
-              "Under $1,000 traded in 24 hours on BNB Chain: a ghost market with stale prices.",
-            ],
-            [
-              "Paused or limited (−50 / −10)",
-              "The issuer paused the token, or limited it around earnings.",
-            ],
-            [
-              "Status unknown (−10)",
-              "We couldn't read whether it trades, and we never assume it does.",
-            ],
-            [
-              "Old reserve report (−10)",
-              "The issuer's latest reserve attestation is more than 3 days old.",
-            ],
-          ].map(([h, b]) => (
-            <li key={h} className="panel list-none p-4">
-              <p className="font-semibold">{h}</p>
-              <p className="mt-1 text-[15px] text-fg2">{b}</p>
-            </li>
-          ))}
-        </ul>
-        <p className="t-meta mt-4">
-          A is 90 or more, B 75, C 60, D 40, F below that. A unit trap (one token being more than
-          one share) adds a badge, not a deduction.
-        </p>
-        <div className="mt-6">
-          <ButtonLink href="/trade">
-            Compare a stock <ArrowRight size={16} aria-hidden />
-          </ButtonLink>
-        </div>
-      </section>
     </main>
   );
 }

@@ -17,6 +17,7 @@ import { recentLines } from "./recent-lines";
 import { SmallBalancesLink, otherAssetsShown, type SmallBalance } from "./small-balances";
 import { ActivityVmView } from "./activity-vm";
 import { HoldingsVm, smallBalancesOf } from "./holdings-vm";
+import { SuggestionsBlock } from "./suggestions";
 import { StatementVmView, type ReceivedRow } from "./statement-vm";
 import { VmDegraded, VmEmpty, VmFreshness, VmSkeleton, usd, type VmEnvelope } from "./vm-shared";
 
@@ -167,6 +168,7 @@ export function PortfolioVmPanel({
                 {(v) => <HoldingsVm vm={v} onSell={onSell} onMigrate={onMigrate} />}
               </TabBody>
               <SmallBalancesLink items={small} />
+              <SuggestionsBlock suggestions={feedEnv?.vm?.suggestions} />
             </>
           ) : null}
           {tab === "activity" ? (
