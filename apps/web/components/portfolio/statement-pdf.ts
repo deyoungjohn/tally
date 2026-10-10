@@ -51,6 +51,12 @@ export interface StatementPdfDocDescription {
   filename: string;
 }
 
+/** "0x1234…abcd": short enough for a one-line title. */
+export function shortWallet(address?: string | null): string {
+  if (!address) return "wallet";
+  return address.length > 14 ? `${address.slice(0, 6)}…${address.slice(-4)}` : address;
+}
+
 /** Formats filename as: tally-statement-<wallet first 6>-<UTC date>.pdf */
 export function statementPdfFilename(
   walletAddress?: string | null,
@@ -119,7 +125,12 @@ export function buildStatementPdfDescription(
       (typeof process !== "undefined" && process.env?.TALLY_FIXTURES === "1"));
 
   const generatedAt = formatUtcDateTime(now);
-  const period = vm.asOf ? `all recorded activity (as of ${vm.asOf})` : "all recorded activity";
+  // "Start date and time to end date and time": the first recorded activity to the moment the statement was read.
+  const times = vm.lines.map((l) => Date.parse(l.date)).filter((t) => Number.isFinite(t));
+  const endMs =
+    vm.asOf && Number.isFinite(Date.parse(vm.asOf)) ? Date.parse(vm.asOf) : new Date(now).getTime();
+  const startMs = times.length ? Math.min(...times) : endMs;
+  const period = `${formatUtcDateTime(startMs)} to ${formatUtcDateTime(endMs)}`;
   const filename = statementPdfFilename(vm.walletAddress, now);
 
   const sections: StatementPdfSection[] = [];
@@ -315,7 +326,7 @@ export function buildStatementPdfDescription(
   const emptyReason = vm.reason ?? vm.asOfReason ?? "Statement has no observations yet.";
 
   return {
-    title: "Tally statement",
+    title: `Statement for ${shortWallet(vm.walletAddress)} Stock Holdings`,
     walletAddress: vm.walletAddress ?? "Unknown wallet",
     period,
     generatedAt,
@@ -427,9 +438,9 @@ export function renderStatementPdf(
 
   let currentY = marginTop;
 
-  // Title: "Tally statement"
+  // Title: "Statement for <wallet> Stock Holdings" (one line)
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(20);
+  doc.setFontSize(18);
   doc.setTextColor(0, 0, 0);
   doc.text(desc.title, marginX, currentY + 16);
   currentY += 28;
@@ -577,9 +588,9 @@ export function renderStatementPdf(
           doc.setFontSize(8);
         }
 
-        // Row background (subtle zebra striping)
+        // Row background (zebra striping, dark enough to tell rows apart on paper)
         if (rIdx % 2 === 1) {
-          doc.setFillColor(252, 252, 253);
+          doc.setFillColor(228, 231, 236);
           doc.rect(marginX, currentY, printableWidth, rowHeight, "F");
         }
 

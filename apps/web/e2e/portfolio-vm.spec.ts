@@ -84,7 +84,7 @@ test.describe("portfolio view model: real routes on a seeded server", () => {
     // Unknown multiplier: shares are unknown, never a 1:1 guess, and there is no Sell for it. Worth under $1, it sits in the
     // small balances dialog rather than the list.
     await page.getByTestId("show-small-balances").click();
-    await expect(page.getByTestId("small-balance-TSLAon")).toContainText("unknown");
+    await expect(page.getByTestId("small-balance-TSLAon")).toContainText("-");
     await expect(page.getByTestId("sell-TSLAon")).toHaveCount(0);
   });
 
@@ -628,7 +628,7 @@ test.describe("portfolio view model: states (stubbed routes)", () => {
     (vm.holdings[0]!.issuers[0] as Record<string, unknown>).balanceShares = "unavailable";
     await stubPortfolio(page, env(vm));
     await page.goto("/portfolio");
-    await expect(page.getByTestId("vm-issuer-NVDAon")).toContainText("unknown", {
+    await expect(page.getByTestId("vm-issuer-NVDAon")).toContainText("-", {
       timeout: 20_000,
     });
     // Shown but disabled, with the reason in its label and tooltip.

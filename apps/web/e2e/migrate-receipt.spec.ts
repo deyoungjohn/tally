@@ -35,7 +35,7 @@ test.describe("Migrate Receipt Permalink", () => {
 
       // Check it renders correctly (the values from our bypass mock)
       await expect(page.getByText("10 NVDAB = 10 shares to 10 NVDAon = 10 shares")).toBeVisible();
-      await expect(page.getByText("Share-true comparison")).toBeVisible();
+      await expect(page.getByText("How they compare in shares:")).toBeVisible();
 
       // Ensure the share control is visible
       const copyBtn = page.getByRole("button", { name: "Copy Migrate Receipt Link" });
@@ -52,7 +52,7 @@ test.describe("Migrate Receipt Permalink", () => {
   test("dev page renders correctly", async ({ page }) => {
     await page.goto(`${server.url}/dev/migrate-receipt`);
     await expect(page.getByText("10 NVDAB = 10 shares to 10 NVDAon = 10 shares")).toBeVisible();
-    await expect(page.getByText("Share-true comparison")).toBeVisible();
+    await expect(page.getByText("How they compare in shares:")).toBeVisible();
   });
 
   test("share control copies the exact URL", async ({ page }) => {

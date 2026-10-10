@@ -276,9 +276,9 @@ export default function HowItWorks() {
               paste any wallet address to look at it too, because the data is public.
             </p>
             <p className="mt-3">
-              Your statement lists your activity and shows a gain or loss only where Tally can
+              Your statement lists your activity and shows a PnL only where Tally can
               support it. When it cannot, it says unknown and never shows a guess. You can download
-              it as a CSV.
+              it as a CSV or PDF.
             </p>
             <p className="mt-3">
               If you hold fewer than three stocks, Portfolio suggests a few more that can be traded

@@ -124,8 +124,8 @@ export function VmFreshness({
   );
 }
 
-/** Dollar strings and share strings arrive already formatted; a missing number reads "unknown", never a guess. */
+/** Dollar strings and share strings arrive already formatted; a missing number reads "-", never a guess. */
 export const usd = (s: string | null | undefined) =>
-  s === null || s === undefined || s === "-" || s === "unavailable" ? "unknown" : `$${s}`;
+  s === null || s === undefined || s === "-" || s === "unavailable" ? "-" : `$${s}`;
 export const sharesStr = (s: string | null | undefined) =>
-  s === null || s === undefined || s === "unavailable" || s === "-" ? "unknown" : s;
+  s === null || s === undefined || s === "unavailable" || s === "-" ? "-" : s;

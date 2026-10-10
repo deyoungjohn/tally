@@ -81,9 +81,21 @@ export function PortfolioVmPanel({
 }) {
   const [tab, setTab] = useState<PortfolioTab>("holdings");
   const q = encodeURIComponent(address);
+  // A wallet the statement worker has not read yet answers "empty, suggestions unavailable". That is not the real answer, so the
+  // page shows its loading state (never the empty card) and asks again every 2 s, for at most 8 s.
+  const [gaveUp, setGaveUp] = useState(false);
+  useEffect(() => {
+    const id = window.setTimeout(() => setGaveUp(true), 8000);
+    return () => window.clearTimeout(id);
+  }, []);
+  const [settling, setSettling] = useState(true);
   const portfolio = useJson<VmEnvelope<PortfolioVM>>(`/api/vm/portfolio?address=${q}`, {
-    refreshMs: 30_000,
+    refreshMs: settling && !gaveUp ? 2_000 : 30_000,
   });
+  useEffect(() => {
+    const v = portfolio.data?.vm;
+    if (v && !(v.state === "empty" && v.suggestions?.state === "unavailable")) setSettling(false);
+  }, [portfolio.data]);
   const reload = portfolio.reload;
   useEffect(() => {
     if (refreshKey) reload();
@@ -118,7 +130,8 @@ export function PortfolioVmPanel({
     tab === "activity" || tab === "statement" ? `/api/vm/activity?address=${q}` : null,
   );
 
-  const env = feedEnv && mergedVm ? { ...feedEnv, vm: mergedVm } : feedEnv;
+  const env0 = feedEnv && mergedVm ? { ...feedEnv, vm: mergedVm } : feedEnv;
+  const env = settling && !gaveUp && !portfolio.error ? null : env0;
   // The Statement tab: tokens the feed never saw, and verified transactions it does not have yet.
   const untracked = useMemo(
     () =>

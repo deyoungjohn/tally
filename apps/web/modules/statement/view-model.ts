@@ -247,20 +247,27 @@ export function buildPortfolioVM(
     };
 
     let pnlPct = "0.00";
+    // A cost that is missing or tiny next to the value (a gain of thousands of percent) means the purchases behind this holding
+    // were not all seen, for example tokens that arrived by transfer or a Migrate. Showing it would be false, so it reads "-".
+    let costTrusted = group.costKnown !== false;
     if (group.totalCostBasisUsdE18 > 0n) {
       const basisNum = Number(formatUnits(group.totalCostBasisUsdE18, 18));
       const pnlNum = Number(formatUnits(group.unrealizedPnlUsdE18, 18));
-      pnlPct = ((pnlNum / basisNum) * 100).toFixed(2);
-    }
+      const pct = (pnlNum / basisNum) * 100;
+      pnlPct = pct.toFixed(2);
+      if (!Number.isFinite(pct) || Math.abs(pct) > 1000) costTrusted = false;
+    } else if (group.totalValueUsdE18 > 0n) costTrusted = false;
 
     return {
       ticker: group.ticker,
       totalShares: totalSharesStr,
       totalValueUsd: formatUsd(group.totalValueUsdE18),
       avgCostPerShareUsd:
-        group.avgCostPerShareUsdE18 !== null ? formatUsd(group.avgCostPerShareUsdE18) : "-",
-      unrealizedPnlUsd: group.costKnown === false ? "-" : formatUsd(group.unrealizedPnlUsdE18),
-      unrealizedPnlPercent: group.costKnown === false ? "-" : pnlPct,
+        costTrusted && group.avgCostPerShareUsdE18 !== null
+          ? formatUsd(group.avgCostPerShareUsdE18)
+          : "-",
+      unrealizedPnlUsd: costTrusted ? formatUsd(group.unrealizedPnlUsdE18) : "-",
+      unrealizedPnlPercent: costTrusted ? pnlPct : "-",
       issuers,
       rowActionsSlot,
     };

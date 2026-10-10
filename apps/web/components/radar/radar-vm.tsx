@@ -164,7 +164,7 @@ export function FlowPanel({ panel }: { panel: FlowPanelDisplay }) {
                     <span className="text-fg2" title={w.reason}>
                       {/does not cover this window/i.test(w.reason)
                         ? "History still building"
-                        : `Unavailable: ${w.reason}`}
+                        : "-"}
                     </span>
                   ) : (
                     <>
@@ -181,14 +181,12 @@ export function FlowPanel({ panel }: { panel: FlowPanelDisplay }) {
           <p className="mt-3 text-[14.5px] text-fg2">
             Last real trade:{" "}
             {i.lastRealTradeAgeMs === null
-              ? (i.lastRealTradeReason ?? "unknown")
-              : (ageText(i.lastRealTradeAgeMs) ?? "unknown")}
+              ? (i.lastRealTradeReason ?? "-")
+              : (ageText(i.lastRealTradeAgeMs) ?? "-")}
           </p>
           <p className="text-[14.5px] text-fg2">
             Top ten holders, excluding custody:{" "}
-            {i.concentration === null
-              ? (i.concentrationReason ?? "unknown")
-              : `${i.concentration}%`}
+            {i.concentration === null ? (i.concentrationReason ?? "-") : `${i.concentration}%`}
           </p>
           {i.notes
             .filter((n) => !/^Trade history incomplete:/i.test(n))

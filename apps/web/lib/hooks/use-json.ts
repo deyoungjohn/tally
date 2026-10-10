@@ -5,16 +5,28 @@ import type { ApiError } from "@/lib/dto";
 import { PORTFOLIO_URL, onPortfolioChanged } from "./portfolio-changed";
 
 const cacheListeners = new Set<() => void>();
+// The last good answer per URL, kept in memory for the life of the tab. A page that mounts again (a tab switch, the back button)
+// shows it at once and refreshes behind it, instead of starting empty and reloading. Wallet changes clear it.
+const memo = new Map<string, unknown>();
+const MEMO_MAX = 60;
+const remember = (url: string, data: unknown) => {
+  memo.delete(url);
+  memo.set(url, data);
+  if (memo.size > MEMO_MAX) memo.delete(memo.keys().next().value!);
+};
 
 /** Reset all cached useJson data across the app (called on wallet switch or user change). */
 export function resetJsonCache(): void {
+  memo.clear();
   for (const fn of cacheListeners) fn();
 }
 
 /** Fetch JSON once (and again on `reload`). `url` null means "don't fetch yet". Keeps the last good data while reloading the same URL. */
 export function useJson<T>(url: string | null, opts: { refreshMs?: number } = {}) {
   const { refreshMs } = opts;
-  const [data, setData] = useState<T | null>(null);
+  const [data, setData] = useState<T | null>(() =>
+    url ? ((memo.get(url) as T | undefined) ?? null) : null,
+  );
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [n, setN] = useState(0);
@@ -28,7 +40,7 @@ export function useJson<T>(url: string | null, opts: { refreshMs?: number } = {}
     if (prevUrlRef.current !== url) {
       prevUrlRef.current = url;
       // Address or target URL changed: reset immediately so the old address's balances never show while loading
-      setData(null);
+      setData(url ? ((memo.get(url) as T | undefined) ?? null) : null);
       setError(null);
     }
   }, [url]);
@@ -64,6 +76,7 @@ export function useJson<T>(url: string | null, opts: { refreshMs?: number } = {}
       .then(async (r) => {
         const body = (await r.json()) as T | ApiError;
         if (!r.ok) throw new Error((body as ApiError).error?.message ?? "Something went wrong.");
+        remember(url, body);
         setData(body as T);
         setError(null);
       })

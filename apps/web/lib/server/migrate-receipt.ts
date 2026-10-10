@@ -201,6 +201,8 @@ export async function loadMigrateReceipt(
     /* ignore */
   }
 
+  const sellGasUsd =
+    (await engine.trade.receipt(sellHash as `0x${string}`).catch(() => null))?.gasUsd ?? undefined;
   const vm = buildMigrateReceipt(
     {
       hash: sellHash,
@@ -212,6 +214,7 @@ export async function loadMigrateReceipt(
       sellUsdtReceived: sellUsdtReceived.toString(),
       blockNumber: Number(sellReceipt.blockNumber),
       gasUsed: Number(sellReceipt.gasUsed),
+      gasUsd: sellGasUsd,
       // we don't have feeUsd, quote details for permalink
     },
     {

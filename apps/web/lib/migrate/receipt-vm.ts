@@ -1,4 +1,5 @@
 import { formatUnits, parseUnits } from "viem";
+import { dec3 } from "../receipt-format";
 
 export interface LegVM {
   verified: boolean;
@@ -6,6 +7,8 @@ export interface LegVM {
   tokenAmount: string | null;
   shares: string | null;
   sharesLabel?: string;
+  /** True when the shares were worked out with today's multiplier rather than the one recorded at the time. */
+  sharesAtTodaysMultiplier?: boolean;
   usdValue: string | null;
 
   route: string;
@@ -15,6 +18,7 @@ export interface LegVM {
   txHash: string;
   blockNumber: number | null;
   gasUsed: number | null;
+  gasUsd: number | null;
 
   protectionLabel: string;
   protectionValue: string | null;
@@ -68,6 +72,13 @@ export interface LegInput {
   gasUsd?: number;
 }
 
+/** A share difference to 3 decimals; one that rounds to nothing reads "0". */
+function signedDec3(value: string, isDown: boolean): string {
+  const r = dec3(value) ?? value;
+  if (/^-?0(\.0+)?$/.test(r)) return "0";
+  return (isDown ? "" : "+") + r;
+}
+
 export function buildMigrateReceipt(sell: LegInput, buy: LegInput): MigrateReceiptVM {
   const isFixture = sell.isFixture || buy.isFixture;
 
@@ -84,6 +95,7 @@ export function buildMigrateReceipt(sell: LegInput, buy: LegInput): MigrateRecei
     txHash: sell.hash,
     blockNumber: sell.blockNumber ?? null,
     gasUsed: sell.gasUsed ?? null,
+    gasUsd: sell.gasUsd ?? null,
     protectionLabel: "Guaranteed at least",
     protectionValue: sell.sellGuaranteedUsdt
       ? formatUnits(BigInt(sell.sellGuaranteedUsdt), 18)
@@ -96,7 +108,8 @@ export function buildMigrateReceipt(sell: LegInput, buy: LegInput): MigrateRecei
     const m = BigInt(sell.multiplier);
     giveUp.shares = formatUnits((tokens * m) / 1000000000000000000n, 18);
     if (sell.isTodayMultiplier) {
-      giveUp.sharesLabel = "Shares at today's multiplier";
+      giveUp.sharesLabel = "Shares";
+      giveUp.sharesAtTodaysMultiplier = true;
     }
   }
 
@@ -117,6 +130,7 @@ export function buildMigrateReceipt(sell: LegInput, buy: LegInput): MigrateRecei
     txHash: buy.hash,
     blockNumber: buy.blockNumber ?? null,
     gasUsed: buy.gasUsed ?? null,
+    gasUsd: buy.gasUsd ?? null,
     protectionLabel: "Guaranteed at least",
     protectionValue: buy.buyMinShares ? formatUnits(BigInt(buy.buyMinShares), 18) : null,
     protectionPass: false,
@@ -127,7 +141,8 @@ export function buildMigrateReceipt(sell: LegInput, buy: LegInput): MigrateRecei
     const m = BigInt(buy.multiplier);
     receive.shares = formatUnits((tokens * m) / 1000000000000000000n, 18);
     if (buy.isTodayMultiplier) {
-      receive.sharesLabel = "Shares at today's multiplier";
+      receive.sharesLabel = "Shares";
+      receive.sharesAtTodaysMultiplier = true;
     }
   }
 
@@ -147,12 +162,12 @@ export function buildMigrateReceipt(sell: LegInput, buy: LegInput): MigrateRecei
     const fmtOut = formatUnits(sharesOut, 18);
     // Remove trailing zeros to match standard display or keep standard formatting?
     // Let's use Number() formatting for the label to make it readable.
-    const fIn = parseFloat(fmtIn);
-    const fOut = parseFloat(fmtOut);
+    const fIn = dec3(fmtIn);
+    const fOut = dec3(fmtOut);
 
     shareDiff = {
       label: `${fIn} ${giveUp.tokenSymbol} = ${fIn} shares to ${fOut} ${receive.tokenSymbol} = ${fOut} shares`,
-      diff: (isDown ? "" : "+") + parseFloat(formatUnits(diff, 18)).toString(),
+      diff: signedDec3(formatUnits(diff, 18), isDown),
       isDown,
       approximate: !!(sell.isTodayMultiplier || buy.isTodayMultiplier),
     };

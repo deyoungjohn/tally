@@ -147,21 +147,21 @@ export function MigrateReviewModal({
             </div>
             <div className="detail-row">
               <dt>Network fee, sale</dt>
-              <dd>{v.sell.feeUsd === null ? "unknown" : `≈ ${fmtUsd(v.sell.feeUsd, 3)}`}</dd>
+              <dd>{v.sell.feeUsd === null ? "-" : `≈ ${fmtUsd(v.sell.feeUsd, 3)}`}</dd>
             </div>
             <div className="detail-row">
               <dt>Step 2 · you buy</dt>
               <dd data-testid="mr-buy">
                 {v.buy
                   ? `about ${v.buy.shares.toFixed(6)} shares of ${to} at ${fmtUsd(v.buy.usdPerShare)}`
-                  : "not available"}
+                  : "-"}
               </dd>
             </div>
             <div className="detail-row">
               <dt>Network fee, buy</dt>
               <dd>
                 {v.buy?.feeUsd === undefined || v.buy?.feeUsd === null
-                  ? "unknown"
+                  ? "-"
                   : `≈ ${fmtUsd(v.buy.feeUsd, 3)}`}
               </dd>
             </div>

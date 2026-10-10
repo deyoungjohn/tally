@@ -41,6 +41,7 @@ export function MigrateReceiptModal({
             const txData = await txRes.json();
             sellBlockNumber = txData.blockNumber;
             sellGasUsed = txData.gasUsed;
+            sellGasUsd = txData.gasUsd ?? undefined;
           }
         } catch {
           /* ignore */

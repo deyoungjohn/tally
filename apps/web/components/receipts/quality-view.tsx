@@ -13,8 +13,8 @@ import { useJson } from "@/lib/hooks/use-json";
 import { VmEmpty, VmFreshness, type VmEnvelope } from "@/components/portfolio/vm-shared";
 
 export const QUALITY_POLL_MS = 5_000;
-const pct = (v: number | null) => (v === null ? "unavailable" : `${(v * 100).toFixed(1)}%`);
-const bps = (v: number | null) => (v === null ? "unavailable" : `${v > 0 ? "+" : ""}${v} bps`);
+const pct = (v: number | null) => (v === null ? "-" : `${(v * 100).toFixed(1)}%`);
+const bps = (v: number | null) => (v === null ? "-" : `${v > 0 ? "+" : ""}${v} bps`);
 
 type Line = { id: string; label: string; row: QualityRow };
 

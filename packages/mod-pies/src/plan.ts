@@ -57,7 +57,7 @@ export function rebalancePlan(input: RebalanceInput): RebalancePlan {
       deferredSellValueE18: 0n,
       deferredBuyUsdtE18: 0n,
     },
-    notes: ["Example allocation, not advice"],
+    notes: [],
     reason: null,
   };
   if (valuation.excluded.length) {

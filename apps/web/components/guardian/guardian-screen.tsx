@@ -140,7 +140,10 @@ function Alert({ a }: { a: AlertFeedItemVM }) {
   );
 }
 
-function Feed({ state }: { state: SessionJson<AlertFeedVM> }) {
+function Feed({ state, hold }: { state: SessionJson<AlertFeedVM>; hold?: boolean }) {
+  // Until we know whether the wallet holds anything, an empty feed is not an answer yet.
+  if (hold && "data" in state && state.data?.state === "empty")
+    return <VmSkeleton rows={2} label="Loading alerts" />;
   if (state.status === "loading" && !state.data)
     return <VmSkeleton rows={2} label="Loading alerts" />;
   if (state.status === "error" && !state.data)
@@ -354,9 +357,9 @@ export function GuardianScreen() {
   );
   const holdsNothing =
     held.data !== null && held.data.groups.length === 0 && held.data.failed.length === 0;
-  const portfolioVm = useJson<VmEnvelope<PortfolioVM>>(
-    holdsNothing && q ? `/api/vm/portfolio?address=${q}` : null,
-  );
+  // Asked at the same time as the holdings (not after them), so the suggestions are ready when the nudge appears.
+  const portfolioVm = useJson<VmEnvelope<PortfolioVM>>(q ? `/api/vm/portfolio?address=${q}` : null);
+  const holdingsKnown = !q || held.data !== null || held.error !== null;
   const feed = useSessionJson<AlertFeedVM>("/api/session/guardian/feed", { refreshMs: 60_000 });
   // While a link code is on screen, look for the link every few seconds so the page notices when the bot confirms it.
   const [watching, setWatching] = useState(false);
@@ -478,11 +481,15 @@ export function GuardianScreen() {
             <ButtonLink href="/trade" className="mt-4" data-testid="guardian-buy-cta">
               Buy your first tokenized stock <ArrowRight size={16} aria-hidden />
             </ButtonLink>
-            <SuggestionsBlock suggestions={portfolioVm.data?.vm?.suggestions} />
+            {portfolioVm.data === null && portfolioVm.error === null ? (
+              <VmSkeleton rows={1} label="Loading suggestions" />
+            ) : (
+              <SuggestionsBlock suggestions={portfolioVm.data?.vm?.suggestions} />
+            )}
           </section>
         ) : null}
         <h2 className="t-h3 mb-3">Alerts</h2>
-        <Feed state={feed.state} />
+        <Feed state={feed.state} hold={!holdingsKnown} />
       </div>
       <aside className="grid min-w-0 content-start gap-3">
         {settingsVm ? (

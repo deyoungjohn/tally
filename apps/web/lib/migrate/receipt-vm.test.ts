@@ -27,7 +27,7 @@ describe("MigrateReceiptVM", () => {
 
     expect(vm.giveUp.shares).toBe("0.0254");
     expect(vm.receive.shares).toBe("0.0254");
-    expect(vm.shareDiff?.diff).toBe("+0");
+    expect(vm.shareDiff?.diff).toBe("0");
     expect(vm.dollarDiff?.diff).toBe("+$0.00 (minus $0.25 gas)");
     expect(vm.dollarDiff?.isDown).toBe(false);
   });
@@ -56,7 +56,7 @@ describe("MigrateReceiptVM", () => {
 
     expect(vm.giveUp.shares).toBe("0.0254");
     expect(vm.receive.shares).toBe("0.025");
-    expect(vm.shareDiff?.diff).toBe("-0.0004");
+    expect(vm.shareDiff?.diff).toBe("0");
     expect(vm.dollarDiff?.diff).toBe("-$2.00 (minus $0.25 gas)");
     expect(vm.dollarDiff?.isDown).toBe(true);
   });
@@ -83,7 +83,7 @@ describe("MigrateReceiptVM", () => {
 
     expect(vm.giveUp.shares).toBe("0.0254");
     expect(vm.receive.shares).toBe("0.026");
-    expect(vm.shareDiff?.diff).toBe("+0.0006");
+    expect(vm.shareDiff?.diff).toBe("+0.001");
     expect(vm.dollarDiff?.diff).toBe("+$2.00");
     expect(vm.dollarDiff?.isDown).toBe(false);
   });
@@ -174,6 +174,6 @@ describe("MigrateReceiptVM", () => {
 
     expect(vm.giveUp.simulation).toBe(null);
     expect(vm.receive.simulation).toBe(null);
-    expect(vm.shareDiff?.diff).toBe("+0");
+    expect(vm.shareDiff?.diff).toBe("0");
   });
 });

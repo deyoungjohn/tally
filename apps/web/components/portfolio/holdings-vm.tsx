@@ -78,7 +78,7 @@ function IssuerRow({
         {h.balanceTokens} tokens ×{" "}
         {h.multiplier === "unavailable" ? (
           <Tip text="The share multiplier for this token couldn't be read, so its shares aren't counted. Tally never assumes 1:1.">
-            <span className="text-amber">unknown</span>
+            <span className="text-amber">-</span>
           </Tip>
         ) : (
           h.multiplier
@@ -147,8 +147,8 @@ function Group({
   const known = g.issuers.some((i) => i.balanceShares !== "unavailable");
   const held = heldIssuers(g);
   // Cost figures are shown only when they are known: a stock whose cost can't be worked out simply has no cost lines.
-  const avgKnown = usd(g.avgCostPerShareUsd) !== "unknown";
-  const pnlKnown = usd(g.unrealizedPnlUsd) !== "unknown";
+  const avgKnown = usd(g.avgCostPerShareUsd) !== "-";
+  const pnlKnown = usd(g.unrealizedPnlUsd) !== "-";
   return (
     <li className="panel list-none p-5" data-testid={`group-${g.ticker}`}>
       <div className="flex items-center gap-3">
@@ -167,7 +167,7 @@ function Group({
             className="num text-[23px] font-bold tracking-tight"
             data-testid={`vm-total-shares-${g.ticker}`}
           >
-            {known ? sharesStr(g.totalShares) : "unknown"}
+            {known ? sharesStr(g.totalShares) : "-"}
           </p>
           <p className="t-meta">shares · ≈ {usd(g.totalValueUsd)}</p>
         </div>

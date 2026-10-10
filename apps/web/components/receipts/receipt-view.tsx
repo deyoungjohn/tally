@@ -7,7 +7,9 @@ import { ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { ButtonLink } from "@/components/motion/button";
 import { Tip } from "@/components/ui/tooltip";
-import { shortHash } from "@/lib/format";
+import { fmtUsd, shortHash } from "@/lib/format";
+import { dec3, dec3Down, usdt2, usdt2Down } from "@/lib/receipt-format";
+import { useJson } from "@/lib/hooks/use-json";
 import { nameOf } from "@/lib/tickers";
 import type { ReceiptVM } from "@/modules/receipts/view-model";
 import { VmEmpty, VmFreshness, ageText } from "@/components/portfolio/vm-shared";
@@ -50,13 +52,8 @@ function fmtE18(raw: string | null): string | null {
   return `${n / 10n ** 18n}${frac ? `.${frac}` : ""}`;
 }
 
-/** A decimal string cut to at most six places (the view model sends all eighteen); never rounds up. */
-const dec = (v: string | null) => {
-  if (v === null) return null;
-  const [i, f = ""] = v.split(".");
-  const cut = f.slice(0, 6).replace(/0+$/, "");
-  return cut ? `${i}.${cut}` : (i ?? v);
-};
+/** Amounts print to 3 decimals; a USDT value rounds up to 2 (see `lib/receipt-format`). */
+const dec = (v: string | null) => dec3(v);
 
 const bps = (v: number | null) =>
   v === null ? null : `${v > 0 ? "+" : ""}${(v / 100).toFixed(2)}%`;
@@ -75,7 +72,8 @@ function Step({
   const fromBrowser = stage.stage === "Quoted" && stage.source === "client-reported quote";
   const unit = sell && stage.stage === "Received" ? "USDT" : sell ? "tokens offered" : "shares";
   // Sells ladder in tokens (and USDT), buys in shares.
-  const main = dec(sell ? stage.tokens : stage.shares);
+  const raw = sell ? stage.tokens : stage.shares;
+  const main = sell && stage.stage === "Received" ? usdt2(raw) : dec(raw);
   return (
     <li
       className="panel list-none p-4"
@@ -90,7 +88,7 @@ function Step({
           <p className="font-semibold">{stage.stage}</p>
           {main === null ? (
             <p className="mt-1 text-fg2" data-testid={`receipt-step-reason-${stage.stage}`}>
-              Unavailable{stage.reason ? `: ${stage.reason}` : ""}
+              -
             </p>
           ) : (
             <p className="mt-1">
@@ -129,6 +127,9 @@ export function ReceiptView({
       ? `${nameOf(vm.ticker)} ${what} receipt`
       : "Transaction receipt";
   const bscscan = vm.evidence.explorerUrl;
+  const gas = useJson<{ gasUsd?: number | null }>(
+    vm.txHash && vm.state !== "pending" ? `/api/trade/receipt?tx=${vm.txHash}` : null,
+  );
   if (vm.state === "empty" || vm.state === "error" || vm.state === "disabled")
     return (
       <>
@@ -159,7 +160,8 @@ export function ReceiptView({
   // The "Simulated" step is never shown: a sale records no simulation output and a buy's is almost always unavailable.
   const ladder = vm.ladder.filter((s) => s.stage !== "Simulated");
   const trusted = vm.comparisonTrust === "recorded";
-  const minimum = sell ? vm.signedMinimumShares : dec(vm.signedMinimumShares);
+  // A guarantee rounds down: rounding it up would promise more than was signed.
+  const minimum = sell ? usdt2Down(vm.signedMinimumShares) : dec3Down(vm.signedMinimumShares);
   const multiplier = fmtE18(vm.evidence.multiplier);
   const diffQuote = bps(vm.diffVsQuoteBps);
   return (
@@ -252,7 +254,10 @@ export function ReceiptView({
           <div>
             <dt className="t-meta">Gas used / limit</dt>
             <dd className="m-0">
-              {vm.evidence.gasUsed ?? "Unavailable"} / {vm.evidence.gasLimit ?? "Unavailable"}
+              {vm.evidence.gasUsed ?? "-"} / {vm.evidence.gasLimit ?? "-"}
+              {typeof gas.data?.gasUsd === "number"
+                ? ` (≈ ${fmtUsd(gas.data.gasUsd, 3)} used)`
+                : ""}
             </dd>
           </div>
           {multiplier ? (

@@ -57,7 +57,7 @@ export function RowActions({
   const ondoDestinationClosed = useOndoClosedReason(ticker, issuer === "bstock" ? "ondo" : "");
   const tradable = issuer === "ondo" || issuer === "bstock";
   const worth = valueUsd ?? Number.NaN;
-  const worthText = Number.isFinite(worth) ? fmtUsd(worth) : "unknown";
+  const worthText = Number.isFinite(worth) ? fmtUsd(worth) : "-";
 
   // Buy more
   let buyReason: string | null = null;

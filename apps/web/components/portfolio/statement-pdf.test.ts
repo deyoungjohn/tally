@@ -88,7 +88,7 @@ describe("statement-pdf pure builder and generator", () => {
     const desc = buildStatementPdfDescription(vm, { now: "2026-10-10T12:00:00Z" });
 
     // 1. Verify description metadata
-    expect(desc.title).toBe("Tally statement");
+    expect(desc.title).toMatch(/^Statement for .+ Stock Holdings$/);
     expect(desc.walletAddress).toBe(WALLET);
     expect(desc.isEmpty).toBe(false);
     expect(desc.totalRowCount).toBe(3); // 1 holding + 2 trades
