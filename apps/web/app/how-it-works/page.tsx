@@ -20,7 +20,7 @@ const NAV = [
   ["portfolio", "Your portfolio"],
   ["sell", "Selling and Migrate"],
   ["guardian", "Guardian alerts"],
-  ["pies", "Baskets (Pies)"],
+  ["pies", "Baskets"],
   ["limits", "What can go wrong"],
   ["more", "Learn more"],
 ] as const;
@@ -318,7 +318,7 @@ export default function HowItWorks() {
           </section>
 
           <section id="pies">
-            <h2>Baskets (Pies)</h2>
+            <h2>Baskets</h2>
             <p className="mt-3">
               A basket is a set of stocks bought together. You enter a budget and how much of it
               goes to each stock, and Tally buys them one after another for you. Each stock is its

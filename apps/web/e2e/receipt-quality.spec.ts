@@ -29,7 +29,7 @@ test.describe("receipt and quality pages: real server, signed out", () => {
   });
   test.afterAll(() => server?.stop());
 
-  test("a verified buy shows Quoted, Simulated and Received, labelled fixture data, no contract address", async ({
+  test("a verified buy shows Quoted and Received, labelled fixture data, no contract address", async ({
     page,
   }) => {
     await page.goto(`${server.url}/receipt/${BUY_HASH}`);
@@ -38,7 +38,7 @@ test.describe("receipt and quality pages: real server, signed out", () => {
     });
     // No registry snapshot is seeded, so the issuer is the browser's word and the page says so.
     await expect(page.getByTestId("receipt-issuer-note")).toContainText("reported by your browser");
-    for (const s of ["Quoted", "Simulated", "Received"])
+    for (const s of ["Quoted", "Received"])
       await expect(page.getByTestId(`receipt-step-${s}`)).toBeVisible();
     await expect(page.getByTestId("receipt-status")).toBeVisible();
     await expect(page.getByTestId("vm-fixture-label")).toContainText("not live");

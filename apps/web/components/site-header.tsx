@@ -23,7 +23,7 @@ export const NAV_LINKS = [
 /** Feature-flagged modules from other work orders. Portfolio and Radar are core pages here, so they are not repeated. */
 const MODULE_LINKS: { href: string; label: string; flag: ModuleName }[] = [
   { href: "/guardian", label: "Guardian", flag: "guardian" },
-  { href: "/pies", label: "Pies", flag: "pies" },
+  { href: "/pies", label: "Baskets", flag: "pies" },
 ];
 
 export function Logo() {

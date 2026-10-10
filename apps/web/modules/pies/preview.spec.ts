@@ -6,7 +6,7 @@ for (const width of [375, 768, 1280]) {
   }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/dev/pies");
-    await expect(page.getByRole("heading", { name: "Pies preview" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Baskets preview" })).toBeVisible();
     await expect(page.getByText("MSFT is not buyable")).toBeVisible();
     await expect(page.getByText("partially rebalanced", { exact: true })).toBeVisible();
     await expect(page.getByText(/Stale snapshot: 600000 ms/)).toBeVisible();

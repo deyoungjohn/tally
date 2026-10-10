@@ -40,7 +40,7 @@ it("empty pie VM explains missing observations and never claims a live source", 
     stale: false,
     ageMs: null,
     source: null,
-    reason: "Pies has no observations yet.",
+    reason: "Baskets have no observations yet.",
     error: null,
     pie: null,
   });
@@ -48,12 +48,12 @@ it("empty pie VM explains missing observations and never claims a live source", 
     state: "empty",
     empty: true,
     currentValueE18: "0",
-    reason: "Empty pie",
+    reason: "Empty basket",
   });
   expect(buildRebalancePlanVM(rebalancePlan(base))).toMatchObject({
     state: "empty",
     legs: [],
-    reason: expect.stringContaining("Empty pie"),
+    reason: expect.stringContaining("Empty basket"),
   });
 });
 it("default templates use the expanded product list while Mag 7 stays a preview", async () => {

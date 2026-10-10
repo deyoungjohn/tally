@@ -12,7 +12,7 @@ export default function PiesPreview() {
     notFound();
   return (
     <main id="main">
-      <h1>Pies preview</h1>
+      <h1>Baskets preview</h1>
       <PiesPlain vm={previewPies()} />
     </main>
   );

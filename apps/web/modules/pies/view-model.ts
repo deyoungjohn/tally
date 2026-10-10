@@ -107,7 +107,7 @@ export function buildPieVM(
     ...state(
       empty,
       empty
-        ? "Empty pie"
+        ? "Empty basket"
         : value.excluded.length
           ? `cannot value ${[...new Set(value.excluded.map((e) => e.ticker))].join(", ")}`
           : null,
@@ -189,7 +189,7 @@ export interface LoadPiesOptions {
 export async function loadPies(options: LoadPiesOptions = {}): Promise<PiesViewModel> {
   const buyable = options.buyable ?? new Set(BUYABLE_TICKERS.map((t) => t.ticker));
   const result: PiesViewModel = {
-    ...state(true, "Pies has no observations yet.", defaultMeta),
+    ...state(true, "Baskets have no observations yet.", defaultMeta),
     templates: buildPieTemplatesVM(buyable),
     pie: null,
     plan: buildRebalancePlanVM(null),

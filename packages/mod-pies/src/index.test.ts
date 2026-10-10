@@ -332,7 +332,7 @@ it("below-threshold drift produces no plan and the exact threshold triggers plan
 it("an empty pie produces no sell/buy plan", () => {
   expect(rebalancePlan({ ...base, holdings: [] })).toMatchObject({
     legs: [],
-    reason: expect.stringContaining("Empty pie"),
+    reason: expect.stringContaining("Empty basket"),
   });
 });
 it("unrelated wallet holdings are outside the pie and remain untouched", () => {

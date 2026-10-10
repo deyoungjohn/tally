@@ -7,7 +7,7 @@ import { PiesMiniContent } from "./mini-plain";
 const usd = (amount: string) => formatUnits(BigInt(amount), 18, 2);
 export function PiesContent({ vm }: { vm: PiesViewModel }) {
   return (
-    <section aria-label="Pies">
+    <section aria-label="Baskets">
       {vm.reason && <p>{vm.reason}</p>}
       {vm.error && <p role="alert">{vm.error}</p>}
       {vm.ageMs !== null && (
@@ -138,7 +138,7 @@ export function PiesPlain({ wallet, vm }: { wallet?: string; vm?: PiesViewModel 
             <PiesContent vm={vm} />
           </>
         ) : (
-          <p>Pies has no successful update yet.</p>
+          <p>Baskets have no successful update yet.</p>
         )
       }
     />
@@ -164,7 +164,7 @@ function buildEmptyMini(): PiesPageVM {
   return {
     state: "empty",
     empty: true,
-    reason: "Pies has no observations yet",
+    reason: "Baskets have no observations yet",
     error: null,
     source: null,
     stale: false,

@@ -73,7 +73,7 @@ export function rebalancePlan(input: RebalanceInput): RebalancePlan {
     return plan;
   }
   if (total === 0n) {
-    plan.reason = "Empty pie; invest funds to build an allocation";
+    plan.reason = "Empty basket; invest funds to build an allocation";
     return plan;
   }
   if (input.mode === "rebalance" && plan.target.every((h) => h.driftBps < threshold)) {

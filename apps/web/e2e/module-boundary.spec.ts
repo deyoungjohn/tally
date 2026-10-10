@@ -40,7 +40,7 @@ test.describe("foundation boundaries", () => {
     );
     await page.goto("/dev");
     const nav = page.getByRole("navigation", { name: "Primary" });
-    for (const name of ["Portfolio", "Radar", "Guardian", "Pies"])
+    for (const name of ["Portfolio", "Radar", "Guardian", "Baskets"])
       await expect(nav.getByRole("link", { name, exact: true })).toBeVisible();
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth - innerWidth),
@@ -123,7 +123,7 @@ test.describe("foundation boundaries", () => {
     await expect(dialog.getByRole("link", { name: "Portfolio", exact: true })).toBeVisible();
     await expect(dialog.getByRole("link", { name: "Radar", exact: true })).toBeVisible();
     await expect(dialog.getByRole("link", { name: "Quality", exact: true })).toHaveCount(0);
-    await expect(dialog.getByRole("link", { name: "Pies", exact: true })).toHaveCount(0);
+    await expect(dialog.getByRole("link", { name: "Baskets", exact: true })).toHaveCount(0);
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
     await expect(menu).toBeFocused();

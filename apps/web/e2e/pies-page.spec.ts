@@ -268,18 +268,18 @@ test.describe("pies page", () => {
   }
 });
 
-test.describe("pies page: module never updated", () => {
+test.describe("baskets page: no worker snapshot", () => {
   let server: VmServer;
   test.beforeAll(async () => {
     server = await startVmServer({ port: 3142, seed: "none", flags: { FEATURE_PIES: "1" } });
   });
   test.afterAll(() => server?.stop());
-  test("shows the catching-up card and offers nothing to buy", async ({ page }) => {
+  test("never shows a catching-up card: baskets read no worker snapshot", async ({ page }) => {
     await wallet(page);
     await page.goto(`${server.url}/pies`);
-    await expect(page.getByTestId("vm-degraded")).toContainText("Pies is catching up", {
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("basket of stocks", {
       timeout: 20_000,
     });
-    await expect(page.getByTestId("pies-start")).toHaveCount(0);
+    await expect(page.getByText("is catching up")).toHaveCount(0);
   });
 });

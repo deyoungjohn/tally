@@ -57,6 +57,12 @@ export function useMigrateFlow() {
       return;
     }
     const saved = readPendingMigrate(wallet.address);
+    // A Migrate whose buy is already sent is finished: it is never reopened by a page change or a reload. Its receipt stays
+    // reachable from the Statement and the receipt links.
+    if (saved && saved.step === 2 && saved.buyHash) {
+      clearPendingMigrate();
+      return;
+    }
     if (saved) {
       setPm(saved);
       if (saved.source) setSource(saved.source);

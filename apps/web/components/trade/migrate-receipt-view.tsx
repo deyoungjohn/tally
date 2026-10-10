@@ -1,10 +1,116 @@
 import { CheckCircle2 } from "lucide-react";
-import { MigrateReceiptVM } from "../../lib/migrate/receipt-vm";
+import { LegVM, MigrateReceiptVM } from "../../lib/migrate/receipt-vm";
 import { ShareReceiptButton } from "./share-receipt-button";
+
+const NOT_RECORDED = "Not recorded on chain";
+
+/** One label/value line; a value that was not recorded on chain is left out for good, never shown as "not recorded". */
+function Row({ label, value }: { label: string; value: React.ReactNode | null | undefined }) {
+  if (value === null || value === undefined || value === "" || value === NOT_RECORDED) return null;
+  return (
+    <div className="flex min-w-0 justify-between gap-3">
+      <span className="shrink-0 text-white/60">{label}</span>
+      <span className="min-w-0 break-all text-right">{value}</span>
+    </div>
+  );
+}
+
+function Leg({
+  leg,
+  title,
+  unit,
+  receiptLabel,
+  protectionDelivered,
+}: {
+  leg: LegVM;
+  title: string;
+  unit: "USDT" | "shares";
+  receiptLabel: string;
+  protectionDelivered: string | null;
+}) {
+  const pending = (v: string | null) => v ?? (leg.verified ? null : "Pending");
+  const quoteTime = leg.quoteTime ? new Date(leg.quoteTime).toISOString() : null;
+  const guaranteed = leg.protectionValue ? `${leg.protectionValue} ${unit}` : null;
+  const delivered = protectionDelivered ? `${protectionDelivered} ${unit}` : null;
+  return (
+    <div className="flex min-w-0 flex-col gap-4">
+      <h4 className="font-semibold pb-2 border-b border-white/15">{title}</h4>
+
+      <div className="grid gap-y-2 text-sm">
+        <Row label="Token" value={leg.tokenSymbol} />
+        <Row
+          label="Amount"
+          value={
+            <>
+              {leg.verified ? leg.tokenAmount : "Pending"}
+              {leg.verified ? (
+                <span className="mt-1 block text-xs">
+                  <span className="rounded bg-white/10 px-1">Verified</span>
+                </span>
+              ) : null}
+            </>
+          }
+        />
+        <Row label={leg.sharesLabel ?? "Shares"} value={pending(leg.shares)} />
+        <Row label="Value (USDT)" value={pending(leg.usdValue)} />
+      </div>
+
+      {guaranteed || delivered ? (
+        <div className="bg-white/5 rounded p-3 text-xs grid gap-2">
+          <div className="font-medium mb-1">Protection</div>
+          <Row label={leg.protectionLabel} value={guaranteed} />
+          <Row
+            label="Delivered"
+            value={
+              delivered ? (
+                <span className="inline-flex items-center gap-1">
+                  {delivered}
+                  {leg.protectionPass && <CheckCircle2 className="w-3 h-3 shrink-0 text-white" />}
+                </span>
+              ) : null
+            }
+          />
+        </div>
+      ) : null}
+
+      <div className="text-xs grid gap-y-1">
+        <div className="font-medium mb-1">Execution</div>
+        <Row label="Route" value={leg.route} />
+        <Row label="Vendor" value={leg.vendor} />
+        <Row label="Quote time" value={quoteTime} />
+        <Row label="Value" value="0 BNB" />
+        <Row label="Gas used" value={pending(leg.gasUsed === null ? null : String(leg.gasUsed))} />
+        <Row
+          label="Block"
+          value={pending(leg.blockNumber === null ? null : String(leg.blockNumber))}
+        />
+      </div>
+
+      <div className="mt-auto pt-2 border-t border-white/15 flex gap-2">
+        <a
+          href={`/receipt/${leg.txHash}`}
+          target="_blank"
+          rel="noreferrer"
+          className="link-text text-xs"
+        >
+          {receiptLabel}
+        </a>
+        <a
+          href={`https://bscscan.com/tx/${leg.txHash}`}
+          target="_blank"
+          rel="noreferrer"
+          className="link-text text-xs"
+        >
+          BscScan
+        </a>
+      </div>
+    </div>
+  );
+}
 
 export function MigrateReceiptView({ vm }: { vm: MigrateReceiptVM }) {
   return (
-    <div className="grid gap-6 mt-4 text-sm text-white bg-transparent">
+    <div className="grid grid-cols-1 min-w-0 gap-6 mt-4 text-sm text-white bg-transparent">
       {vm.isFixture && <div className="text-[var(--orange-text)] font-medium">Fixture data</div>}
 
       <div className="flex flex-col gap-1 pb-4 border-b border-white/15">
@@ -12,7 +118,7 @@ export function MigrateReceiptView({ vm }: { vm: MigrateReceiptVM }) {
         {vm.shareDiff ? (
           <>
             <p className="text-white/60">{vm.shareDiff.label}</p>
-            <div className="flex gap-8 mt-2 font-medium">
+            <div className="flex flex-wrap gap-x-8 gap-y-1 mt-2 font-medium break-all">
               <div>
                 <span className="text-white/60 mr-2">
                   Share difference{vm.shareDiff.approximate ? " (approximate)" : ""}:
@@ -36,218 +142,21 @@ export function MigrateReceiptView({ vm }: { vm: MigrateReceiptVM }) {
         )}
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8">
-        {/* Leg 1 */}
-        <div className="flex flex-col gap-4">
-          <h4 className="font-semibold pb-2 border-b border-white/15">Step 1: You gave up</h4>
-
-          <div className="grid grid-cols-2 gap-y-2">
-            <div className="text-white/60">Token</div>
-            <div>{vm.giveUp.tokenSymbol}</div>
-
-            <div className="text-white/60">Amount</div>
-            <div>
-              {vm.giveUp.verified ? vm.giveUp.tokenAmount : "Pending"}
-              {vm.giveUp.verified && (
-                <span className="ml-2 text-xs bg-white/10 px-1 rounded">Verified</span>
-              )}
-            </div>
-
-            <div className="text-white/60">{vm.giveUp.sharesLabel ?? "Shares"}</div>
-            <div>{vm.giveUp.shares ?? (vm.giveUp.verified ? "shares unavailable" : "Pending")}</div>
-
-            <div className="text-white/60">Value (USDT)</div>
-            <div>{vm.giveUp.usdValue ?? "Pending"}</div>
-          </div>
-
-          <div className="bg-white/5 rounded p-3 text-xs grid gap-2">
-            <div className="font-medium mb-1">Protection</div>
-            <div className="flex justify-between items-center">
-              <span className="text-white/60">{vm.giveUp.protectionLabel}</span>
-              <span>
-                {vm.giveUp.protectionValue
-                  ? `${vm.giveUp.protectionValue} USDT`
-                  : vm.giveUp.verified
-                    ? "Not recorded on chain"
-                    : "Pending"}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-white/60">Delivered</span>
-              <div className="flex items-center gap-1">
-                {vm.giveUp.usdValue
-                  ? `${vm.giveUp.usdValue} USDT`
-                  : vm.giveUp.verified
-                    ? "Not recorded on chain"
-                    : "Pending"}
-                {vm.giveUp.protectionPass && <CheckCircle2 className="w-3 h-3 text-white" />}
-              </div>
-            </div>
-          </div>
-
-          <div className="text-xs grid gap-y-1">
-            <div className="font-medium mb-1">Execution</div>
-            <div className="flex justify-between">
-              <span className="text-white/60">Route</span>
-              <span>{vm.giveUp.route}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-white/60">Vendor</span>
-              <span>{vm.giveUp.vendor}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-white/60">Quote time</span>
-              <span>
-                {vm.giveUp.quoteTime
-                  ? new Date(vm.giveUp.quoteTime).toISOString()
-                  : "Not recorded on chain"}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-white/60">Value</span>
-              <span>0 BNB</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-white/60">Gas used</span>
-              <span>{vm.giveUp.gasUsed ?? "Pending"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-white/60">Block</span>
-              <span>{vm.giveUp.blockNumber ?? "Pending"}</span>
-            </div>
-          </div>
-
-          <div className="mt-auto pt-2 border-t border-white/15 flex gap-2">
-            <a
-              href={`/receipt/${vm.giveUp.txHash}`}
-              target="_blank"
-              rel="noreferrer"
-              className="link-text text-xs"
-            >
-              Sale Receipt
-            </a>
-            <a
-              href={`https://bscscan.com/tx/${vm.giveUp.txHash}`}
-              target="_blank"
-              rel="noreferrer"
-              className="link-text text-xs"
-            >
-              BscScan
-            </a>
-          </div>
-        </div>
-
-        {/* Leg 2 */}
-        <div className="flex flex-col gap-4">
-          <h4 className="font-semibold pb-2 border-b border-white/15">Step 2: You received</h4>
-
-          <div className="grid grid-cols-2 gap-y-2">
-            <div className="text-white/60">Token</div>
-            <div>{vm.receive.tokenSymbol}</div>
-
-            <div className="text-white/60">Amount</div>
-            <div>
-              {vm.receive.verified ? vm.receive.tokenAmount : "Pending"}
-              {vm.receive.verified && (
-                <span className="ml-2 text-xs bg-white/10 px-1 rounded">Verified</span>
-              )}
-            </div>
-
-            <div className="text-white/60">{vm.receive.sharesLabel ?? "Shares"}</div>
-            <div>
-              {vm.receive.shares ?? (vm.receive.verified ? "shares unavailable" : "Pending")}
-            </div>
-
-            <div className="text-white/60">Value (USDT)</div>
-            <div>{vm.receive.usdValue ?? "Pending"}</div>
-          </div>
-
-          <div className="bg-white/5 rounded p-3 text-xs grid gap-2">
-            <div className="font-medium mb-1">Protection</div>
-            <div className="flex justify-between items-center">
-              <span className="text-white/60">{vm.receive.protectionLabel}</span>
-              <span>
-                {vm.receive.protectionValue
-                  ? `${vm.receive.protectionValue} shares`
-                  : vm.receive.verified
-                    ? "Not recorded on chain"
-                    : "Pending"}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-white/60">Delivered</span>
-              <div className="flex items-center gap-1">
-                {vm.receive.shares
-                  ? `${vm.receive.shares} shares`
-                  : vm.receive.verified
-                    ? "Not recorded on chain"
-                    : "Pending"}
-                {vm.receive.protectionPass && <CheckCircle2 className="w-3 h-3 text-white" />}
-              </div>
-            </div>
-          </div>
-
-          <div className="text-xs grid gap-y-1">
-            <div className="font-medium mb-1">Execution</div>
-            <div className="flex justify-between">
-              <span className="text-white/60">Route</span>
-              <span>{vm.receive.route}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-white/60">Vendor</span>
-              <span>{vm.receive.vendor}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-white/60">Quote time</span>
-              <span>
-                {vm.receive.quoteTime
-                  ? new Date(vm.receive.quoteTime).toISOString()
-                  : "Not recorded on chain"}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-white/60">Simulated at gas limit</span>
-              <span>
-                {vm.receive.simulation === true
-                  ? "yes"
-                  : vm.receive.simulation === false
-                    ? "no"
-                    : "Not recorded"}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-white/60">Value</span>
-              <span>0 BNB</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-white/60">Gas used</span>
-              <span>{vm.receive.gasUsed ?? "Pending"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-white/60">Block</span>
-              <span>{vm.receive.blockNumber ?? "Pending"}</span>
-            </div>
-          </div>
-
-          <div className="mt-auto pt-2 border-t border-white/15 flex gap-2">
-            <a
-              href={`/receipt/${vm.receive.txHash}`}
-              target="_blank"
-              rel="noreferrer"
-              className="link-text text-xs"
-            >
-              Buy Receipt
-            </a>
-            <a
-              href={`https://bscscan.com/tx/${vm.receive.txHash}`}
-              target="_blank"
-              rel="noreferrer"
-              className="link-text text-xs"
-            >
-              BscScan
-            </a>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 min-w-0 md:grid-cols-2 gap-8">
+        <Leg
+          leg={vm.giveUp}
+          title="Step 1: You gave up"
+          unit="USDT"
+          receiptLabel="Sale Receipt"
+          protectionDelivered={vm.giveUp.usdValue}
+        />
+        <Leg
+          leg={vm.receive}
+          title="Step 2: You received"
+          unit="shares"
+          receiptLabel="Buy Receipt"
+          protectionDelivered={vm.receive.shares}
+        />
       </div>
 
       <ShareReceiptButton sellHash={vm.giveUp.txHash} buyHash={vm.receive.txHash} />

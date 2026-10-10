@@ -156,13 +156,12 @@ export function ReceiptView({
 
   const status = vm.status ? STATUS[vm.status] : null;
   const sell = vm.kind === "sell";
-  // A sale records no simulation output, so its ladder has no "Simulated" step.
-  const ladder = sell ? vm.ladder.filter((s) => s.stage !== "Simulated") : vm.ladder;
+  // The "Simulated" step is never shown: a sale records no simulation output and a buy's is almost always unavailable.
+  const ladder = vm.ladder.filter((s) => s.stage !== "Simulated");
   const trusted = vm.comparisonTrust === "recorded";
   const minimum = sell ? vm.signedMinimumShares : dec(vm.signedMinimumShares);
   const multiplier = fmtE18(vm.evidence.multiplier);
   const diffQuote = bps(vm.diffVsQuoteBps);
-  const diffSim = bps(vm.diffVsSimBps);
   return (
     <>
       <p className="t-kicker">Receipt</p>
@@ -204,7 +203,7 @@ export function ReceiptView({
       {vm.ladder.length ? (
         <ol
           className="m-0 mt-6 grid max-w-[640px] list-none gap-3 p-0"
-          aria-label={sell ? "Quote, received" : "Quote, simulation, received"}
+          aria-label="Quote, received"
         >
           {ladder.map((s, i) => (
             <Step key={s.stage} stage={s} step={i + 1} sell={sell} />
@@ -232,12 +231,6 @@ export function ReceiptView({
                   <span className="t-meta text-amber"> · quote {BROWSER_NOTE.toLowerCase()}</span>
                 ) : null}
               </dd>
-            </div>
-          ) : null}
-          {diffSim && !sell ? (
-            <div>
-              <dt className="t-meta">Received vs simulation</dt>
-              <dd className="m-0">{diffSim}</dd>
             </div>
           ) : null}
         </dl>

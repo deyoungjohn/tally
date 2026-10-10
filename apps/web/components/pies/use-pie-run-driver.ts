@@ -175,7 +175,7 @@ export function createPieRunner(io: PieRunTransport, publish: (run: PieBuyRun | 
           );
         for (let signatures = 0; signatures < 2; signatures++) {
           assertWallet(run);
-          if (!io.enabled()) throw new Error("Pies is not enabled");
+          if (!io.enabled()) throw new Error("Baskets are not enabled");
           if (!io.tokenEnabled(leg.ticker))
             throw new Error(`${leg.symbol} isn’t enabled in Tally yet`);
           leg.status = "pending";
@@ -195,7 +195,7 @@ export function createPieRunner(io: PieRunTransport, publish: (run: PieBuyRun | 
             run.wallet,
           );
           const wallet = assertWallet(run);
-          if (!io.enabled()) throw new Error("Pies is not enabled");
+          if (!io.enabled()) throw new Error("Baskets are not enabled");
           if (!io.tokenEnabled(leg.ticker))
             throw new Error(`${leg.symbol} isn’t enabled in Tally yet`);
           if (
@@ -279,7 +279,7 @@ export function createPieRunner(io: PieRunTransport, publish: (run: PieBuyRun | 
     async start(input: PieRunInput) {
       if (busy) return;
       validatePieRunInput(input);
-      if (!io.enabled()) throw new Error("Pies is not enabled");
+      if (!io.enabled()) throw new Error("Baskets are not enabled");
       const wallet = io.wallet();
       if (!wallet.ready || !wallet.authenticated || !wallet.address)
         throw new Error("Sign in before starting a basket");

@@ -263,7 +263,7 @@ it("interrupted signing without a hash blocks another signature after reload", a
 it("feature-off and unavailable-issuer data prevent signatures", async () => {
   const f = fixture();
   f.setEnabled(false);
-  await expect(f.create().start(input)).rejects.toThrow("Pies is not enabled");
+  await expect(f.create().start(input)).rejects.toThrow("Baskets are not enabled");
   f.setEnabled(true);
   f.io.tokenEnabled = () => false;
   const runner = f.create();
