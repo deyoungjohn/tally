@@ -10,6 +10,7 @@ import { Modal } from "@/components/motion/modal";
 import { PercentSlider } from "@/components/ui/percent-slider";
 import { TokenIcon } from "@/components/ui/token-icon";
 import { Tip } from "@/components/ui/tooltip";
+import { ComingSoon } from "@/components/trade/coming-soon";
 import { VmEmpty, VmFreshness } from "@/components/portfolio/vm-shared";
 import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { cn } from "@/lib/utils";
@@ -417,6 +418,18 @@ export function PiesScreen({ initial }: { initial: PiesPageVM }) {
           </section>
         </>
       )}
+
+      <ComingSoon
+        items={["Batch Transactions", "Auto Rebalancing", "Custom baskets"]}
+        tips={{
+          "Batch Transactions":
+            "Buy the whole basket in one transaction instead of one confirmation per stock. Fewer wallet prompts, and it all happens together or not at all.",
+          "Auto Rebalancing":
+            "Tally will keep your basket at the weights you chose: when prices move it buys and sells the right amounts to bring it back, on your terms.",
+          "Custom baskets":
+            "Build your own basket from the stocks you pick, name it, save it and share it, instead of choosing from Tally's list.",
+        }}
+      />
 
       <p className="t-meta flex items-center gap-2" data-testid="pies-roadmap">
         <Plus size={14} aria-hidden /> {vm.roadmap}

@@ -58,6 +58,20 @@ export function SuggestionsBlock({
           </li>
         ))}
       </ul>
+      <SuggestionsDisclaimer />
     </section>
+  );
+}
+
+/** Shown under recommendations wherever they appear (Portfolio, Guardian) and only when there are some. */
+export function SuggestionsDisclaimer() {
+  return (
+    <p
+      className="mt-3 max-w-[70ch] text-[13px] leading-5 text-fg3"
+      data-testid="suggestions-disclaimer"
+    >
+      Token recommendations are not investment advice. We recommend tokens with good liquidity and
+      we don&apos;t guarantee profits when you buy tokens based on our recommendations.
+    </p>
   );
 }

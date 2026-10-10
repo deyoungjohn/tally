@@ -166,6 +166,38 @@ test.describe("guardian: real server, module running", () => {
     );
   });
 
+  test("signed in with no tokens: a nudge to buy that links to Trade; Autopilot and Earnings say Soon", async ({
+    page,
+  }) => {
+    await mockWallet(page);
+    await stub(page, feed(), settings());
+    await page.route("**/api/portfolio**", (route) =>
+      route.fulfill({ json: { groups: [], failed: [], wallet: { usdt: 0, bnb: 0 }, asOf: "" } }),
+    );
+    await page.goto(`${server.url}/guardian`);
+    const nudge = page.getByTestId("guardian-no-tokens");
+    await expect(nudge).toContainText("don't hold any tokenized stocks", { timeout: 20_000 });
+    await expect(page.getByTestId("guardian-buy-cta")).toHaveAttribute("href", "/trade");
+    await expect(page.getByTestId("guardian-settings")).toContainText("Earnings · Soon");
+    await expect(page.getByTestId("guardian-autopilot-soon")).toContainText("Autopilot · Soon");
+    await expect(page.getByTestId("guardian-switch-autopilot")).toBeDisabled();
+    await page.getByTestId("guardian-autopilot-soon").getByText("Autopilot").hover();
+    await expect(page.getByRole("tooltip")).toContainText("act on an alert for you");
+  });
+
+  test("signed in holding tokens: no nudge", async ({ page }) => {
+    await mockWallet(page);
+    await stub(page, feed(), settings());
+    await page.route("**/api/portfolio**", (route) =>
+      route.fulfill({
+        json: { groups: [{ ticker: "NVDA", parts: [] }], failed: [], wallet: { usdt: 0, bnb: 0 } },
+      }),
+    );
+    await page.goto(`${server.url}/guardian`);
+    await expect(page.getByTestId("guardian-alert-a1")).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByTestId("guardian-no-tokens")).toHaveCount(0);
+  });
+
   test("the bell counts unread alerts, opens the latest in a dialog, and clears the count", async ({
     page,
   }) => {

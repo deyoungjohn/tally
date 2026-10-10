@@ -4,20 +4,40 @@
 // wallet from the Privy access token and `x-tally-wallet` (see `useSessionFetch`). The settings are shown read-only: no route
 // accepts a change yet, and the screen says so.
 
-import { Bell, BellOff, Check, Copy, ExternalLink, Link2, LogIn, ShieldAlert } from "lucide-react";
+import {
+  ArrowRight,
+  Bell,
+  BellOff,
+  Check,
+  Copy,
+  ExternalLink,
+  Link2,
+  LogIn,
+  ShieldAlert,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import type {
   AlertFeedItemVM,
   AlertFeedVM,
   GuardianSettingsVM,
 } from "@/modules/guardian/view-model";
-import { Button } from "@/components/motion/button";
+import { Button, ButtonLink } from "@/components/motion/button";
 import { Switch } from "@/components/motion/switch";
-import { VmEmpty, VmFreshness, VmSkeleton, ageText } from "@/components/portfolio/vm-shared";
+import { SuggestionsBlock } from "@/components/portfolio/suggestions";
+import {
+  VmEmpty,
+  VmFreshness,
+  VmSkeleton,
+  ageText,
+  type VmEnvelope,
+} from "@/components/portfolio/vm-shared";
 import { Tip } from "@/components/ui/tooltip";
+import { useJson } from "@/lib/hooks/use-json";
 import { useSessionFetch } from "@/lib/hooks/use-session-fetch";
 import { useSessionJson, type SessionJson } from "@/lib/hooks/use-session-json";
 import { tokenSymbol } from "@/lib/tickers";
+import type { PortfolioReport } from "@tally/engine";
+import type { PortfolioVM } from "@/modules/statement/view-model";
 
 /** The Guardian bot's public Telegram username. */
 export const GUARDIAN_BOT = "tallyguardianbot";
@@ -66,6 +86,14 @@ const RULES: [keyof GuardianSettingsVM["settings"]["rules"], string, string][] =
   ["priceThreshold", "Price thresholds", "Market price crosses a limit you set."],
   ["earnings", "Earnings", "An issuer limits a token around earnings."],
 ];
+
+/** Earnings alerts and Autopilot are not switchable yet; the tooltips say what they will do. */
+const SOON_TIPS = {
+  earnings:
+    "Coming soon: a heads-up when an issuer limits trading on a token you hold around a company's earnings, so a pause never surprises you.",
+  autopilot:
+    "Coming soon: Autopilot can act on an alert for you, within limits you set. For example, it can sell a token that was just paused, even while you're offline. Every action is capped, you can switch it off at any time, and every decision it makes is shown to you.",
+} as const;
 
 function Unverified({ login }: { login: () => void }) {
   return (
@@ -263,12 +291,9 @@ function Settings({
           const unavailable = key === "earnings";
           return (
             <li key={key} className="flex items-center justify-between gap-3 text-[14.5px]">
-              <Tip
-                text={
-                  unavailable ? "Not available yet: Tally has no source for earnings dates." : tip
-                }
-              >
+              <Tip text={unavailable ? SOON_TIPS.earnings : tip}>
                 {label}
+                {unavailable ? <span className="text-fg3"> · Soon</span> : null}
               </Tip>
               <Switch
                 checked={s.rules[key]}
@@ -280,6 +305,21 @@ function Settings({
             </li>
           );
         })}
+        <li
+          className="flex items-center justify-between gap-3 text-[14.5px]"
+          data-testid="guardian-autopilot-soon"
+        >
+          <Tip text={SOON_TIPS.autopilot}>
+            Autopilot <span className="text-fg3">· Soon</span>
+          </Tip>
+          <Switch
+            checked={false}
+            disabled
+            ariaLabel="Autopilot (coming soon)"
+            testId="guardian-switch-autopilot"
+            onCheckedChange={() => undefined}
+          />
+        </li>
       </ul>
       {saveError ? (
         <p role="alert" className="mt-2 text-amber" data-testid="guardian-save-error">
@@ -305,7 +345,18 @@ const polledLinked = (st: SessionJson<GuardianSettingsVM>) =>
   "data" in st && st.data?.telegram.linked === true;
 
 export function GuardianScreen() {
-  const { signedIn, ready, login, sessionFetch } = useSessionFetch();
+  const { signedIn, ready, login, sessionFetch, address } = useSessionFetch();
+  // Does the signed-in wallet hold any tokenized stock? Only a loaded answer that says "none" shows the nudge.
+  const q = signedIn && address ? encodeURIComponent(address) : null;
+  const held = useJson<Pick<PortfolioReport, "groups" | "failed">>(
+    q ? `/api/portfolio?address=${q}` : null,
+    { refreshMs: 60_000 },
+  );
+  const holdsNothing =
+    held.data !== null && held.data.groups.length === 0 && held.data.failed.length === 0;
+  const portfolioVm = useJson<VmEnvelope<PortfolioVM>>(
+    holdsNothing && q ? `/api/vm/portfolio?address=${q}` : null,
+  );
   const feed = useSessionJson<AlertFeedVM>("/api/session/guardian/feed", { refreshMs: 60_000 });
   // While a link code is on screen, look for the link every few seconds so the page notices when the bot confirms it.
   const [watching, setWatching] = useState(false);
@@ -413,6 +464,23 @@ export function GuardianScreen() {
   return (
     <div className="grid grid-cols-1 gap-6 min-[981px]:grid-cols-[minmax(0,1fr)_340px]">
       <div className="min-w-0">
+        {holdsNothing ? (
+          <section
+            className="glass mb-6 p-6"
+            aria-label="Buy your first token"
+            data-testid="guardian-no-tokens"
+          >
+            <h2 className="t-h3">You don&apos;t hold any tokenized stocks yet</h2>
+            <p className="mt-2 max-w-[60ch] text-fg2">
+              Guardian watches the tokens in your wallet, so there is nothing to watch until you
+              hold one. Buy your first and its alerts start working.
+            </p>
+            <ButtonLink href="/trade" className="mt-4" data-testid="guardian-buy-cta">
+              Buy your first tokenized stock <ArrowRight size={16} aria-hidden />
+            </ButtonLink>
+            <SuggestionsBlock suggestions={portfolioVm.data?.vm?.suggestions} />
+          </section>
+        ) : null}
         <h2 className="t-h3 mb-3">Alerts</h2>
         <Feed state={feed.state} />
       </div>
