@@ -38,7 +38,7 @@ export default async function Page({
                 </p>
                 <div className="flex flex-col gap-3">
                   <a href={`/receipt/${sellHash}`} className="link-text">
-                    View Sale Receipt
+                    View Sell Receipt
                   </a>
                   <a href={`/receipt/${buyHash}`} className="link-text">
                     View Buy Receipt

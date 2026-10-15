@@ -135,6 +135,18 @@ forge script script/AddAssets.s.sol:AddAssets --sig 'verifyBstockBatch2()' --rpc
 
 Rollback of one token (dry run first, then add `--account "$OWNER_ACCOUNT" --broadcast`): `forge script script/AddAssets.s.sol:AddAssets --sig 'rollbackBstockBatch2(address)' "$STOCK" --rpc-url bsc --sender "$OWNER" -vv`. After the broadcast, ask Agent 09 to add the six to the generated product list (`gen_buyable.py`), which also changes the issuer map the Migrate check uses.
 
+**Batch 3 (four Ondo tokens: INTCon, METAon, MSFTon, MSTRon; needs seeds).** Batch 2 is already enabled on the guard; the product list names AMZNB, GMEB, BMNRB and NFLXB too. Batch 3 must be enabled before the web build that lists these four ships. Record the seeds right before the broadcast (public Binance readings from two sources, valid 2 hours; run it where `www.binance.com` answers, for example the EC2), then in `contracts/`, with the same `OWNER`, `OWNER_ACCOUNT` and `--rpc-url bsc` as above:
+
+```bash
+python3 tools/gen_ondo_seeds_batch3.py                                                                   # writes deploy/seeds-batch3.json
+forge script script/AddOndoBatch3.s.sol:AddOndoBatch3 --sig 'preview()' --rpc-url bsc -vv                # keyless, nothing signed
+forge script script/AddOndoBatch3.s.sol:AddOndoBatch3 --sig 'run()' --rpc-url bsc --sender "$OWNER" -vv  # dry run
+forge script script/AddOndoBatch3.s.sol:AddOndoBatch3 --sig 'run()' --rpc-url bsc --sender "$OWNER" --account "$OWNER_ACCOUNT" --broadcast -vv
+forge script script/AddOndoBatch3.s.sol:AddOndoBatch3 --sig 'verify()' --rpc-url bsc -vv                 # read-only check afterwards
+```
+
+Rollback of one token (dry run first, then add `--account "$OWNER_ACCOUNT" --broadcast`): `forge script script/AddOndoBatch3.s.sol:AddOndoBatch3 --sig 'rollback(address)' "$STOCK" --rpc-url bsc --sender "$OWNER" -vv`. Do not commit `deploy/seeds-batch3.json`.
+
 Live $6 proofs run on the Seoul EC2 with the buyer wallet configured there (`contracts/tools/guarded_buy.py`, `--send` spends real funds); run each token once without `--send` first. The Ondo proof uses the feed value seeded by the owner step, so no signer key is needed.
 
 ## Checks after a restart
@@ -152,6 +164,7 @@ Names only here:
 - `./deploy/restart.sh` refuses to start (and says which names are missing or look like a wrong spelling) when `BINANCE_W3_API_KEY`, `BINANCE_W3_API_SECRET` or `TALLY_DATA_DIR` is unset, and warns about `BSC_RPC_PRIMARY` and `NEXT_PUBLIC_PRIVY_APP_ID`. The Binance names are `BINANCE_W3_*`, not `BINANCE_WEB3_*` (that spelling once left the web server without credentials on 8 Oct).
 - Always: `NEXT_PUBLIC_PRIVY_APP_ID`, `NEXT_PUBLIC_TELEGRAM_BOT_USERNAME` (both public, baked in at build time: load the file before building), `BINANCE_W3_API_KEY`, `BINANCE_W3_API_SECRET`, `BSC_RPC_PRIMARY` (not `BSC_RPC_URL`), `FEED_SIGNER_PK`, `TALLY_DATA_DIR` (same value for the web app and every worker; writable).
 - RPC providers (the chain reads, receipts, holdings and the Flow collector): `BSC_RPC_PRIMARY` is tried first, then `BSC_RPC_FALLBACKS` in order (a comma-separated list of full URLs; when it is set it REPLACES the built-in public endpoints, so end it with them: `https://bsc-dataseed.bnbchain.org,https://bsc-dataseed1.defibit.io`). `BSC_RPC_NODEREAL` and `BSC_RPC_ANKR` feed the transaction and log readers; each takes either a full URL or just the key. A provider that answers "daily request limit reached" is skipped automatically (fixed 9 Oct; a used-up QuickNode plan had stopped every chain read). `curl https://<domain>/api/health` shows `rpcBlock` (null means all endpoints failed) and `rpcDetail` (why, with URLs removed).
+- `ETHERSCAN_API_KEY` (optional, server only): the block explorer fallback (Etherscan API V2, covers BNB Smart Chain). The RPC is always asked first; when it is slow (more than 4 s), fails, or has not seen a transaction, the explorer is asked for the transaction and its receipt, so a confirmed transaction is never shown as pending. Each process keeps to 4 calls a second and 45,000 a day (the plan allows 5 and 100,000), and nothing is logged with the key. Restart after setting it (`./deploy/restart.sh`).
 - `TALLY_APP_ORIGIN`: the exact browser origin. A quick tunnel changes it on every restart, so update it and restart.
 - Guardian and wallet registration: `PRIVY_APP_SECRET` (server only), `TELEGRAM_BOT_TOKEN`.
 - Tuning: `TALLY_RATE_LIMIT_MULT`, `TALLY_WORKER_RPS`, `TALLY_MIN_FREE_MB`, `TALLY_EST_MB`, `TALLY_STAGGER_S`.

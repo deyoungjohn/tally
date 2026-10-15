@@ -13,6 +13,8 @@ import type { ReactNode } from "react";
 
 export interface HeroCardSpec {
   key: string;
+  /** Where the card goes when it is clicked (the first card turns into the live trade card instead). */
+  href: string;
   title: string;
   text: string;
   meta: ReactNode;
@@ -35,6 +37,7 @@ const Meta = ({ icon, children }: { icon: ReactNode; children: ReactNode }) => (
 export const HERO_CARDS: HeroCardSpec[] = [
   {
     key: "trade",
+    href: "/trade",
     title: "Trade at the best prices",
     text: "Compare every issuer in share units and buy from the cheapest, with the shares you get guaranteed.",
     meta: <Meta icon={<MousePointerClick size={16} aria-hidden />}>Tap to try it live</Meta>,
@@ -51,6 +54,7 @@ export const HERO_CARDS: HeroCardSpec[] = [
   },
   {
     key: "migrate",
+    href: "/trade?tab=migrate",
     title: "Migrate across issuers",
     text: "Move a holding from one issuer to another in two confirmed steps. A receipt compares the shares.",
     meta: <Meta icon={<ArrowLeftRight size={16} aria-hidden />}>Ondo to bStock</Meta>,
@@ -80,6 +84,7 @@ export const HERO_CARDS: HeroCardSpec[] = [
   },
   {
     key: "alerts",
+    href: "/guardian",
     title: "Alerts about your holdings",
     text: "A pause, a change in shares per token or a drop in liquidity, sent to you on Telegram as it happens.",
     meta: <Meta icon={<Bell size={16} aria-hidden />}>Guardian</Meta>,
@@ -105,6 +110,7 @@ export const HERO_CARDS: HeroCardSpec[] = [
   },
   {
     key: "baskets",
+    href: "/baskets",
     title: "Stock baskets, no hassle",
     text: "Pick a basket, set a budget and the weights, and Tally buys each stock with its own guaranteed minimum.",
     meta: <Meta icon={<ShoppingBasket size={16} aria-hidden />}>Big Tech · $30</Meta>,
@@ -124,6 +130,7 @@ export const HERO_CARDS: HeroCardSpec[] = [
   },
   {
     key: "radar",
+    href: "/radar",
     title: "Spot liquid tokens",
     text: "Every token is graded A to F, and unit traps, like ten shares in one token, are flagged before you buy.",
     meta: <Meta icon={<RadarIcon size={16} aria-hidden />}>Radar</Meta>,
@@ -133,7 +140,7 @@ export const HERO_CARDS: HeroCardSpec[] = [
           [
             ["NVDAon", "10 shares per token", "Liquid", true],
             ["AAPLB", "1 share per token", "Liquid", true],
-            ["TSLAx", "$10 traded in 24 h", "Not Tradable", false],
+            ["TSLAx", "$10 traded in 24 h", "No Liquidity", false],
           ] as const
         ).map(([t, n, b, ok]) => (
           <span key={t} className="panel flex items-center justify-between gap-3 p-2.5">

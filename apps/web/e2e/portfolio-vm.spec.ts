@@ -104,7 +104,7 @@ test.describe("portfolio view model: real routes on a seeded server", () => {
     await expect(page.getByTestId("sell-NVDAB")).toBeEnabled({ timeout: 20_000 });
     await expect(page.getByTestId("sell-TSLAB")).toBeDisabled(); // worth $2.50
     await page.getByTestId("sell-TSLAB").locator("xpath=..").hover();
-    await expect(page.getByRole("tooltip")).toContainText("below the $5 minimum sale");
+    await expect(page.getByRole("tooltip")).toContainText("below the $5 minimum sell");
     await page.getByTestId("sell-NVDAB").click();
     await expect(page.getByRole("dialog", { name: "Sell NVDAB" })).toBeVisible();
   });
@@ -120,9 +120,10 @@ test.describe("portfolio view model: real routes on a seeded server", () => {
       "Export a statement of your wallet activity the TradFi way",
     );
     await expect(page.getByTestId("st-table")).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByTestId("st-table")).toContainText("Sale");
+    await expect(page.getByTestId("st-table")).toContainText("Sell");
     await expect(page.getByTestId("st-converted")).toContainText("converted at today's ratio");
-    await expect(page.getByTestId("st-realized")).toContainText("$");
+    // The realized and unrealized totals are switched off for now (milestone 7 in docs/MILESTONES.md).
+    await expect(page.getByTestId("st-realized")).toHaveCount(0);
     const [download] = await Promise.all([
       page.waitForEvent("download"),
       page.getByTestId("st-csv").click(),

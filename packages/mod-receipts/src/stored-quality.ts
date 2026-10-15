@@ -27,7 +27,10 @@ export function storedQualityReport(
     const empty = { n: 0, medianBps: null, p90Bps: null, insufficient: true };
     return {
       ...row,
-      n: verifiedRow?.n ?? 0,
+      // `n` counts every fill the chain confirmed (what Live fills shows); the price comparisons below need 5 fills with a
+      // server-recorded quote, because a quote a browser reports is never trusted. Counting only the trusted fills here made the
+      // page read "0 fills" after any number of real purchases, since every quote arrives from the browser.
+      n: row.n,
       insufficient: (verifiedRow?.n ?? 0) < 5,
       vsQuote: verifiedRow?.vsQuote ?? empty,
       vsSimulation: verifiedRow?.vsSimulation ?? empty,
@@ -57,22 +60,15 @@ export function storedQualityReport(
       ),
       issuer: row.issuer,
     })),
-    byRouteLength: [
-      ...verified.byRouteLength,
-      ...(unknown.length
-        ? [
-            {
-              ...distributions(
-                qualityReport(
-                  unknown.map((e) => e.receipt!),
-                  [],
-                ),
-              ),
-              routeLength: null,
-            },
-          ]
-        : []),
-    ],
+    // Every fill, grouped by the route length its quote describes (a fill with no route on record stays "unknown"). The counts
+    // are fills; the price comparisons stay empty until fills carry a server-recorded quote.
+    byRouteLength: all.byRouteLength.map((row) => ({
+      ...distributions(
+        row,
+        verified.byRouteLength.find((v) => v.routeLength === row.routeLength),
+      ),
+      routeLength: row.routeLength,
+    })),
     unverifiedComparisonCount: unknown.filter((e) => e.receipt?.quote !== null).length,
     chainReconciledCount: all.n,
     approvalCount: entries.filter((e) => e.kind === "approval").length,

@@ -32,7 +32,7 @@ export const TERMS: LegalSection[] = [
     id: "what",
     title: "What Tally is",
     paragraphs: [
-      `${LEGAL.owner} ("Tally", "we") provides a website and related tools that compare tokenized versions of US stocks across issuers on BNB Smart Chain, show them in share units, and prepare purchase and sale transactions that you sign yourself.`,
+      `${LEGAL.owner} ("Tally", "we") provides a website and related tools that compare tokenized versions of US stocks across issuers on BNB Smart Chain, show them in share units, and prepare buy and sell transactions that you sign yourself.`,
       "Tally is not a broker, exchange, bank, custodian or investment adviser. Tally does not issue, mint, redeem or hold tokens, and it never holds your funds or keys. Nothing on Tally is investment, legal or tax advice.",
     ],
   },
@@ -58,14 +58,14 @@ export const TERMS: LegalSection[] = [
     title: "Your wallet and your responsibility",
     paragraphs: [
       "Tally is non-custodial. Your wallet is created and secured through our sign-in provider, or you connect your own wallet. You sign every transaction yourself. Tally cannot move your funds, reverse a transaction or recover a lost key.",
-      "Blockchain transactions are final. You are responsible for keeping your sign-in methods and any exported key safe, for having USDT and a small amount of BNB on BNB Smart Chain for the purchase and the network fee, and for checking each confirmation screen before you sign.",
+      "Blockchain transactions are final. You are responsible for keeping your sign-in methods and any exported key safe, for having USDT and a small amount of BNB on BNB Smart Chain for the buy and the network fee, and for checking each confirmation screen before you sign.",
     ],
   },
   {
     id: "guarantee",
     title: "Quotes, the guarantee and what it does not cover",
     paragraphs: [
-      "Quotes are estimates from third-party data and expire within seconds. Before you sign, Tally shows a minimum number of shares. Your purchase goes through a smart contract that checks, after the swap and in the same transaction, that the tokens received are worth at least that minimum in shares, and cancels the whole transaction if they are not. You then pay only the network fee of the attempt.",
+      "Quotes are estimates from third-party data and expire within seconds. Before you sign, Tally shows a minimum number of shares. Your buy goes through a smart contract that checks, after the swap and in the same transaction, that the tokens received are worth at least that minimum in shares, and cancels the whole transaction if they are not. You then pay only the network fee of the attempt.",
       "This guarantee depends on the share multiplier the issuer publishes and on the contract working as written. It does not protect you against a price that falls after you buy, an issuer pausing or changing a token, a fault in an issuer's own systems, a wrong or late data feed, or a bug in a smart contract. The contract's code is public and verified on BscScan, but smart contracts can contain errors and you should not treat any of this as risk-free.",
     ],
   },
@@ -168,10 +168,10 @@ export const PRIVACY: LegalSection[] = [
       "Sign-in. You sign in with an email address, a Google account or a wallet through our sign-in provider, Privy, which creates the wallet and holds the login details under its own privacy policy. Tally receives the proof of who you are (an access token that our server checks) and your wallet address. Tally does not store your email address.",
       "Your location. Cloudflare adds the country and region of your connection to each request. We use it to block restricted regions. Your IP address is used for that check and for rate limiting while the request is handled; the application does not keep it afterwards, but our hosting and Cloudflare keep ordinary access logs.",
       "Your region declaration. When you confirm you are not in a restricted region we store the version of the wording you accepted, the time, the country and region the request came from and, if you were signed in, your wallet address. We keep it to show we asked.",
-      "Your transactions made through Tally. For a purchase or sale we record the transaction hash, the wallet, the stock, the quoted and the received amounts and the outcome, to show your Activity and Statement and to measure how fills compare with quotes. The public list of recent fills on the home page shows only the transaction hash, the stock, the time, the share count and the price, never a wallet address.",
+      "Your transactions made through Tally. For a buy or sell we record the transaction hash, the wallet, the stock, the quoted and the received amounts and the outcome, to show your Activity and Statement and to measure how fills compare with quotes. The public list of recent fills on the home page shows only the transaction hash, the stock, the time, the share count and the price, never a wallet address.",
       "Wallet snapshots. After you sign in, our server may keep refreshing a snapshot of your public holdings so your Portfolio and Statement load quickly.",
       "Alerts. If you link Telegram for Guardian alerts, we store your Telegram chat identifier, the link code, your alert settings and the alerts we sent you.",
-      "On your device. Tally keeps small items in your browser storage so a purchase, sale or basket you started can be resumed after a reload, and to remember that your wallet was registered in this tab. Our sign-in provider and Cloudflare may set cookies or storage that they need to work. Tally sets no advertising or analytics cookies.",
+      "On your device. Tally keeps small items in your browser storage so a buy, sell or basket you started can be resumed after a reload, and to remember that your wallet was registered in this tab. Our sign-in provider and Cloudflare may set cookies or storage that they need to work. Tally sets no advertising or analytics cookies.",
       "Technical logs. Our servers log errors and basic request details (time, address, page, error) so we can keep the service running and secure.",
     ],
   },

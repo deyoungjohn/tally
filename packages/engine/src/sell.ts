@@ -61,6 +61,8 @@ export interface SellPlan {
   hops: number;
   vendor: string;
   balances: { tokens: string; bnb: string };
+  /** Estimated network fee of the swap in USD, present even before the plan has a transaction. */
+  estFeeUsd?: number | null;
   shortfall?: { tokens: string; bnb: string; bnbNeeded: string };
   approve?: { to: Address; spender: Address; data: Hex; amount: string };
   tx?: {
@@ -311,6 +313,17 @@ export async function prepareSell(deps: SellDeps, req: SellRequest): Promise<Sel
   const bnbNeeded =
     (APPROVE_GAS + gasLimitFromEstimate(BigInt(expectedSwapGas(raw.legCount)))) * gasPriceWei;
 
+  // A plan that still needs an approval has no transaction to price yet, so the fee shown is the estimate for the swap.
+  const bnbPrice = await deps.bnbUsd().catch(() => null);
+  const estFeeUsd =
+    bnbPrice === null
+      ? null
+      : feeUsd(
+          Number(gasLimitFromEstimate(BigInt(expectedSwapGas(raw.legCount)))),
+          gasPriceWei,
+          bnbPrice,
+        );
+
   const base = {
     builtAt: now(),
     expiresAt: now() + QUOTE_FRESH_MS,
@@ -332,6 +345,7 @@ export async function prepareSell(deps: SellDeps, req: SellRequest): Promise<Sel
     hops: raw.legCount,
     vendor: raw.vendor,
     balances: { tokens: stockBal.toString(), bnb: bnbBal.toString() },
+    estFeeUsd,
     warnings,
     rfq: picked.rfq ? true : undefined,
   };

@@ -80,7 +80,7 @@ export function PortfolioVmPanel({
   onTabChange?: (t: PortfolioTab) => void;
   onSell?: (t: SellTarget) => void;
   onMigrate?: (t: SellTarget, toIssuer: "ondo" | "bstock") => void;
-  /** Changes when something happened that may have moved the holdings (a sale confirmed): refetch. */
+  /** Changes when something happened that may have moved the holdings (a sell confirmed): refetch. */
   refreshKey?: number;
 }) {
   const [tab, setTab] = useState<PortfolioTab>("holdings");
@@ -133,9 +133,11 @@ export function PortfolioVmPanel({
 
   const statement = useJson<VmEnvelope<StatementVM>>(
     tab === "statement" ? `/api/vm/statement?address=${q}` : null,
+    { refreshMs: 15_000 },
   );
   const activity = useJson<VmEnvelope<ActivityVM>>(
     tab === "activity" || tab === "statement" ? `/api/vm/activity?address=${q}` : null,
+    { refreshMs: 15_000 },
   );
 
   const env0 = feedEnv && mergedVm ? { ...feedEnv, vm: mergedVm } : feedEnv;
@@ -154,8 +156,10 @@ export function PortfolioVmPanel({
       recentLines(
         activity.data?.vm ?? null,
         new Set(
+          // Only the lines the table will actually show count as "known": the feed lists a sell it cannot attribute to a
+          // tokenized stock with no issuer, the table drops it, and counting it here hid the verified sell from Activity too.
           (statement.data?.vm?.lines ?? []).flatMap((l) =>
-            l.txHash ? [l.txHash.toLowerCase()] : [],
+            l.txHash && l.issuer !== null ? [l.txHash.toLowerCase()] : [],
           ),
         ),
       ),
@@ -177,7 +181,10 @@ export function PortfolioVmPanel({
         </div>
       ) : null}
       <div className="grid grid-cols-1 gap-6 min-[981px]:grid-cols-[1.4fr_1fr]">
-        <section aria-label="Portfolio" className="min-w-0">
+        <section
+          aria-label="Portfolio"
+          className="order-2 min-w-0 min-[981px]:order-none min-[981px]:col-start-1 min-[981px]:row-start-1"
+        >
           {tab === "holdings" ? (
             <>
               <TabBody
@@ -189,7 +196,6 @@ export function PortfolioVmPanel({
                 {(v) => <HoldingsVm vm={v} onSell={onSell} onMigrate={onMigrate} />}
               </TabBody>
               <SmallBalancesLink items={small} />
-              <SuggestionsBlock suggestions={feedEnv?.vm?.suggestions} />
             </>
           ) : null}
           {tab === "activity" ? (
@@ -237,12 +243,25 @@ export function PortfolioVmPanel({
           ) : null}
         </section>
 
-        <aside className="grid content-start gap-4" aria-label="Summary">
+        {/* Suggestions sit under the holdings list: on a phone the order is the total, the list, then the suggestions. */}
+        {tab === "holdings" ? (
+          <div className="order-3 min-w-0 min-[981px]:order-none min-[981px]:col-start-1 min-[981px]:row-start-2">
+            <SuggestionsBlock suggestions={feedEnv?.vm?.suggestions} />
+          </div>
+        ) : null}
+
+        <aside
+          className={`order-1 grid content-start gap-4 min-[981px]:order-none min-[981px]:col-start-2 min-[981px]:row-span-2 min-[981px]:row-start-1 ${
+            tab === "holdings" ? "" : "max-[980px]:hidden"
+          }`}
+          aria-label="Summary"
+        >
           <div className="glass p-5">
             <p className="t-meta">Total value of tokenized stock holdings</p>
             <p className="t-big mt-1" data-testid="total-value">
               {vm && vm.state === "ready" ? usd(vm.totalValueUsd) : "–"}
             </p>
+            {/* Realized and unrealized PnL are switched off for now (milestone 7 in docs/MILESTONES.md): kept here, not deleted.
             {vm?.state === "ready" ? (
               <dl className="mt-3">
                 <div className="detail-row">
@@ -255,6 +274,7 @@ export function PortfolioVmPanel({
                 </div>
               </dl>
             ) : null}
+            */}
             {env ? (
               <div className="mt-3">
                 <VmFreshness
@@ -271,7 +291,7 @@ export function PortfolioVmPanel({
             failed={!!balances.error}
             fixtures={env?.fixtures ?? false}
           />
-          <ComingSoon items={["Price alerts"]} />
+          <ComingSoon items={["Price alerts", "Watchlists"]} />
         </aside>
       </div>
     </div>

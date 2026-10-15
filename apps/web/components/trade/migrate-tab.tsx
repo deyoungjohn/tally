@@ -27,7 +27,7 @@ function blocked(p: Part, ondoClosed: string | null): string | null {
   if (p.issuer === "xstocks") return "No market to exit this token on BNB Chain.";
   if (ondoClosed) return p.issuer === "ondo" ? ondoClosed : ONDO_CLOSED_MIGRATE_TIP;
   if (p.valueUsd !== null && p.valueUsd < MIN_SELL_USDT)
-    return `Too small to migrate: the sale must be at least $${MIN_SELL_USDT} and the buy at least 6 USDT.`;
+    return `Too small to migrate: the sell must be at least $${MIN_SELL_USDT} and the buy at least 6 USDT.`;
   return null;
 }
 
@@ -40,6 +40,8 @@ export function MigrateTab({ flow }: { flow: ReturnType<typeof useMigrateFlow> }
   const parts = (portfolio.data?.groups ?? [])
     .flatMap((g) => g.parts)
     .filter((p) => (p.issuer === "ondo" || p.issuer === "bstock") && canMigrateTicker(p.ticker))
+    // A token bought and sold again leaves a speck of dust (0.000000 shares, $0.00): it is not a holding, so it is not listed.
+    .filter((p) => p.shares >= 0.0005 && (p.valueUsd === null || p.valueUsd >= 0.01))
     .sort((a, b) => (b.valueUsd ?? 0) - (a.valueUsd ?? 0));
 
   return (

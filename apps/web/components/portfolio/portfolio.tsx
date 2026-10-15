@@ -395,7 +395,7 @@ export function PortfolioPage() {
                 </dl>
               </div>
             ) : null}
-            <ComingSoon items={["Price alerts"]} />
+            <ComingSoon items={["Price alerts", "Watchlists"]} />
           </aside>
         </div>
       )}

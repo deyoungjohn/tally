@@ -14,8 +14,15 @@ import type {
 } from "@/modules/statement/view-model";
 import { sharesStr, usd } from "./vm-shared";
 
-const pnlClass = (s: string) =>
-  s.startsWith("-") ? "text-red" : s === "0.00" || s === "-" ? "text-fg2" : "text-up";
+// PnL is switched off for now (milestone 7 in docs/MILESTONES.md); used again then:
+// const pnlClass = (s: string) =>
+//   s.startsWith("-") ? "text-red" : s === "0.00" || s === "-" ? "text-fg2" : "text-up";
+
+/** A long decimal cut to a readable length: "0.253100" reads "0.2531", "1.000000" reads "1". */
+const trimNum = (s: string, dp: number) => {
+  const n = Number(s);
+  return Number.isFinite(n) ? String(Number(n.toFixed(dp))) : s;
+};
 
 function IssuerRow({
   h,
@@ -38,7 +45,7 @@ function IssuerRow({
       ticker: action.ticker ?? ticker,
       issuer: action.issuer as "ondo" | "bstock",
       symbol: h.tokenSymbol,
-      // The opening check only: the sale sheet requests the exact raw balance, never these display numbers.
+      // The opening check only: the sell sheet requests the exact raw balance, never these display numbers.
       probeShares: Number.parseFloat(action.balanceShares ?? "0"),
       probeUsd: Number.isFinite(worth) ? worth : null,
     });
@@ -75,13 +82,13 @@ function IssuerRow({
         </span>
       </span>
       <span className="num text-fg2">
-        {h.balanceTokens} tokens ×{" "}
+        {trimNum(h.balanceTokens, 4)} tokens ×{" "}
         {h.multiplier === "unavailable" ? (
           <Tip text="The share multiplier for this token couldn't be read, so its shares aren't counted. Tally never assumes 1:1.">
             <span className="text-amber">-</span>
           </Tip>
         ) : (
-          h.multiplier
+          trimNum(h.multiplier, 4)
         )}{" "}
         = <b className="text-fg">{sharesStr(h.balanceShares)}</b>
         {sharesKnown ? "" : " shares"}
@@ -93,15 +100,17 @@ function IssuerRow({
         <span className="t-meta w-full">Converted at today&apos;s share ratio.</span>
       ) : null}
 
-      <RowActions
-        ticker={action.ticker ?? ticker}
-        issuer={action.issuer}
-        symbol={h.tokenSymbol}
-        valueUsd={Number.isFinite(worth) ? worth : null}
-        sharesKnown={sharesKnown}
-        onSell={onSell ? openSell : undefined}
-        onMigrate={onMigrate ? (to) => openMigrate(to) : undefined}
-      />
+      <div className="w-full">
+        <RowActions
+          ticker={action.ticker ?? ticker}
+          issuer={action.issuer}
+          symbol={h.tokenSymbol}
+          valueUsd={Number.isFinite(worth) ? worth : null}
+          sharesKnown={sharesKnown}
+          onSell={onSell ? openSell : undefined}
+          onMigrate={onMigrate ? (to) => openMigrate(to) : undefined}
+        />
+      </div>
     </li>
   );
 }
@@ -148,7 +157,7 @@ function Group({
   const held = heldIssuers(g);
   // Cost figures are shown only when they are known: a stock whose cost can't be worked out simply has no cost lines.
   const avgKnown = usd(g.avgCostPerShareUsd) !== "-";
-  const pnlKnown = usd(g.unrealizedPnlUsd) !== "-";
+  // const pnlKnown = usd(g.unrealizedPnlUsd) !== "-"; // PnL is switched off for now (milestone 7 in docs/MILESTONES.md)
   return (
     <li className="panel list-none p-5" data-testid={`group-${g.ticker}`}>
       <div className="flex items-center gap-3">
@@ -172,7 +181,7 @@ function Group({
           <p className="t-meta">shares · ≈ {usd(g.totalValueUsd)}</p>
         </div>
       </div>
-      {avgKnown || pnlKnown ? (
+      {avgKnown ? (
         <dl className="mt-3">
           {avgKnown ? (
             <div className="detail-row">
@@ -180,6 +189,7 @@ function Group({
               <dd>{usd(g.avgCostPerShareUsd)}</dd>
             </div>
           ) : null}
+          {/* PnL is switched off for now (milestone 7 in docs/MILESTONES.md): kept here, not deleted.
           {pnlKnown ? (
             <div className="detail-row">
               <dt>Unrealized PnL</dt>
@@ -189,6 +199,7 @@ function Group({
               </dd>
             </div>
           ) : null}
+          */}
         </dl>
       ) : null}
       <ul className="m-0 mt-3 grid list-none gap-2 p-0">

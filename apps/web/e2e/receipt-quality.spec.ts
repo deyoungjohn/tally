@@ -33,11 +33,11 @@ test.describe("receipt and quality pages: real server, signed out", () => {
     page,
   }) => {
     await page.goto(`${server.url}/receipt/${BUY_HASH}`);
-    await expect(page.getByTestId("receipt-title")).toContainText("NVDAB purchase receipt", {
+    await expect(page.getByTestId("receipt-title")).toContainText("NVDAB buy receipt", {
       timeout: 20_000,
     });
-    // No registry snapshot is seeded, so the issuer is the browser's word and the page says so.
-    await expect(page.getByTestId("receipt-issuer-note")).toContainText("reported by your browser");
+    // Receipts no longer print caveats about browser-reported data.
+    await expect(page.getByTestId("receipt-issuer-note")).toHaveCount(0);
     for (const s of ["Quoted", "Received"])
       await expect(page.getByTestId(`receipt-step-${s}`)).toBeVisible();
     await expect(page.getByTestId("receipt-status")).toBeVisible();
@@ -51,20 +51,18 @@ test.describe("receipt and quality pages: real server, signed out", () => {
     expect(await page.content()).not.toMatch(GUARD);
   });
 
-  test("a quote reported by the browser is labelled, and a stale receipt says how old it is", async ({
+  test("a stale receipt says how old it is and prints no browser-reported caveat", async ({
     page,
   }) => {
     await page.goto(`${server.url}/receipt/${STALE_HASH}`);
     await expect(page.getByTestId("receipt-title")).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByTestId("receipt-browser-note")).toContainText(
-      "Reported by your browser",
-    );
+    await expect(page.getByTestId("receipt-browser-note")).toHaveCount(0);
     await expect(page.getByTestId("vm-stale")).toContainText("Last update");
   });
 
   test("a hint-only transaction is shown as pending with no claimed amounts", async ({ page }) => {
     await page.goto(`${server.url}/receipt/${PENDING_HASH}`);
-    await expect(page.getByTestId("receipt-pending")).toContainText("pending", {
+    await expect(page.getByTestId("receipt-pending")).toContainText("Waiting for BNB Smart Chain", {
       timeout: 20_000,
     });
     await expect(page.getByTestId("receipt-status")).toContainText("Pending");
@@ -229,7 +227,7 @@ test.describe("migrate permalink page: real server, signed out", () => {
     await expect(page.locator("text=These two transactions are not a Migrate")).toBeVisible({
       timeout: 20_000,
     });
-    const sellLink = page.getByRole("link", { name: "View Sale Receipt" });
+    const sellLink = page.getByRole("link", { name: "View Sell Receipt" });
     await expect(sellLink).toHaveAttribute("href", `/receipt/${sellHash}`);
     const buyLink = page.getByRole("link", { name: "View Buy Receipt" });
     await expect(buyLink).toHaveAttribute("href", `/receipt/${buyHash}`);

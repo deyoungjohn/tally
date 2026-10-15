@@ -54,6 +54,18 @@ function BasisTag({ g }: { g: RadarGradeDisplay }) {
 }
 
 const usdWhole = (s: string) => `$${BigInt(s).toLocaleString("en-US")}`;
+/** Dollars from a long decimal string: "1003.461099" reads "$1,003.46"; a sign is kept ("+$12.00", "-$3.50"). */
+const usdShort = (s: string, signed = false) => {
+  const n = Number(s);
+  if (!Number.isFinite(n)) return "-";
+  const t = `$${Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  return n < 0 ? `-${t}` : signed && n > 0 ? `+${t}` : t;
+};
+/** Shares and percentages are cut to a readable length: "41.500000" reads "41.5". */
+const trimDec = (s: string, dp: number) => {
+  const n = Number(s);
+  return Number.isFinite(n) ? String(Number(n.toFixed(dp))) : "-";
+};
 
 function GradeRow({ g, ticker }: { g: RadarGradeDisplay; ticker: string }) {
   return (
@@ -65,8 +77,8 @@ function GradeRow({ g, ticker }: { g: RadarGradeDisplay; ticker: string }) {
         <div className="min-w-0 flex-1">
           <p className="flex flex-wrap items-center gap-2 font-semibold">
             {ISSUER_LABEL[g.issuer]} <span className="mono text-[13px] text-fg3">{g.symbol}</span>
-            <LiquidityBadge grade={g.grade} />
-            {g.ghost ? <FlagBadge flag="ghost" /> : null}
+            {/* A market with no liquidity is No Liquidity (not tradable); Low Liquidity is for a thin market that still trades. */}
+            {g.ghost ? <FlagBadge flag="ghost" /> : <LiquidityBadge grade={g.grade} />}
             {g.unitTrap ? <FlagBadge flag="unit-trap" /> : null}
           </p>
           <p className="mt-1 text-[14px] text-fg2">
@@ -145,10 +157,9 @@ export function FlowPanel({ panel }: { panel: FlowPanelDisplay }) {
           <p className="flex flex-wrap items-center justify-between gap-2 font-semibold">
             {ISSUER_LABEL[i.issuer] ?? i.issuer}
             <span className="t-meta font-normal">
-              {i.sourceLabel} ·{" "}
               {i.stale ? (
                 <span className="text-amber" data-testid={`radarvm-flow-stale-${i.issuer}`}>
-                  Stale, updated {ageText(i.ageMs) ?? "a while ago"}
+                  Updated {ageText(i.ageMs) ?? "a while ago"}
                 </span>
               ) : (
                 `Updated ${ageText(i.ageMs) ?? "just now"}`
@@ -168,7 +179,10 @@ export function FlowPanel({ panel }: { panel: FlowPanelDisplay }) {
                     </span>
                   ) : (
                     <>
-                      <span className="num font-semibold">{w.netShares}</span> net shares
+                      <span className="num font-semibold" data-testid={`radarvm-net-${w.window}`}>
+                        {w.netUsd === null ? "-" : usdShort(w.netUsd, true)}
+                      </span>{" "}
+                      net
                       <span className="t-meta block">
                         {w.buys} buys · {w.sells} sells
                       </span>
@@ -186,7 +200,9 @@ export function FlowPanel({ panel }: { panel: FlowPanelDisplay }) {
           </p>
           <p className="text-[14.5px] text-fg2">
             Top ten holders, excluding custody:{" "}
-            {i.concentration === null ? (i.concentrationReason ?? "-") : `${i.concentration}%`}
+            {i.concentration === null
+              ? (i.concentrationReason ?? "-")
+              : `${trimDec(i.concentration, 1)}%`}
           </p>
           {i.notes
             .filter((n) => !/^Trade history incomplete:/i.test(n))
@@ -218,8 +234,8 @@ export function FlowPanel({ panel }: { panel: FlowPanelDisplay }) {
                       className="border-t border-white/[0.06]"
                     >
                       <td className="py-1.5 pr-3 capitalize">{p.side}</td>
-                      <td className="num py-1.5 pr-3 text-right">{p.shares}</td>
-                      <td className="num py-1.5 text-right">${p.usd}</td>
+                      <td className="num py-1.5 pr-3 text-right">{trimDec(p.shares, 3)}</td>
+                      <td className="num py-1.5 text-right">{usdShort(p.usd)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -365,8 +381,8 @@ function TickerCard({ card, grades }: { card: RadarCardDisplay; grades: RadarGra
 const STAT_TIP: Record<string, string> = {
   "Tokens checked": "Every tokenized stock Tally reads, across all issuers.",
   Liquid: "Grade A or B: good trading liquidity and no data problems found",
-  "Low Liquidity": "Grade C to F: trading is thin or the data is inconsistent.",
-  "Not Tradable": "Under $1,000 of cleaned 24-hour volume, so the price can be stale.",
+  "Low Liquidity": "Grade C to F: under $1,000 of 24-hour volume, or the data is inconsistent.",
+  "No Liquidity": "Under $100 of 24-hour volume, so the price can be stale.",
   "Unit traps":
     "Tokens that are more than one share, so price and balance look off by that factor.",
 };
@@ -375,8 +391,8 @@ export function Stats({ grades }: { grades: RadarGradeDisplay[] }) {
   const stats = [
     ["Tokens checked", grades.length],
     ["Liquid", grades.filter((g) => !flagged(g)).length],
-    ["Low Liquidity", grades.filter(flagged).length],
-    ["Not Tradable", grades.filter((g) => g.ghost).length],
+    ["Low Liquidity", grades.filter((g) => flagged(g) && !g.ghost).length],
+    ["No Liquidity", grades.filter((g) => g.ghost).length],
     ["Unit traps", grades.filter((g) => g.unitTrap).length],
   ] as const;
   return (
@@ -579,11 +595,6 @@ export function RadarVmBody({
           source={vm.source}
           fixtures={env.fixtures}
         />
-        {env.degraded ? (
-          <p className="t-meta mt-1 text-amber" role="status" data-testid="radarvm-degraded-note">
-            Radar is catching up. Showing the last good grades.
-          </p>
-        ) : null}
       </div>
 
       <div className="mt-6 flex justify-center">
@@ -611,7 +622,7 @@ export function RadarVmBody({
               options={[
                 { value: "all", label: "All" },
                 { value: "flagged", label: "Low Liquidity" },
-                { value: "ghost", label: "Not Tradable" },
+                { value: "ghost", label: "No Liquidity" },
                 { value: "unit", label: "Unit trap" },
               ]}
             />

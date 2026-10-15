@@ -18,9 +18,15 @@ export function fromE18(raw: string, maxDecimals = 6): string {
   return `${neg ? "-" : ""}${whole.toLocaleString("en-US")}${frac ? `.${frac}` : ""}`;
 }
 
-export const usdtText = (raw: string) => `${fromE18(raw, 4)} USDT`;
-export const sharesText = (raw: string) => fromE18(raw, 6);
-export const tokensText = (raw: string, symbol: string) => `${fromE18(raw, 8)} ${symbol}`;
+/** Sheets and receipts cap what they print: shares and tokens at 3 decimals, USDT at 2 (all cut, never rounded up). */
+export function usd2(raw: string): string {
+  const t = fromE18(raw, 2);
+  const [w = "0", f = ""] = t.split(".");
+  return `${w}.${f.padEnd(2, "0")}`;
+}
+export const usdtText = (raw: string) => `${usd2(raw)} USDT`;
+export const sharesText = (raw: string) => fromE18(raw, 3);
+export const tokensText = (raw: string, symbol: string) => `${fromE18(raw, 3)} ${symbol}`;
 export const bnbText = (raw: string) => `${fromE18(raw, 6)} BNB`;
 
 export interface SellSheetView {
@@ -78,7 +84,7 @@ export function toSellSheet(plan: SellPlan): SellSheetView {
     routeText: plan.routeText,
     vendor: plan.vendor,
     hops: plan.hops,
-    feeUsd: plan.tx?.feeUsd ?? null,
+    feeUsd: plan.tx?.feeUsd ?? plan.estFeeUsd ?? null,
     tolerancePct: plan.tolerancePct,
     warnings: plan.warnings.map(plainWarning).filter((w): w is string => w !== null),
     shortfall: short
@@ -142,7 +148,7 @@ export function explainSellError(e: unknown): SellFailure {
     case "below_minimum":
       return {
         kind: "below_minimum",
-        message: `The sale is below the $${MIN_SELL_USDT} minimum order. Transaction will fail.`,
+        message: `The sell is below the $${MIN_SELL_USDT} minimum order. Transaction will fail.`,
       };
     case "quotes_unavailable":
       return {
@@ -172,12 +178,18 @@ export function explainSellError(e: unknown): SellFailure {
         message: "The sell route isn't on the allow list, so nothing was sent.",
       };
     case "route_failed":
-      return { kind: "unavailable", message: "No route was found for this sale right now." };
+      return { kind: "unavailable", message: "No route was found for this sell right now." };
+    case "no_liquidity":
+      return {
+        kind: "unavailable",
+        message:
+          "There isn't enough liquidity on BNB Chain to sell this token right now. Nothing was sold.",
+      };
     case "simulation_reverted":
     case "token_paused":
       return {
         kind: "unavailable",
-        message: "The sale would fail right now, so nothing was sent.",
+        message: "The sell would fail right now, so nothing was sent.",
       };
     case "invalid_request":
       return { kind: "failed", message: "That amount can't be sold. Check it and try again." };

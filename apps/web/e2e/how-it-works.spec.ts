@@ -31,7 +31,7 @@ test.describe("How it works (the end-user page)", () => {
       "href",
       "https://docs.tallyprotocol.xyz",
     );
-    await page.goto("/docs");
+    await page.goto("/contracts");
     await expect(page.locator("main").getByRole("link", { name: "How it works" })).toHaveAttribute(
       "href",
       "/how-it-works",

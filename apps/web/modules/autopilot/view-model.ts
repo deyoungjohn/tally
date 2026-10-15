@@ -178,7 +178,7 @@ export async function loadAutopilot(opts: AutopilotLoadOptions = {}): Promise<Au
                 ? "shadow alert only; nothing was executed"
                 : "alert only"
               : row.receiptId
-                ? "executed sale"
+                ? "executed sell"
                 : "execution not verified",
         tokens: row.leg ? formatUnits(row.leg.tokens, row.inputs.position!.tokenDecimals!) : null,
         usdCap: row.leg ? formatUnits(row.leg.usdCap, 18) : null,

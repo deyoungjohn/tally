@@ -344,7 +344,7 @@ describe("additive view-model fields (WO-12 decisions 2026-10-06)", () => {
     expect(ready.emptyKind).toBeUndefined();
   });
 
-  it("realizedKnown is true only when a sale carries a realized figure", () => {
+  it("realizedKnown is true only when a sell carries a realized figure", () => {
     const trade = (realized?: bigint) => ({
       txHash: `0x${"11".repeat(32)}`,
       time: 1_000,

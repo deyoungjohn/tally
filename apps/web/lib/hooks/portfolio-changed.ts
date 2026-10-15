@@ -1,6 +1,6 @@
 "use client";
 // One signal for "a transaction just finished": every portfolio view (holdings, activity, statement, balances) reads again at once
-// instead of waiting for its next poll. Buys, sales and migrations call `notifyPortfolioChanged()` when they confirm; `useJson`
+// instead of waiting for its next poll. Buys, sells and migrations call `notifyPortfolioChanged()` when they confirm; `useJson`
 // listens for it on the portfolio URLs.
 
 const listeners = new Set<() => void>();

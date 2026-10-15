@@ -72,8 +72,8 @@ export async function loadQuality(options: QualityLoadOptions = {}): Promise<Qua
       source: samples.length ? [...new Set(samples.map((s) => s.source))].join(", ") : null,
       reason: !samples.length
         ? vm.reason
-        : result.n < 5
-          ? "Insufficient data: fewer than 5 fills with verified comparisons. Pending attempts are excluded from statistics."
+        : result.insufficient
+          ? `Insufficient data: fewer than 5 fills with verified comparisons. ${result.n} ${result.n === 1 ? "fill is" : "fills are"} confirmed on the chain; price comparisons appear once 5 fills carry a server-recorded quote. Pending attempts are excluded from statistics.`
           : null,
       truncated: snapshots.length === 1000 || hints.length === 1000,
     };

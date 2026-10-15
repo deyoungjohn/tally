@@ -17,13 +17,13 @@ it("lists exactly the manifest issuers for every buyable ticker", () => {
 });
 
 it("a one-issuer ticker cannot be bought through its disabled twin", () => {
-  expect(isBuyable("NFLX")).toBe(true);
-  expect(issuersOf("NFLX")).toEqual(["ondo"]);
-  expect(isTokenBuyable("nflx", "ondo")).toBe(true);
-  expect(isTokenBuyable("NFLX", "bstock")).toBe(false);
-  expect(issuersOf("MSFT")).toEqual(["bstock"]);
-  expect(isTokenBuyable("MSFT", "bstock")).toBe(true);
-  expect(isTokenBuyable("MSFT", "ondo")).toBe(false);
+  expect(isBuyable("BABA")).toBe(true);
+  expect(issuersOf("BABA")).toEqual(["bstock"]);
+  expect(isTokenBuyable("baba", "bstock")).toBe(true);
+  expect(isTokenBuyable("BABA", "ondo")).toBe(false);
+  expect(issuersOf("HOOD")).toEqual(["bstock"]);
+  expect(isTokenBuyable("HOOD", "bstock")).toBe(true);
+  expect(isTokenBuyable("HOOD", "ondo")).toBe(false);
 });
 
 it("a two-issuer ticker enables either destination, never xstocks", () => {
@@ -41,3 +41,18 @@ it.each(["DJT", "UNKNOWN", "constructor", "__proto__"])(
     expect(isTokenBuyable(ticker, "bstock")).toBe(false);
   },
 );
+
+it("the nine newly enabled tokens are buyable from their issuer", () => {
+  for (const [ticker, issuer] of [
+    ["BMNR", "bstock"],
+    ["AMZN", "bstock"],
+    ["GME", "bstock"],
+    ["INTC", "ondo"],
+    ["META", "ondo"],
+    ["MSFT", "ondo"],
+    ["MSTR", "ondo"],
+    ["NFLX", "bstock"],
+    ["NFLX", "ondo"],
+  ] as const)
+    expect(isTokenBuyable(ticker, issuer)).toBe(true);
+});

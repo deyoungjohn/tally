@@ -69,3 +69,13 @@ Larger pieces of work that are not part of the 11 Oct submission. They can be do
 **Scope.** `ETHERSCAN_API_KEY` in `/etc/tally/tally.env` (documented in `docs/deployment.md`); a shared client with a 4-calls-per-second bucket, a persisted daily counter that stops at 90,000, a cache so a mined transaction is asked once, and a logged reason when it is skipped; filling token, amount, shares at that block, dollar value, gas, block and time. Values from the explorer carry the provenance "explorer" and are cross-checked against our RPC receipt when that is cheap. Work order: `docs/prompts/wo03-statement-chain-backfill.md`.
 
 **Done when.** A transaction the feed does not know shows real values on the Statement and on its receipt with no "unknown" or "-" that the chain could have filled; with the key removed everything still works and says why a value is missing; the daily budget is never exceeded in a load test.
+
+## 7. Bring back realized and unrealized PnL
+
+**Status:** switched off on 12 Oct 2026; the code is commented out, not deleted. Search the repo for "milestone 7" to find each place.
+
+**Why it is off.** The cost behind a position is incomplete for wallets that received tokens by transfer, used Migrate or bought outside Tally, so the figures could mislead (a gain of thousands of percent on a tiny known cost). Better no number than a wrong one.
+
+**Scope.** Re-enable the commented blocks (Portfolio summary, per-stock row, Statement totals and Realized column, the PDF's summary and PnL columns, the CSV's realized column once it is also switched off or on) only after the cost basis is complete: every buy, sale, Migrate leg and transfer in the wallet's history is matched (the explorer fallback in milestone 6 supplies the missing legs), and a position whose cost is still unknown reads "-" with the reason.
+
+**Done when.** The figures on Portfolio, Statement and the PDF agree to the cent with a hand calculation on three real wallets, including one that used Migrate and one that received tokens by transfer.

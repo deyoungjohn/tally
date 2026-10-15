@@ -12,3 +12,10 @@ describe("explainSellError: wallet refusals keep their plain message", () => {
     });
   });
 });
+
+describe("no liquidity", () => {
+  it("is said plainly, with nothing sold", () => {
+    const e = Object.assign(new Error("x"), { kind: "no_liquidity" });
+    expect(explainSellError(e).message).toMatch(/enough liquidity .* Nothing was sold/);
+  });
+});

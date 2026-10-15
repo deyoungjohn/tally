@@ -10,6 +10,8 @@ export const SNAPSHOT_RETENTION_MS = {
   "flow-holders": HOUR / 2,
   "flow-pools": HOUR / 2,
   "flow-aggregate": 24 * HOUR,
+  // A recorded buy plan only matters until its transaction is checked (an hour); the plan route writes one per quote.
+  "plan-quote": 2 * HOUR,
   default: 7 * 24 * HOUR,
 } as const;
 

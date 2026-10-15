@@ -127,5 +127,10 @@ export function VmFreshness({
 /** Dollar strings and share strings arrive already formatted; a missing number reads "-", never a guess. */
 export const usd = (s: string | null | undefined) =>
   s === null || s === undefined || s === "-" || s === "unavailable" ? "-" : `$${s}`;
-export const sharesStr = (s: string | null | undefined) =>
-  s === null || s === undefined || s === "unavailable" || s === "-" ? "-" : s;
+export const sharesStr = (s: string | null | undefined) => {
+  if (s === null || s === undefined || s === "unavailable" || s === "-") return "-";
+  // Cut to a readable length: "0.253100" reads "0.2531"; under 0.01 keep six places so a small position never reads 0.
+  const n = Number(s);
+  if (!Number.isFinite(n)) return s;
+  return String(Number(n.toFixed(n !== 0 && Math.abs(n) < 0.01 ? 6 : 4)));
+};

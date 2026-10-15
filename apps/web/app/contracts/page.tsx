@@ -3,7 +3,7 @@ import { ExternalLink } from "lucide-react";
 import { SHAREGUARD_DEPLOYED } from "@tally/config";
 
 export const metadata: Metadata = {
-  title: "Docs | Tally",
+  title: "Contracts | Tally",
   description: "Contract addresses, onchain proof and developer documentation for Tally.",
 };
 
@@ -11,18 +11,6 @@ const DOCS_URL = "https://docs.tallyprotocol.xyz";
 
 const BSCSCAN = "https://bscscan.com";
 const GUARD = SHAREGUARD_DEPLOYED;
-const TX = [
-  [
-    "Ondo (NVDAon), signed feed update",
-    "0x55ec244764dae2778357a7a446f5ec95de03cf2243fbff3ea1f3b4458a22e11a",
-    "6 USDT → 0.025704894 shares",
-  ],
-  [
-    "bStock (NVDAB)",
-    "0xb678802dfb1dfa6e1206ac01fdf79d18181d5d61bab23d307b7ea059abc39a8e",
-    "6 USDT → 0.025674701 shares",
-  ],
-] as const;
 
 function Ext({ href, children }: { href: string; children: React.ReactNode }) {
   return (
@@ -47,7 +35,7 @@ const NAV = [
 export default function Docs() {
   return (
     <main id="main" className="wrap pb-24 pt-10 min-[561px]:pt-14">
-      <p className="t-kicker">Docs</p>
+      <p className="t-kicker">Contracts</p>
       <h1 className="t-h2 mt-3">Contracts, proof and the developer docs.</h1>
       <div className="mt-8 grid grid-cols-1 gap-8 min-[981px]:grid-cols-[240px_minmax(0,1fr)]">
         <nav
@@ -106,22 +94,6 @@ export default function Docs() {
                   </Ext>
                 </dd>
               </div>
-            </dl>
-            <h3 className="mt-6 font-semibold text-fg">Two live guarded buys (2026-10-02)</h3>
-            <dl className="mt-1">
-              {TX.map(([label, hash, what]) => (
-                <div key={hash} className="detail-row">
-                  <dt>
-                    {label}
-                    <span className="block text-[13.5px] text-fg3">{what}</span>
-                  </dt>
-                  <dd className="mono text-[13.5px]">
-                    <Ext href={`${BSCSCAN}/tx/${hash}`}>
-                      {hash.slice(0, 10)}…{hash.slice(-6)}
-                    </Ext>
-                  </dd>
-                </div>
-              ))}
             </dl>
           </section>
 

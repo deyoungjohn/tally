@@ -42,8 +42,8 @@ describe("migrate module view models", () => {
   });
 
   it.each([
-    ["NFLX", "ondo", "bstock", "NFLXB"],
-    ["MSFT", "bstock", "ondo", "MSFTon"],
+    ["BABA", "bstock", "ondo", "BABAon"],
+    ["HOOD", "bstock", "ondo", "HOODon"],
   ] as const)(
     "blocks %s migration into its disabled issuer",
     async (ticker, fromIssuer, toIssuer, symbol) => {
@@ -63,7 +63,9 @@ describe("migrate module view models", () => {
 
   it.each([
     ["NFLX", "bstock", "ondo", "NFLXon"],
+    ["NFLX", "ondo", "bstock", "NFLXB"],
     ["MSFT", "ondo", "bstock", "MSFTB"],
+    ["MSFT", "bstock", "ondo", "MSFTon"],
     ["NVDA", "ondo", "bstock", "NVDAB"],
     ["NVDA", "bstock", "ondo", "NVDAon"],
   ] as const)(

@@ -207,7 +207,7 @@ describe("the integrity log records EVERY check, passes and skips included", () 
     );
     expect(
       id(gradeIntegrity({ ...clean, onchainVolume24hUsd: 96 }), "onchain-volume").summary,
-    ).toBe("$96 in 24h < $1,000 → −40");
+    ).toBe("$96 in 24h < $100 → −40");
   });
   it("the multiplier check logs every source reading, and the deviation", () => {
     const g = gradeIntegrity(withDisagree());

@@ -2,7 +2,7 @@ import type { PortfolioReport } from "@tally/engine";
 
 /**
  * `&held=NVDA,AAPL` for `/api/vm/portfolio`: the stocks the wallet holds right now, from the chain read. Suggestions follow this, so
- * they are right the moment a sale or a buy is confirmed instead of after the statement worker's next run. Balances under $1 are
+ * they are right the moment a sell or a buy is confirmed instead of after the statement worker's next run. Balances under $1 are
  * dust and do not count. An empty list is sent as `held=` (the wallet holds nothing).
  */
 export function heldQuery(chain: Pick<PortfolioReport, "groups"> | null | undefined): string {

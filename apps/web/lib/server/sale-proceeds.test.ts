@@ -85,7 +85,7 @@ describe("loadSaleProceeds", () => {
     expect(res).toEqual({ state: "failed" });
   });
 
-  it("returns confirmed when valid sale receipt is parsed", async () => {
+  it("returns confirmed when valid sell receipt is parsed", async () => {
     mockEngine.transactions.getReceipt.mockResolvedValue({
       status: "success",
       sender: SENDER,

@@ -25,7 +25,7 @@ The aggregator has no direct stock-to-stock route: it answers `40368` ("Ondo ass
 ### What it guarantees
 
 * The buy leg carries ShareGuard's share floor; the sale leg carries the router's minimum.
-* The two legs are not atomic, so the price can move between them. The sheet says so and shows a combined receipt in tokens, shares and dollars.
+* The two legs are not atomic, so the price can fluctuate between them. The sheet says so and shows a combined receipt in tokens, shares and dollars.
 
 ### Eligibility
 

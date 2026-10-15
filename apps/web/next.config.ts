@@ -15,6 +15,13 @@ const config: NextConfig = {
   poweredByHeader: false,
   // Next 16 would otherwise write AGENTS.md and CLAUDE.md into apps/web on every dev start.
   agentRules: false,
+  // The contracts page used to be /docs (the developer docs are on their own site now).
+  async redirects() {
+    return [
+      { source: "/docs", destination: "/contracts", permanent: false },
+      { source: "/pies", destination: "/baskets", permanent: false },
+    ];
+  },
   async headers() {
     return [
       {

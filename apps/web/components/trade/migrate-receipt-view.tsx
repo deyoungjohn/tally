@@ -175,7 +175,7 @@ export function MigrateReceiptView({ vm }: { vm: MigrateReceiptVM }) {
           leg={vm.giveUp}
           title="Step 1: You gave up"
           unit="USDT"
-          receiptLabel="Sale Receipt"
+          receiptLabel="Sell Receipt"
           protectionDelivered={vm.giveUp.usdValue}
         />
         <Leg

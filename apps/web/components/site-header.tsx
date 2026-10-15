@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 const ALL_LINKS: { href: string; label: string; flag?: ModuleName }[] = [
   { href: "/trade", label: "Trade" },
   { href: "/portfolio", label: "Portfolio" },
-  { href: "/pies", label: "Baskets", flag: "pies" }, // "Pies" was the module's first name; the code keeps it
+  { href: "/baskets", label: "Baskets", flag: "pies" }, // "Pies" was the module's first name; the code keeps it
   { href: "/radar", label: "Radar" },
   { href: "/guardian", label: "Guardian", flag: "guardian" },
 ];

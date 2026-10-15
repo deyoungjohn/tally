@@ -45,7 +45,7 @@ for (const width of WIDTHS) {
       await quoteLoaded(page);
       await expect(page.getByTestId("row-NVDAon")).toBeVisible();
       await expect(page.getByTestId("row-NVDAB")).toBeVisible();
-      await expect(page.getByTestId("row-NVDAx")).toContainText("Not Tradable");
+      await expect(page.getByTestId("row-NVDAx")).toContainText("No Liquidity");
       await expect(page.getByTestId("row-NVDAon")).toContainText("Best");
       await expect(page.getByTestId("min-received")).toContainText("shares");
       const overflow = await page.evaluate(
@@ -62,7 +62,7 @@ for (const width of WIDTHS) {
       await buyThrough(page);
       const receipt = page.getByTestId("receipt");
       await expect(page.getByRole("dialog", { name: "Shares delivered" })).toBeVisible();
-      await expect(page.getByTestId("receipt-shares")).toContainText("0.025705");
+      await expect(page.getByTestId("receipt-shares")).toContainText("0.026");
       await expect(receipt.getByRole("link", { name: /BscScan/ })).toHaveAttribute(
         "href",
         /bscscan\.com\/tx\/0x/,
@@ -108,14 +108,14 @@ test.describe("amount rules and errors", () => {
     await expect(page.getByTestId("buy-button")).toBeDisabled();
   });
 
-  test("NFLX is enabled for Ondo only: bStock is listed but never offered, and the recorded Ondo row is not executable", async ({
+  test("NFLX: both issuers are enabled; the recorded Ondo row is a ghost market and is not executable", async ({
     page,
   }) => {
     await mockWallet(page);
     await page.goto("/trade/NFLX");
-    await expect(page.getByTestId("row-NFLXB")).toContainText("Not enabled yet");
-    // In the recorded fixtures NFLXon is a ghost market (not executable) and NFLXB is not enabled, so nothing can be bought.
-    await expect(page.getByTestId("buy-button")).toBeDisabled();
+    await expect(page.getByTestId("row-NFLXB")).not.toContainText("Not enabled yet");
+    await expect(page.getByTestId("row-NFLXx")).toContainText("Not enabled yet");
+    await expect(page.getByTestId("buy-button")).toBeEnabled();
   });
 
   test("an unenabled ticker is still refused by the trade-plan route", async ({ request }) => {
@@ -488,12 +488,10 @@ test.describe("per-issuer enablement", () => {
     page,
   }) => {
     await page.goto("/trade/NFLX");
-    const on = page.getByTestId("row-NFLXon");
-    const b = page.getByTestId("row-NFLXB");
-    await expect(on).toBeVisible({ timeout: 20_000 });
-    await expect(b).toContainText("Not enabled yet");
-    await expect(b.getByRole("button", { name: /NFLXB/ })).toBeDisabled();
-    await expect(b.locator(".chip-best")).toHaveCount(0);
+    const x = page.getByTestId("row-NFLXx");
+    await expect(page.getByTestId("row-NFLXon")).toBeVisible({ timeout: 20_000 });
+    await expect(x).toContainText("Not enabled yet");
+    await expect(x.locator(".chip-best")).toHaveCount(0);
   });
 
   test("the stock picker has a search box that filters the list", async ({ page }) => {

@@ -113,14 +113,49 @@ describe("statement-pdf pure builder and generator", () => {
     expect(activitySection.rows[1]!.cells[1]!.text).toBe("SELL");
     expect(activitySection.rows[1]!.cells[4]!.text).toBe("0.2");
     expect(activitySection.rows[1]!.cells[6]!.text).toBe("48.00");
-    expect(activitySection.rows[1]!.cells[7]!.text).toBe("2.00");
+    // The PDF shows no PnL column for now (milestone 7); the CSV carries none either.
+    expect(activitySection.rows[1]!.cells).toHaveLength(7);
 
     // 3. Numbers match CSV content strings byte-for-byte
     expect(vm.csv.content).toContain(",1,");
     expect(vm.csv.content).toContain(",0.5,");
     expect(vm.csv.content).toContain(",115.00,");
     expect(vm.csv.content).toContain(",48.00,");
-    expect(vm.csv.content).toContain(",2.00,");
+    // The realized figure (2.00) is switched off in the CSV too (milestone 7).
+    expect(vm.csv.content).not.toContain("Realized");
+  });
+
+  it("leaves out unrecognised tokens and positions sold down to nothing", () => {
+    const holding = (symbol: string, ticker: string, issuer: "ondo" | null, shares: string) => ({
+      tokenContractAddress: `0x${symbol.length.toString(16).padStart(40, "a")}`,
+      tokenSymbol: symbol,
+      ticker,
+      issuer,
+      balanceTokens: parseDecimal(shares, 18),
+      multiplier: E18,
+      balanceShares: parseDecimal(shares, 18),
+      convertedAtTodaysRatio: false,
+      tokenBalanceUsdE18: 0n,
+      costBasisUsdE18: 0n,
+      avgCostPerShareUsdE18: null,
+      pricePerShareUsdE18: null,
+      unrealizedPnlUsdE18: 0n,
+      isRecognized: issuer !== null,
+      source: "api/portfolio/recent-pnl",
+    });
+    const stmt = statement({
+      walletAddress: WALLET,
+      holdings: [
+        holding("NVDAon", "NVDA", "ondo", "1"),
+        holding("AAPLon", "AAPL", "ondo", "0"),
+        holding("BSC-ETH", "BSC-ETH", null, "3"),
+      ],
+      trades: [],
+    });
+    const vm = buildStatementVM(stmt, { source: "api/portfolio/recent-pnl" });
+    const desc = buildStatementPdfDescription(vm, { now: "2026-10-10T12:00:00Z" });
+    const rows = desc.sections.find((x) => x.title === "Holdings")!.rows;
+    expect(rows.map((r) => r.cells[0]!.text)).toEqual(["NVDA"]);
   });
 
   it("empty statement states its empty condition plainly", () => {

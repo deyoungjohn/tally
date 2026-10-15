@@ -152,7 +152,7 @@ export function useMigrateFlow() {
     setReceiptState(null);
     setWaitElapsedMs(0);
     sell.close();
-    // The sale's own saved watch must go too, or the sell sheet brings the dropped Migrate back after a reload.
+    // The sell's own saved watch must go too, or the sell sheet brings the dropped Migrate back after a reload.
     try {
       localStorage.removeItem(PENDING_SELL_KEY);
     } catch {
@@ -164,7 +164,7 @@ export function useMigrateFlow() {
     cancel();
   }, [cancel]);
 
-  // The automatic sale: sell all, approve if the plan asks for it, then sign. Each plan is acted on once; if anything
+  // The automatic sell: sell all, approve if the plan asks for it, then sign. Each plan is acted on once; if anything
   // comes back needing a person (a refusal, a worse price, a failure) the automation stops and the sell sheet takes over.
   const { phase: sp, inputs: sellInputs, sellAll, approve, confirm } = sell;
   useEffect(() => {

@@ -63,7 +63,7 @@ test.describe("round 6", () => {
     await expect(page.getByTestId("trade-slider-available")).toContainText("tokens", {
       timeout: 20_000,
     });
-    await page.getByTestId("trade-slider-input").fill("100"); // the whole holding, about $6: above the $5 minimum sale
+    await page.getByTestId("trade-slider-input").fill("100"); // the whole holding, about $6: above the $5 minimum sell
     await expect(page.locator("#amount")).not.toHaveValue("");
     await page.getByTestId("sell-button").click();
     await expect(page.getByRole("dialog", { name: /^Sell NVDA/ })).toBeVisible();

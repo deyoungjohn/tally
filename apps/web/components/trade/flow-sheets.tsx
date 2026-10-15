@@ -9,7 +9,7 @@ import { DynamicIsland, DynamicIslandView } from "@/components/motion/dynamic-is
 import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { DECLARATION_TEXT, DECLARATION_VERSION } from "@/lib/declaration";
 import type { PlanDto, ReceiptDto } from "@/lib/dto";
-import { fmtPct, fmtShares, fmtUsd, fromWei, shortHash } from "@/lib/format";
+import { fmtPct, fmtShares3, floorShares3, fmtUsd, fromWei, shortHash } from "@/lib/format";
 import { ISSUER_LABEL } from "@/lib/format";
 import { fetchPlan, progressOf, type FlowParams, type FlowPhase } from "./use-trade-flow";
 import { ReceiptLink } from "@/components/receipts/receipt-link";
@@ -356,7 +356,7 @@ export function ReviewSheet({
           <div className="field">
             <p className="t-meta">You&apos;ll get at least</p>
             <p className="t-big mt-1" data-testid="min-shares">
-              {fmtShares(min)} <span className="text-[23px] text-fg2">{plan.symbol} shares</span>
+              {floorShares3(min)} <span className="text-[23px] text-fg2">{plan.symbol} shares</span>
             </p>
             <p className="mt-2 text-[15px] text-fg2">
               …or nothing happens. Tally checks this in shares, onchain, before it keeps the trade.
@@ -369,7 +369,7 @@ export function ReviewSheet({
             </div>
             <div className="detail-row">
               <dt>Expected</dt>
-              <dd>{fmtShares(fromWei(plan.quotedShares))} shares</dd>
+              <dd>{fmtShares3(fromWei(plan.quotedShares))} shares</dd>
             </div>
             <div className="detail-row">
               <dt>Price per share</dt>
@@ -389,9 +389,7 @@ export function ReviewSheet({
             </div>
             <div className="detail-row">
               <dt>Issuer</dt>
-              <dd>
-                {plan.symbol} ({ISSUER_LABEL[plan.issuer]})
-              </dd>
+              <dd>{ISSUER_LABEL[plan.issuer]}</dd>
             </div>
             <div className="detail-row">
               <dt>Slippage</dt>
@@ -468,7 +466,7 @@ function ReceiptBody({
   return (
     <div data-testid="receipt">
       <p className="t-big mt-3" data-testid="receipt-shares">
-        {fmtShares(shares)} <span className="text-[23px] text-fg2">{symbol} shares</span>
+        {fmtShares3(shares)} <span className="text-[23px] text-fg2">{symbol} shares</span>
       </p>
       <dl className="mt-4">
         <div className="detail-row">
@@ -486,14 +484,14 @@ function ReceiptBody({
         <div className="detail-row">
           <dt>Tokens received</dt>
           <dd data-testid="receipt-tokens">
-            {floorTokens(fromWei(f.tokensOut))} {symbol}
+            {fmtShares3(fromWei(f.tokensOut))} {symbol}
           </dd>
         </div>
         {plan ? (
           <div className="detail-row">
             <dt>Guaranteed at least</dt>
             <dd data-testid="receipt-min">
-              {floorTokens(minTokens(plan))} {symbol}
+              {floorShares3(minTokens(plan))} {symbol}
             </dd>
           </div>
         ) : null}
@@ -531,5 +529,3 @@ function minTokens(plan: PlanDto): number {
   const m = BigInt(plan.multiplier);
   return m === 0n ? fromWei(plan.minShares) : fromWei((BigInt(plan.minShares) * 10n ** 18n) / m);
 }
-/** Six decimals, rounded down: a floor is never shown higher than it is. */
-const floorTokens = (n: number) => (Math.floor(n * 1e6) / 1e6).toFixed(6);

@@ -20,7 +20,7 @@ const TABS = [
       {
         question: "Do I need to know crypto?",
         answer:
-          "No, you don't need to be a crypto OG. Sign in with your email or Google account, deposit USDT and a few cents of BNB on BNB chain, and make your first purchase. We explain each step.",
+          "No, you don't need to be a crypto OG. Sign in with your email or Google account, deposit USDT and a few cents of BNB on BNB chain, and make your first buy. We explain each step.",
       },
     ],
   },
@@ -30,7 +30,7 @@ const TABS = [
       {
         question: "What does it cost?",
         answer:
-          "Tally adds no fee, for now. You pay the network fee, about two to five cents, and the price already includes the issuer's spread. The minimum purchase is $6.",
+          "Tally adds no fee, for now. You pay the network fee, about two to five cents, and the price already includes the issuer's spread. The minimum buy is $6.",
       },
       {
         question: "Why is the minimum $6?",

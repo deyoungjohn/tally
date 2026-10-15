@@ -1,8 +1,8 @@
 "use client";
 // The hero's rolling line and the card carousel beside it move together: when the phrase changes, that feature's card slides to the
 // middle. Cards are one size and loop right to left forever. The first card is a mock of the trade card; tapping it fades into the
-// real, live one. Rotation stops for good once someone taps a card or a dot (so typing is never interrupted), pauses while the
-// pointer is over the cards, and never starts with reduced motion. A swipe on a phone moves to the next or previous card.
+// real, live one. Rotation stops for good once someone taps a dot or uses the live trade card (so typing is never interrupted). It waits while the
+// mouse is over the cards (so text can be read or selected) and carries on when the mouse leaves. It never starts with reduced motion. A swipe on a phone moves to the next or previous card.
 
 import { useReducedMotion } from "motion/react";
 import {
@@ -14,6 +14,7 @@ import {
   useRef,
   useState,
 } from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { RollingText } from "./rolling-text";
 import { HERO_CARDS, type HeroCardSpec } from "./hero-samples";
@@ -46,6 +47,7 @@ export function HeroStage({ children }: { children: React.ReactNode }) {
   const reduce = useReducedMotion();
   const [index, setIndex] = useState(0);
   const [pinned, setPinned] = useState(false);
+  // While the mouse is over the cards (reading, selecting text) the rotation waits; it carries on when the mouse leaves.
   const [hovering, setHovering] = useState(false);
   useEffect(() => {
     // Browsers driven by automation (navigator.webdriver) never auto-rotate, so a script that types into the card is not
@@ -156,7 +158,6 @@ export function HeroPanels({ trade }: { trade: React.ReactNode }) {
     <div
       onPointerEnter={(e) => e.pointerType === "mouse" && hover(true)}
       onPointerLeave={(e) => e.pointerType === "mouse" && hover(false)}
-      onPointerDown={pin}
       onFocusCapture={pin}
     >
       <div
@@ -211,6 +212,15 @@ export function HeroPanels({ trade }: { trade: React.ReactNode }) {
                   }}
                   trade={trade}
                 />
+              ) : active ? (
+                <Link
+                  href={card.href}
+                  className="block h-full w-full rounded-[28px] no-underline"
+                  aria-label={card.title}
+                  data-testid={`hero-link-${card.key}`}
+                >
+                  <ListingCard card={card} />
+                </Link>
               ) : (
                 <ListingCard card={card} />
               )}

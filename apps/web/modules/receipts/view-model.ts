@@ -210,7 +210,7 @@ export function receiptVM(
           : d.kind === "approval"
             ? "USDT approval confirmed; no stock fill"
             : d.kind === "stock_approval"
-              ? "Stock approval confirmed; no sale fill"
+              ? "Stock approval confirmed; no sell fill"
               : status === "UNRECONCILED"
                 ? (result?.notes.at(-1) ?? d.pendingReason ?? "Evidence incomplete")
                 : d.kind === "sell" && status === "RECONCILED"
@@ -255,18 +255,20 @@ export function receiptVM(
               {
                 stage: "Received",
                 unit: "usdt",
+                // The USDT the sell paid out. (`verifiedFill.tokens` of a sell is the stock tokens SPENT, so it is never
+                // read here: it once showed 0.048 NVDAB as "0.05 USDT" on a sell that paid 11 USDT.)
                 tokens:
-                  receivedTokens === null || receivedTokens === undefined
+                  result?.tokensReceived === null || result?.tokensReceived === undefined
                     ? null
-                    : formatUnits(receivedTokens, 18),
+                    : formatUnits(result.tokensReceived, 18),
                 shares:
                   receivedShares === null || receivedShares === undefined
                     ? null
                     : formatUnits(receivedShares, 18),
                 source: snapshot.source,
                 reason:
-                  receivedTokens == null
-                    ? "No reconciled stock tokens spent"
+                  result?.tokensReceived == null
+                    ? "No reconciled USDT received"
                     : receivedShares == null
                       ? "Shares unavailable; engine multiplier could not be determined at verification time"
                       : null,

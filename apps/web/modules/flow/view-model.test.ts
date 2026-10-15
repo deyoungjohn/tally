@@ -419,7 +419,7 @@ it("Radar grades carry executable and executableReason only from facts the snaps
     );
     expect(grades.find((g) => g.symbol === "NVDAx")).toMatchObject({
       executable: false,
-      executableReason: "Almost no trading: a ghost market",
+      executableReason: "No Liquidity",
     });
     expect(grades.find((g) => g.symbol === "NVDAon")).toMatchObject({
       executable: false,

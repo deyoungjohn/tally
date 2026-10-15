@@ -88,7 +88,10 @@ export function gradeFromScore(score: number): Grade {
 const ATTESTATION_MAX_AGE_DAYS = 3;
 const DAY_MS = 86_400_000;
 const PREMIUM_LIMIT = 0.02;
-const GHOST_VOLUME_USD = 1_000;
+/** Under this much onchain volume in 24h a market is a ghost: "No Liquidity", not tradable. */
+const GHOST_VOLUME_USD = 100;
+/** Under this much (and at least the ghost line) it is thin: "Low Liquidity", still tradable, never a grade above C. */
+const LOW_LIQUIDITY_VOLUME_USD = 1_000;
 const usd0 = (n: number) => `$${Math.round(n).toLocaleString("en-US")}`;
 const pct = (n: number) => `${n >= 0 ? "+" : ""}${(n * 100).toFixed(2)}%`;
 const m = (v: bigint | undefined) => (v === undefined ? "–" : formatUnits(v, 18, 6));
@@ -261,7 +264,7 @@ export function gradeIntegrity(i: IntegrityInput): Integrity {
     }
   }
 
-  // 4. Onchain volume (−40 if under $1,000 in 24h: a ghost market)
+  // 4. Onchain volume (−40 under $100 in 24h: a ghost market; −30 under $1,000: thin)
   {
     const inputs = { onchainVolume24hUsd: i.onchainVolume24hUsd };
     if (i.onchainVolume24hUsd === undefined) {
@@ -280,7 +283,16 @@ export function gradeIntegrity(i: IntegrityInput): Integrity {
         flag: "ghost",
         inputs,
         summary: `${usd0(i.onchainVolume24hUsd)} in 24h < ${usd0(GHOST_VOLUME_USD)} → −40`,
-        reason: `Almost no trading on BNB Chain (${usd0(i.onchainVolume24hUsd)} in 24h). Prices can be stale.`,
+        reason: `No Liquidity (${usd0(i.onchainVolume24hUsd)} in 24h)`,
+      });
+    } else if (i.onchainVolume24hUsd < LOW_LIQUIDITY_VOLUME_USD) {
+      checks.push({
+        id: "onchain-volume",
+        outcome: "deduct",
+        points: 30,
+        inputs,
+        summary: `${usd0(i.onchainVolume24hUsd)} in 24h < ${usd0(LOW_LIQUIDITY_VOLUME_USD)} → −30`,
+        reason: `Low Liquidity (${usd0(i.onchainVolume24hUsd)} in 24h)`,
       });
     } else {
       checks.push({
@@ -288,7 +300,7 @@ export function gradeIntegrity(i: IntegrityInput): Integrity {
         outcome: "pass",
         points: 0,
         inputs,
-        summary: `${usd0(i.onchainVolume24hUsd)} in 24h ≥ ${usd0(GHOST_VOLUME_USD)} → pass`,
+        summary: `${usd0(i.onchainVolume24hUsd)} in 24h ≥ ${usd0(LOW_LIQUIDITY_VOLUME_USD)} → pass`,
       });
     }
   }

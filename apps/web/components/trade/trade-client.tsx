@@ -42,7 +42,8 @@ export function TradeClient(props: {
   const [tab, setTab] = useState<TradeTab>("trade");
   // `/trade?tab=fills` (the old Quality address redirects here) opens the Live fills tab.
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("tab") === "fills") setTab("fills");
+    const t = new URLSearchParams(window.location.search).get("tab");
+    if (t === "fills" || t === "migrate") setTab(t);
   }, []);
   const migrate = useMigrateFlow();
   const active: TradeTab =
@@ -136,7 +137,7 @@ function TradeInner({
     wallet.authenticated && wallet.address ? `/api/portfolio?address=${wallet.address}` : null,
     { refreshMs: 10_000 },
   );
-  // The largest Ondo or bStock position in this stock: that is the token a sale would use.
+  // The largest Ondo or bStock position in this stock: that is the token a sell would use.
   const holding = useMemo(() => {
     const parts = portfolio.data?.groups.find((g) => g.ticker === ticker)?.parts ?? [];
     return parts

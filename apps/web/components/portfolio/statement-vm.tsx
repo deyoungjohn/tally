@@ -6,13 +6,58 @@ import { Download } from "lucide-react";
 import { Button } from "@/components/motion/button";
 import { tokenSymbol } from "@/lib/tickers";
 import type { StatementVM } from "@/modules/statement/view-model";
+import type { ActivityVM } from "@/modules/receipts/view-model";
+import { recentLines } from "./recent-lines";
+import { csvWithLines } from "./statement-csv";
 import { sharesStr, usd } from "./vm-shared";
 
-const signed = (s: string) => (s.startsWith("-") ? "text-red" : "text-fg");
+// PnL is switched off for now (milestone 7 in docs/MILESTONES.md); used again then:
+// const signed = (s: string) => (s.startsWith("-") ? "text-red" : "text-fg");
 
-/** Downloads the CSV the statement module already built (filename and content come from its view model). */
-function downloadCsv(vm: StatementVM) {
-  const blob = new Blob([vm.csv.content], { type: "text/csv;charset=utf-8;" });
+/**
+ * Every statement download is built again from scratch: the statement and Activity are read fresh from the server at the click,
+ * and every verified Activity transaction the feed does not list yet is added. Nothing built earlier is reused.
+ */
+async function freshStatement(
+  wallet: string | null | undefined,
+  shown: { vm: StatementVM; recent: StatementVM["lines"] },
+): Promise<{ vm: StatementVM; lines: StatementVM["lines"] }> {
+  let vm = shown.vm;
+  let recent = shown.recent;
+  if (wallet) {
+    try {
+      const q = encodeURIComponent(wallet);
+      const [st, act] = await Promise.all([
+        fetch(`/api/vm/statement?address=${q}`, { cache: "no-store" }).then((r) => r.json()),
+        fetch(`/api/vm/activity?address=${q}`, { cache: "no-store" }).then((r) => r.json()),
+      ]);
+      const fresh = (st as { vm?: StatementVM | null }).vm;
+      if (fresh) vm = fresh;
+      const known = new Set(
+        vm.lines.flatMap((l) => (l.txHash && l.issuer !== null ? [l.txHash.toLowerCase()] : [])),
+      );
+      recent = recentLines((act as { vm?: ActivityVM | null }).vm ?? null, known);
+    } catch {
+      // Offline or a failed read: fall back to what is on the screen.
+    }
+  }
+  const lines = [...recent, ...vm.lines].filter((l) => l.issuer !== null);
+  const named =
+    vm.state === "empty" && lines.length > 0
+      ? {
+          state: "ready" as const,
+          csv: {
+            ...vm.csv,
+            filename: `tally-statement-${(wallet ?? "wallet").slice(0, 8)}-${new Date().toISOString().slice(0, 10)}.csv`,
+          },
+        }
+      : {};
+  return { vm: { ...vm, ...named, lines }, lines };
+}
+
+/** Downloads the CSV (filename and the summary come from the view model; the transactions are the merged lines). */
+function downloadCsv(vm: StatementVM, lines: StatementVM["lines"]) {
+  const blob = new Blob([csvWithLines(vm, lines)], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -66,7 +111,7 @@ export function StatementVmView({
 }) {
   // The table lists tokenized stocks only. A line with no issuer is not one (for example BNB or USDT moving as part of a swap).
   const lines = [...recent, ...vm.lines].filter((l) => l.issuer !== null);
-  const anyRealized = vm.lines.some((l) => l.realizedPnlUsd !== undefined);
+  // const anyRealized = vm.lines.some((l) => l.realizedPnlUsd !== undefined);
 
   const [pdfLoading, setPdfLoading] = useState(false);
   const [pdfError, setPdfError] = useState<string | null>(null);
@@ -75,8 +120,11 @@ export function StatementVmView({
     setPdfLoading(true);
     setPdfError(null);
     try {
-      const { downloadStatementPdf } = await import("./statement-pdf");
-      await downloadStatementPdf(vm);
+      const [{ downloadStatementPdf }, fresh] = await Promise.all([
+        import("./statement-pdf"),
+        freshStatement(wallet, { vm, recent }),
+      ]);
+      await downloadStatementPdf(fresh.vm);
     } catch (err) {
       const message = err instanceof Error ? err.message : "PDF generation failed";
       setPdfError(`Could not generate PDF: ${message}. Please try downloading CSV.`);
@@ -97,6 +145,7 @@ export function StatementVmView({
             <dt>Cost basis</dt>
             <dd data-testid="st-cost">{dash(usd(vm.totalCostBasisUsd))}</dd>
           </div>
+          {/* Realized and unrealized PnL are switched off for now (milestone 7 in docs/MILESTONES.md): kept here, not deleted.
           {untracked.length === 0 ? (
             <div className="detail-row">
               <dt>Unrealized PnL</dt>
@@ -111,22 +160,31 @@ export function StatementVmView({
               {anyRealized ? dash(usd(vm.totalRealizedPnlUsd)) : "-"}
             </dd>
           </div>
+          */}
         </dl>
         {untracked.length > 0 ? (
           <p className="t-meta mt-2" data-testid="st-untracked-note">
             {untracked.length === 1 ? "1 token has" : `${untracked.length} tokens have`} no trade
             record (received from another wallet, or bought outside Tally). They are counted in
-            Value today and listed below as received; their cost is unknown, so the unrealized
-            figure is left out.
+            Value today and listed below as received; their cost is unknown.
           </p>
         ) : null}
+        {/* Realized and unrealized PnL are switched off for now (milestone 7 in docs/MILESTONES.md): kept here, not deleted.
         {anyRealized ? null : (
           <p className="t-meta mt-2" data-testid="st-realized-reason">
-            No sale in this statement could be matched to a cost, so no realized figure is shown.
+            No sell in this statement could be matched to a cost, so no realized figure is shown.
           </p>
         )}
+        */}
         <div className="mt-4 flex flex-wrap items-center gap-3">
-          <Button variant="glassy" onClick={() => downloadCsv(vm)} data-testid="st-csv">
+          <Button
+            variant="glassy"
+            onClick={async () => {
+              const fresh = await freshStatement(wallet, { vm, recent });
+              downloadCsv(fresh.vm, fresh.lines);
+            }}
+            data-testid="st-csv"
+          >
             <Download size={16} aria-hidden /> Download statement CSV
           </Button>
           <Button
@@ -189,14 +247,14 @@ export function StatementVmView({
                 <th className="px-3 py-2 text-right font-medium">Shares</th>
                 <th className="px-3 py-2 text-right font-medium">Price per share</th>
                 <th className="px-3 py-2 text-right font-medium">Value</th>
-                <th className="px-3 py-2 text-right font-medium">Realized</th>
+                {/* <th className="px-3 py-2 text-right font-medium">Realized</th> */}
               </tr>
             </thead>
             <tbody>
               {lines.map((l, i) => (
                 <tr key={l.txHash ?? i} className="border-t border-white/[0.06]">
                   <td className="px-3 py-2">{l.date.slice(0, 10)}</td>
-                  <td className="px-3 py-2">{l.type === "BUY" ? "Purchase" : "Sale"}</td>
+                  <td className="px-3 py-2">{l.type === "BUY" ? "Buy" : "Sell"}</td>
                   <td className="px-3 py-2">
                     {(() => {
                       const symbol = l.issuer ? tokenSymbol(l.ticker, l.issuer) : l.ticker;
@@ -230,9 +288,9 @@ export function StatementVmView({
                   <td className="num px-3 py-2 text-right">{dash(sharesStr(l.amountShares))}</td>
                   <td className="num px-3 py-2 text-right">{dash(usd(l.pricePerShareUsd))}</td>
                   <td className="num px-3 py-2 text-right">{dash(usd(l.valueUsd))}</td>
-                  <td className="num px-3 py-2 text-right">
+                  {/* <td className="num px-3 py-2 text-right">
                     {l.realizedPnlUsd !== undefined ? usd(l.realizedPnlUsd) : "–"}
-                  </td>
+                  </td> */}
                 </tr>
               ))}
               {untracked.flatMap((t) => {
@@ -266,7 +324,6 @@ export function StatementVmView({
                       <td className="num px-3 py-2 text-right">{t.shares}</td>
                       <td className="num px-3 py-2 text-right">-</td>
                       <td className="num px-3 py-2 text-right">${t.valueUsd}</td>
-                      <td className="num px-3 py-2 text-right">–</td>
                     </tr>,
                   ];
                 return dated.map((r) => (
@@ -293,7 +350,6 @@ export function StatementVmView({
                       {String(Number((Number(r.tokens) * t.sharesPerToken).toFixed(6)))}
                     </td>
                     <td className="num px-3 py-2 text-right">-</td>
-                    <td className="num px-3 py-2 text-right">–</td>
                     <td className="num px-3 py-2 text-right">–</td>
                   </tr>
                 ));

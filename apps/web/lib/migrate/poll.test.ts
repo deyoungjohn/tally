@@ -107,7 +107,7 @@ describe("fetchSaleStatus (poll-state)", () => {
     expect(res).toEqual({ state: "failed" });
   });
 
-  it("returns unrecognised when chain sale does not look like stock-for-USDT", async () => {
+  it("returns unrecognised when chain sell does not look like stock-for-USDT", async () => {
     const fetchFn = vi.fn(async () => {
       return {
         ok: true,

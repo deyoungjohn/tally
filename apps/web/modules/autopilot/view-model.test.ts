@@ -116,7 +116,7 @@ it("wallet isolation never exposes another wallet's rows or observation metadata
     await loadAutopilot({ walletAddress: "other-wallet", store: seeded(), now }),
   ).toMatchObject({ state: "empty", rows: [], source: null, ageMs: null, spentToday: "0" });
 });
-it("shadow refusals do not claim a hypothetical sale; live receipt-backed spend rolls over", async () => {
+it("shadow refusals do not claim a hypothetical sell; live receipt-backed spend rolls over", async () => {
   const store = seeded();
   appendDecisionRows(
     store,

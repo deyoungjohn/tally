@@ -73,7 +73,8 @@ export function QualityView({ vm: initial, fixtures }: { vm: QualityVM; fixtures
           </Tip>
         ),
         width: "130px",
-        cell: (l) => cell(l.row, (r) => pct(r.fillRate)),
+        // The fill rate comes from the chain, not from quotes, so it shows as soon as there is one finished attempt.
+        cell: (l) => pct(l.row.fillRate),
       },
       {
         key: "median",
@@ -124,8 +125,7 @@ export function QualityView({ vm: initial, fixtures }: { vm: QualityVM; fixtures
           role="status"
           data-testid="quality-insufficient"
         >
-          {vm.reason ?? "Fewer than 5 fills with verified comparisons."} Numbers appear per row once
-          it has 5 or more.
+          {vm.reason ?? "Fewer than 5 fills with verified comparisons."}
         </p>
       ) : null}
       <div className="mt-4">

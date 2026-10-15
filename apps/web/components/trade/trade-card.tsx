@@ -79,7 +79,7 @@ export function TradeCard(p: TradeCardProps) {
   // The token symbol shown wherever the card names what is bought or sold (never a bare ticker).
   const sym = (selling ? p.sell?.symbol : p.row?.symbol) ?? tokenPair(p.ticker);
   const sellShares = p.sell && /^\d*\.?\d*$/.test(p.sell.text) ? Number(p.sell.text) : 0;
-  // Below the smallest sale the router path accepts: the button is unclickable, so no sheet has to open just to say so.
+  // Below the smallest sell the router path accepts: the button is unclickable, so no sheet has to open just to say so.
   const belowMinSale =
     selling && sellShares > 0 && p.sell!.usdOut !== null && p.sell!.usdOut < MIN_SELL_USDT;
   const canSell =
@@ -110,7 +110,7 @@ export function TradeCard(p: TradeCardProps) {
   };
 
   let label: string;
-  if (selling) label = belowMinSale ? `Minimum sale is $${MIN_SELL_USDT}` : `Sell ${sym}`;
+  if (selling) label = belowMinSale ? `Minimum sell is $${MIN_SELL_USDT}` : `Sell ${sym}`;
   else if (!p.buyable) label = "Quotes only for now";
   else if (p.phaseLabel) label = p.phaseLabel;
   else if (p.busy) label = "Working…";
@@ -186,7 +186,7 @@ export function TradeCard(p: TradeCardProps) {
                 : sellShares > p.sell!.heldShares
                   ? `You only hold ${fmtShares(p.sell!.heldShares)} shares.`
                   : belowMinSale
-                    ? `Minimum sale is $${MIN_SELL_USDT}.`
+                    ? `Minimum sell is $${MIN_SELL_USDT}.`
                     : ""
               : tooSmall
                 ? `Minimum is $${MIN_USD}.`
@@ -225,9 +225,10 @@ export function TradeCard(p: TradeCardProps) {
           <p className="t-meta">
             {selling ? "You get about" : p.unit === "usd" ? "You get" : "You pay about"}
           </p>
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+          {/* One row, never wrapped: the token and issuer stay on the right of the card beside the amount, in buy and in sell. */}
+          <div className="mt-2 flex flex-nowrap items-center justify-between gap-x-3">
             <p
-              className="t-big min-w-0 !text-[clamp(31px,3.6vw,47px)]"
+              className="t-big min-w-0 truncate !text-[clamp(26px,3.2vw,40px)]"
               data-testid="you-get"
               aria-busy={p.quoteLoading}
             >
@@ -270,7 +271,7 @@ export function TradeCard(p: TradeCardProps) {
                 </>
               )}
             </p>
-            <span className="token-pill">
+            <span className="token-pill shrink-0">
               <TokenIcon ticker={selling ? "USDT" : p.ticker} size={24} />
               <span className="flex flex-col items-start leading-tight">
                 <span>{selling ? "USDT" : p.unit === "usd" ? `${sym} shares` : "USDT"}</span>
@@ -384,7 +385,7 @@ export function TradeCard(p: TradeCardProps) {
         ) : (
           <>
             If you&apos;d get fewer shares than the minimum above, the trade doesn&apos;t happen.
-            Not investment advice. <LearnMore concept="guarantee" />
+            <LearnMore concept="guarantee" />
           </>
         )}
       </p>

@@ -22,15 +22,15 @@ import { HowWeGradeLink } from "./how-we-grade-link";
 export const useRadar = () => useJson<RadarReport>("/api/radar");
 
 const flagged = (r: RadarRow) => r.grade !== "A" && r.grade !== "B";
-/** 0 Liquid, 1 Low Liquidity, 2 Not Tradable. */
+/** 0 Liquid, 1 Low Liquidity, 2 No Liquidity. */
 export const liquidityRank = (r: RadarRow) => (r.flags.includes("ghost") ? 2 : flagged(r) ? 1 : 0);
 
 const STAT_TIP: Record<string, string> = {
   "Tokens checked": "Every tokenized stock Tally reads, across all issuers.",
   Liquid: "Grade A or B: good trading liquidity and no data problems found",
   "Low Liquidity": "Grade C to F: trading is thin or the data is inconsistent.",
-  "Not Tradable":
-    "Under $1,000 traded in 24 hours, so the price can be stale. Tally does not let you buy these.",
+  "No Liquidity":
+    "Under $100 traded in 24 hours, so the price can be stale. Tally does not let you buy these.",
   "Unit traps":
     "Tokens that are more than one share, so price and balance look off by that factor.",
 };
@@ -39,8 +39,8 @@ export function RadarStats({ rows }: { rows: RadarRow[] }) {
   const stats = [
     ["Tokens checked", rows.length],
     ["Liquid", rows.filter((r) => !flagged(r)).length],
-    ["Low Liquidity", rows.filter(flagged).length],
-    ["Not Tradable", rows.filter((r) => r.flags.includes("ghost")).length],
+    ["Low Liquidity", rows.filter((r) => flagged(r) && !r.flags.includes("ghost")).length],
+    ["No Liquidity", rows.filter((r) => r.flags.includes("ghost")).length],
     ["Unit traps", rows.filter((r) => r.unitTrap).length],
   ] as const;
   return (
@@ -70,8 +70,12 @@ export function RadarRowCard({ r }: { r: RadarRow }) {
         <div className="min-w-0 flex-1">
           <p className="flex flex-wrap items-center gap-2 font-semibold">
             {ISSUER_LABEL[r.issuer]} <span className="mono text-[13px] text-fg3">{r.symbol}</span>
-            <LiquidityBadge grade={r.grade} />
-            {r.flags.includes("ghost") ? <FlagBadge flag="ghost" /> : null}
+            {/* One liquidity badge per token: No Liquidity, Low Liquidity or Liquid. */}
+            {r.flags.includes("ghost") ? (
+              <FlagBadge flag="ghost" />
+            ) : (
+              <LiquidityBadge grade={r.grade} />
+            )}
             {r.unitTrap ? <FlagBadge flag="unit-trap" /> : null}
           </p>
           <p className="mt-1 text-[14px] text-fg2">
@@ -162,7 +166,7 @@ function RadarLegacyBody() {
     const filtered = needle
       ? f.filter((r) => `${r.ticker} ${r.symbol} ${r.issuer}`.toLowerCase().includes(needle))
       : f;
-    // Liquid first, then Low Liquidity, then Not Tradable, whatever the active filter; best grade first inside each group.
+    // Liquid first, then Low Liquidity, then No Liquidity, whatever the active filter; best grade first inside each group.
     return [...filtered].sort(
       (a, b) =>
         liquidityRank(a) - liquidityRank(b) ||
@@ -189,7 +193,7 @@ function RadarLegacyBody() {
           options={[
             { value: "all", label: "All" },
             { value: "flagged", label: "Low Liquidity" },
-            { value: "ghost", label: "Not Tradable" },
+            { value: "ghost", label: "No Liquidity" },
             { value: "unit", label: "Unit trap" },
           ]}
         />
@@ -239,7 +243,7 @@ export function RadarPage() {
   return (
     <main id="main" className="wrap pb-24 pt-10 min-[561px]:pt-14">
       <p className="t-kicker">Radar</p>
-      <h1 className="t-h2 mt-3 max-w-[22ch]">Spot liquid and non-tradable tokens in a glance.</h1>
+      <h1 className="t-h2 mt-3 max-w-[22ch]">Spot the state of every stock token in one place</h1>
       <TabSubtitle
         className="mt-3"
         active={flags.flow ? view : "tokens"}

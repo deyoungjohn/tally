@@ -13,6 +13,7 @@ const policies: [string, number][] = [
     HOUR / 2,
   ]),
   ["flow-aggregate", 24 * HOUR],
+  ["plan-quote", 2 * HOUR],
   ...[
     "flow-progress",
     "flow-attempt",

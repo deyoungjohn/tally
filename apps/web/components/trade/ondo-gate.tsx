@@ -2,7 +2,7 @@
 // Ondo tokens trade through signed orders (RFQ) outside US market hours, which Tally can't send yet, so selling and
 // migrating them waits for the US market to open. The signal is the live quote itself: Binance answers an Ondo route in
 // signed-order mode and the engine marks the Ondo row not executable. If the quote can't be read, nothing is disabled
-// (the sale itself still refuses with the same plain words).
+// (the sell itself still refuses with the same plain words).
 
 import type { ReactNode } from "react";
 import type { QuoteDto } from "@/lib/dto";

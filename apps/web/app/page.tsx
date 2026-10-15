@@ -113,7 +113,7 @@ export default function Home() {
                     ShoppingBasket,
                     "Baskets",
                     "Pick a basket, set a budget and how much goes to each stock, and Tally buys them one after another, each with its own guaranteed minimum.",
-                    "/pies",
+                    "/baskets",
                     "Open Baskets",
                   ],
                   [
@@ -126,14 +126,14 @@ export default function Home() {
                   [
                     FileText,
                     "Statements",
-                    "Everything you bought and sold, counted in shares, with a statement you can download as a PDF or a CSV.",
+                    "Every stock token you bought and sold, counted in shares, with a statement you can download as a PDF or a CSV.",
                     "/portfolio",
                     "Open Portfolio",
                   ],
                 ] as const
               )
                 .filter(([, , , href]) =>
-                  href === "/pies" ? flags.pies : href === "/guardian" ? flags.guardian : true,
+                  href === "/baskets" ? flags.pies : href === "/guardian" ? flags.guardian : true,
                 )
                 .map(([Icon, h, b, href, cta]) => (
                   <li key={h} className="panel flex min-w-0 flex-col gap-3 p-5">
@@ -175,7 +175,6 @@ export default function Home() {
                     "Shares you get",
                     "Every quote is in share units, with the price per share and the premium over the US price.",
                   ],
-                  ["The real network fee", "Estimated from the route's real cost."],
                   [
                     "Cheapest right now",
                     "Quotes refresh every 10 seconds and the best issuer is marked.",
@@ -219,10 +218,7 @@ export default function Home() {
               </p>
               <ul className="m-0 mt-6 grid list-none gap-3 p-0">
                 {[
-                  [
-                    "Across issuers",
-                    "1.2 shares from Ondo and 0.5 from bStock read as 1.7 shares.",
-                  ],
+                  ["Across issuers", "We count stock tokens from Ondo and bStocks in share units."],
                   ["Value in dollars", "At the current US price per share."],
                 ].map(([h, b]) => (
                   <li key={h} className="panel p-4">
@@ -252,18 +248,18 @@ export default function Home() {
                 <RadarIcon size={14} aria-hidden /> Radar
               </p>
               <h2 id="radar-title" className="t-h2 mt-3">
-                We catch the tokens that would mislead you.
+                Spot the state of every stock token in one place
               </h2>
               <p className="t-lead mt-3 max-w-[50ch]">
                 Markets nobody trades, tokens that are ten shares each, data that disagrees with
-                itself, paused assets. Radar grades every token A to F and says why, in plain words.{" "}
-                <LearnMore concept="radar" />
+                itself, paused assets, and more. Radar grades every token A to F and says why, in
+                plain words. <LearnMore concept="radar" />
               </p>
               <ul className="m-0 mt-6 grid list-none gap-3 p-0">
                 {[
                   [
-                    "Not Tradable",
-                    "Under $1,000 traded in a day means stale prices, so Tally won't let you buy.",
+                    "No Liquidity",
+                    "Under $100 traded in a day means stale prices, so Tally won't let you buy.",
                   ],
                   [
                     "Unit traps",
@@ -306,10 +302,6 @@ export default function Home() {
               <h2 id="faq-title" className="t-h2 mt-3">
                 Answers to your burning questions.
               </h2>
-              <p className="t-meta mx-auto mt-4 max-w-[60ch]">
-                Tally compares and executes at your instruction; it doesn&apos;t recommend what to
-                buy.
-              </p>
             </div>
             <div className="min-w-0">
               <HomeFaq />

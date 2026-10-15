@@ -6,9 +6,19 @@ export const fmtUsd = (n: number | null | undefined, d = 2) =>
 /** Shares are small numbers for small buys: show enough digits to tell them apart (0.025705, not 0.03). */
 export const fmtShares = (n: number | null | undefined) => {
   if (n === null || n === undefined || !Number.isFinite(n)) return "–";
-  const d = n >= 100 ? 2 : n >= 1 ? 4 : 6;
+  const d = n >= 100 ? 2 : n >= 0.01 ? 4 : 6;
   return n.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
 };
+
+/** Sheets and receipts: three decimals. `floorShares3` cuts (for a guaranteed minimum: never shown higher than it is). */
+export const fmtShares3 = (n: number | null | undefined) =>
+  n === null || n === undefined || !Number.isFinite(n)
+    ? "–"
+    : n.toLocaleString("en-US", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+export const floorShares3 = (n: number | null | undefined) =>
+  n === null || n === undefined || !Number.isFinite(n)
+    ? "–"
+    : fmtShares3(Math.floor(n * 1000) / 1000);
 
 export const fmtPct = (f: number | null | undefined, d = 2) =>
   f === null || f === undefined || !Number.isFinite(f)

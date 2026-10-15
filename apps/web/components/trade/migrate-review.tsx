@@ -1,7 +1,7 @@
 "use client";
 // The first thing Migrate shows: what you sell, what you receive, the costs and what you end up with. Nothing is sent until
 // Confirm; Confirm then sells the whole holding by itself (see `useMigrateFlow`), and the buy has its own review next.
-// Every number comes from the sale's own plan and a live quote of the target; none is recomputed from a displayed float.
+// Every number comes from the sell's own plan and a live quote of the target; none is recomputed from a displayed float.
 
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -10,7 +10,7 @@ import { Modal } from "@/components/motion/modal";
 import { useTallyWallet } from "@/components/wallet/wallet-context";
 import type { QuoteDto } from "@/lib/dto";
 import { fmtUsd } from "@/lib/format";
-import { toSellSheet, fromE18, type SellSheetView } from "@/lib/sell/view";
+import { toSellSheet, fromE18, usd2, type SellSheetView } from "@/lib/sell/view";
 import { explainSellError } from "@/lib/sell/view";
 import { fetchSellPlan } from "@/lib/trade-plan/sell";
 import { tokenSymbol } from "@/lib/tickers";
@@ -49,7 +49,7 @@ export function MigrateReviewModal({
         if (!address) throw new Error("Sign in to migrate.");
         const t = review.target;
         const probe = Math.floor(t.probeShares * 1e8) / 1e8;
-        const plan = await fetchSellPlan({
+        let plan = await fetchSellPlan({
           ticker: t.ticker,
           issuer: t.issuer,
           shares: probe > 0 ? probe : undefined,
@@ -57,6 +57,18 @@ export function MigrateReviewModal({
           tolerancePct: 1,
           user: address,
         });
+        // The probe came from a rounded number on the screen. The sale itself is the exact raw balance (what "Sell all"
+        // sends), so the review is priced on that and a rounding gap can never read as "not enough".
+        const held = BigInt(plan.balances.tokens);
+        if (held > 0n && plan.tokensIn !== held.toString()) {
+          plan = await fetchSellPlan({
+            ticker: t.ticker,
+            issuer: t.issuer,
+            tokens: held.toString(),
+            tolerancePct: 1,
+            user: address,
+          });
+        }
         const sell = toSellSheet(plan);
         const usdtOut = Number(BigInt(sell.expectedUsdt)) / 1e18;
         // What the buy would look like with the proceeds, rounded down to the cent like the real buy.
@@ -117,7 +129,7 @@ export function MigrateReviewModal({
         if (!o) onClose();
       }}
       title={`Migrate ${from} to ${to}`}
-      description="Migrate involves a sale and a purchase and you'll confirm each one."
+      description="Migrate involves a sell and a buy and you'll confirm each one."
       className="max-w-[540px]"
       showClose
     >
@@ -134,26 +146,26 @@ export function MigrateReviewModal({
         ) : v ? (
           <dl className="m-0">
             <div className="detail-row">
-              <dt>Step 1 · you sell</dt>
+              <dt>Step 1: you sell</dt>
               <dd data-testid="mr-sell">
-                {fromE18(v.sell.sharesIn, 6)} shares ({fromE18(v.sell.tokensIn, 8)} {from})
+                {fromE18(v.sell.sharesIn, 3)} shares ({fromE18(v.sell.tokensIn, 3)} {from})
               </dd>
             </div>
             <div className="detail-row">
-              <dt>You receive (USDT)</dt>
+              <dt>You get (USDT)</dt>
               <dd data-testid="mr-usdt">
-                about {fromE18(v.sell.expectedUsdt, 2)}, at least {fromE18(v.sell.minUsdt, 2)}
+                about {usd2(v.sell.expectedUsdt)}, never less than {usd2(v.sell.minUsdt)}
               </dd>
             </div>
             <div className="detail-row">
-              <dt>Network fee, sale</dt>
+              <dt>Network fee, sell</dt>
               <dd>{v.sell.feeUsd === null ? "-" : `≈ ${fmtUsd(v.sell.feeUsd, 3)}`}</dd>
             </div>
             <div className="detail-row">
-              <dt>Step 2 · you buy</dt>
+              <dt>Step 2: you buy</dt>
               <dd data-testid="mr-buy">
                 {v.buy
-                  ? `about ${v.buy.shares.toFixed(6)} shares of ${to} at ${fmtUsd(v.buy.usdPerShare)}`
+                  ? `about ${(Math.floor(v.buy.shares * 1000) / 1000).toFixed(3)} shares of ${to} at ${fmtUsd(v.buy.usdPerShare)}`
                   : "-"}
               </dd>
             </div>
@@ -174,13 +186,16 @@ export function MigrateReviewModal({
 
         {v?.sell.status === "needs_approval" ? (
           <p className="t-meta mt-3">
-            The sale starts with a one-time approval for exactly this amount of {from}.
+            The sell starts with a one-time approval for exactly this amount of {from}.
           </p>
         ) : null}
         {v?.sell.status === "needs_funds" ? (
-          <p role="alert" className="mt-3 text-amber">
-            This wallet doesn&apos;t have enough {from} or BNB for the network fee to sell this
-            amount.
+          <p role="alert" className="mt-3 text-amber" data-testid="migrate-review-funds">
+            {v.sell.shortfall?.tokens && v.sell.shortfall.bnb
+              ? `This wallet is short of both ${from} and BNB for the network fee.`
+              : v.sell.shortfall?.bnb
+                ? `This wallet needs a little more BNB for the network fee (${fromE18(v.sell.shortfall.bnb, 5)} BNB short).`
+                : `This wallet holds less ${from} than the amount to sell (${fromE18(v.sell.shortfall?.tokens ?? "0", 6)} ${from} short). Refresh your portfolio and try again.`}
           </p>
         ) : null}
         {v?.buyReason ? (
@@ -189,7 +204,7 @@ export function MigrateReviewModal({
           </p>
         ) : null}
         <p className="t-meta mt-3">
-          Prices can move between the two steps. Confirming sells your whole {from} holding for
+          Prices can fluctuate between the two steps. Confirming sells your whole {from} holding for
           USDT; the buy then has its own review before anything is bought.
         </p>
 
@@ -208,7 +223,7 @@ export function MigrateReviewModal({
   );
 }
 
-/** Shown while the sale runs by itself after Confirm: which step it is on, with a way out until the wallet is asked to sign. */
+/** Shown while the sell runs by itself after Confirm: which step it is on, with a way out until the wallet is asked to sign. */
 export function MigrateSellProgress({
   phaseName,
   approving,
@@ -226,10 +241,10 @@ export function MigrateSellProgress({
         ? `Approving ${symbol}…`
         : `Approve selling ${symbol} in your wallet`
       : phaseName === "signing"
-        ? "Confirm the sale in your wallet"
+        ? "Confirm the sell in your wallet"
         : phaseName === "mining"
           ? "Selling… waiting for the chain to confirm"
-          : "Preparing the sale…";
+          : "Preparing the sell…";
   const cancellable = phaseName !== "signing" && phaseName !== "mining";
   return (
     <Modal
@@ -285,7 +300,7 @@ export function MigrateDropConfirm({
           pick it up again.
         </p>
         <p>
-          Anything already confirmed on the chain stays as it is. If your sale went through, your
+          Anything already confirmed on the chain stays as it is. If your sell went through, your
           USDT is in your wallet and nothing will be bought.
         </p>
       </div>

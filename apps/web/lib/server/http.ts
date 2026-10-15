@@ -51,6 +51,16 @@ export function errorResponse(e: unknown): NextResponse {
     );
     return fail(409, e.kind, e.message);
   }
+  // Binance answers a token with no market as an unclassified error whose text says there is not enough liquidity. That is a plain
+  // fact about the token, not a fault on our side, so it gets its own kind and sentence.
+  if (e instanceof Error && /insufficient liquidity/i.test(e.message)) {
+    console.warn(`no liquidity: ${e.message.slice(0, 200)}`);
+    return fail(
+      409,
+      "no_liquidity",
+      "There isn't enough liquidity on BNB Chain to trade this token right now.",
+    );
+  }
   console.error("unhandled:", e instanceof Error ? e.message.slice(0, 200) : e);
   return fail(500, "internal", "Something went wrong on our side. Nothing was spent.");
 }

@@ -1,8 +1,11 @@
 import {
   HINT_KIND,
   HINT_TTL_MS,
+  PLAN_KIND,
+  PLAN_MAX_AGE_MS,
   RECEIPTS_KIND,
   RECEIPT_MAX_AGE_MS,
+  planKey,
   receiptHintKey,
   verifySignedCall,
   verifySignedSellCall,
@@ -11,6 +14,7 @@ import {
   promoteSellReceipt,
   verifyMinedTransaction,
   equalAddress,
+  type PlanRecord,
   type ReceiptHint,
   type SellMultiplierEvidence,
   type StoredHint,
@@ -246,7 +250,30 @@ export const job: WorkerJob = {
             call.kind === "swap"
               ? (tokens.find((t) => t.address.toLowerCase() === call.stock.toLowerCase()) ?? null)
               : null;
-          data = promoteReceipt(hint as ReceiptHint, tx, mined, call, token, ctx.now());
+          // Did Tally itself build the bytes this transaction signs? Then the quote is the one it recorded at that moment, and
+          // the fill is compared against that, not against what a browser says it was quoted.
+          const planned =
+            call.kind === "swap"
+              ? ctx.store.latest<PlanRecord>(PLAN_KIND, await planKey(tx.sender, tx.input), {
+                  maxAgeMs: PLAN_MAX_AGE_MS,
+                  now,
+                })
+              : null;
+          const recordedQuote =
+            planned &&
+            equalAddress(planned.data.user, tx.sender) &&
+            equalAddress(planned.data.to, tx.destination)
+              ? planned.data.quote
+              : null;
+          data = promoteReceipt(
+            hint as ReceiptHint,
+            tx,
+            mined,
+            call,
+            token,
+            ctx.now(),
+            recordedQuote,
+          );
         }
         data.lastCheckedAt = now;
         ctx.store.put({

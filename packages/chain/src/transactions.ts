@@ -8,6 +8,7 @@ import {
   type Address,
 } from "viem";
 import { bsc } from "viem/chains";
+import { explorerFromEnv, type Explorer } from "./explorer";
 
 export interface ReadTransaction {
   hash: Hex;
@@ -112,6 +113,85 @@ export function transactionsFromClients(
       }),
   };
 }
+/** How long our RPC gets before the explorer is asked as well. */
+export const RPC_SLOW_MS = 4_000;
+
+/**
+ * The RPC answers first. If it is slow (more than `slowMs`), fails, or has not seen the transaction, the explorer is asked, and its
+ * answer is used when it has one. A transaction that is not found anywhere is still null, never a guess.
+ */
+export function withExplorerFallback(
+  primary: Transactions,
+  explorer: Explorer | null,
+  slowMs = RPC_SLOW_MS,
+): Transactions {
+  if (!explorer) return primary;
+  async function first<T>(
+    ask: () => Promise<T | null>,
+    other: () => Promise<T | null>,
+  ): Promise<T | null> {
+    let slow: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<"slow">((r) => {
+      slow = setTimeout(() => r("slow"), slowMs);
+    });
+    const attempt = ask().then(
+      (v) => ({ ok: true as const, v }),
+      (e: unknown) => ({ ok: false as const, e }),
+    );
+    const winner = await Promise.race([attempt, timeout]);
+    clearTimeout(slow);
+    if (winner !== "slow" && winner.ok && winner.v !== null) return winner.v;
+    const fromExplorer = await other().catch(() => null);
+    if (fromExplorer !== null) return fromExplorer;
+    if (winner === "slow") {
+      const late = await attempt;
+      if (late.ok) return late.v;
+      throw late.e;
+    }
+    if (winner.ok) return winner.v;
+    throw winner.e;
+  }
+  return {
+    getTransaction: (hash) =>
+      first(
+        () => primary.getTransaction(hash),
+        async () => {
+          const t = await explorer.transaction(hash);
+          return t
+            ? {
+                hash: t.hash,
+                sender: t.from,
+                destination: t.to,
+                value: t.value,
+                input: t.input,
+                inputSelector: t.input.slice(0, 10) as Hex,
+                blockNumber: t.blockNumber,
+                gasLimit: t.gas,
+              }
+            : null;
+        },
+      ),
+    getReceipt: (hash) =>
+      first(
+        () => primary.getReceipt(hash),
+        async () => {
+          const r = await explorer.receipt(hash);
+          return r
+            ? {
+                hash: r.transactionHash,
+                sender: r.from,
+                destination: r.to,
+                blockNumber: r.blockNumber,
+                gasUsed: r.gasUsed,
+                status: r.status,
+                logs: r.logs,
+              }
+            : null;
+        },
+      ),
+  };
+}
+
 export function transactionsFromEnv(
   env: Record<string, string | undefined> = process.env,
   onWarn: (message: string) => void = console.warn,
@@ -139,5 +219,8 @@ export function transactionsFromEnv(
     );
   if (!clients.length)
     onWarn("Transaction reader has no configured provider; chain fallback unavailable");
-  return transactionsFromClients(clients, onWarn);
+  return withExplorerFallback(
+    transactionsFromClients(clients, onWarn),
+    explorerFromEnv(env, onWarn),
+  );
 }

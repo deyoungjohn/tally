@@ -123,3 +123,28 @@ it("rejects malformed guard calldata, foreign destinations, mismatched assets an
     ),
   ).toThrow("receipt mismatch");
 });
+
+it("a quote Tally recorded makes the comparison server-recorded; without one it stays the browser's", async () => {
+  const { planKey } = await import("./plan-record");
+  const hint = recordedHint("F11_NVDAB"),
+    tx = transaction("F11_NVDAB"),
+    call = verifySignedCall(tx, hint, guard);
+  const token: RegistryToken = {
+    ticker: "NVDA",
+    issuer: hint.quote!.issuer,
+    address: hint.quote!.stock,
+    symbol: "NVDA",
+    decimals: 18,
+    assetType: 1,
+  } as RegistryToken;
+  const browser = promoteReceipt(hint, tx, mined("F11_NVDAB"), call, token, 0);
+  expect(browser.baselineTrust).toBe("client-hint");
+  const server = promoteReceipt(hint, tx, mined("F11_NVDAB"), call, token, 0, hint.quote);
+  expect(server.baselineTrust).toBe("recorded");
+  expect(server.receipt!.quote!.notes[0]).toContain("recorded by Tally");
+  // The key is the same for the same bytes and differs for another user or other calldata.
+  const k = await planKey("0xAbC", "0x1234");
+  expect(k).toBe(await planKey("0xabc", "0x1234"));
+  expect(k).not.toBe(await planKey("0xabc", "0x1235"));
+  expect(k).not.toBe(await planKey("0xdef", "0x1234"));
+});

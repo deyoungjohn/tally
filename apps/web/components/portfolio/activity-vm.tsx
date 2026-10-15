@@ -14,8 +14,8 @@ const STATUS: Record<string, { label: string; cls: string }> = {
   UNRECONCILED: { label: "Not reconciled yet", cls: "text-amber" },
 };
 const KIND: Record<string, string> = {
-  swap: "Purchase",
-  sell: "Sale",
+  swap: "Buy",
+  sell: "Sell",
   approval: "USDT approval",
   stock_approval: "Token approval",
 };

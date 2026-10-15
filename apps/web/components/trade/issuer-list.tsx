@@ -83,7 +83,7 @@ function Row({
         "panel min-w-0 list-none p-0",
         r.isBest && enabled && "row-best",
         !enabled && "opacity-60",
-        selected && pickable && "!bg-[var(--hl)]",
+        selected && pickable && "row-selected",
       )}
       data-testid={`row-${r.symbol}`}
     >

@@ -4,6 +4,8 @@
 // no wallet, so the link works signed out. No contract address is shown; the transaction links to BscScan.
 
 import { ExternalLink } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import Link from "next/link";
 import { ButtonLink } from "@/components/motion/button";
 import { Tip } from "@/components/ui/tooltip";
@@ -58,8 +60,6 @@ const dec = (v: string | null) => dec3(v);
 const bps = (v: number | null) =>
   v === null ? null : `${v > 0 ? "+" : ""}${(v / 100).toFixed(2)}%`;
 
-const BROWSER_NOTE = "Reported by your browser";
-
 function Step({
   stage,
   step,
@@ -69,7 +69,6 @@ function Step({
   step: number;
   sell: boolean;
 }) {
-  const fromBrowser = stage.stage === "Quoted" && stage.source === "client-reported quote";
   const unit = sell && stage.stage === "Received" ? "USDT" : sell ? "tokens offered" : "shares";
   // Sells ladder in tokens (and USDT), buys in shares.
   const raw = sell ? stage.tokens : stage.shares;
@@ -97,29 +96,38 @@ function Step({
             </p>
           )}
           {!sell && stage.tokens ? <p className="t-meta">{dec(stage.tokens)} tokens</p> : null}
-          {fromBrowser ? (
-            <p className="t-meta mt-1 text-amber" data-testid="receipt-browser-note">
-              {BROWSER_NOTE}
-            </p>
-          ) : (
-            <p className="t-meta mt-1">{stage.source}</p>
-          )}
         </div>
       </div>
     </li>
   );
 }
 
+/** What the chain itself says about the transaction, read by the page when Tally's own check has not finished. */
+export interface ChainCheck {
+  block: string;
+  ok: boolean;
+}
+
 export function ReceiptView({
   vm,
   fixtures,
   qualityOn,
+  chain = null,
 }: {
   vm: ReceiptVM;
   fixtures: boolean;
   qualityOn: boolean;
+  chain?: ChainCheck | null;
 }) {
-  const what = vm.kind === "sell" ? "sale" : vm.kind === "swap" ? "purchase" : "transaction";
+  const router = useRouter();
+  // While Tally is still checking the amounts, read the page again every few seconds until they are in.
+  const waiting = vm.state === "pending";
+  useEffect(() => {
+    if (!waiting) return;
+    const id = window.setInterval(() => router.refresh(), 6_000);
+    return () => window.clearInterval(id);
+  }, [waiting, router]);
+  const what = vm.kind === "sell" ? "sell" : vm.kind === "swap" ? "buy" : "transaction";
   // The token symbol when the view model knows the issuer; the stock's name otherwise (never a bare ticker).
   const title = vm.symbol
     ? `${vm.symbol} ${what} receipt`
@@ -155,13 +163,26 @@ export function ReceiptView({
       </>
     );
 
-  const status = vm.status ? STATUS[vm.status] : null;
+  // The chain has confirmed it even if Tally has not finished reading the amounts: never say "Pending" then.
+  const status =
+    vm.status === "PENDING" && chain
+      ? chain.ok
+        ? {
+            label: "Confirmed",
+            tone: "badge-up",
+            tip: "BNB Smart Chain has confirmed the transaction. Tally is still reading the amounts.",
+          }
+        : STATUS.FAILED
+      : vm.status
+        ? STATUS[vm.status]
+        : null;
   const sell = vm.kind === "sell";
-  // The "Simulated" step is never shown: a sale records no simulation output and a buy's is almost always unavailable.
+  // The "Simulated" step is never shown: a sell records no simulation output and a buy's is almost always unavailable.
   const ladder = vm.ladder.filter((s) => s.stage !== "Simulated");
-  const trusted = vm.comparisonTrust === "recorded";
   // A guarantee rounds down: rounding it up would promise more than was signed.
-  const minimum = sell ? usdt2Down(vm.signedMinimumShares) : dec3Down(vm.signedMinimumShares);
+  // (the stored text can carry a note after the number; only the number is shown)
+  const floorNumber = vm.signedMinimumShares?.split(" ")[0] ?? null;
+  const minimum = sell ? usdt2Down(floorNumber) : dec3Down(floorNumber);
   const multiplier = fmtE18(vm.evidence.multiplier);
   const diffQuote = bps(vm.diffVsQuoteBps);
   return (
@@ -179,13 +200,8 @@ export function ReceiptView({
           </Tip>
         ) : null}
         <span className="mono text-[13px] text-fg3">{shortHash(vm.txHash)}</span>
-        {vm.issuerTrust === "client-hint" ? (
-          <span className="t-meta text-amber" data-testid="receipt-issuer-note">
-            Issuer {BROWSER_NOTE.toLowerCase()}
-          </span>
-        ) : null}
       </div>
-      {vm.reason ? (
+      {vm.reason && vm.status === "FAILED" ? (
         <p className="t-lead mt-3 max-w-[62ch]" data-testid="receipt-reason">
           {vm.reason}
         </p>
@@ -197,8 +213,11 @@ export function ReceiptView({
           role="status"
           data-testid="receipt-pending"
         >
-          This transaction is pending. The amounts below stay unavailable until the chain confirms
-          it and Tally checks the result.
+          {chain
+            ? chain.ok
+              ? `Confirmed on BNB Smart Chain in block ${chain.block}. Tally is reading the amounts; this page updates by itself.`
+              : `This transaction failed on BNB Smart Chain (block ${chain.block}). Nothing was exchanged.`
+            : "Waiting for BNB Smart Chain to confirm this transaction. This page updates by itself."}
         </p>
       ) : null}
 
@@ -217,9 +236,9 @@ export function ReceiptView({
         <dl className="m-0 mt-6 grid max-w-[640px] gap-3" data-testid="receipt-compare">
           {minimum ? (
             <div>
-              <dt className="t-meta">{sell ? "Floor you signed" : "Minimum you signed"}</dt>
+              <dt className="t-meta">{sell ? "Least you'd receive" : "Minimum you signed"}</dt>
               <dd className="m-0">
-                {sell ? minimum : `${minimum} shares`}
+                {sell ? `${minimum} USDT` : `${minimum} shares`}
                 {sell ? null : <span className="t-meta"> (the transaction fails below this)</span>}
               </dd>
             </div>
@@ -229,9 +248,6 @@ export function ReceiptView({
               <dt className="t-meta">Received vs quote</dt>
               <dd className="m-0" data-testid="receipt-diff-quote">
                 {diffQuote}
-                {!trusted ? (
-                  <span className="t-meta text-amber"> · quote {BROWSER_NOTE.toLowerCase()}</span>
-                ) : null}
               </dd>
             </div>
           ) : null}
@@ -242,14 +258,8 @@ export function ReceiptView({
         <h2 className="t-h3">Evidence</h2>
         <dl className="m-0 mt-3 grid gap-2 text-[14.5px]">
           <div>
-            <dt className="t-meta">Provenance</dt>
-            <dd className="m-0 text-fg2" data-testid="receipt-provenance">
-              {vm.provenance}
-            </dd>
-          </div>
-          <div>
             <dt className="t-meta">Block</dt>
-            <dd className="m-0">{vm.evidence.block ?? "Pending"}</dd>
+            <dd className="m-0">{vm.evidence.block ?? chain?.block ?? "-"}</dd>
           </div>
           <div>
             <dt className="t-meta">Gas used / limit</dt>
@@ -266,11 +276,6 @@ export function ReceiptView({
               <dd className="m-0">{multiplier}</dd>
             </div>
           ) : null}
-          {vm.evidence.notes.map((n) => (
-            <p key={n} className="t-meta">
-              {n}
-            </p>
-          ))}
         </dl>
         {bscscan ? (
           <a

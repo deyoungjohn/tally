@@ -221,7 +221,7 @@ export default function HowItWorks() {
                 Tally adds no fee, for now. You pay the network fee, usually two to five cents, and
                 the issuer&apos;s spread is already inside the price.
               </li>
-              <li>The minimum purchase is $6, and the minimum sale is $5.</li>
+              <li>The minimum buy is $6, and the minimum sell is $5.</li>
               <li>
                 A trade that is cancelled by the guarantee costs only its network fee. Your USDT
                 stays in your wallet.
@@ -248,11 +248,11 @@ export default function HowItWorks() {
               <b>Low Liquidity</b> means C to F: something looked thin or inconsistent, and the
               reasons are listed so you can judge for yourself.
             </p>
-            <h3 id="how-not-tradable">Not Tradable</h3>
+            <h3 id="how-not-tradable">No Liquidity</h3>
             <p className="mt-2">
-              A token that traded under $1,000 in the last 24 hours on BNB Chain has no real market.
+              A token that traded under $100 in the last 24 hours on BNB Chain has no real market.
               Its price can be stale by days, and a buy could fill far from the price you see. Tally
-              marks it Not Tradable and does not let you buy it.
+              marks it No Liquidity and does not let you buy it.
             </p>
             <h3 id="how-grades">How a grade is made</h3>
             <p className="mt-2">{GRADE_INTRO}</p>
@@ -294,16 +294,16 @@ export default function HowItWorks() {
           <section id="sell">
             <h2>Selling and Migrate</h2>
             <p className="mt-3">
-              <b>Selling</b> turns a stock token into USDT. The sale sheet shows the least USDT you
-              will receive. The sale guarantee is the router&apos;s minimum, not the share guarantee
+              <b>Selling</b> turns a stock token into USDT. The sell sheet shows the least USDT you
+              will receive. The sell guarantee is the router&apos;s minimum, not the share guarantee
               that buys have.
             </p>
             <p className="mt-3">
               <b>Migrate</b> moves a holding to the other issuer of the same stock, for example
-              NVDAB to NVDAon. It is two transactions you confirm one at a time: a sale, then a
-              purchase. The price can move between them, and your USDT waits in your wallet if you
-              pause. When it finishes, one receipt shows what you gave up and what you received, in
-              tokens, shares and dollars, with a link you can share.
+              NVDAB to NVDAon. It is two transactions you confirm one at a time: a sell, then a buy.
+              The price can fluctuate between them, and your USDT waits in your wallet if you pause.
+              When it finishes, one receipt shows what you gave up and what you received, in tokens,
+              shares and dollars, with a link you can share.
             </p>
             <p className="mt-3">
               Ondo tokens only trade while Ondo&apos;s market is open. Outside those hours Tally
@@ -326,7 +326,7 @@ export default function HowItWorks() {
             <p className="mt-3">
               A basket is a set of stocks bought together. You enter a budget and how much of it
               goes to each stock, and Tally buys them one after another for you. Each stock is its
-              own guaranteed purchase that you confirm in your wallet. If one fails, Tally stops and
+              own guaranteed buy that you confirm in your wallet. If one fails, Tally stops and
               shows exactly what happened. You can continue with the rest.
             </p>
           </section>
@@ -354,7 +354,7 @@ export default function HowItWorks() {
             </ul>
             <p className="mt-3">
               See{" "}
-              <a className="link-text" href="/docs#disclaimer">
+              <a className="link-text" href="/contracts#disclaimer">
                 availability and disclaimer
               </a>
               .

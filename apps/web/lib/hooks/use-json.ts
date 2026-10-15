@@ -33,6 +33,8 @@ export function useJson<T>(url: string | null, opts: { refreshMs?: number } = {}
   // The id of the request that is still in flight (0 = none). A timed refresh must never abort it: if a slow endpoint takes
   // longer than `refreshMs`, aborting and restarting on every tick means no request ever finishes (a page stuck loading).
   const inflight = useRef(0);
+  // Set when a finished transaction asks for an immediate re-read: that one request tells the server to skip its short cache.
+  const freshNext = useRef(false);
   const requestId = useRef(0);
 
   const prevUrlRef = useRef(url);
@@ -60,7 +62,10 @@ export function useJson<T>(url: string | null, opts: { refreshMs?: number } = {}
   // A finished transaction refreshes the portfolio views at once.
   useEffect(() => {
     if (!url || !PORTFOLIO_URL.test(url)) return;
-    return onPortfolioChanged(() => setN((x) => x + 1));
+    return onPortfolioChanged(() => {
+      freshNext.current = true;
+      setN((x) => x + 1);
+    });
   }, [url]);
 
   useEffect(() => {
@@ -72,7 +77,10 @@ export function useJson<T>(url: string | null, opts: { refreshMs?: number } = {}
     const id = ++requestId.current;
     inflight.current = id;
     setLoading(true);
-    fetch(url, { signal: ctl.signal, cache: "no-store" })
+    const wantFresh = freshNext.current && PORTFOLIO_URL.test(url);
+    freshNext.current = false;
+    const target = wantFresh ? `${url}${url.includes("?") ? "&" : "?"}fresh=1` : url;
+    fetch(target, { signal: ctl.signal, cache: "no-store" })
       .then(async (r) => {
         const body = (await r.json()) as T | ApiError;
         if (!r.ok) throw new Error((body as ApiError).error?.message ?? "Something went wrong.");

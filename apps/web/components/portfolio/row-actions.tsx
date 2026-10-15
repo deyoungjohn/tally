@@ -1,6 +1,6 @@
 "use client";
 // The three buttons on every holding row, always in this order: Buy more, Migrate, Sell. Each one knows when it cannot be used and
-// says why in a tooltip (a disabled button is never silent): a sale under $5, an Ondo token while the US market is closed, an issuer
+// says why in a tooltip (a disabled button is never silent): a sell under $5, an Ondo token while the US market is closed, an issuer
 // that is not enabled, xStocks (no market to exit). Buy more is a link while it works.
 
 import { Button, ButtonLink } from "@/components/motion/button";
@@ -53,7 +53,7 @@ export function RowActions({
   onMigrate?: (to: "ondo" | "bstock") => void;
 }) {
   const closed = useOndoClosedReason(ticker, issuer ?? "");
-  // A bStock holding migrates INTO Ondo: its buy leg needs the Ondo market open too, or the sale would leave USDT with no buy.
+  // A bStock holding migrates INTO Ondo: its buy leg needs the Ondo market open too, or the sell would leave USDT with no buy.
   const ondoDestinationClosed = useOndoClosedReason(ticker, issuer === "bstock" ? "ondo" : "");
   const tradable = issuer === "ondo" || issuer === "bstock";
   const worth = valueUsd ?? Number.NaN;
@@ -71,7 +71,7 @@ export function RowActions({
     sellReason = "The share multiplier for this token couldn't be read, so it can't be sold.";
   else if (closed) sellReason = closed;
   else if (Number.isFinite(worth) && worth < MIN_SELL_USDT)
-    sellReason = `This holding is worth ${worthText}, below the $${MIN_SELL_USDT} minimum sale.`;
+    sellReason = `This holding is worth ${worthText}, below the $${MIN_SELL_USDT} minimum sell.`;
 
   // Migrate
   let migrateReason: string | null = null;
@@ -82,7 +82,7 @@ export function RowActions({
     migrateReason =
       "The share multiplier for this token couldn't be read, so it can't be migrated.";
   else if (Number.isFinite(worth) && worth < MIN_SELL_USDT)
-    migrateReason = `This holding is worth ${worthText}, below the $${MIN_SELL_USDT} minimum sale.`;
+    migrateReason = `This holding is worth ${worthText}, below the $${MIN_SELL_USDT} minimum sell.`;
 
   return (
     <div className="flex flex-wrap gap-2" data-testid={`actions-${symbol}`}>

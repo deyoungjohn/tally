@@ -184,6 +184,8 @@ describe("prepareSell engine logic", () => {
     expect(plan.approve?.spender.toLowerCase()).toBe(ROUTER.toLowerCase());
     expect(plan.approve?.amount).toBe("25654736000000000");
     expect(plan.tx).toBeUndefined();
+    // No transaction to price yet, but the fee is still estimated (Migrate's review shows it).
+    expect(plan.estFeeUsd).toBeGreaterThan(0);
   });
 
   it("returns ready with direct router transaction and floor when funds and allowance are present", async () => {

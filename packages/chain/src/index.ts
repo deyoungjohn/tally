@@ -4,3 +4,4 @@ export * from "./gas";
 export * from "./logs";
 export * from "./transactions";
 export * from "./shareguard";
+export * from "./explorer";

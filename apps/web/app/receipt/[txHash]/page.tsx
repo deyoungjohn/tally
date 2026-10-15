@@ -5,6 +5,7 @@ import { ReceiptView } from "@/components/receipts/receipt-view";
 import { VmDegraded } from "@/components/portfolio/vm-shared";
 import { moduleFlags } from "@/lib/flags";
 import { loadReceipt } from "@/modules/receipts/view-model";
+import { getEngine } from "@/lib/server/engine";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Transaction Receipt | Tally" };
@@ -22,12 +23,24 @@ export default async function Page({ params }: { params: Promise<{ txHash: strin
         fallback={<VmDegraded name="Receipts" reason={null} ageMs={null} />}
         load={async () => {
           const vm = await loadReceipt(txHash);
+          // Tally's own check can lag behind the chain: ask the chain (RPC first, the explorer when the RPC is slow) so a
+          // confirmed transaction is never shown as pending.
+          let chain: { block: string; ok: boolean } | null = null;
+          if (vm.state === "pending" && /^0x[0-9a-fA-F]{64}$/.test(txHash)) {
+            try {
+              const r = await (await getEngine()).transactions.getReceipt(txHash);
+              if (r) chain = { block: r.blockNumber.toString(), ok: r.status === "success" };
+            } catch {
+              /* the page keeps saying it is waiting */
+            }
+          }
           // The contract address stays out of the page (and out of its data payload); the screen does not show it.
           return (
             <ReceiptView
               vm={{ ...vm, evidence: { ...vm.evidence, guard: null } }}
               fixtures={fixtures}
               qualityOn={flags.quality}
+              chain={chain}
             />
           );
         }}

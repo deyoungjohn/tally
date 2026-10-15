@@ -85,10 +85,10 @@ export function FlagBadge({ flag, inButton }: { flag: string; inButton?: boolean
     return (
       <Tip
         focusable={!inButton}
-        text="Not Tradable: under $1,000 traded in the last 24 hours, so the price can be days stale. Tally does not let you buy it."
+        text="No Liquidity: under $100 traded in the last 24 hours, so the price can be days stale. Tally does not let you buy it."
       >
         <span className="badge badge-red">
-          <AlertTriangle size={12} aria-hidden /> Not Tradable
+          <AlertTriangle size={12} aria-hidden /> No Liquidity
         </span>
       </Tip>
     );

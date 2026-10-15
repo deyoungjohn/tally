@@ -20,4 +20,5 @@ export const TOKEN_ICON_FILES: Readonly<Record<string, string>> = {
   SPY: "SPY.png",
   TSLA: "TSLA.png",
   TSM: "TSM.png",
+  USDT: "USDT.png",
 };

@@ -14,7 +14,7 @@ import { MigrateReceiptModal } from "./migrate-receipt";
 import { MigrateDropConfirm, MigrateReviewModal, MigrateSellProgress } from "./migrate-review";
 import type { PlanDto } from "@/lib/dto";
 
-/** Everything Migrate shows: the review, the automatic sale's progress, then the later steps. */
+/** Everything Migrate shows: the review, the automatic sell's progress, then the later steps. */
 export function MigrateSheet({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
   const sp = flow.sell.phase;
   return (
@@ -69,7 +69,7 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
     }
   };
 
-  // After a verified sale the buy follows at once: its own review (with Confirm) is the next dialog. Only when the proceeds had
+  // After a verified sell the buy follows at once: its own review (with Confirm) is the next dialog. Only when the proceeds had
   // to be typed in by hand does this step wait for the person.
   useEffect(() => {
     if (
@@ -133,7 +133,7 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
                 <div className="flex items-center gap-3">
                   <Loader2 className="h-5 w-5 motion-safe:animate-spin text-black" />
                   <div className="flex-1">
-                    <p className="text-sm text-black">Waiting for the sale to confirm...</p>
+                    <p className="text-sm text-black">Waiting for the sell to confirm...</p>
                     <p className="text-xs text-black/60 mt-1">
                       Elapsed: {Math.floor(waitElapsedMs / 1000)}s
                     </p>
@@ -158,7 +158,7 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
             ) : step === "interstitial" && receiptState === "failed" ? (
               <div className="grid gap-4">
                 <div className="rounded-lg border border-black/10 bg-white p-4 space-y-2 text-sm text-black">
-                  <p>The sale transaction failed and did not go through.</p>
+                  <p>The sell transaction failed and did not go through.</p>
                   <p>No buy is offered.</p>
                 </div>
                 <div className="flex justify-end">
@@ -171,14 +171,14 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
               <div className="grid gap-4">
                 <div className="rounded-lg border border-black/10 bg-white p-4 space-y-2 text-sm text-black">
                   <p>
-                    The sale confirmed for{" "}
+                    The sell confirmed for{" "}
                     {pm.usdtReceived
                       ? formatUnits(BigInt(roundDownToCent(pm.usdtReceived)), 18)
                       : "?"}{" "}
                     USDT{pm.isFixture ? " (fixture data)" : ""}, which is under the 6 USDT minimum
                     required to buy.
                   </p>
-                  <p>Your USDT is in your wallet. No purchase was made.</p>
+                  <p>Your USDT is in your wallet. No buy was made.</p>
                 </div>
                 <div className="flex justify-end">
                   <Button onClick={cancel} className="bg-white text-black border border-black/10">
@@ -265,7 +265,7 @@ function MigrateSteps({ flow }: { flow: ReturnType<typeof useMigrateFlow> }) {
                       rel="noreferrer"
                       className="link-text"
                     >
-                      Sale Receipt
+                      Sell Receipt
                     </a>
                   ) : null}
                   {pm.buyHash ? (

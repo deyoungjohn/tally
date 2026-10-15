@@ -1,8 +1,8 @@
 "use client";
 // The sell flow (a separate hook; the buy hook is untouched). It plans through /api/trade/sell, approves the exact amount when
 // asked, re-plans before signing, signs exactly the plan's transaction and watches it through /api/trade/tx-status.
-// Sells emit no buy-shaped stage events. Once the sale's hash exists (never the approval's) one fire-and-forget receipt hint is posted
-// through postSellReceiptHint (emitSellStage is not used, so there is exactly one POST per sale); it can never block or fail the sell.
+// Sells emit no buy-shaped stage events. Once the sell's hash exists (never the approval's) one fire-and-forget receipt hint is posted
+// through postSellReceiptHint (emitSellStage is not used, so there is exactly one POST per sell); it can never block or fail the sell.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Hex } from "viem";
@@ -16,7 +16,7 @@ import { explainSellError, planGotWorse, type SellFailure } from "../../lib/sell
 import { ONDO_CLOSED_TIP } from "./ondo-closed";
 import { notifyPortfolioChanged } from "../../lib/hooks/portfolio-changed";
 
-/** The plain reason for a failed sale. Ondo tokens sell only while the US market is open: say that, not the router's wording. */
+/** The plain reason for a failed sell. Ondo tokens sell only while the US market is open: say that, not the router's wording. */
 function explainFor(e: unknown, t: SellTarget | null): SellFailure {
   const f = explainSellError(e);
   if (t?.issuer === "ondo" && /signed order/i.test(f.message))
@@ -55,7 +55,7 @@ export type SellPhase =
       gasUsed: number | null;
       /** What the gas cost in dollars, worked out from the plan's own fee estimate; null when that was not known. */
       feeUsd: number | null;
-      /** The router-enforced least USDT of this sale (1e18 integer string), to set beside the verified amount. */
+      /** The router-enforced least USDT of this sell (1e18 integer string), to set beside the verified amount. */
       floorUsdt: string | null;
       bscscan: string;
     }
@@ -87,7 +87,7 @@ const DEBOUNCE_MS = 450;
 const AUTO_MIN_MS = 5_000;
 const SHARES_RE = /^\d*\.?\d{0,8}$/;
 
-/** What a resumed sale needs to post its receipt hint (bigints as decimal strings). */
+/** What a resumed sell needs to post its receipt hint (bigints as decimal strings). */
 interface PendingIntent {
   id: string;
   issuer: "ondo" | "bstock";
@@ -176,7 +176,7 @@ export interface TxStatus {
   bscscan: string;
 }
 
-/** Roughly what the sale is worth, from the holding's own value; null when that is unknown. The engine's check stays the authority. */
+/** Roughly what the sell is worth, from the holding's own value; null when that is unknown. The engine's check stays the authority. */
 export function estimateSaleUsd(t: SellTarget, i: SellInputs): number | null {
   if (t.probeUsd === null || t.probeUsd === undefined || !(t.probeShares > 0)) return null;
   if (i.all) return t.probeUsd;
@@ -222,7 +222,7 @@ export function useSellFlow() {
   const lastPlan = useRef<SellPlan | null>(null);
 
   const requestFor = useCallback((t: SellTarget, i: SellInputs) => {
-    // Below the minimum sale there is nothing to ask the server: the sheet says so and offers no way to confirm.
+    // Below the minimum sell there is nothing to ask the server: the sheet says so and offers no way to confirm.
     if (isBelowMinimum(t, i)) return null;
     const base = { ticker: t.ticker, issuer: t.issuer, tolerancePct: i.tolerancePct };
     if (i.all) return rawBalance.current ? { ...base, tokens: rawBalance.current } : null;
@@ -249,7 +249,7 @@ export function useSellFlow() {
     const failure = explainFor(e, targetRef.current);
     if (failure.kind === "refused" || failure.kind === "region")
       return setPhase({ name: "refused", failure });
-    // The old plan was for different inputs: keeping it would leave a Confirm button on screen for a sale that was just refused.
+    // The old plan was for different inputs: keeping it would leave a Confirm button on screen for a sell that was just refused.
     if (keepForm) setPhase({ name: "form", plan: null, refreshing: false, failure });
     else setPhase({ name: "failed", failure });
   }, []);
@@ -305,8 +305,8 @@ export function useSellFlow() {
         else {
           const isRfq = Boolean(rfq);
           const message = isRfq
-            ? "The sale did not go through, likely because the market-maker quote expired. Nothing was sold; only the network fee was spent. Market-maker quotes last a few seconds. Try again."
-            : "The sale did not go through. Nothing was sold; only the network fee was spent. Try again.";
+            ? "The sell did not go through, likely because the market-maker quote expired. Nothing was sold; only the network fee was spent. Market-maker quotes last a few seconds. Try again."
+            : "The sell did not go through. Nothing was sold; only the network fee was spent. Try again.";
           setPhase({
             name: "failed",
             hash,
@@ -380,10 +380,10 @@ export function useSellFlow() {
         setPhase({ name: "refused", failure });
       else {
         // The check failed for a reason about the amount (for instance a small holding below the minimum). "Sell all" still needs the
-        // exact balance, so it is read from the holdings route; the plan then says in words why the sale can't go ahead.
+        // exact balance, so it is read from the holdings route; the plan then says in words why the sell can't go ahead.
         rawBalance.current = await readRawBalance(t, w.address);
         if (id !== runId.current) return;
-        // Whatever the check said stays on screen: a sale that is declined always shows why.
+        // Whatever the check said stays on screen: a sell that is declined always shows why.
         setPhase({ name: "form", plan: null, refreshing: false, failure: explainFor(e, t) });
         if (initialText) setInputs({ text: initialText, all: false });
       }
@@ -681,7 +681,7 @@ export function useSellFlow() {
     void watch(pending.hash, id, pending.fee, pending.intent?.minUsdtOut, pending.rfq);
   }, [watch, wallet.ready, wallet.authenticated, wallet.address]);
 
-  // A confirmed sale changes the wallet: Portfolio (holdings, activity, statement) reads again now.
+  // A confirmed sell changes the wallet: Portfolio (holdings, activity, statement) reads again now.
   const sold = phase.name === "confirmed";
   useEffect(() => {
     if (sold) notifyPortfolioChanged();

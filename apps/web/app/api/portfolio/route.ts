@@ -6,13 +6,22 @@ import { errorResponse, json, rateLimited, tooMany } from "@/lib/server/http";
 
 export const dynamic = "force-dynamic";
 
-const query = z.object({ address: z.string().regex(/^0x[0-9a-fA-F]{40}$/) });
+const query = z.object({
+  address: z.string().regex(/^0x[0-9a-fA-F]{40}$/),
+  /** Set by the page right after a transaction finishes: read the chain again instead of using the short cache. */
+  fresh: z.string().optional(),
+});
 
-/** Tickers a wallet holds. Cached for two seconds: the scan reads every registry token. Returns null when scan fails. */
+/**
+ * Tickers a wallet holds. The scan reads every registry token, so it is the costly part of this route (the provider's
+ * daily quota went on it): it is kept for 45 seconds, and a page that just finished a transaction passes `fresh=1` to skip
+ * the cache. Returns null when the scan fails.
+ */
+const HELD_TTL_MS = 45_000;
 const heldCache = new Map<string, { at: number; tickers: string[] }>();
-async function heldTickers(address: `0x${string}`): Promise<string[] | null> {
+async function heldTickers(address: `0x${string}`, fresh = false): Promise<string[] | null> {
   const hit = heldCache.get(address.toLowerCase());
-  if (hit && Date.now() - hit.at < 2_000) return hit.tickers;
+  if (!fresh && hit && Date.now() - hit.at < HELD_TTL_MS) return hit.tickers;
   try {
     const engine = await getEngine();
     const report = await engine.holdings(address);
@@ -32,7 +41,7 @@ export async function GET(req: NextRequest) {
     const q = query.parse(Object.fromEntries(req.nextUrl.searchParams));
     const engine = await getEngine();
     const t0 = Date.now();
-    const held = await heldTickers(q.address as `0x${string}`);
+    const held = await heldTickers(q.address as `0x${string}`, q.fresh === "1");
     const tickers = held !== null ? held : PICKER_TICKERS.map((t) => t.ticker);
     const [report, bnbUsd] = await Promise.all([
       engine.portfolio(q.address as `0x${string}`, tickers),

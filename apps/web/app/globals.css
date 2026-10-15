@@ -760,11 +760,11 @@ body {
   color: #fff;
   background: var(--orange);
 }
-.row-best {
-  border-color: rgba(232, 235, 239, 0.45) !important;
-  box-shadow:
-    0 0 0 1px rgba(232, 235, 239, 0.18),
-    0 0 36px -8px var(--silver-glow);
+.row-best,
+.row-selected {
+  /* The top (best) card and the chosen card: a thick white edge, no fill (no glow, no orange tint). */
+  border-color: #fff !important;
+  box-shadow: 0 0 0 1px #fff;
 }
 .seg-bar {
   display: grid;

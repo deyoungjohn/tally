@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { startVmServer, type VmServer } from "./vm-server";
 
-// The /pies page (flag `pies`): basket cards, budget and weights, the review sheet and the sequential run, on the mock wallet.
+// The /baskets page (flag `pies`): basket cards, budget and weights, the review sheet and the sequential run, on the mock wallet.
 const USER = "0x1111111111111111111111111111111111111111";
 const HASH = `0x${"b2".padStart(64, "0")}`;
 const GUARD = "0x28F6F19bffbF25E36452c78d12090F0bC922970a";
@@ -90,7 +90,7 @@ const sent = (page: Page) =>
 
 test.describe("pies page: flag off", () => {
   test("404 with the pies flag off", async ({ request }) => {
-    expect((await request.get("/pies")).status()).toBe(404);
+    expect((await request.get("/baskets")).status()).toBe(404);
   });
 });
 
@@ -109,7 +109,7 @@ test.describe("pies page", () => {
 
   test("the basket card, chips, fixture label and equal weights", async ({ page }) => {
     await wallet(page, false);
-    await page.goto(`${server.url}/pies`);
+    await page.goto(`${server.url}/baskets`);
     await page.getByTestId("basket-big-tech").click({ timeout: 20_000 });
     await expect(page.getByTestId("pies-screen")).toBeVisible({ timeout: 20_000 });
     await expect(page.getByTestId("basket-big-tech")).toContainText("Big Tech");
@@ -127,7 +127,7 @@ test.describe("pies page", () => {
     page,
   }) => {
     await wallet(page);
-    await page.goto(`${server.url}/pies`);
+    await page.goto(`${server.url}/baskets`);
     for (const id of ["mag-7", "ai-chips", "etfs"]) {
       const card = page.getByTestId(`basket-${id}`);
       await expect(card).toBeVisible({ timeout: 20_000 });
@@ -142,7 +142,7 @@ test.describe("pies page", () => {
     page,
   }) => {
     await wallet(page);
-    await page.goto(`${server.url}/pies`);
+    await page.goto(`${server.url}/baskets`);
     await page.getByTestId("basket-big-tech").click({ timeout: 20_000 });
     await expect(page.getByTestId("pies-preview")).toBeVisible({ timeout: 20_000 });
     for (const t of ["NVDA", "AAPL", "GOOGL", "MSFT", "META"])
@@ -161,7 +161,7 @@ test.describe("pies page", () => {
     page,
   }) => {
     await wallet(page);
-    await page.goto(`${server.url}/pies`);
+    await page.goto(`${server.url}/baskets`);
     await page.getByTestId("basket-big-tech").click({ timeout: 20_000 });
     await expect(page.getByTestId("pies-total")).toContainText("Total 100%", { timeout: 20_000 });
     await page.getByRole("textbox", { name: "Weight NVDAB %" }).fill("40");
@@ -183,7 +183,7 @@ test.describe("pies page", () => {
   }) => {
     await wallet(page);
     await stubTrade(page);
-    await page.goto(`${server.url}/pies`);
+    await page.goto(`${server.url}/baskets`);
     await page.getByTestId("basket-big-tech").click({ timeout: 20_000 });
     await expect(page.getByTestId("pies-builder")).toBeVisible({ timeout: 20_000 });
     await setWeights(page, THREE);
@@ -216,7 +216,7 @@ test.describe("pies page", () => {
     await wallet(page);
     const controls: { failTicker?: string } = { failTicker: "AAPL" };
     await stubTrade(page, controls);
-    await page.goto(`${server.url}/pies`);
+    await page.goto(`${server.url}/baskets`);
     await page.getByTestId("basket-big-tech").click({ timeout: 20_000 });
     await expect(page.getByTestId("pies-builder")).toBeVisible({ timeout: 20_000 });
     await setWeights(page, THREE);
@@ -242,7 +242,7 @@ test.describe("pies page", () => {
   }) => {
     await wallet(page);
     await stubTrade(page, { failTicker: "AAPL" });
-    await page.goto(`${server.url}/pies`);
+    await page.goto(`${server.url}/baskets`);
     await page.getByTestId("basket-big-tech").click({ timeout: 20_000 });
     await expect(page.getByTestId("pies-builder")).toBeVisible({ timeout: 20_000 });
     await setWeights(page, THREE);
@@ -271,7 +271,7 @@ test.describe("pies page", () => {
         expect(
           await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth),
         ).toBeLessThanOrEqual(0);
-      await page.goto(`${server.url}/pies`);
+      await page.goto(`${server.url}/baskets`);
       await page.getByTestId("basket-big-tech").click({ timeout: 20_000 });
       await expect(page.getByTestId("pies-builder")).toBeVisible({ timeout: 20_000 });
       await noScroll();
@@ -296,7 +296,7 @@ test.describe("baskets page: no worker snapshot", () => {
   test.afterAll(() => server?.stop());
   test("never shows a catching-up card: baskets read no worker snapshot", async ({ page }) => {
     await wallet(page);
-    await page.goto(`${server.url}/pies`);
+    await page.goto(`${server.url}/baskets`);
     await expect(page.getByRole("heading", { level: 1 })).toContainText("basket of stocks", {
       timeout: 20_000,
     });

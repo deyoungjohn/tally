@@ -17,20 +17,20 @@ async function mockWallet(page: Page, signedIn = true) {
 test.describe("round 3", () => {
   test.use({ viewport: { width: 1280, height: 900 } });
 
-  test("Radar uses Liquid / Low Liquidity / Not Tradable, and tags explain themselves on hover", async ({
+  test("Radar uses Liquid / Low Liquidity / No Liquidity, and tags explain themselves on hover", async ({
     page,
   }) => {
     await page.goto("/radar");
     const stats = page.locator("dl").first();
     await expect(stats).toContainText("Liquid", { timeout: 20_000 });
     await expect(stats).toContainText("Low Liquidity");
-    await expect(stats).toContainText("Not Tradable");
+    await expect(stats).toContainText("No Liquidity");
     await expect(page.getByText("Clean (A or B)")).toHaveCount(0);
     await expect(page.getByText("Flagged (C to F)")).toHaveCount(0);
     await expect(page.getByText("Ghost markets")).toHaveCount(0);
-    const tag = page.getByTestId("radar-NVDAx").getByText("Not Tradable");
+    const tag = page.getByTestId("radar-NVDAx").getByText("No Liquidity", { exact: true });
     await tag.hover();
-    await expect(page.getByRole("tooltip")).toContainText("under $1,000");
+    await expect(page.getByRole("tooltip")).toContainText("under $100");
   });
 
   test("the trade block says Min amount to receive and Slippage", async ({ page }) => {
@@ -186,7 +186,7 @@ test.describe("round 3", () => {
     await expect(page.getByText("Read more")).toHaveCount(0);
   });
 
-  test("Radar lists Liquid, then Low Liquidity, then Not Tradable, and has a morphing search", async ({
+  test("Radar lists Liquid, then Low Liquidity, then No Liquidity, and has a morphing search", async ({
     page,
   }) => {
     await page.goto("/radar");
@@ -194,17 +194,17 @@ test.describe("round 3", () => {
     const ranks = await page.locator('li[data-testid^="radar-"]').evaluateAll((els) =>
       els.map((el) => {
         const t = el.textContent ?? "";
-        return t.includes("Not Tradable") && !el.querySelector(".badge-up")
+        return t.includes("No Liquidity") && !el.querySelector(".badge-up")
           ? 2
           : t.includes("Low Liquidity")
             ? 1
-            : t.includes("Not Tradable")
+            : t.includes("No Liquidity")
               ? 2
               : 0;
       }),
     );
     expect(ranks).toEqual([...ranks].sort((a, b) => a - b));
-    await page.getByRole("radio", { name: "Not Tradable" }).click();
+    await page.getByRole("radio", { name: "No Liquidity" }).click();
     const only = await page.locator('li[data-testid^="radar-"]').count();
     expect(only).toBeGreaterThan(0);
     await page.getByRole("radio", { name: "All" }).click();

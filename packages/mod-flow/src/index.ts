@@ -385,6 +385,8 @@ export interface WindowAggregate {
   buys: number;
   sells: number;
   realVolumeUsd: bigint | null;
+  /** Dollars bought minus dollars sold in the window (what people care about); null when any trade has no price. */
+  netUsd: bigint | null;
   reason: string | null;
 }
 export interface FlowAggregate {
@@ -429,6 +431,9 @@ export function aggregateFlow(snapshot: FlowSnapshot, now: number): FlowAggregat
           buys: buy.length,
           sells: sell.length,
           realVolumeUsd: reason ? null : trades.reduce((s, t) => s + t.usd!, 0n),
+          netUsd: reason
+            ? null
+            : buy.reduce((s, t) => s + t.usd!, 0n) - sell.reduce((s, t) => s + t.usd!, 0n),
           reason,
         },
       ];

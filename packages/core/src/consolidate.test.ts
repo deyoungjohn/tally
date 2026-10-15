@@ -187,6 +187,47 @@ describe("consolidatedQuote", () => {
     expect(b.routeText).toBe("USDT → T0 → T1 → NVDAB");
   });
 
+  it("a quote nowhere near the US price is not a market: no price, not ranked, flagged as no liquidity (any session)", async () => {
+    const p = ports({
+      q: { NVDAon: { tokensPerUsdt: 1n } }, // dust out for 25 USDT
+      ref: { price: 230, session: "overnight" },
+    });
+    const r = await consolidatedQuote(p, { ticker: "NVDA", amount: { usd: 25 } });
+    const on = r.rows.find((x) => x.symbol === "NVDAon")!;
+    expect(on.executable).toBe(false);
+    expect(on.usdPerShare).toBeUndefined();
+    expect(on.sharesOut).toBeUndefined();
+    expect(on.integrity.flags).toContain("ghost");
+    expect(on.notExecutableReason).toMatch(/too thin/);
+    expect(r.best).toBe("NVDAB");
+    expect(r.warnings.some((w) => w.startsWith("NVDAon: the quote is"))).toBe(true);
+  });
+
+  it("a token with no route says so instead of a bare 'Quote unavailable'", async () => {
+    const p = ports({ q: { NVDAon: { tokensPerUsdt: E18, fail: kinded("token_unavailable") } } });
+    const r = await consolidatedQuote(p, { ticker: "NVDA", amount: { usd: 25 } });
+    const on = r.rows.find((x) => x.symbol === "NVDAon")!;
+    expect(on.notExecutableReason).toMatch(/no route to this token/);
+  });
+
+  it("Binance's 'Insufficient liquidity' says so on the row", async () => {
+    const p = ports({
+      q: {
+        NVDAon: {
+          tokensPerUsdt: E18,
+          fail: kinded(
+            "unknown",
+            "Insufficient liquidity for a quote. Please decrease the amount.",
+          ),
+        },
+      },
+    });
+    const r = await consolidatedQuote(p, { ticker: "NVDA", amount: { usd: 25 } });
+    const on = r.rows.find((x) => x.symbol === "NVDAon")!;
+    expect(on.notExecutableReason).toMatch(/Not enough liquidity to quote/);
+    expect(r.best).toBe("NVDAB");
+  });
+
   it("ranks by effective cost per share including the fee, and reports the saving vs the runner-up", async () => {
     // Ondo gives more tokens but through 4 hops (more gas); the fee decides close calls.
     const p = ports({
@@ -471,6 +512,7 @@ describe("consolidatedQuote", () => {
             priceInputs: goodPrice,
             facts: { NVDAon: { ...baseAt, status: splitStatus } },
             mult: { NVDAon: { api: newMult } },
+            q: { NVDAon: { tokensPerUsdt: E18 / 2300n } }, // priced like the stock after the step
           }),
           { ticker: "NVDA", amount: { usd: 25 } },
         );
@@ -502,6 +544,7 @@ describe("consolidatedQuote", () => {
             priceInputs: goodPrice,
             facts: { NVDAon: { ...baseAt, corporateAction: earlier } },
             mult: { NVDAon: { api: newMult } },
+            q: { NVDAon: { tokensPerUsdt: E18 / 2300n } }, // priced like the stock after the step
           }),
           { ticker: "NVDA", amount: { usd: 25 } },
         );
@@ -516,6 +559,7 @@ describe("consolidatedQuote", () => {
             priceInputs: goodPrice,
             facts: { NVDAon: baseAt },
             mult: { NVDAon: { api: newMult } },
+            q: { NVDAon: { tokensPerUsdt: E18 / 2300n } }, // priced like the stock after the step
           }),
           { ticker: "NVDA", amount: { usd: 25 } },
         );
@@ -540,6 +584,7 @@ describe("consolidatedQuote", () => {
             priceInputs: goodPrice,
             facts: { NVDAon: { ...baseAt, status: halted } },
             mult: { NVDAon: { api: newMult } },
+            q: { NVDAon: { tokensPerUsdt: E18 / 2300n } }, // priced like the stock after the step
           }),
           { ticker: "NVDA", amount: { usd: 25 } },
         );
@@ -560,6 +605,7 @@ describe("consolidatedQuote", () => {
             priceInputs: { NVDAon: { tokenPrice: 230 * 10.017 * 1.04, stockPrice: 230 } },
             facts: { NVDAon: { ...baseAt, status: splitStatus } },
             mult: { NVDAon: { api: newMult } },
+            q: { NVDAon: { tokensPerUsdt: E18 / 2300n } }, // priced like the stock after the step
           }),
           { ticker: "NVDA", amount: { usd: 25 } },
         );

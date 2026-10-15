@@ -122,7 +122,7 @@ const empty = (ticker: string, error: string | null = null): FlowPanelVM => ({
 
 /** A reason buying is blocked, only from facts the grade and registry already carry; null when none of them blocks it. */
 function blockedReason(grade: RadarGradeSnapshot, token: FlowToken): string | null {
-  if (grade.ghost) return "Almost no trading: a ghost market";
+  if (grade.ghost) return "No Liquidity";
   const flags = grade.integrity?.flags ?? [];
   if (flags.includes("paused")) return "The issuer has paused this token";
   if (flags.includes("unsupported")) return "This token is not supported";
@@ -332,6 +332,8 @@ export interface FlowPanelDisplay {
     windows: {
       window: FlowWindow;
       netShares: string;
+      /** Dollars bought minus dollars sold, or null when the window has no prices. */
+      netUsd: string | null;
       buys: number;
       sells: number;
       reason: string | null;
@@ -369,6 +371,7 @@ export function displayFlow(vm: FlowPanelVM): FlowPanelDisplay {
       windows: (Object.keys(i.windows) as FlowWindow[]).map((window) => ({
         window,
         netShares: units(i.windows[window].netShares),
+        netUsd: i.windows[window].netUsd == null ? null : units(i.windows[window].netUsd!),
         buys: i.windows[window].buys,
         sells: i.windows[window].sells,
         reason: i.windows[window].reason,

@@ -237,7 +237,12 @@ export async function consolidatedQuote(
         return {
           ...base,
           executable: false,
-          notExecutableReason: "Quote unavailable",
+          notExecutableReason:
+            isKindedError(e) && e.kind === "token_unavailable"
+              ? "Quote unavailable: no route to this token right now (no liquidity, or the issuer is closed)."
+              : e instanceof Error && /insufficient liquidity/i.test(e.message)
+                ? "Not enough liquidity to quote this token right now, even though it has traded today."
+                : "Quote unavailable",
           multiplier: p.multiplier,
           integrity,
           error: {
@@ -260,6 +265,23 @@ export async function consolidatedQuote(
       const effective = sharesN > 0 ? (usdIn + (fee ?? 0)) / sharesN : undefined;
       const swap = q.executionMode === "SWAP";
       const integrity = gradeFor(p, ref, premium, unitTrap, now());
+      // A quote that lands nowhere near the US price is a market with almost nothing in it, in any session (the 2% premium check
+      // above only runs in regular hours). Showing it as a price, or ranking it, would mislead, so the row has no price at all.
+      if (sharesN <= 0 || (premium !== undefined && Math.abs(premium) > ABSURD_PREMIUM)) {
+        warnings.push(
+          `${p.token.symbol}: the quote is ${premium === undefined ? "empty" : `${(premium * 100).toFixed(0)}% away from the US price`}, treated as no market`,
+        );
+        return {
+          ...base,
+          executable: false,
+          notExecutableReason:
+            "No usable price: this token's market on BNB Chain is too thin right now.",
+          multiplier: p.multiplier,
+          integrity: integrity.flags.includes("ghost")
+            ? integrity
+            : { ...integrity, flags: [...integrity.flags, "ghost"] },
+        };
+      }
       return {
         ...base,
         executable: swap,
@@ -321,6 +343,9 @@ export async function consolidatedQuote(
     warnings,
   };
 }
+
+/** A quote more than this far from the US price (+/-50%) is not a market, whatever the session. */
+const ABSURD_PREMIUM = 0.5;
 
 async function prepare(ports: EnginePorts, token: RegistryToken, now: number): Promise<Prepared> {
   const [readings, facts] = await Promise.all([

@@ -353,7 +353,7 @@ describe("useSellFlow", () => {
     h.unmount();
   });
 
-  it("a reverted sale without rfq explains plainly that nothing was sold and offers retry", async () => {
+  it("a reverted sell without rfq explains plainly that nothing was sold and offers retry", async () => {
     stubStatus("reverted");
     fetchSellPlan.mockResolvedValue(plan({ rfq: false }));
     const h = mount();
@@ -366,13 +366,13 @@ describe("useSellFlow", () => {
       expect(p.hash).toBe(HASH);
       expect(p.canRetry).toBe(true);
       expect(p.failure.message).toBe(
-        "The sale did not go through. Nothing was sold; only the network fee was spent. Try again.",
+        "The sell did not go through. Nothing was sold; only the network fee was spent. Try again.",
       );
     }
     h.unmount();
   });
 
-  it("a reverted sale with rfq explains that the market-maker quote likely expired and offers retry", async () => {
+  it("a reverted sell with rfq explains that the market-maker quote likely expired and offers retry", async () => {
     stubStatus("reverted");
     fetchSellPlan.mockResolvedValue(plan({ rfq: true }));
     const h = mount();
@@ -385,7 +385,7 @@ describe("useSellFlow", () => {
       expect(p.hash).toBe(HASH);
       expect(p.canRetry).toBe(true);
       expect(p.failure.message).toBe(
-        "The sale did not go through, likely because the market-maker quote expired. Nothing was sold; only the network fee was spent. Market-maker quotes last a few seconds. Try again.",
+        "The sell did not go through, likely because the market-maker quote expired. Nothing was sold; only the network fee was spent. Market-maker quotes last a few seconds. Try again.",
       );
     }
 
@@ -406,7 +406,7 @@ describe("useSellFlow", () => {
     h.unmount();
   });
 
-  describe("minimum sale", () => {
+  describe("minimum sell", () => {
     const small: SellTarget = { ...target, probeShares: 0.02, probeUsd: 4.7 };
     it("a holding or amount worth under $5 asks the server for nothing and flags it", async () => {
       const h = mount();
@@ -453,7 +453,7 @@ describe("useSellFlow", () => {
       if (p.name === "form") {
         expect(p.plan).toBeNull();
         expect(p.failure?.message).toBe(
-          "The sale is below the $5 minimum order. Transaction will fail.",
+          "The sell is below the $5 minimum order. Transaction will fail.",
         );
       }
       h.unmount();
@@ -461,7 +461,7 @@ describe("useSellFlow", () => {
   });
 
   describe("receipt hint", () => {
-    it("posts exactly one hint for the sale (kind sell, its hash, the intent id, the user) and none for the approval", async () => {
+    it("posts exactly one hint for the sell (kind sell, its hash, the intent id, the user) and none for the approval", async () => {
       const approvePlan = plan({
         status: "needs_approval",
         tx: undefined,
@@ -528,7 +528,7 @@ describe("useSellFlow", () => {
       },
     );
 
-    it("a sale resumed from tally.pendingSell posts once with isResumed true", async () => {
+    it("a sell resumed from tally.pendingSell posts once with isResumed true", async () => {
       stubStatus("pending");
       storage.set(
         "tally.pendingSell",
@@ -560,7 +560,7 @@ describe("useSellFlow", () => {
       h.unmount();
     });
 
-    it("a resumed sale saved by an older build (no intent) posts nothing and still resumes", async () => {
+    it("a resumed sell saved by an older build (no intent) posts nothing and still resumes", async () => {
       stubStatus("success");
       storage.set(
         "tally.pendingSell",
@@ -579,7 +579,7 @@ describe("useSellFlow", () => {
       h.unmount();
     });
 
-    it("a pending sale for a different wallet is ignored and deleted from storage", async () => {
+    it("a pending sell for a different wallet is ignored and deleted from storage", async () => {
       stubStatus("pending");
       const differentWallet = "0x9999999999999999999999999999999999999999";
       storage.set(
@@ -601,7 +601,7 @@ describe("useSellFlow", () => {
       h.unmount();
     });
 
-    it("a pending sale when unauthenticated is ignored and deleted from storage", async () => {
+    it("a pending sell when unauthenticated is ignored and deleted from storage", async () => {
       stubStatus("pending");
       const oldAuthenticated = wallet.authenticated;
       wallet.authenticated = false;

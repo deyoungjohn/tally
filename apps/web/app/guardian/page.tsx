@@ -18,7 +18,7 @@ export default function Page() {
   return (
     <main id="main" className="wrap pb-24 pt-10 min-[561px]:pt-14">
       <p className="t-kicker">Guardian</p>
-      <h1 className="t-h2 mt-3 max-w-[22ch]">Hear about problems before you trade.</h1>
+      <h1 className="t-h2 mt-3 max-w-[22ch]">Your always-on stock token monitor.</h1>
       <p className="t-lead mt-3 max-w-[62ch]">
         Guardian watches the tokens in your wallet and records an alert when something changes. It
         states what changed and shows the reading it came from. It never trades for you.

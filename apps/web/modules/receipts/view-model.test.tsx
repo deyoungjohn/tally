@@ -135,7 +135,7 @@ it("F11 view models expose lossless ladder/evidence strings, source age and wall
   const quality = await loadQuality(options);
   expect(quality.report.vsQuote.n).toBe(0);
   expect(quality.report.unverifiedComparisonCount).toBe(1);
-  expect(quality.report.byRouteLength[0]!.routeLength).toBeNull();
+  expect(quality.report.byRouteLength[0]!.routeLength).toBe(1); // the quote names a one-hop route; its comparisons stay empty
 });
 it("recorded F11 comparisons supply issuer and route rows; n=2 remains insufficient", async () => {
   await seed("F11_NVDAB", true);
@@ -383,7 +383,7 @@ it("sell receipt view model constructs correct ladder, status, and client-report
   expect(vm.ladder[1].stage).toBe("Simulated");
   expect(vm.ladder[1].reason).toBe("Sell does not record simulation output");
   expect(vm.ladder[2].stage).toBe("Received");
-  expect(vm.ladder[2].tokens).toBe("0.025");
+  expect(vm.ladder[2].tokens).toBe("5.88"); // the USDT the sell paid, not the stock tokens spent
 });
 
 it("DEFAULT_LIQUIDMESH_ROUTER in mod-receipts matches LIQUIDMESH_ROUTER from config (Finding 4)", () => {
@@ -490,7 +490,7 @@ it("a pending hint names its token only as the browser's word", async () => {
   });
 });
 
-it("ladder stages say what their amount holds: tokens for a buy, tokens in and USDT out for a sale", async () => {
+it("ladder stages say what their amount holds: tokens for a buy, tokens in and USDT out for a sell", async () => {
   const data = await seed("F11_NVDAB", true);
   const buy = await loadReceipt(data.hint.txHash, { store, now: 1000, enabled: true });
   expect(buy.ladder.map((s) => s.unit)).toEqual(["tokens", "tokens", "tokens"]);

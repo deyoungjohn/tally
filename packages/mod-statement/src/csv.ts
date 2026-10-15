@@ -29,8 +29,9 @@ export function exportStatementCsv(stmt: Statement): string {
   lines.push(`Source,${escapeCsv(stmt.source)}`);
   lines.push(`Total Value (USD),${escapeCsv(formatUsd(stmt.totalValueUsdE18))}`);
   lines.push(`Total Cost Basis (USD),${escapeCsv(formatUsd(stmt.totalCostBasisUsdE18))}`);
-  lines.push(`Total Realized P&L (USD),${escapeCsv(formatUsd(stmt.totalRealizedPnlUsdE18))}`);
-  lines.push(`Total Unrealized P&L (USD),${escapeCsv(formatUsd(stmt.totalUnrealizedPnlUsdE18))}`);
+  // PnL is switched off for now (milestone 7 in docs/MILESTONES.md):
+  // lines.push(`Total Realized P&L (USD),${escapeCsv(formatUsd(stmt.totalRealizedPnlUsdE18))}`);
+  // lines.push(`Total Unrealized P&L (USD),${escapeCsv(formatUsd(stmt.totalUnrealizedPnlUsdE18))}`);
   lines.push(`Differs From API,${escapeCsv(stmt.differsFromApi)}`);
   if (stmt.notes.length > 0) {
     lines.push(`Notes,${escapeCsv(stmt.notes.join("; "))}`);
@@ -51,7 +52,7 @@ export function exportStatementCsv(stmt: Statement): string {
       "Price Per Share (USD)",
       "Current Value (USD)",
       "Avg Cost Per Share (USD)",
-      "Unrealized P&L (USD)",
+      // "Unrealized P&L (USD)", // PnL is switched off for now (milestone 7 in docs/MILESTONES.md):
       "Converted At Today Ratio",
     ]
       .map(escapeCsv)
@@ -71,7 +72,7 @@ export function exportStatementCsv(stmt: Statement): string {
         h.pricePerShareUsdE18 !== null ? formatUsd(h.pricePerShareUsdE18) : "-",
         formatUsd(h.tokenBalanceUsdE18),
         h.avgCostPerShareUsdE18 !== null ? formatUsd(h.avgCostPerShareUsdE18) : "-",
-        formatUsd(h.unrealizedPnlUsdE18),
+        // formatUsd(h.unrealizedPnlUsdE18),
         h.convertedAtTodaysRatio,
       ]
         .map(escapeCsv)
@@ -93,7 +94,7 @@ export function exportStatementCsv(stmt: Statement): string {
       "Shares",
       "Price Per Share (USD)",
       "Value (USD)",
-      "Realized P&L (USD)",
+      // "Realized P&L (USD)", // PnL is switched off for now (milestone 7 in docs/MILESTONES.md):
       "Today Ratio",
       "Tx Hash",
     ]
@@ -113,7 +114,7 @@ export function exportStatementCsv(stmt: Statement): string {
         t.amountShares !== null ? formatUnits(t.amountShares, 18, 6) : "unavailable",
         t.pricePerShareUsdE18 !== null ? formatUsd(t.pricePerShareUsdE18) : "-",
         formatUsd(t.valueUsdE18),
-        t.realizedPnlUsdE18 !== undefined ? formatUsd(t.realizedPnlUsdE18) : "-",
+        // t.realizedPnlUsdE18 !== undefined ? formatUsd(t.realizedPnlUsdE18) : "-",
         t.convertedAtTodaysRatio,
         t.txHash,
       ]

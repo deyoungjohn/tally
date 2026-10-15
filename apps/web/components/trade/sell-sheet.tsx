@@ -16,14 +16,14 @@ type Flow = ReturnType<typeof useSellFlow>;
 
 const STATUS_LINE: Record<string, string> = {
   loading: "Checking whether this token can be sold…",
-  signing: "Confirm the sale in your wallet.",
+  signing: "Confirm the sell in your wallet.",
 };
 
 /** The sell sheet: a centered modal that follows the plan's own status (needs funds, needs approval, ready) and then the transaction. */
 export function SellSheet({ flow, isMigrate }: { flow: Flow; isMigrate?: boolean }) {
   const { phase, target } = flow;
   const open = phase.name !== "idle";
-  // While a wallet prompt is open or a sent sale is being watched, the sheet stays: closing then would lose the hash.
+  // While a wallet prompt is open or a sent sell is being watched, the sheet stays: closing then would lose the hash.
   const locked =
     phase.name === "signing" ||
     phase.name === "approve" ||
@@ -278,7 +278,7 @@ function FormView({ flow, isMigrate }: { flow: Flow; isMigrate?: boolean }) {
           onClick={() => void flow.confirm()}
           data-testid="sell-confirm"
         >
-          Confirm sale
+          Confirm sell
         </Button>
       ) : null}
       {view?.next === "fund" ? (
@@ -355,14 +355,14 @@ function FormView({ flow, isMigrate }: { flow: Flow; isMigrate?: boolean }) {
 
       {flow.belowMinimum && !phase.failure ? (
         <Notice tone="red" testId="sell-below-min">
-          {`The sale is below the $${MIN_SELL_USDT} minimum order. Transaction will fail.`}
+          {`The sell is below the $${MIN_SELL_USDT} minimum order. Transaction will fail.`}
         </Notice>
       ) : null}
       {!view && !busy && !phase.failure && !flow.belowMinimum ? (
         inputs.all || inputs.text !== "" ? (
           // An amount is chosen but no quote came back, and nothing said why: say so, with a way to ask again.
           <Notice tone="amber" testId="sell-no-quote">
-            We couldn&apos;t get a quote for this sale right now. Nothing was sent.{" "}
+            We couldn&apos;t get a quote for this sell right now. Nothing was sent.{" "}
             <button type="button" className="link-text" onClick={() => void flow.refresh()}>
               Try again
             </button>
@@ -374,7 +374,7 @@ function FormView({ flow, isMigrate }: { flow: Flow; isMigrate?: boolean }) {
 
       <p className="t-meta" data-testid="sell-risk">
         Tokenized stocks can sell for less than the US price. The router enforces the least USDT
-        shown: if the price moves past it, the sale doesn&apos;t happen and only the network fee is
+        shown: if the price moves past it, the sell doesn&apos;t happen and only the network fee is
         spent.
       </p>
     </>
@@ -441,7 +441,7 @@ type Receipt =
   | { state: "off" | "pending" | "failed" | "unreconciled" }
   | { state: "reconciled"; usdtReceivedRaw: string };
 
-/** Polls the chain-verified sale receipt. Only a reconciled receipt shows an amount; before that there is nothing to claim. */
+/** Polls the chain-verified sell receipt. Only a reconciled receipt shows an amount; before that there is nothing to claim. */
 function useSellReceipt(hash: string): Receipt {
   const [r, setR] = useState<Receipt>({ state: "pending" });
   useEffect(() => {
@@ -477,7 +477,7 @@ function useSellReceipt(hash: string): Receipt {
   return r;
 }
 
-/** What the sale delivered (verified from the chain) and the least it was guaranteed to deliver, in the same unit, one under the other. */
+/** What the sell delivered (verified from the chain) and the least it was guaranteed to deliver, in the same unit, one under the other. */
 function ReceiptLine({ hash, floorUsdt }: { hash: string; floorUsdt: string | null }) {
   const r = useSellReceipt(hash);
   if (r.state === "reconciled")

@@ -125,7 +125,7 @@ export function mergeChainHoldings(
     return { ...g, totalShares: String(Number(shares.toFixed(6))), totalValueUsd: money(value) };
   });
   const total = withTotals.reduce((a, g) => a + num(g.totalValueUsd), 0);
-  // The unrealized total follows what is still held. The feed's own total was worked out when it last ran, so after a sale it
+  // The unrealized total follows what is still held. The feed's own total was worked out when it last ran, so after a sell it
   // would keep showing the gain of tokens that are gone. A held stock with no known cost makes the total unknown ("-").
   const heldGroups = withTotals.filter((g) => num(g.totalValueUsd) > 0);
   const unrealizedKnown = heldGroups.every((g) => g.unrealizedPnlUsd !== "-");

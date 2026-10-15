@@ -335,7 +335,7 @@ test("blocks ineligible cases", async ({ page }) => {
   // Hover over the TSLAB disabled button to check the tooltip reason
   await migrateDustBtn.hover({ force: true });
   await expect(page.getByRole("tooltip")).toContainText(
-    "This holding is worth $2.00, below the $5 minimum sale.",
+    "This holding is worth $2.00, below the $5 minimum sell.",
   );
 });
 
@@ -366,7 +366,7 @@ test("resumes after reload", async ({ page }) => {
 
   // Should auto open interstitial
   await expect(
-    page.getByRole("dialog").filter({ hasText: "Waiting for the sale to confirm..." }),
+    page.getByRole("dialog").filter({ hasText: "Waiting for the sell to confirm..." }),
   ).toBeVisible();
 });
 
@@ -444,7 +444,7 @@ test("rounds down to cent when passing USDT to buy step", async ({ page }) => {
 
 test.describe("Migrate review", () => {
   test.use({ viewport: { width: 1280, height: 800 } });
-  test("Cancel sends nothing; a refused sale is explained and cannot be confirmed", async ({
+  test("Cancel sends nothing; a refused sell is explained and cannot be confirmed", async ({
     page,
   }) => {
     await flags(page, true);
@@ -466,6 +466,56 @@ test.describe("Migrate review", () => {
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("migrate-review")).toHaveCount(0);
     expect(await page.evaluate(() => window.localStorage.getItem("tally.pendingSell"))).toBeNull();
+  });
+
+  test("a plan that still needs an approval shows the estimated sell fee, not a dash", async ({
+    page,
+  }) => {
+    await flags(page, true);
+    await mockWallet(page);
+    await stubQuote(page);
+    await stubSell(page, { ...plan("needs_approval"), estFeeUsd: 0.021 } as ReturnType<
+      typeof plan
+    >);
+    await page.goto("/portfolio");
+    await page.getByTestId("migrate-NVDAB").click({ timeout: 20_000 });
+    const review = page.getByTestId("migrate-review");
+    await expect(review.getByText("Network fee, sell").locator("..")).toContainText("$0.021");
+  });
+
+  test("a wallet short of BNB is told exactly that, and what is missing", async ({ page }) => {
+    await flags(page, true);
+    await mockWallet(page);
+    await stubQuote(page);
+    await stubSell(page, {
+      ...plan("needs_funds"),
+      shortfall: { tokens: "0", bnb: "1500000000000000", bnbNeeded: "3000000000000000" },
+    } as unknown as ReturnType<typeof plan>);
+    await page.goto("/portfolio");
+    await page.getByTestId("migrate-NVDAB").click({ timeout: 20_000 });
+    await expect(page.getByTestId("migrate-review-funds")).toContainText(
+      "needs a little more BNB for the network fee (0.0015 BNB short)",
+    );
+    await expect(page.getByTestId("migrate-review-confirm")).toBeDisabled();
+  });
+
+  test("the review prices the exact wallet balance, not the rounded number on screen", async ({
+    page,
+  }) => {
+    await flags(page, true);
+    await mockWallet(page);
+    await stubQuote(page);
+    const asked: { shares?: number; tokens?: string }[] = [];
+    await page.route("**/api/trade/sell", async (route) => {
+      asked.push(route.request().postDataJSON());
+      await route.fulfill({ status: 200, json: plan("ready") });
+    });
+    await page.goto("/portfolio");
+    await page.getByTestId("migrate-NVDAB").click({ timeout: 20_000 });
+    await expect(page.getByTestId("migrate-review")).toBeVisible();
+    // The first request probes with shares; the review is then priced on the raw balance the plan reported.
+    await expect.poll(() => asked.length).toBeGreaterThan(1);
+    expect(asked.at(-1)?.tokens).toBe(RAW_BALANCE);
   });
 });
 
@@ -563,7 +613,7 @@ test("clicking outside a Migrate that is under way asks before dropping it", asy
   ).not.toBeNull();
 });
 
-test("failed sale says it did not go through and clears", async ({ page }) => {
+test("failed sell says it did not go through and clears", async ({ page }) => {
   await flags(page, true);
   await mockWallet(page);
 
@@ -594,7 +644,7 @@ test("failed sale says it did not go through and clears", async ({ page }) => {
   await expect(
     page
       .getByRole("dialog")
-      .filter({ hasText: "The sale transaction failed and did not go through." }),
+      .filter({ hasText: "The sell transaction failed and did not go through." }),
   ).toBeVisible({ timeout: 10000 });
 
   await page.getByRole("button", { name: "Cancel" }).click();
@@ -605,7 +655,7 @@ test("Migrate appears only for stocks with both issuers enabled", async ({ page 
   await flags(page, true);
   await mockWallet(page);
   const part = (symbol: string, issuer: string, address: string) => ({
-    ticker: "NFLX",
+    ticker: "HOOD",
     symbol,
     issuer,
     address,
@@ -622,11 +672,11 @@ test("Migrate appears only for stocks with both issuers enabled", async ({ page 
         asOf: new Date().toISOString(),
         groups: [
           {
-            ticker: "NFLX",
+            ticker: "HOOD",
             shares: 20,
             valueUsd: 1000,
             referencePrice: 50,
-            parts: [part("NFLXon", "ondo", "0x01"), part("NFLXB", "bstock", "0x02")],
+            parts: [part("HOODon", "ondo", "0x01"), part("HOODB", "bstock", "0x02")],
           },
         ],
         totalValueUsd: 1000,
@@ -636,12 +686,12 @@ test("Migrate appears only for stocks with both issuers enabled", async ({ page 
     }),
   );
   await page.goto("/portfolio");
-  await expect(page.getByTestId("group-NFLX")).toBeVisible({ timeout: 20_000 });
-  await expect(page.getByTestId("migrate-NFLXon")).toHaveCount(0);
-  await expect(page.getByTestId("migrate-NFLXB")).toHaveCount(0);
-  // Buy more is on for the enabled issuer (NFLX: Ondo) and off, with a reason, for the other.
-  await expect(page.getByTestId("buy-more-NFLXon")).toBeVisible();
-  await expect(page.getByTestId("buy-more-NFLXB")).toBeDisabled();
+  await expect(page.getByTestId("group-HOOD")).toBeVisible({ timeout: 20_000 });
+  await expect(page.getByTestId("migrate-HOODon")).toHaveCount(0);
+  await expect(page.getByTestId("migrate-HOODB")).toHaveCount(0);
+  // Buy more is on for the enabled issuer (HOOD: bStock) and off, with a reason, for the other.
+  await expect(page.getByTestId("buy-more-HOODB")).toBeVisible();
+  await expect(page.getByTestId("buy-more-HOODon")).toBeDisabled();
 });
 
 test.describe("Migrate stocks tab on the Trade page", () => {
@@ -711,14 +761,14 @@ test("stopped receipts worker still completes migration through chain route", as
   await expect(doneDialog).toBeVisible();
 });
 
-test("reload-and-resume of an old sale in fixture mode recognises pseudo hash and proceeds to buy", async ({
+test("reload-and-resume of an old sell in fixture mode recognises pseudo hash and proceeds to buy", async ({
   page,
 }) => {
   await flags(page, true);
   await mockWallet(page);
   const fixtureSaleHash = "0xf111111111111111111111111111111111111111111111111111111111111111";
 
-  // Simulate an old sale stored in localStorage hours ago
+  // Simulate an old sell stored in localStorage hours ago
   await page.addInitScript(
     ([hash]) => {
       window.localStorage.setItem(
@@ -747,7 +797,7 @@ test("reload-and-resume of an old sale in fixture mode recognises pseudo hash an
 
   await page.goto("/portfolio");
 
-  // The old sale is immediately resolved by the server chain route and auto-advances to the buy step
+  // The old sell is immediately resolved by the server chain route and auto-advances to the buy step
   await expect(page.getByRole("dialog").filter({ hasText: "Review your buy" })).toBeVisible({
     timeout: 15_000,
   });
@@ -824,7 +874,7 @@ test("pending migrate bound to wallet: saved migration for different wallet is i
   await expect(page.getByRole("dialog")).not.toBeVisible();
 });
 
-test("confirmed sale under 6 USDT gives its own message and offers no buy", async ({ page }) => {
+test("confirmed sell under 6 USDT gives its own message and offers no buy", async ({ page }) => {
   await flags(page, true);
   await mockWallet(page);
 
@@ -845,7 +895,7 @@ test("confirmed sale under 6 USDT gives its own message and offers no buy", asyn
     );
   });
 
-  // sale proceeds returns confirmed with 5 USDT (under 6 USDT)
+  // sell proceeds returns confirmed with 5 USDT (under 6 USDT)
   await stubSaleProceeds(page, "confirmed", "5000000000000000000");
 
   await page.goto("/portfolio");
@@ -854,7 +904,7 @@ test("confirmed sale under 6 USDT gives its own message and offers no buy", asyn
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText("under the 6 USDT minimum required to buy");
-  await expect(dialog).toContainText("Your USDT is in your wallet. No purchase was made.");
+  await expect(dialog).toContainText("Your USDT is in your wallet. No buy was made.");
 
   // Click Done dismisses and clears
   await dialog.getByRole("button", { name: "Done" }).click();

@@ -95,7 +95,7 @@ test.describe("round 7", () => {
     expect(confirm!.y).toBeLessThan(details!.y);
   });
 
-  test("a sale worth under $5: no Confirm, the new message, and nothing was requested", async ({
+  test("a sell worth under $5: no Confirm, the new message, and nothing was requested", async ({
     page,
   }) => {
     await mockWallet(page);
@@ -113,7 +113,7 @@ test.describe("round 7", () => {
     // 0.001 of 0.0257 shares is about $0.39
     await sheet.getByTestId("sell-shares").fill("0.001");
     await expect(sheet.getByTestId("sell-below-min")).toContainText(
-      "The sale is below the $5 minimum order. Transaction will fail.",
+      "The sell is below the $5 minimum order. Transaction will fail.",
     );
     await expect(sheet.getByTestId("sell-confirm")).toHaveCount(0);
     // And sliding back up brings the button back; sliding down again takes it away.
@@ -132,7 +132,7 @@ test.describe("round 7", () => {
     const sell = page.getByTestId("sell-NVDAB");
     await expect(sell).toBeDisabled({ timeout: 20_000 });
     await sell.locator("xpath=..").hover();
-    await expect(page.getByRole("tooltip")).toContainText("below the $5 minimum sale");
+    await expect(page.getByRole("tooltip")).toContainText("below the $5 minimum sell");
   });
 
   test("Portfolio: the token name comes first, bolder and bigger than the issuer", async ({
@@ -164,7 +164,7 @@ test.describe("round 7", () => {
     expect(sym.weight).toBeGreaterThan(issuer.weight);
   });
 
-  test("Trade page sell mode: the button is unclickable under the minimum sale", async ({
+  test("Trade page sell mode: the button is unclickable under the minimum sell", async ({
     page,
   }) => {
     await mockWallet(page);
@@ -176,7 +176,7 @@ test.describe("round 7", () => {
     });
     await page.locator("#amount").fill("0.01"); // about $2.3
     await expect(page.getByTestId("sell-button")).toBeDisabled();
-    await expect(page.getByTestId("sell-button")).toContainText("Minimum sale is $5");
+    await expect(page.getByTestId("sell-button")).toContainText("Minimum sell is $5");
     await page.locator("#amount").fill("0.025"); // about $5.8, within the fixture holding
     await expect(page.getByTestId("sell-button")).toBeEnabled();
     await expect(page.getByTestId("sell-button")).toContainText(/Sell NVDA(B|on)/);
@@ -295,7 +295,7 @@ test.describe("round 7", () => {
     expect(text).not.toMatch(/\bNVDA\b(?!on|B)/);
   });
 
-  test("a verified sale shows USDT received with Guaranteed at least right under it, in the same unit", async ({
+  test("a verified sell shows USDT received with Guaranteed at least right under it, in the same unit", async ({
     page,
   }) => {
     await mockWallet(page);
@@ -337,10 +337,10 @@ test.describe("round 7", () => {
     await sheet.getByTestId("sell-confirm").click();
     await expect(sheet.getByTestId("sell-confirmed")).toBeVisible({ timeout: 20_000 });
     await expect(sheet.getByTestId("sell-receipt-status")).toContainText("Verifying");
-    await expect(sheet.getByTestId("sell-received")).toContainText("2.3411 USDT", {
+    await expect(sheet.getByTestId("sell-received")).toContainText("2.34 USDT", {
       timeout: 20_000,
     });
-    await expect(sheet.getByTestId("sell-floor")).toContainText("2.3166 USDT");
+    await expect(sheet.getByTestId("sell-floor")).toContainText("2.31 USDT");
     const r = (await sheet.getByTestId("sell-received").boundingBox())!;
     const f = (await sheet.getByTestId("sell-floor").boundingBox())!;
     expect(f.y).toBeGreaterThan(r.y);
@@ -397,9 +397,9 @@ test.describe("round 7", () => {
     expect(labels.indexOf("Guaranteed at least")).toBe(labels.indexOf("Tokens received") + 1);
     const got = await receipt.getByTestId("receipt-tokens").textContent();
     const min = await receipt.getByTestId("receipt-min").textContent();
-    expect(got).toMatch(/^\d+\.\d{6} NVDA(on|B)$/);
-    expect(min).toMatch(/^\d+\.\d{6} NVDA(on|B)$/);
+    expect(got).toMatch(/^\d+\.\d{3} NVDA(on|B)$/);
+    expect(min).toMatch(/^\d+\.\d{3} NVDA(on|B)$/);
     expect(min!.split(" ")[1]).toBe(got!.split(" ")[1]);
-    expect(Number(min!.split(" ")[0])).toBeLessThanOrEqual(Number(got!.split(" ")[0]) + 1e-6);
+    expect(Number(min!.split(" ")[0])).toBeLessThanOrEqual(Number(got!.split(" ")[0]) + 1e-3);
   });
 });

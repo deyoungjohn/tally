@@ -1,7 +1,7 @@
 import type { Address, RegistryToken } from "@tally/core";
 import { decodeGuarded, decodeTransfer, GUARDED_TOPIC, TRANSFER_TOPIC } from "./decode";
 import { reconcile } from "./reconcile";
-import type { AnyReceiptHint, ReceiptHint } from "./hints";
+import type { AnyReceiptHint, QuoteHint, ReceiptHint } from "./hints";
 import type { ChainLog, Hex, Receipt, Reconciliation } from "./types";
 
 // ShareGuard v1 ABI signatures: contracts/src/ShareGuard.sol. Exact selectors, no dependency or I/O.
@@ -207,8 +207,12 @@ export function promoteReceipt(
   call: SignedCall,
   token: RegistryToken | null,
   now: number,
+  /** The quote Tally recorded when it built the plan this transaction signs (see `plan-record.ts`), or null. */
+  recordedQuote: QuoteHint | null = null,
 ): StoredReceipt {
   verifyMinedTransaction(tx, mined);
+  // The comparison basis: Tally's own recorded quote when there is one, else what the browser reported.
+  const basis = recordedQuote ?? hint.quote;
   if (call.kind === "approval")
     return {
       kind: "approval",
@@ -227,7 +231,7 @@ export function promoteReceipt(
     token.ticker !== hint.ticker ||
     !["ondo", "bstock"].includes(token.issuer) ||
     token.decimals !== 18 ||
-    (hint.quote && token.issuer !== hint.quote.issuer)
+    (basis && token.issuer !== basis.issuer)
   )
     throw new Error("Stock metadata does not match the trusted registry");
   const events =
@@ -253,20 +257,22 @@ export function promoteReceipt(
       approvedAt: null,
       guard: tx.destination,
     },
-    quote: hint.quote
+    quote: basis
       ? {
           quoteId: null,
-          expectedOut: { asset: call.stock, raw: BigInt(hint.quote.tokensOut), decimals: 18 },
-          route: hint.quote.routeText.split(" > "),
+          expectedOut: { asset: call.stock, raw: BigInt(basis.tokensOut), decimals: 18 },
+          route: basis.routeText.split(" > "),
           router: call.router,
-          observedAt: hint.quote.builtAt,
-          expiresAt: hint.quote.expiresAt,
+          observedAt: basis.builtAt,
+          expiresAt: basis.expiresAt,
           notes: [
-            "Quote and route description are unverified browser hints; comparison is client-reported",
+            recordedQuote
+              ? "Quote recorded by Tally when the plan was issued"
+              : "Quote and route description are unverified browser hints; comparison is client-reported",
           ],
         }
       : null,
-    quoteMissingReason: hint.quote ? null : "Original quote unavailable after resuming",
+    quoteMissingReason: basis ? null : "Original quote unavailable after resuming",
     simulation: null,
     simulationMissingReason: hint.simulation?.available
       ? "Stage simulation succeeded but exposed no output amount; client-reported validation only"
@@ -307,7 +313,7 @@ export function promoteReceipt(
     receipt,
     result: reconcile(receipt),
     hint,
-    baselineTrust: "client-hint",
+    baselineTrust: recordedQuote ? "recorded" : "client-hint",
     verifiedAt: now,
     verifiedFill: verifiedFill(tx, mined, call),
   };

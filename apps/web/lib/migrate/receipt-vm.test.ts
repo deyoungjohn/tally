@@ -113,7 +113,7 @@ describe("MigrateReceiptVM", () => {
     expect(vm.shareDiff).toBe(null);
   });
 
-  it("unverified leg: missing sale tokens", () => {
+  it("unverified leg: missing sell tokens", () => {
     const vm = buildMigrateReceipt(
       {
         hash: "0x1",

@@ -124,7 +124,7 @@ test.describe("radar view model: real route on a seeded server", () => {
     const table = page.getByTestId("radarvm-whales-ondo");
     await expect(table.getByRole("table")).toBeVisible();
     await expect(table.getByRole("row")).toHaveCount(3);
-    await expect(table).toContainText("$14000.00");
+    await expect(table).toContainText("$14,000.00");
   });
 
   test("the page shows cards, the basis tooltip, the flow panel, stale and filters", async ({
@@ -149,7 +149,7 @@ test.describe("radar view model: real route on a seeded server", () => {
       "Grade last updated 3 h ago",
     );
     // Filter.
-    await page.getByRole("radio", { name: "Not Tradable" }).click();
+    await page.getByRole("radio", { name: "No Liquidity" }).click();
     await expect(page.getByTestId("radarvm-NVDAx")).toBeVisible();
     await expect(page.getByTestId("radarvm-TSLAB")).toHaveCount(0);
     // "How we grade tokens" opens the explanation in a modal that links to the full one in the docs.
@@ -168,7 +168,7 @@ test.describe("radar view model: real route on a seeded server", () => {
     await page.getByRole("radio", { name: "Flow" }).click();
     await expect(page.getByTestId("radarvm-flow-NVDA")).toBeVisible();
     await page.getByTestId("radarvm-flow-pick-NVDA").click();
-    await expect(page.getByTestId("radarvm-flow-NVDA")).toContainText("5.000000");
+    await expect(page.getByTestId("radarvm-flow-NVDA")).toContainText("+$1,167.00 net");
     await expect(page.getByTestId("radarvm-flow-NVDA")).toContainText("Holder list unavailable");
     await expect(page.locator('[data-testid^="radarvm-flow-"][data-testid$="-TSLA"]')).toHaveCount(
       0,

@@ -9,6 +9,8 @@ import { fileURLToPath } from "node:url";
 export const MIN_SIZE = 128;
 export const MAX_SIZE = 512;
 export const MAX_BYTES = 10 * 1024;
+/** USDT is not a stock: its icon is the chief engineer's own file and may be larger. */
+export const MAX_BYTES_USDT = 32 * 1024;
 export const NAME_RE = /^[A-Z0-9.]{1,10}\.(png|webp)$/;
 
 /** Pixel size read from a PNG or WebP header, or null when the file is neither. */
@@ -50,7 +52,8 @@ export function checkIcons(dir) {
     if (!NAME_RE.test(name))
       bad.push("name must look like NVDA.png (uppercase ticker, png or webp)");
     const buf = readFileSync(path);
-    if (buf.length > MAX_BYTES) bad.push(`${buf.length} bytes is over ${MAX_BYTES}`);
+    const cap = name === "USDT.png" ? MAX_BYTES_USDT : MAX_BYTES;
+    if (buf.length > cap) bad.push(`${buf.length} bytes is over ${cap}`);
     const size = imageSize(buf);
     if (!size) bad.push("not a PNG or WebP file");
     else {

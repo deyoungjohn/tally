@@ -497,6 +497,7 @@ describe("bounded flow collection", () => {
       expect(snapshot.data.labels[recorded[0]!.holderWalletAddress.toLowerCase()]!.bot).toBe(true);
       expect(aggregateFlow(snapshot.data, now).windows["24h"]).toMatchObject({
         realVolumeUsd: 0n,
+        netUsd: 0n,
         reason: null,
       });
       expect(logs).not.toHaveBeenCalled();

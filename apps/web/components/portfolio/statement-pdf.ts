@@ -156,9 +156,15 @@ export function buildStatementPdfDescription(
       }
       if (currentSection === "holdings") {
         if (r[0] === "Ticker" || r[0] === "Token") continue;
+        // The statement lists tokenized stocks the wallet holds: not an unrecognised token (BSC-ETH and the like) and not a
+        // position that has been sold down to nothing.
+        if (r[1] === "unrecognized") continue;
+        const held = Number.parseFloat(r[6] ?? "");
+        if (Number.isFinite(held) && held <= 0) continue;
         holdingsDataRows.push(r);
       } else if (currentSection === "activity") {
         if (r[0] === "Date") continue;
+        if (r[2] === "unrecognized") continue;
         activityDataRows.push(r);
       }
     }
@@ -171,18 +177,10 @@ export function buildStatementPdfDescription(
         "Price / Share",
         "Value",
         "Avg Cost / Share",
-        "Unrealized P&L",
+        // "Unrealized P&L", // PnL is switched off for now (milestone 7 in docs/MILESTONES.md)
       ];
-      const colWidths = [60, 55, 65, 75, 75, 90, 95];
-      const alignments: ("left" | "right")[] = [
-        "left",
-        "left",
-        "right",
-        "right",
-        "right",
-        "right",
-        "right",
-      ];
+      const colWidths = [80, 70, 85, 90, 90, 100];
+      const alignments: ("left" | "right")[] = ["left", "left", "right", "right", "right", "right"];
       const rows: StatementPdfRow[] = holdingsDataRows.map((r) => {
         const token = r[0] || "-";
         const issuer = r[1] || "-";
@@ -190,7 +188,7 @@ export function buildStatementPdfDescription(
         const pricePerShare = r[7] || "-";
         const value = r[8] || "-";
         const avgCost = r[9] || "-";
-        const unrealizedPnl = r[10] || "-";
+        // const unrealizedPnl = r[10] || "-";
         return {
           rawValues: r,
           cells: [
@@ -200,7 +198,7 @@ export function buildStatementPdfDescription(
             { text: pricePerShare, align: "right" },
             { text: value, align: "right" },
             { text: avgCost, align: "right" },
-            { text: unrealizedPnl, align: "right" },
+            // { text: unrealizedPnl, align: "right" },
           ],
         };
       });
@@ -223,15 +221,14 @@ export function buildStatementPdfDescription(
         "Shares",
         "Price / Share",
         "Cost / Proceeds",
-        "Realized P&L",
+        // "Realized P&L", // PnL is switched off for now (milestone 7 in docs/MILESTONES.md)
       ];
-      const colWidths = [70, 45, 50, 50, 65, 70, 80, 85];
+      const colWidths = [85, 55, 60, 60, 75, 85, 95];
       const alignments: ("left" | "right")[] = [
         "left",
         "left",
         "left",
         "left",
-        "right",
         "right",
         "right",
         "right",
@@ -244,7 +241,7 @@ export function buildStatementPdfDescription(
         const shares = r[6] || "-";
         const pricePerShare = r[7] || "-";
         const costOrProceeds = r[8] || "-";
-        const realizedPnl = r[9] || "-";
+        // const realizedPnl = r[9] || "-";
         return {
           rawValues: r,
           cells: [
@@ -255,7 +252,7 @@ export function buildStatementPdfDescription(
             { text: shares, align: "right" },
             { text: pricePerShare, align: "right" },
             { text: costOrProceeds, align: "right" },
-            { text: realizedPnl, align: "right" },
+            // { text: realizedPnl, align: "right" },
           ],
         };
       });
@@ -268,7 +265,7 @@ export function buildStatementPdfDescription(
       });
       totalRowCount += rows.length;
     }
-  } else if (vm.lines && vm.lines.length > 0) {
+  } else if (vm.lines && vm.lines.some((l) => l.issuer !== null)) {
     const headers = [
       "Date",
       "Type",
@@ -277,9 +274,9 @@ export function buildStatementPdfDescription(
       "Shares",
       "Price / Share",
       "Cost / Proceeds",
-      "Realized P&L",
+      // "Realized P&L", // PnL is switched off for now (milestone 7 in docs/MILESTONES.md)
     ];
-    const colWidths = [70, 45, 50, 50, 65, 70, 80, 85];
+    const colWidths = [85, 55, 60, 60, 75, 85, 95];
     const alignments: ("left" | "right")[] = [
       "left",
       "left",
@@ -288,30 +285,31 @@ export function buildStatementPdfDescription(
       "right",
       "right",
       "right",
-      "right",
     ];
-    const rows: StatementPdfRow[] = vm.lines.map((l) => ({
-      rawValues: [
-        l.date,
-        l.ticker,
-        l.issuer ?? "unrecognized",
-        l.type,
-        l.amountShares,
-        l.pricePerShareUsd,
-        l.valueUsd,
-        l.realizedPnlUsd ?? "-",
-      ],
-      cells: [
-        { text: l.date.slice(0, 10), align: "left" },
-        { text: l.type === "BUY" ? "Purchase" : "Sale", align: "left" },
-        { text: l.ticker, align: "left" },
-        { text: l.issuer ?? "unrecognized", align: "left" },
-        { text: l.amountShares, align: "right" },
-        { text: l.pricePerShareUsd, align: "right" },
-        { text: l.valueUsd, align: "right" },
-        { text: l.realizedPnlUsd ?? "-", align: "right" },
-      ],
-    }));
+    const rows: StatementPdfRow[] = vm.lines
+      .filter((l) => l.issuer !== null)
+      .map((l) => ({
+        rawValues: [
+          l.date,
+          l.ticker,
+          l.issuer ?? "unrecognized",
+          l.type,
+          l.amountShares,
+          l.pricePerShareUsd,
+          l.valueUsd,
+          // l.realizedPnlUsd ?? "-",
+        ],
+        cells: [
+          { text: l.date.slice(0, 10), align: "left" },
+          { text: l.type === "BUY" ? "Buy" : "Sell", align: "left" },
+          { text: l.ticker, align: "left" },
+          { text: l.issuer ?? "unrecognized", align: "left" },
+          { text: l.amountShares, align: "right" },
+          { text: l.pricePerShareUsd, align: "right" },
+          { text: l.valueUsd, align: "right" },
+          // { text: l.realizedPnlUsd ?? "-", align: "right" },
+        ],
+      }));
     sections.push({
       title: "Activity",
       headers,
@@ -346,7 +344,7 @@ export function buildStatementPdfDescription(
     sections,
     totalRowCount,
     footerNote:
-      "Tokenized shares track a US stock's price; they are not the underlying shares. This statement is a record of onchain activity, not tax advice.",
+      "Tokenized shares track a US stock's price; they are not the underlying shares. This statement is a record of onchain activity.",
     footerBrand: {
       text: "Generated by ",
       brandText: "Tally",
@@ -481,12 +479,13 @@ export function renderStatementPdf(
   doc.setLineWidth(0.8);
   doc.roundedRect(marginX, currentY, printableWidth, summaryBoxH, 3, 3, "FD");
 
-  const colW = printableWidth / 4;
+  const colW = printableWidth / 2;
   const summaryItems = [
     { label: "VALUE TODAY", value: `$${desc.summary.totalValueUsd}` },
     { label: "COST BASIS", value: `$${desc.summary.totalCostBasisUsd}` },
-    { label: "UNREALIZED P&L", value: `$${desc.summary.totalUnrealizedPnlUsd}` },
-    { label: "REALIZED P&L", value: `$${desc.summary.totalRealizedPnlUsd}` },
+    // PnL is switched off for now (milestone 7 in docs/MILESTONES.md):
+    // { label: "UNREALIZED P&L", value: `$${desc.summary.totalUnrealizedPnlUsd}` },
+    // { label: "REALIZED P&L", value: `$${desc.summary.totalRealizedPnlUsd}` },
   ];
 
   for (let i = 0; i < summaryItems.length; i++) {

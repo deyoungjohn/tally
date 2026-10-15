@@ -175,7 +175,7 @@ test.describe("home behaviour", () => {
       expect(await page.locator("body").innerText(), path).not.toMatch(/not tokens/i);
       expect(await page.locator('a[href*="bscscan.com/address"]').count(), path).toBe(0);
     }
-    await page.goto("/docs");
+    await page.goto("/contracts");
     await expect(page.locator('a[href*="bscscan.com/address"]').first()).toBeVisible();
   });
 });
@@ -185,11 +185,11 @@ test.describe("radar and portfolio pages", () => {
 
   test("radar grades every token with reasons and filters ghost markets", async ({ page }) => {
     await page.goto("/radar");
-    await expect(page.getByTestId("radar-NVDAx")).toContainText("Not Tradable", {
+    await expect(page.getByTestId("radar-NVDAx")).toContainText("No Liquidity", {
       timeout: 20_000,
     });
     await expect(page.getByTestId("radar-NVDAon")).toBeVisible();
-    await page.getByRole("radio", { name: "Not Tradable" }).click();
+    await page.getByRole("radio", { name: "No Liquidity" }).click();
     await expect(page.getByTestId("radar-NVDAon")).toHaveCount(0);
     await expect(page.getByTestId("radar-NVDAx")).toBeVisible();
   });
@@ -389,6 +389,33 @@ test.describe("hero rolling line and cards", () => {
     await expect(page.getByTestId("hero-panel-1")).not.toContainText("Available now");
     const after = await page.getByTestId("hero-actions").boundingBox();
     expect(Math.abs((after?.y ?? 0) - (top?.y ?? 0))).toBeLessThan(2);
+  });
+
+  test("the rotation waits while the mouse is over the cards and carries on after it leaves", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await expect(page.getByTestId("hero-panel-0")).toHaveAttribute("data-active", "true");
+    await page.getByTestId("hero-panels").hover();
+    await page.waitForTimeout(5_200);
+    await expect(page.getByTestId("hero-panel-0")).toHaveAttribute("data-active", "true");
+    await page.mouse.move(5, 5);
+    await expect(page.getByTestId("hero-panel-1")).toHaveAttribute("data-active", "true", {
+      timeout: 8_000,
+    });
+  });
+
+  test("the active card links to its feature", async ({ page }) => {
+    await page.goto("/");
+    await page.getByTestId("hero-dot-3").click();
+    await expect(page.getByTestId("hero-link-baskets")).toHaveAttribute("href", "/baskets");
+    await page.getByTestId("hero-dot-1").click();
+    await expect(page.getByTestId("hero-link-migrate")).toHaveAttribute(
+      "href",
+      "/trade?tab=migrate",
+    );
+    await page.getByTestId("hero-dot-4").click();
+    await expect(page.getByTestId("hero-link-radar")).toHaveAttribute("href", "/radar");
   });
 
   test("a dot picks a card and stops the rotation; touching the trade card also stops it", async ({

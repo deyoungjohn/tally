@@ -4,6 +4,8 @@
 
 Built for **BNB Hack: Tokenized Stocks Edition**.
 
+> **After the deadline.** The code was fixed after the submission deadline (11 Oct 2026, 12:00 UTC). The last pre-deadline commit is `790eb22`; everything that changed since is listed in [`docs/POST_DEADLINE_CHANGES.md`](docs/POST_DEADLINE_CHANGES.md).
+
 - App: <https://app.tallyprotocol.xyz>
 - Home: <https://tallyprotocol.xyz>
 - Developer docs: <https://docs.tallyprotocol.xyz> (source in [`gitbook/`](gitbook))

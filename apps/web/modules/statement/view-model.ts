@@ -67,7 +67,7 @@ export interface PortfolioVM {
    * it), `no_holdings` means a snapshot exists and holds nothing. Absent when the state is not empty.
    */
   emptyKind?: "never_collected" | "no_holdings";
-  /** Additive. True only when at least one sale carries a realized figure; otherwise `totalRealizedPnlUsd` is a placeholder zero. */
+  /** Additive. True only when at least one sell carries a realized figure; otherwise `totalRealizedPnlUsd` is a placeholder zero. */
   realizedKnown?: boolean;
   availableTabs: PortfolioTab[];
   activeTab: PortfolioTab;
@@ -247,7 +247,7 @@ export function buildPortfolioVM(
     };
 
     let pnlPct = "0.00";
-    // A cost that is missing or tiny next to the value (a gain of thousands of percent) means the purchases behind this holding
+    // A cost that is missing or tiny next to the value (a gain of thousands of percent) means the buys behind this holding
     // were not all seen, for example tokens that arrived by transfer or a Migrate. Showing it would be false, so it reads "-".
     let costTrusted = group.costKnown !== false;
     if (group.totalCostBasisUsdE18 > 0n) {
@@ -363,7 +363,7 @@ export function buildStatementVM(
     };
   }
 
-  // Lines are for tokenized stocks. A swap also moves BNB or USDT, and those legs are not buys or sales of a stock.
+  // Lines are for tokenized stocks. A swap also moves BNB or USDT, and those legs are not buys or sells of a stock.
   const lines: StatementLineVM[] = stmt.trades
     .filter((t) => t.isRecognized)
     .map((t) => ({
@@ -509,7 +509,7 @@ export async function loadPortfolio(opts?: {
   now?: number;
   /**
    * The stocks the wallet holds right now, read from the chain by the page. The statement snapshot can be minutes old, so after a
-   * sale it still lists what was sold; suggestions follow this list instead whenever it is given.
+   * sell it still lists what was sold; suggestions follow this list instead whenever it is given.
    */
   heldTickers?: string[];
 }): Promise<PortfolioVM> {

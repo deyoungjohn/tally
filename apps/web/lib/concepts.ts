@@ -49,10 +49,10 @@ export const CONCEPTS: Record<string, Concept> = {
   },
   "not-tradable": {
     id: "not-tradable",
-    title: "Why some tokens are Not Tradable",
+    title: "Why some tokens have No Liquidity",
     paragraphs: [
-      "A token that traded under $1,000 in the last 24 hours on BNB Chain has no real market. Its price can be stale by days, and a buy could fill far from the price you see.",
-      "Tally marks those tokens Not Tradable and does not let you buy them, even when the issuer's own data looks fine.",
+      "A token that traded under $100 in the last 24 hours on BNB Chain has no real market. Its price can be stale by days, and a buy could fill far from the price you see.",
+      "Tally marks those tokens No Liquidity and does not let you buy them, even when the issuer's own data looks fine.",
     ],
   },
   "unit-trap": {

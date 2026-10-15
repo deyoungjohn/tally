@@ -34,8 +34,7 @@ export default async function Page() {
       <h1 className="t-h2 mt-3 max-w-[22ch]">Buy a basket of stocks in one go.</h1>
       <p className="t-lead mt-3 max-w-[62ch]">
         Pick a basket, set a budget and how much goes to each stock, and Tally buys them one after
-        another. Each purchase has its own guaranteed minimum, and you confirm each one in your
-        wallet.
+        another. Each buy has its own guaranteed minimum, and you confirm each one in your wallet.
       </p>
       <p className="t-meta mt-3 flex items-center gap-2" data-testid="baskets-signin-note">
         <Info size={14} aria-hidden /> For the best experience with baskets, sign in with Google or

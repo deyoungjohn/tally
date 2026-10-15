@@ -222,8 +222,8 @@ test.describe("sell", () => {
     const sheet = await openSheet(page);
     await sheet.getByTestId("sell-shares").fill("0.025");
     await expect(sheet.getByTestId("sell-plan")).toHaveAttribute("data-status", "ready");
-    await expect(sheet.getByTestId("sell-sends")).toContainText("0.010007");
-    await expect(sheet.getByTestId("sell-min")).toContainText("2.3166 USDT");
+    await expect(sheet.getByTestId("sell-sends")).toContainText("0.01 shares");
+    await expect(sheet.getByTestId("sell-min")).toContainText("2.31 USDT");
     await expect(sheet.getByTestId("sell-sheet")).toContainText("set by the router");
     await expect(sheet.getByTestId("sell-risk")).toBeVisible();
     await sheet.getByTestId("sell-confirm").click();
@@ -243,7 +243,7 @@ test.describe("sell", () => {
     await expect(sheet).not.toContainText("Gas used");
     await expect(sheet.getByTestId("sell-hash")).toHaveAttribute("href", /bscscan\.com\/tx\/0x/);
     expect(urls.some((u) => u.startsWith("/api/trade/receipt"))).toBe(false);
-    // Exactly one receipt hint for the sale, with the sale's hash.
+    // Exactly one receipt hint for the sell, with the sell's hash.
     await expect.poll(() => hints.length).toBe(1);
     expect(hints[0]).toMatchObject({
       kind: "sell",
@@ -309,7 +309,7 @@ test.describe("sell", () => {
     expect(hints[0]!.txHash).not.toBe(APPROVE_HASH);
   });
 
-  test("a failing /api/receipts (404 or 500) does not change the sale's outcome", async ({
+  test("a failing /api/receipts (404 or 500) does not change the sell's outcome", async ({
     page,
   }) => {
     await mockWallet(page);
@@ -325,7 +325,7 @@ test.describe("sell", () => {
     expect(hints).toHaveLength(1);
   });
 
-  test("a sale resumed after a reload posts one hint with isResumed true", async ({ page }) => {
+  test("a sell resumed after a reload posts one hint with isResumed true", async ({ page }) => {
     await mockWallet(page);
     await flags(page, true);
     await stubStatus(page, ["success"]);
@@ -417,10 +417,10 @@ test.describe("sell", () => {
     await stubStatus(page, ["success"]);
     const sheet = await openSheet(page);
     await sheet.getByTestId("sell-shares").fill("0.025");
-    await expect(sheet.getByTestId("sell-min")).toContainText("2.3166 USDT");
+    await expect(sheet.getByTestId("sell-min")).toContainText("2.31 USDT");
     await sheet.getByTestId("sell-confirm").click();
     await expect(sheet.getByTestId("sell-notice")).toContainText("quote changed");
-    await expect(sheet.getByTestId("sell-min")).toContainText("2.2 USDT");
+    await expect(sheet.getByTestId("sell-min")).toContainText("2.20 USDT");
     expect(await sent(page)).toHaveLength(0);
     await sheet.getByTestId("sell-confirm").click();
     await expect(sheet.getByTestId("sell-confirmed")).toBeVisible({ timeout: 20_000 });
@@ -528,7 +528,7 @@ test.describe("sell", () => {
     await expect(sheet.getByTestId("sell-refused")).toContainText("unavailable from this region");
   });
 
-  test("reverted sale with rfq explains quote expiration, shows Try again, and clicking Try again re-plans", async ({
+  test("reverted sell with rfq explains quote expiration, shows Try again, and clicking Try again re-plans", async ({
     page,
   }) => {
     await mockWallet(page);
@@ -552,7 +552,7 @@ test.describe("sell", () => {
     // Reverted failure notice is shown with RFQ explanation
     await expect(sheet.getByTestId("sell-failed")).toBeVisible({ timeout: 20_000 });
     await expect(sheet.getByTestId("sell-failed")).toContainText(
-      "The sale did not go through, likely because the market-maker quote expired",
+      "The sell did not go through, likely because the market-maker quote expired",
     );
     await expect(sheet.getByTestId("sell-failed")).toContainText(
       "Market-maker quotes last a few seconds. Try again.",
@@ -571,7 +571,7 @@ test.describe("sell", () => {
     expect(bodies.length).toBeGreaterThanOrEqual(4);
   });
 
-  test("reverted sale without rfq explains plainly without claiming quote expiration", async ({
+  test("reverted sell without rfq explains plainly without claiming quote expiration", async ({
     page,
   }) => {
     await mockWallet(page);
@@ -585,7 +585,7 @@ test.describe("sell", () => {
 
     await expect(sheet.getByTestId("sell-failed")).toBeVisible({ timeout: 20_000 });
     await expect(sheet.getByTestId("sell-failed")).toContainText(
-      "The sale did not go through. Nothing was sold; only the network fee was spent. Try again.",
+      "The sell did not go through. Nothing was sold; only the network fee was spent. Try again.",
     );
     await expect(sheet.getByTestId("sell-failed")).not.toContainText("market-maker");
     await expect(sheet.getByTestId("sell-retry")).toBeVisible();
