@@ -40,3 +40,11 @@ spike/shareguard/cache/
 # multi-agent review packs (scripts/review-pack.*)
 review/
 .review-wt/
+
+#demo video (raw footage, renders and the video project stay local: they are large and the raw footage shows private data)
+frames/
+video/
+tallydemo.mp4
+# local-only record of the post-deadline fixes
+LOCAL_FIXES.md
+tally-fixes*.patch

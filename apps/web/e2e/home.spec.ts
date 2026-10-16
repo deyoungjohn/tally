@@ -162,8 +162,18 @@ test.describe("home behaviour", () => {
     await q.click();
     await expect(q).toHaveAttribute("aria-expanded", "true");
     await expect(faq).toContainText("USDT is worth slightly under $1");
-    await faq.getByRole("button", { name: "Read how it works" }).click();
-    await expect(page).toHaveURL(/\/how-it-works$/);
+    // The footer button opens the demo post in a new tab.
+    await page.evaluate(() => {
+      (window as unknown as { __opened?: string }).__opened = undefined;
+      window.open = ((url: string) => {
+        (window as unknown as { __opened?: string }).__opened = url;
+        return null;
+      }) as typeof window.open;
+    });
+    await faq.getByRole("button", { name: "Watch the Demo" }).click();
+    expect(
+      await page.evaluate(() => (window as unknown as { __opened?: string }).__opened),
+    ).toMatch(/^https:\/\/x\.com\/tallydotxyz/);
   });
 
   test("the old tagline is gone and no page links a contract outside the docs", async ({
@@ -237,14 +247,19 @@ test.describe("real wallet provider (no mock)", () => {
 test.describe("signed-in changes", () => {
   test.use({ viewport: { width: 1280, height: 900 } });
 
-  test("hero buttons are gone once signed in; How it works stays in the footer only", async ({
+  test("hero buttons are gone once signed in; How it works stays in the footer only (the hero shows Watch the Demo)", async ({
     page,
   }) => {
     await page.goto("/");
     await expect(page.getByTestId("hero-actions")).toBeVisible();
+    const demo = page.getByTestId("hero-actions").getByRole("link", { name: "Watch the Demo" });
+    await expect(demo).toBeVisible();
+    await expect(demo).toHaveAttribute("href", /^https:\/\/x\.com\/tallydotxyz/);
+    await expect(demo).toHaveAttribute("target", "_blank");
+    await expect(demo).toHaveAttribute("rel", /noopener/);
     await expect(
       page.getByTestId("hero-actions").getByRole("link", { name: "How it works" }),
-    ).toBeVisible();
+    ).toHaveCount(0);
     await mockWallet(page);
     await page.goto("/");
     await expect(page.getByTestId("account-button")).toBeVisible();
@@ -255,6 +270,9 @@ test.describe("signed-in changes", () => {
     await expect(
       page.getByRole("contentinfo").getByRole("link", { name: "How it works" }),
     ).toBeVisible();
+    await expect(
+      page.getByRole("contentinfo").getByRole("link", { name: "X", exact: true }),
+    ).toHaveAttribute("href", "https://x.com/tallydotxyz");
   });
 
   test("the Home trade button says Buy {ticker}, follows the dropdown, then follows the transaction once signed in", async ({

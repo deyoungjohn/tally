@@ -4,6 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { ButtonLink } from "@/components/motion/button";
 import { useTallyWallet } from "@/components/wallet/wallet-context";
 import { ReturningUser } from "@/components/wallet/returning-user";
+import { DEMO_URL } from "@/lib/links";
 
 /** The hero's two buttons exist to get a visitor started. Once someone is signed in they are gone (the nav keeps "How it works"). */
 export function HeroActions() {
@@ -15,8 +16,13 @@ export function HeroActions() {
         <ButtonLink href="/trade">
           Get Started <ArrowRight size={16} aria-hidden />
         </ButtonLink>
+        {/* The "How it works" button was replaced by the demo (the page itself stays in the footer and the Learn more links):
         <ButtonLink href="/how-it-works" variant="glassy">
           How it works
+        </ButtonLink>
+        */}
+        <ButtonLink href={DEMO_URL} variant="glassy" target="_blank" rel="noopener noreferrer">
+          Watch the Demo
         </ButtonLink>
       </div>
       <ReturningUser className="mt-4" />

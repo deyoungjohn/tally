@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { moduleFlags } from "@/lib/flags";
+import { X_URL } from "@/lib/links";
 import { Logo } from "./site-header";
 
 const COLS = [
@@ -22,7 +23,13 @@ const COLS = [
       ["Contracts", "/contracts"],
     ],
   },
-  { h: "Links", links: [["GitHub", "https://github.com/deyoungjohn/tally"]] },
+  {
+    h: "Links",
+    links: [
+      ["GitHub", "https://github.com/deyoungjohn/tally"],
+      ["X", X_URL],
+    ],
+  },
   {
     h: "Legal",
     links: [

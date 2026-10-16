@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { FAQTabsCard } from "@/components/spectrumui/faq-tabs-card";
+import { DEMO_URL } from "@/lib/links";
 
 const TABS = [
   {
@@ -67,12 +67,12 @@ const TABS = [
 ];
 
 export function HomeFaq() {
-  const router = useRouter();
   return (
     <FAQTabsCard
       tabs={TABS}
-      footerLabel="Read how it works"
-      onFooterClick={() => router.push("/how-it-works")}
+      // Was: footerLabel="Read how it works" with onFooterClick={() => router.push("/how-it-works")}
+      footerLabel="Watch the Demo"
+      onFooterClick={() => window.open(DEMO_URL, "_blank", "noopener,noreferrer")}
     />
   );
 }

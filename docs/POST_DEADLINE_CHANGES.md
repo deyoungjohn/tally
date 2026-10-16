@@ -10,6 +10,7 @@ The submission deadline was 11 October 2026, 12:00 UTC. This file lists everythi
 | README rewrite (documentation only, 12 Oct) | `e5d8323` |
 | GitBook's own sync commits (12 and 14 Oct) | `c55cc89` to `aa67ffc`; they added `SUMMARY.md` files and edited `gitbook-docs.yaml` |
 | All code fixes below, in one commit | "Minor Post Deadline Fixes" (15 Oct) |
+| X link in the footer and the demo buttons | "added Link to X and demo video" (16 Oct) |
 
 To see exactly what changed: `git diff 790eb22 HEAD --stat -- . ':!gitbook'`.
 
@@ -27,6 +28,9 @@ To see exactly what changed: `git diff 790eb22 HEAD --stat -- . ':!gitbook'`.
 - Receipts show confirmed transactions as confirmed: an Etherscan V2 explorer fallback sits behind the RPC (`ETHERSCAN_API_KEY`, see `docs/deployment.md`).
 - Live fills compares against quotes recorded by the server when a plan is issued ("plan-quote" snapshots).
 - The Migrate review prices the wallet's exact balance, shows the real shortfall (BNB or tokens), and estimates the sell fee before an approval.
+
+**Demo and social link (16 Oct)**
+- The footer's Links column has an X link. The home hero button and the FAQ card's footer button, which used to say "How it works", now say "Watch the Demo" and open the demo post on X in a new tab. The How it works page is still linked from the footer and the "Learn more" links.
 
 **Tokens**
 - Nine more tokens are listed as buyable: AMZNB, GMEB, BMNRB and NFLXB (already enabled on the guard by the owner), and INTCon, METAon, MSFTon and MSTRon. The last four need an owner transaction first; `contracts/script/AddOndoBatch3.s.sol` and `contracts/tools/gen_ondo_seeds_batch3.py` prepare it, and the steps are in `docs/deployment.md`.
